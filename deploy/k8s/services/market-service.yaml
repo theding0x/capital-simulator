@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: market-service
+  labels:
+    app: market-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8083
+      name: http
+  selector:
+    app: market-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: market-service
+  template:
+    metadata:
+      labels:
+        app: market-service
+    spec:
+      containers:
+        - name: market-service
+          image: ghcr.io/theding0x/capital-simulator/market-service:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+              name: http
+          env:
+            - name: SERVICE_ADDR
+              value: ":8083"
+            - name: LOG_LEVEL
+              value: info
+            - name: MONGO_URI
+              value: mongodb://mongo:27017
+            - name: MONGO_DATABASE
+              value: market
+            - name: REDIS_ADDR
+              value: redis:6379
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

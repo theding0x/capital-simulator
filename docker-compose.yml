@@ -1,0 +1,131 @@
+# Local development stack for capital-simulator.
+# Bring up the whole economy with: docker compose up --build
+name: capital-simulator
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    environment:
+      LOG_LEVEL: info
+      SERVICE_ADDR: ":8080"
+      MONGO_URI: mongodb://mongo:27017
+      REDIS_ADDR: redis:6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  commodity-service:
+    build:
+      context: .
+      dockerfile: services/commodity-service/Dockerfile
+    environment:
+      LOG_LEVEL: info
+      SERVICE_ADDR: ":8081"
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DATABASE: commodity
+      REDIS_ADDR: redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  agent-service:
+    build:
+      context: .
+      dockerfile: services/agent-service/Dockerfile
+    environment:
+      LOG_LEVEL: info
+      SERVICE_ADDR: ":8082"
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DATABASE: agent
+      REDIS_ADDR: redis:6379
+    ports:
+      - "8082:8082"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  market-service:
+    build:
+      context: .
+      dockerfile: services/market-service/Dockerfile
+    environment:
+      LOG_LEVEL: info
+      SERVICE_ADDR: ":8083"
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DATABASE: market
+      REDIS_ADDR: redis:6379
+    ports:
+      - "8083:8083"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  simulation-engine:
+    build:
+      context: .
+      dockerfile: services/simulation-engine/Dockerfile
+    environment:
+      LOG_LEVEL: info
+      SERVICE_ADDR: ":8084"
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DATABASE: simulation
+      REDIS_ADDR: redis:6379
+    ports:
+      - "8084:8084"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./web
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+
+volumes:
+  mongo_data:
+  redis_data:
