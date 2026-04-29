@@ -36,6 +36,7 @@ services:
     environment:
       LOG_LEVEL: info
       SERVICE_ADDR: ":8080"
+      COMMODITY_SERVICE_URL: http://commodity-service:8081
       MONGO_URI: mongodb://mongo:27017
       REDIS_ADDR: redis:6379
     ports:
@@ -45,6 +46,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      commodity-service:
+        condition: service_started
 
   commodity-service:
     build:

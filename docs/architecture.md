@@ -48,7 +48,7 @@ All Go services share a single root `go.mod` (`github.com/theding0x/capital-simu
 
 - `pkg/log` — structured logging via `log/slog`.
 - `pkg/httpx` — HTTP server scaffolding with `/healthz`, `/readyz`, and graceful shutdown.
-- `pkg/mongo` — MongoDB connection config (driver wired in by a later chapter).
+- `pkg/mongo` — MongoDB driver + connection config. **Live as of Ch. 1.**
 - `pkg/redis` — Redis connection config (driver wired in by a later chapter).
 
 ## Data flow per simulation tick (target shape)
@@ -65,12 +65,23 @@ This is the *target*; the initial scaffold ships health endpoints only.
 
 Each chapter of *Capital* turns into a feature branch and PR. Approximate mapping:
 
-| Chapter | Concepts                                                 | Primary services              |
-|---------|----------------------------------------------------------|-------------------------------|
-| Ch. 1   | Commodity, use-value, value, exchange-value, fetishism   | commodity-service             |
-| Ch. 2-3 | Exchange, money, hoarding, means of payment              | market-service, commodity     |
-| Ch. 4   | Money → capital; the general formula M-C-M'              | agent-service, market         |
-| Ch. 5-7 | Labour-process, valorization, surplus-value              | agent-service, simulation-eng |
-| Ch. 8-9 | Constant/variable capital, rate of surplus-value         | commodity, simulation-eng     |
-| Ch. 10  | The working day                                          | agent-service, simulation-eng |
-| Ch. 11+ | Cooperation, machinery, wages, accumulation              | all                           |
+| Chapter   | Status      | Concepts                                                 | Primary services              |
+|-----------|-------------|----------------------------------------------------------|-------------------------------|
+| Ch. 1     | ✅ Done     | Commodity, use-value, value, exchange-value, value-forms, fetishism | commodity-service |
+| Ch. 2-3   | Next        | Exchange, money, hoarding, means of payment              | market-service, commodity     |
+| Ch. 4     | Pending     | Money → capital; the general formula M-C-M'              | agent-service, market         |
+| Ch. 5-7   | Pending     | Labour-process, valorization, surplus-value              | agent-service, simulation-eng |
+| Ch. 8-9   | Pending     | Constant/variable capital, rate of surplus-value         | commodity, simulation-eng     |
+| Ch. 10    | Pending     | The working day                                          | agent-service, simulation-eng |
+| Ch. 11+   | Pending     | Cooperation, machinery, wages, accumulation              | all                           |
+
+### Ch. 1 — what was built
+
+`commodity-service` now models all four sections of Capital Vol. I, Ch. 1:
+
+- **§1 Two factors of a commodity.** `Commodity`, `UseValue`, `LabourMinutes`, `ProductivityChange`, with the inverse-proportionality law between productivity and value enforced by tests.
+- **§2 Dual character of labour.** Each `Commodity` carries a `ConcreteLabour`; `AsAbstractLabour` makes the reduction to homogeneous human labour explicit at every value-computation site.
+- **§3 The form of value.** `SimpleFormOf`, `ExpandedFormOf`, `GeneralFormOf`, `MoneyFormOf` — each derivable as a view over a population of commodities, with a chosen money-commodity for the money-form.
+- **§4 The fetishism of commodities.** `SocialRelationsOf` and the `/v1/commodities/{id}/social-relations` endpoint surface the labour relations that exchange-value normally hides.
+
+The MongoDB driver is wired up via `pkg/mongo`; the `commodities` collection has a unique case-insensitive index on `name`. The api-gateway reverse-proxies `/v1/commodities/*` and `/v1/exchange-ratio` to commodity-service, and the React dashboard exposes full CRUD plus a "Reveal" toggle that renders the fetishism critique inline.
