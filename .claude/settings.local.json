@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 /mnt/c/Users/AaronHulse/IdeaProjects/capital-simulator/.claude/skills/sync-types/scripts/sync_check.py)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(cp web/src/types.ts /tmp/types.ts.bak)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 .claude/skills/sync-types/scripts/sync_check.py)",
+      "Bash(mv /tmp/types.ts.bak web/src/types.ts)",
+      "Bash(git -C /mnt/c/Users/AaronHulse/IdeaProjects/capital-simulator log --oneline -- web/src/App.tsx)",
+      "Bash(git -C /mnt/c/Users/AaronHulse/IdeaProjects/capital-simulator show HEAD:web/src/App.tsx)",
+      "Bash(python3 *)",
+      "Read(//tmp/**)"
+    ]
+  }
+}
