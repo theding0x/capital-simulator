@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/theding0x/capital-simulator/services/commodity-service/internal/commodity"
@@ -196,18 +197,6 @@ func isDuplicate(err error) bool {
 	if err == nil {
 		return false
 	}
-	return containsAny(err.Error(), "1062", "Duplicate entry")
-}
-
-func containsAny(s string, subs ...string) bool {
-	for _, sub := range subs {
-		if len(s) >= len(sub) {
-			for i := 0; i <= len(s)-len(sub); i++ {
-				if s[i:i+len(sub)] == sub {
-					return true
-				}
-			}
-		}
-	}
-	return false
+	s := err.Error()
+	return strings.Contains(s, "1062") || strings.Contains(s, "Duplicate entry")
 }
