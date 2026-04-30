@@ -151,3 +151,68 @@ export interface UpdateCommodityInput {
   concrete_labour_description?: string;
   snlt_per_unit?: number;
 }
+
+// --- market-service types (Ch. 3: Money) ------------------------------------
+
+export interface CircuitLeg {
+  kind: string;
+  commodity_id: string;
+  money_id: string;
+  owner_id: string;
+  value: number;
+}
+
+export interface Circuit {
+  id: string;
+  sale_leg: CircuitLeg;
+  purchase_leg: CircuitLeg;
+  created_at: string;
+}
+
+export interface Hoard {
+  id: string;
+  owner_id: string;
+  amount: number;
+  created_at: string;
+}
+
+export interface PaymentObligation {
+  id: string;
+  creditor_id: string;
+  debtor_id: string;
+  amount: number;
+  created_at: string;
+  due_at: string;
+  paid_at?: string;
+}
+
+export interface WorldMoneyTransfer {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  gold_mg: number;
+  created_at: string;
+}
+
+export interface CreateCircuitInput {
+  sale_leg: CircuitLeg;
+  purchase_leg: CircuitLeg;
+}
+
+export interface CreateHoardInput {
+  owner_id: string;
+  amount: number;
+}
+
+export interface CreatePaymentObligationInput {
+  creditor_id: string;
+  debtor_id: string;
+  amount: number;
+  due_at: string;
+}
+
+export interface CreateWorldMoneyTransferInput {
+  sender_id: string;
+  receiver_id: string;
+  gold_mg: number;
+}
