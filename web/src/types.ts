@@ -58,6 +58,84 @@ export interface SocialRelations {
   note: string;
 }
 
+// --- market-service types (Ch. 2: Exchange) ---------------------------------
+
+export interface Owner {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Offer {
+  id: string;
+  owner_id: string;
+  commodity_id: string;
+  quantity: number;
+  seeks_kind: string;
+  seeks_commodity_id?: string;
+  created_at: string;
+}
+
+export interface Exchange {
+  id: string;
+  giver_id: string;
+  receiver_id: string;
+  giver_commodity_id: string;
+  giver_qty: number;
+  receiver_commodity_id: string;
+  receiver_qty: number;
+  realised_value: number; // labour-minutes
+  created_at: string;
+}
+
+export interface UniversalEquivalent {
+  commodity_id: string;
+  set_at: string;
+}
+
+export interface MoneyCommodity {
+  commodity_id: string;
+  created_at: string;
+}
+
+export interface Price {
+  commodity_id: string;
+  money_commodity_id: string;
+  amount: number;
+  updated_at: string;
+}
+
+export interface CreateOwnerInput {
+  name: string;
+}
+
+export interface CreateOfferInput {
+  owner_id: string;
+  commodity_id: string;
+  quantity: number;
+  seeks_kind: string;
+  seeks_commodity_id?: string;
+}
+
+export interface CreateExchangeInput {
+  giver_id: string;
+  receiver_id: string;
+  giver_commodity_id: string;
+  giver_qty: number;
+  receiver_commodity_id: string;
+  receiver_qty: number;
+  realised_value: number;
+}
+
+export interface ComputePriceInput {
+  commodity_id: string;
+  money_commodity_id: string;
+  commodity_snlt: number;
+  money_snlt: number;
+  unit_qty: number;
+}
+
 export interface CreateCommodityInput {
   name: string;
   use_value: UseValue;
