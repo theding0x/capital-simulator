@@ -103,10 +103,10 @@ const (
 // We must, therefore, have recourse to their guardians, who are also their
 // owners." (Ch. 2)
 type Owner struct {
-	ID        OwnerID   `json:"id" bson:"_id"`
-	Name      string    `json:"name" bson:"name"`
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	ID        OwnerID   `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Validate checks that o is well-formed.
@@ -121,13 +121,13 @@ func (o Owner) Validate() error {
 // SeeksCommodityID is optional; when set, it names the specific commodity
 // the owner wants in return.
 type Offer struct {
-	ID               OfferID     `json:"id" bson:"_id"`
-	OwnerID          OwnerID     `json:"owner_id" bson:"owner_id"`
-	CommodityID      CommodityID `json:"commodity_id" bson:"commodity_id"`
-	Quantity         float64     `json:"quantity" bson:"quantity"`
-	SeeksKind        string      `json:"seeks_kind" bson:"seeks_kind"`
-	SeeksCommodityID CommodityID `json:"seeks_commodity_id,omitempty" bson:"seeks_commodity_id,omitempty"`
-	CreatedAt        time.Time   `json:"created_at" bson:"created_at"`
+	ID               OfferID     `json:"id"`
+	OwnerID          OwnerID     `json:"owner_id"`
+	CommodityID      CommodityID `json:"commodity_id"`
+	Quantity         float64     `json:"quantity"`
+	SeeksKind        string      `json:"seeks_kind"`
+	SeeksCommodityID CommodityID `json:"seeks_commodity_id,omitempty"`
+	CreatedAt        time.Time   `json:"created_at"`
 }
 
 // Validate checks that o is well-formed. An owner cannot seek the same
@@ -152,10 +152,10 @@ func (o Offer) Validate() error {
 // BarterRatio captures the direct proportion: x use-value A = y use-value B.
 // "The form of direct barter is x use-value A = y use-value B." (Ch. 2)
 type BarterRatio struct {
-	CommodityA CommodityID `json:"commodity_a" bson:"commodity_a"`
-	QtyA       float64     `json:"qty_a" bson:"qty_a"`
-	CommodityB CommodityID `json:"commodity_b" bson:"commodity_b"`
-	QtyB       float64     `json:"qty_b" bson:"qty_b"`
+	CommodityA CommodityID `json:"commodity_a"`
+	QtyA       float64     `json:"qty_a"`
+	CommodityB CommodityID `json:"commodity_b"`
+	QtyB       float64     `json:"qty_b"`
 }
 
 // Validate checks structural integrity of the ratio.
@@ -176,15 +176,15 @@ func (r BarterRatio) Validate() error {
 // "All commodities are non-use-values for their owners, and use-values for
 // their non-owners. Consequently, they must all change hands." (Ch. 2)
 type Exchange struct {
-	ID                  ExchangeID    `json:"id" bson:"_id"`
-	GiverID             OwnerID       `json:"giver_id" bson:"giver_id"`
-	ReceiverID          OwnerID       `json:"receiver_id" bson:"receiver_id"`
-	GiverCommodityID    CommodityID   `json:"giver_commodity_id" bson:"giver_commodity_id"`
-	GiverQty            float64       `json:"giver_qty" bson:"giver_qty"`
-	ReceiverCommodityID CommodityID   `json:"receiver_commodity_id" bson:"receiver_commodity_id"`
-	ReceiverQty         float64       `json:"receiver_qty" bson:"receiver_qty"`
-	RealisedValue       RealisedValue `json:"realised_value" bson:"realised_value"`
-	CreatedAt           time.Time     `json:"created_at" bson:"created_at"`
+	ID                  ExchangeID    `json:"id"`
+	GiverID             OwnerID       `json:"giver_id"`
+	ReceiverID          OwnerID       `json:"receiver_id"`
+	GiverCommodityID    CommodityID   `json:"giver_commodity_id"`
+	GiverQty            float64       `json:"giver_qty"`
+	ReceiverCommodityID CommodityID   `json:"receiver_commodity_id"`
+	ReceiverQty         float64       `json:"receiver_qty"`
+	RealisedValue       RealisedValue `json:"realised_value"`
+	CreatedAt           time.Time     `json:"created_at"`
 }
 
 // Validate checks the exchange is structurally sound. It enforces that giver
@@ -213,11 +213,11 @@ func (e Exchange) Validate() error {
 // CircuitLeg is one step in the C-M-C circuit: either a sale (C → M) or a
 // purchase (M → C).
 type CircuitLeg struct {
-	Kind        LegKind       `json:"kind" bson:"kind"`
-	CommodityID CommodityID   `json:"commodity_id" bson:"commodity_id"`
-	MoneyID     CommodityID   `json:"money_id" bson:"money_id"`
-	OwnerID     OwnerID       `json:"owner_id" bson:"owner_id"`
-	Value       RealisedValue `json:"value" bson:"value"`
+	Kind        LegKind       `json:"kind"`
+	CommodityID CommodityID   `json:"commodity_id"`
+	MoneyID     CommodityID   `json:"money_id"`
+	OwnerID     OwnerID       `json:"owner_id"`
+	Value       RealisedValue `json:"value"`
 }
 
 // UniversalEquivalent is the commodity set apart by social act to serve as the
@@ -225,23 +225,23 @@ type CircuitLeg struct {
 // "The social action therefore of all other commodities, sets apart the
 // particular commodity in which they all represent their values." (Ch. 2)
 type UniversalEquivalent struct {
-	CommodityID CommodityID `json:"commodity_id" bson:"commodity_id"`
-	SetAt       time.Time   `json:"set_at" bson:"set_at"`
+	CommodityID CommodityID `json:"commodity_id"`
+	SetAt       time.Time   `json:"set_at"`
 }
 
 // MoneyCommodity is the universal equivalent once crystallised into the money-form.
 // "Money is a crystal formed of necessity in the course of the exchanges." (Ch. 2)
 type MoneyCommodity struct {
-	CommodityID CommodityID `json:"commodity_id" bson:"commodity_id"`
-	CreatedAt   time.Time   `json:"created_at" bson:"created_at"`
+	CommodityID CommodityID `json:"commodity_id"`
+	CreatedAt   time.Time   `json:"created_at"`
 }
 
 // Price is the value of a commodity expressed as a quantity of the money-commodity.
 type Price struct {
-	CommodityID      CommodityID `json:"commodity_id" bson:"commodity_id"`
-	MoneyCommodityID CommodityID `json:"money_commodity_id" bson:"money_commodity_id"`
-	Amount           PriceAmount `json:"amount" bson:"amount"`
-	UpdatedAt        time.Time   `json:"updated_at" bson:"updated_at"`
+	CommodityID      CommodityID `json:"commodity_id"`
+	MoneyCommodityID CommodityID `json:"money_commodity_id"`
+	Amount           PriceAmount `json:"amount"`
+	UpdatedAt        time.Time   `json:"updated_at"`
 }
 
 // ComputePrice computes the price of one unit of a commodity expressed in

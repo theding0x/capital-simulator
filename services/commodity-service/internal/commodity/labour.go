@@ -42,10 +42,10 @@ func (lm LabourMinutes) String() string {
 type ConcreteLabour struct {
 	// Kind is a short identifier for the type of useful labour
 	// (e.g. "weaving", "tailoring", "smelting", "agriculture").
-	Kind string `json:"kind" bson:"kind"`
+	Kind string `json:"kind"`
 
 	// Description is a human-readable explanation of the labour process.
-	Description string `json:"description,omitempty" bson:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 // Validate ensures the concrete-labour record carries at least a kind.
