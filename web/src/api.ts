@@ -1,20 +1,28 @@
 import type {
+  Circuit,
   Commodity,
   ComputePriceInput,
+  CreateCircuitInput,
   CreateCommodityInput,
   CreateExchangeInput,
+  CreateHoardInput,
   CreateOfferInput,
   CreateOwnerInput,
+  CreatePaymentObligationInput,
+  CreateWorldMoneyTransferInput,
   Exchange,
   ExchangeRatio,
+  Hoard,
   MoneyCommodity,
   Offer,
   Owner,
+  PaymentObligation,
   Price,
   SocialRelations,
   UniversalEquivalent,
   UpdateCommodityInput,
   ValueResponse,
+  WorldMoneyTransfer,
 } from "./types";
 
 const BASE = "/api";
@@ -127,4 +135,44 @@ export const api = {
 
   computePrice: (input: ComputePriceInput) =>
     http<Price>("/v1/prices", { method: "POST", body: JSON.stringify(input) }),
+
+  // --- market-service (Ch. 3: Money) ---
+
+  getMoneyRequired: (sumOfPrices: number, velocity: number) =>
+    http<{ money_required: number }>(
+      `/v1/circulation/money-required?sum_of_prices=${sumOfPrices}&velocity=${velocity}`
+    ),
+
+  listCircuits: () =>
+    http<{ items: Circuit[] }>("/v1/circuits").then((r) => r.items),
+
+  createCircuit: (input: CreateCircuitInput) =>
+    http<Circuit>("/v1/circuits", { method: "POST", body: JSON.stringify(input) }),
+
+  listHoards: () =>
+    http<{ items: Hoard[] }>("/v1/hoards").then((r) => r.items),
+
+  createHoard: (input: CreateHoardInput) =>
+    http<Hoard>("/v1/hoards", { method: "POST", body: JSON.stringify(input) }),
+
+  listPaymentObligations: () =>
+    http<{ items: PaymentObligation[] }>("/v1/payment-obligations").then((r) => r.items),
+
+  createPaymentObligation: (input: CreatePaymentObligationInput) =>
+    http<PaymentObligation>("/v1/payment-obligations", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  settlePaymentObligation: (id: string) =>
+    http<PaymentObligation>(`/v1/payment-obligations/${id}/settle`, { method: "POST" }),
+
+  listWorldMoneyTransfers: () =>
+    http<{ items: WorldMoneyTransfer[] }>("/v1/world-money-transfers").then((r) => r.items),
+
+  createWorldMoneyTransfer: (input: CreateWorldMoneyTransferInput) =>
+    http<WorldMoneyTransfer>("/v1/world-money-transfers", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

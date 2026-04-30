@@ -54,3 +54,9 @@ kubeconfig
 # Logs
 logs/
 *.log
+
+# Git worktrees
+.worktrees/
+
+# Superpowers brainstorm artefacts
+.superpowers/
