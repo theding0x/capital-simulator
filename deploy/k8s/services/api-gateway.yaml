@@ -41,8 +41,6 @@ spec:
               value: info
             - name: COMMODITY_SERVICE_URL
               value: http://commodity-service
-            - name: MONGO_URI
-              value: mongodb://mongo:27017
             - name: REDIS_ADDR
               value: redis:6379
           readinessProbe:
