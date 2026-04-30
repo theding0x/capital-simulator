@@ -39,6 +39,8 @@ spec:
               value: ":8080"
             - name: LOG_LEVEL
               value: info
+            - name: COMMODITY_SERVICE_URL
+              value: http://commodity-service
             - name: MONGO_URI
               value: mongodb://mongo:27017
             - name: REDIS_ADDR
