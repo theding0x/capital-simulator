@@ -9,13 +9,13 @@ Microservice simulation of an economy modeled chapter-by-chapter on Marx's
 
 ## Stack (fixed; do not propose alternatives)
 
-Go 1.22 monorepo · React 18 + Vite + TS · MongoDB · Redis · Docker · k8s
+Go 1.22 monorepo · React 18 + Vite + TS · MySQL 8 · Redis · Docker · k8s
 (kustomize) · GitHub. Module path: `github.com/theding0x/capital-simulator`.
 
 ## Layout
 
 ```
-pkg/{log,httpx,mongo,redis}/    shared Go libs
+pkg/{log,httpx,mysql,redis}/    shared Go libs
 services/<svc>/cmd/<svc>/       main.go (one per service)
 services/<svc>/internal/        domain, store, transport
 services/<svc>/Dockerfile       multi-stage, distroless, build context = repo root
@@ -39,12 +39,12 @@ docs/architecture.md            authoritative topology + chapter status
 
 - **Go imports**: stdlib group, blank line, third-party, blank line, local.
 - **HTTP**: pkg/httpx.Server. Routes use Go 1.22 mux syntax (`POST /v1/...`).
-- **Persistence**: every domain service gets `internal/store/{store.go,memory.go,mongo.go}`. Store interface, Memory for tests, Mongo for prod.
+- **Persistence**: every domain service gets `internal/store/{store.go,memory.go,mysql.go}`. Store interface, Memory for tests, MySQL for prod.
 - **Errors**: sentinel `ErrNotFound`/`ErrAlreadyExists` in store; HTTP layer maps via `errors.Is`.
 - **Time/labour**: `LabourMinutes int64` is the canonical value-magnitude unit.
 - **IDs**: `commodity.NewID()` style — 96-bit hex from crypto/rand. No google/uuid.
 - **Tests**: `t.Parallel()` by default. Use Marx's textual examples as test fixtures (20 yards linen = 1 coat, etc.).
-- **Naming**: bson tags use `snake_case`; JSON tags too. Match the wire format the React types expect.
+- **Naming**: JSON tags use `snake_case`. Match the wire format the React types expect.
 - **Web**: no router yet. One `App.tsx` composes feature panels. Shared `types.ts` mirrors Go structs.
 
 ## Commands
@@ -94,16 +94,16 @@ cd web && npm run build     # vite production build
 - Store contract: `services/commodity-service/internal/store/store.go`
 - HTTP routes: `services/<svc>/internal/transport/httpapi/routes.go`
 - Gateway proxy targets: `services/api-gateway/cmd/api-gateway/main.go`
-- Env config patterns: `pkg/mongo/client.go` (`ConfigFromEnv`)
+- Env config patterns: `pkg/mysql/client.go` (`ConfigFromEnv`)
 - React API client: `web/src/api.ts`
 - Wire types: `web/src/types.ts` (mirror of Go structs — keep in sync)
 
 ## Anti-patterns (do not propose)
 
 - Per-service `go.mod` / Go workspaces. Single module is intentional.
-- An ORM. Use the official Mongo driver directly via the Store interface.
+- An ORM. Use `database/sql` with `github.com/go-sql-driver/mysql` directly via the Store interface.
 - A web router (react-router). One App.tsx until a chapter forces it.
-- Inline SQL/migrations. MongoDB-only.
+- Inline schema migrations. `NewMySQL` runs `CREATE TABLE IF NOT EXISTS` on startup; no migration framework.
 - HTTPS termination in services. The cluster handles that.
 - `interface{}`/`any` in domain types. Use concrete types and named ID/value types.
 

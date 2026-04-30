@@ -3,18 +3,21 @@
 name: capital-simulator
 
 services:
-  mongo:
-    image: mongo:7
+  mysql:
+    image: mysql:8
     restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: capital
     ports:
-      - "27017:27017"
+      - "3306:3306"
     volumes:
-      - mongo_data:/data/db
+      - mysql_data:/var/lib/mysql
+      - ./deploy/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pcapital"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -37,13 +40,10 @@ services:
       LOG_LEVEL: info
       SERVICE_ADDR: ":8080"
       COMMODITY_SERVICE_URL: http://commodity-service:8081
-      MONGO_URI: mongodb://mongo:27017
       REDIS_ADDR: redis:6379
     ports:
       - "8080:8080"
     depends_on:
-      mongo:
-        condition: service_healthy
       redis:
         condition: service_healthy
       commodity-service:
@@ -56,13 +56,12 @@ services:
     environment:
       LOG_LEVEL: info
       SERVICE_ADDR: ":8081"
-      MONGO_URI: mongodb://mongo:27017
-      MONGO_DATABASE: commodity
+      MYSQL_DSN: "root:capital@tcp(mysql:3306)/commodity?parseTime=true&loc=UTC"
       REDIS_ADDR: redis:6379
     ports:
       - "8081:8081"
     depends_on:
-      mongo:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -74,13 +73,12 @@ services:
     environment:
       LOG_LEVEL: info
       SERVICE_ADDR: ":8082"
-      MONGO_URI: mongodb://mongo:27017
-      MONGO_DATABASE: agent
+      MYSQL_DSN: "root:capital@tcp(mysql:3306)/agent?parseTime=true&loc=UTC"
       REDIS_ADDR: redis:6379
     ports:
       - "8082:8082"
     depends_on:
-      mongo:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -92,13 +90,12 @@ services:
     environment:
       LOG_LEVEL: info
       SERVICE_ADDR: ":8083"
-      MONGO_URI: mongodb://mongo:27017
-      MONGO_DATABASE: market
+      MYSQL_DSN: "root:capital@tcp(mysql:3306)/market?parseTime=true&loc=UTC"
       REDIS_ADDR: redis:6379
     ports:
       - "8083:8083"
     depends_on:
-      mongo:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -110,13 +107,12 @@ services:
     environment:
       LOG_LEVEL: info
       SERVICE_ADDR: ":8084"
-      MONGO_URI: mongodb://mongo:27017
-      MONGO_DATABASE: simulation
+      MYSQL_DSN: "root:capital@tcp(mysql:3306)/simulation?parseTime=true&loc=UTC"
       REDIS_ADDR: redis:6379
     ports:
       - "8084:8084"
     depends_on:
-      mongo:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -130,5 +126,5 @@ services:
       - api-gateway
 
 volumes:
-  mongo_data:
+  mysql_data:
   redis_data:

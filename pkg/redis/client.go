@@ -1,4 +1,4 @@
-// Package redis is the scaffolding equivalent of pkg/mongo: it centralizes how
+// Package redis is the scaffolding equivalent of pkg/mysql: it centralizes how
 // services read Redis connection settings from env. The actual go-redis client
 // will be wired in once a chapter introduces caching needs.
 package redis
