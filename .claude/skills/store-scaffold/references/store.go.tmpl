@@ -1,0 +1,52 @@
+// Package store defines the persistence boundary for <<svc>>.
+// The Store interface is the only seam between the HTTP/domain layer and
+// the underlying database (MongoDB in production, in-memory in tests).
+package store
+
+import (
+	"context"
+	"errors"
+
+	"github.com/theding0x/capital-simulator/services/<<svc>>/internal/<<pkg>>"
+)
+
+// Sentinel errors that callers can branch on with errors.Is.
+var (
+	ErrNotFound      = errors.New("<<type>>: not found")
+	ErrAlreadyExists = errors.New("<<type>>: already exists")
+)
+
+// Update is a partial-update payload. Non-nil fields are applied; nil
+// fields are left untouched. Modeling it this way keeps PATCH semantics
+// explicit and avoids the "did the caller mean empty or did they mean
+// unchanged?" ambiguity of plain structs.
+type Update struct {
+	// <<UpdateFields>> — one *T field per patchable domain field.
+	// Example:
+	//   Name        *string
+	//   Description *string
+}
+
+// IsEmpty reports whether u carries no field updates.
+func (u Update) IsEmpty() bool {
+	// <<IsEmptyChecks>> — &&-join one check per Update field, e.g.:
+	// return u.Name == nil && u.Description == nil
+	return true
+}
+
+// Apply returns a copy of c with u's non-nil fields written through.
+func (u Update) Apply(c <<pkg>>.<<Type>>) <<pkg>>.<<Type>> {
+	out := c
+	// <<ApplyBlocks>> — one if-block per Update field, e.g.:
+	// if u.Name != nil { out.Name = *u.Name }
+	return out
+}
+
+// Store is the persistence contract for <<Type>> records.
+type Store interface {
+	Create(ctx context.Context, x <<pkg>>.<<Type>>) (<<pkg>>.<<Type>>, error)
+	Get(ctx context.Context, id <<pkg>>.ID) (<<pkg>>.<<Type>>, error)
+	List(ctx context.Context) ([]<<pkg>>.<<Type>>, error)
+	Update(ctx context.Context, id <<pkg>>.ID, u Update) (<<pkg>>.<<Type>>, error)
+	Delete(ctx context.Context, id <<pkg>>.ID) error
+}
