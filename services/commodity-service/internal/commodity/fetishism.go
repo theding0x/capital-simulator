@@ -63,10 +63,11 @@ const fetishismNote = "" +
 // rest of the population.
 func SocialRelationsOf(subject Commodity, population []Commodity) SocialRelations {
 	out := SocialRelations{
-		Subject:        subject,
-		LabourPerUnit:  subject.SNLTPerUnit,
-		ConcreteLabour: subject.ConcreteLabour,
-		Note:           fetishismNote,
+		Subject:         subject,
+		LabourPerUnit:   subject.SNLTPerUnit,
+		ConcreteLabour:  subject.ConcreteLabour,
+		LabourRelations: []LabourRelation{},
+		Note:            fetishismNote,
 	}
 	for _, c := range population {
 		if c.ID == subject.ID || c.SNLTPerUnit <= 0 {
