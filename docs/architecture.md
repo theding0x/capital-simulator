@@ -68,7 +68,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Chapter   | Status      | Concepts                                                 | Primary services              |
 |-----------|-------------|----------------------------------------------------------|-------------------------------|
 | Ch. 1     | ✅ Done     | Commodity, use-value, value, exchange-value, value-forms, fetishism | commodity-service |
-| Ch. 2-3   | Next        | Exchange, money, hoarding, means of payment              | market-service, commodity     |
+| Ch. 2     | ✅ Done     | Exchange, owners, offers, barter ratio, universal equivalent, money-form, prices | market-service |
+| Ch. 3     | Next        | Money: hoarding, means of payment, world money            | market-service                |
 | Ch. 4     | Pending     | Money → capital; the general formula M-C-M'              | agent-service, market         |
 | Ch. 5-7   | Pending     | Labour-process, valorization, surplus-value              | agent-service, simulation-eng |
 | Ch. 8-9   | Pending     | Constant/variable capital, rate of surplus-value         | commodity, simulation-eng     |
@@ -85,3 +86,17 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 - **§4 The fetishism of commodities.** `SocialRelationsOf` and the `/v1/commodities/{id}/social-relations` endpoint surface the labour relations that exchange-value normally hides.
 
 The MongoDB driver is wired up via `pkg/mongo`; the `commodities` collection has a unique case-insensitive index on `name`. The api-gateway reverse-proxies `/v1/commodities/*` and `/v1/exchange-ratio` to commodity-service, and the React dashboard exposes full CRUD plus a "Reveal" toggle that renders the fetishism critique inline.
+
+### Ch. 2 — what was built
+
+`market-service` models the exchange process from Capital Vol. I, Ch. 2:
+
+- **Owners.** `Owner`, `OwnerID`, `NewOwnerID` — the commodity owner as economic subject; "guardians" who bring commodities to market. CRUD endpoints at `/v1/owners`.
+- **Offers.** `Offer`, `OfferID` — a trade intention (owner + commodity + quantity + seeks-kind). Validated so an owner cannot seek the same commodity they offer (`ErrOfferInvalid`). Endpoints: `POST/GET /v1/offers`, `DELETE /v1/offers/{id}`.
+- **Exchanges.** `Exchange`, `ExchangeID`, `RealisedValue` — a completed bilateral transfer. Enforces `ErrSelfExchange`; records the labour-time value confirmed by the act. Endpoints: `POST/GET /v1/exchanges`, `GET /v1/exchanges/{id}`.
+- **BarterRatio.** `BarterRatio` — the direct proportion x use-value A = y use-value B, validated structurally in the domain layer.
+- **Universal equivalent.** `UniversalEquivalent` — the commodity set apart by social act. Idempotent: calling `SetUniversalEquivalent` with the same commodity ID is a no-op. Endpoint: `POST/GET /v1/universal-equivalent`.
+- **Money-commodity.** `MoneyCommodity` — the crystallised universal equivalent. "Money is a crystal formed of necessity in the course of the exchanges." Endpoint: `POST/GET /v1/money-commodity`.
+- **Prices.** `Price`, `PriceAmount`, `ComputePrice` — value expressed as a quantity of the money-commodity. Encodes the Petty law (fn. 12): halving money SNLT doubles the price. Endpoints: `POST /v1/prices`, `GET /v1/prices`, `GET /v1/prices/{commodityID}`.
+
+The api-gateway reverse-proxies all market routes to market-service. The React UI adds a "Ch. 02 — Exchange" section with owner registration, offer board, exchange recorder, universal-equivalent election, money crystallisation, and price computation.

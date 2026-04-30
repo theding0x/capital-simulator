@@ -36,6 +36,24 @@ func main() {
 	srv.Handle("/v1/commodities/{rest...}", commodityProxy)
 	srv.Handle("/v1/exchange-ratio", commodityProxy)
 
+	// Reverse-proxy routes to market-service.
+	marketURL := getenv("MARKET_SERVICE_URL", "http://market-service:8083")
+	marketProxy, err := proxy.New(marketURL, logger)
+	if err != nil {
+		logger.Error("failed to build market proxy", "err", err)
+		os.Exit(1)
+	}
+	srv.Handle("/v1/owners", marketProxy)
+	srv.Handle("/v1/owners/{rest...}", marketProxy)
+	srv.Handle("/v1/offers", marketProxy)
+	srv.Handle("/v1/offers/{rest...}", marketProxy)
+	srv.Handle("/v1/exchanges", marketProxy)
+	srv.Handle("/v1/exchanges/{rest...}", marketProxy)
+	srv.Handle("/v1/universal-equivalent", marketProxy)
+	srv.Handle("/v1/money-commodity", marketProxy)
+	srv.Handle("/v1/prices", marketProxy)
+	srv.Handle("/v1/prices/{rest...}", marketProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -47,15 +65,15 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-1-the-commodity",
-		"description": "External entrypoint. Forwards /v1/commodities/* and /v1/exchange-ratio to commodity-service.",
+		"status":      "ch-2-exchange",
+		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service.",
 		"downstream": []string{
 			"commodity-service",
 			"agent-service",
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 1 - The Commodity",
+		"chapter": "Capital Vol. I, Ch. 2 - Exchange",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)

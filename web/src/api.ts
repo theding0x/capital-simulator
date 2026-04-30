@@ -1,8 +1,18 @@
 import type {
   Commodity,
+  ComputePriceInput,
   CreateCommodityInput,
+  CreateExchangeInput,
+  CreateOfferInput,
+  CreateOwnerInput,
+  Exchange,
   ExchangeRatio,
+  MoneyCommodity,
+  Offer,
+  Owner,
+  Price,
   SocialRelations,
+  UniversalEquivalent,
   UpdateCommodityInput,
   ValueResponse,
 } from "./types";
@@ -70,4 +80,51 @@ export const api = {
 
   socialRelations: (id: string) =>
     http<SocialRelations>(`/v1/commodities/${id}/social-relations`),
+
+  // --- market-service (Ch. 2) ---
+
+  listOwners: () =>
+    http<{ items: Owner[] }>("/v1/owners").then((r) => r.items),
+
+  createOwner: (input: CreateOwnerInput) =>
+    http<Owner>("/v1/owners", { method: "POST", body: JSON.stringify(input) }),
+
+  listOffers: () =>
+    http<{ items: Offer[] }>("/v1/offers").then((r) => r.items),
+
+  createOffer: (input: CreateOfferInput) =>
+    http<Offer>("/v1/offers", { method: "POST", body: JSON.stringify(input) }),
+
+  deleteOffer: (id: string) =>
+    http<void>(`/v1/offers/${id}`, { method: "DELETE" }),
+
+  listExchanges: () =>
+    http<{ items: Exchange[] }>("/v1/exchanges").then((r) => r.items),
+
+  createExchange: (input: CreateExchangeInput) =>
+    http<Exchange>("/v1/exchanges", { method: "POST", body: JSON.stringify(input) }),
+
+  getUniversalEquivalent: () =>
+    http<UniversalEquivalent>("/v1/universal-equivalent"),
+
+  setUniversalEquivalent: (commodityId: string) =>
+    http<UniversalEquivalent>("/v1/universal-equivalent", {
+      method: "POST",
+      body: JSON.stringify({ commodity_id: commodityId }),
+    }),
+
+  getMoneyCommodity: () =>
+    http<MoneyCommodity>("/v1/money-commodity"),
+
+  setMoneyCommodity: (commodityId: string) =>
+    http<MoneyCommodity>("/v1/money-commodity", {
+      method: "POST",
+      body: JSON.stringify({ commodity_id: commodityId }),
+    }),
+
+  listPrices: () =>
+    http<{ items: Price[] }>("/v1/prices").then((r) => r.items),
+
+  computePrice: (input: ComputePriceInput) =>
+    http<Price>("/v1/prices", { method: "POST", body: JSON.stringify(input) }),
 };
