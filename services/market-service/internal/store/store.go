@@ -1,6 +1,6 @@
 // Package store defines the persistence boundary for market-service.
 // The Store interface is the only seam between the HTTP/domain layer and
-// the underlying database (MongoDB in production, in-memory in tests).
+// the underlying database (MySQL in production, in-memory in tests).
 package store
 
 import (

@@ -12,7 +12,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/pkg/httpx"
 	applog "github.com/theding0x/capital-simulator/pkg/log"
-	pmongo "github.com/theding0x/capital-simulator/pkg/mongo"
+	pmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/store"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/transport/httpapi"
 )
@@ -26,16 +26,14 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	st, mongoCli, err := openStore(ctx, logger)
+	st, mysqlDB, err := openStore(ctx, logger)
 	if err != nil {
 		logger.Error("could not open any store", "err", err)
 		os.Exit(1)
 	}
-	if mongoCli != nil {
+	if mysqlDB != nil {
 		defer func() {
-			shutdownCtx, c := context.WithTimeout(context.Background(), 5*time.Second)
-			defer c()
-			_ = mongoCli.Close(shutdownCtx)
+			_ = mysqlDB.Close()
 		}()
 	}
 
@@ -51,31 +49,34 @@ func main() {
 	}
 }
 
-func openStore(ctx context.Context, logger *slog.Logger) (store.Store, *pmongo.Client, error) {
-	if strings.EqualFold(os.Getenv("MONGO_DISABLED"), "true") {
-		logger.Warn("MONGO_DISABLED=true; using in-memory store")
+func openStore(ctx context.Context, logger *slog.Logger) (store.Store, *pmysql.DB, error) {
+	if strings.EqualFold(os.Getenv("MYSQL_DISABLED"), "true") {
+		logger.Warn("MYSQL_DISABLED=true; using in-memory store")
 		return store.NewMemory(), nil, nil
 	}
 
-	cfg := pmongo.ConfigFromEnv(serviceName)
+	cfg := pmysql.ConfigFromEnv(serviceName)
 	dialCtx, cancel := context.WithTimeout(ctx, cfg.ConnectTimeout)
 	defer cancel()
 
-	cli, err := pmongo.Connect(dialCtx, cfg)
+	cli, err := pmysql.Connect(dialCtx, cfg)
 	if err != nil {
 		if strings.EqualFold(os.Getenv("FALLBACK_MEMORY"), "true") {
-			logger.Warn("mongo connect failed; falling back to in-memory store", "err", err)
+			logger.Warn("mysql connect failed; falling back to in-memory store", "err", err)
 			return store.NewMemory(), nil, nil
 		}
 		return nil, nil, err
 	}
 
-	mstore, err := store.NewMongo(ctx, cli.DB)
+	initCtx, initCancel := context.WithTimeout(ctx, 30*time.Second)
+	defer initCancel()
+
+	mstore, err := store.NewMySQL(initCtx, cli.SQL)
 	if err != nil {
-		_ = cli.Close(context.Background())
+		_ = cli.Close()
 		return nil, nil, err
 	}
-	logger.Info("mongo store ready", "uri", cfg.URI, "database", cfg.Database)
+	logger.Info("mysql store ready", "dsn_prefix", cfg.DSN[:min(len(cfg.DSN), 30)])
 	return mstore, cli, nil
 }
 
@@ -85,3 +86,4 @@ func getenv(key, fallback string) string {
 	}
 	return fallback
 }
+

@@ -48,19 +48,19 @@ func (id ID) IsZero() bool { return id == "" }
 // Concrete useful labour produces the use-value; the same labour, considered
 // as homogeneous human labour-power, constitutes the value.
 type Commodity struct {
-	ID             ID             `json:"id" bson:"_id"`
-	Name           string         `json:"name" bson:"name"`
-	UseValue       UseValue       `json:"use_value" bson:"use_value"`
-	ConcreteLabour ConcreteLabour `json:"concrete_labour" bson:"concrete_labour"`
+	ID             ID             `json:"id"`
+	Name           string         `json:"name"`
+	UseValue       UseValue       `json:"use_value"`
+	ConcreteLabour ConcreteLabour `json:"concrete_labour"`
 
 	// SNLTPerUnit is the socially necessary labour-time required to produce
 	// one Unit of this commodity under the conditions of production normal for
 	// the society and with the average degree of skill and intensity of labour
 	// prevalent in it (Capital I, Ch. 1, §1).
-	SNLTPerUnit LabourMinutes `json:"snlt_per_unit" bson:"snlt_per_unit"`
+	SNLTPerUnit LabourMinutes `json:"snlt_per_unit"`
 
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // UseValue captures the qualitative side of a commodity: what want it
@@ -69,12 +69,12 @@ type Commodity struct {
 type UseValue struct {
 	// Description is a free-text explanation of the want this commodity
 	// satisfies (e.g. "linen for clothing").
-	Description string `json:"description" bson:"description"`
+	Description string `json:"description"`
 	// Unit is the socially-recognized standard of measure for quantities
 	// of this commodity (e.g. "yards", "cwt", "qtr"). Diverse measures arise
 	// "partly in the diverse nature of the objects to be measured, partly in
 	// convention" (Capital I, Ch. 1, §1).
-	Unit string `json:"unit" bson:"unit"`
+	Unit string `json:"unit"`
 }
 
 // Validate checks that c is well-formed enough to persist.
