@@ -30,7 +30,7 @@ Capital Simulator is a microservices simulation of an economy as described in Ka
    ┌────────────────┴───────────────┐
    ▼                                ▼
 ┌────────┐                       ┌───────┐
-│ MongoDB │  durable state        │ Redis │  hot caches & tick state
+│ MySQL  │  durable state        │ Redis │  hot caches & tick state
 └────────┘                       └───────┘
 ```
 
@@ -39,16 +39,16 @@ Capital Simulator is a microservices simulation of an economy as described in Ka
 | Service              | Port  | Marxist role                                                            | Persistence       |
 |----------------------|-------|-------------------------------------------------------------------------|-------------------|
 | `api-gateway`        | 8080  | External entrypoint; fans out to domain services.                       | —                 |
-| `commodity-service`  | 8081  | Use-value, exchange-value, value (Ch. 1).                               | MongoDB           |
-| `agent-service`      | 8082  | Workers, capitalists, and other class-bearers (Ch. 4+).                 | MongoDB           |
-| `market-service`     | 8083  | Exchange and circulation; C-M-C and M-C-M' (Ch. 2-3).                   | MongoDB + Redis   |
-| `simulation-engine`  | 8084  | Time-step orchestrator; advances the economy one period at a time.      | MongoDB + Redis   |
+| `commodity-service`  | 8081  | Use-value, exchange-value, value (Ch. 1).                               | MySQL             |
+| `agent-service`      | 8082  | Workers, capitalists, and other class-bearers (Ch. 4+).                 | MySQL             |
+| `market-service`     | 8083  | Exchange and circulation; C-M-C and M-C-M' (Ch. 2-3).                   | MySQL + Redis     |
+| `simulation-engine`  | 8084  | Time-step orchestrator; advances the economy one period at a time.      | MySQL + Redis     |
 
 All Go services share a single root `go.mod` (`github.com/theding0x/capital-simulator`). Cross-cutting concerns live under `pkg/`:
 
 - `pkg/log` — structured logging via `log/slog`.
 - `pkg/httpx` — HTTP server scaffolding with `/healthz`, `/readyz`, and graceful shutdown.
-- `pkg/mongo` — MongoDB driver + connection config. **Live as of Ch. 1.**
+- `pkg/mysql` — MySQL driver + connection config. **Live as of Ch. 1 (refactored from MongoDB).**
 - `pkg/redis` — Redis connection config (driver wired in by a later chapter).
 
 ## Data flow per simulation tick (target shape)
@@ -56,7 +56,7 @@ All Go services share a single root `go.mod` (`github.com/theding0x/capital-simu
 1. `simulation-engine` advances the clock and tells `agent-service` to act.
 2. Agents form intentions to produce / sell / buy and notify `commodity-service` and `market-service`.
 3. `market-service` matches trades and updates prices.
-4. State changes are persisted to MongoDB; hot tick state is cached in Redis.
+4. State changes are persisted to MySQL; hot tick state is cached in Redis.
 5. `api-gateway` exposes a read view of the world to the React UI.
 
 This is the *target*; the initial scaffold ships health endpoints only.
@@ -85,7 +85,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 - **§3 The form of value.** `SimpleFormOf`, `ExpandedFormOf`, `GeneralFormOf`, `MoneyFormOf` — each derivable as a view over a population of commodities, with a chosen money-commodity for the money-form.
 - **§4 The fetishism of commodities.** `SocialRelationsOf` and the `/v1/commodities/{id}/social-relations` endpoint surface the labour relations that exchange-value normally hides.
 
-The MongoDB driver is wired up via `pkg/mongo`; the `commodities` collection has a unique case-insensitive index on `name`. The api-gateway reverse-proxies `/v1/commodities/*` and `/v1/exchange-ratio` to commodity-service, and the React dashboard exposes full CRUD plus a "Reveal" toggle that renders the fetishism critique inline.
+MySQL is wired up via `pkg/mysql`; the `commodities` table has a unique case-insensitive index on `name` via `utf8mb4_unicode_ci` collation. The api-gateway reverse-proxies `/v1/commodities/*` and `/v1/exchange-ratio` to commodity-service, and the React dashboard exposes full CRUD plus a "Reveal" toggle that renders the fetishism critique inline.
 
 ### Ch. 2 — what was built
 
