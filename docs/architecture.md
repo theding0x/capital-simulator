@@ -48,7 +48,7 @@ All Go services share a single root `go.mod` (`github.com/theding0x/capital-simu
 
 - `pkg/log` — structured logging via `log/slog`.
 - `pkg/httpx` — HTTP server scaffolding with `/healthz`, `/readyz`, and graceful shutdown.
-- `pkg/mysql` — MySQL driver + connection config. **Live as of Ch. 1 (refactored from MongoDB).**
+- `pkg/mysql` — MySQL driver, connection config, and `Migrate` helper (goose v3). **Live as of Ch. 1 (refactored from MongoDB); migrations added Ch. 3.**
 - `pkg/redis` — Redis connection config (driver wired in by a later chapter).
 
 ## Data flow per simulation tick (target shape)
