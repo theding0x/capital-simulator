@@ -3,26 +3,18 @@ package store
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"errors"
+	"io/fs"
 	"strings"
 	"time"
 
+	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/commodity-service/internal/commodity"
 )
 
-const createCommoditiesTable = `
-CREATE TABLE IF NOT EXISTS commodities (
-    id               VARCHAR(24)  NOT NULL PRIMARY KEY,
-    name             VARCHAR(255) NOT NULL,
-    use_value_desc   TEXT         NOT NULL,
-    use_value_unit   VARCHAR(100) NOT NULL,
-    cl_kind          VARCHAR(100) NOT NULL DEFAULT '',
-    cl_description   TEXT         NOT NULL DEFAULT '',
-    snlt_per_unit    BIGINT       NOT NULL DEFAULT 0,
-    created_at       DATETIME(6)  NOT NULL,
-    updated_at       DATETIME(6)  NOT NULL,
-    UNIQUE KEY uq_name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
+//go:embed migrations
+var migrationsFS embed.FS
 
 // MySQL is a MySQL-backed Store. Construct via NewMySQL.
 type MySQL struct {
@@ -30,9 +22,13 @@ type MySQL struct {
 	now func() time.Time
 }
 
-// NewMySQL returns a Store backed by db and ensures the commodities table exists.
+// NewMySQL returns a Store backed by db and runs any pending migrations.
 func NewMySQL(ctx context.Context, db *sql.DB) (*MySQL, error) {
-	if _, err := db.ExecContext(ctx, createCommoditiesTable); err != nil {
+	sub, err := fs.Sub(migrationsFS, "migrations")
+	if err != nil {
+		return nil, err
+	}
+	if err := pkgmysql.Migrate(ctx, db, sub); err != nil {
 		return nil, err
 	}
 	return &MySQL{db: db, now: time.Now}, nil
