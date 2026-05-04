@@ -63,6 +63,8 @@ func main() {
 	}
 	srv.Handle("/v1/agents", agentProxy)
 	srv.Handle("/v1/agents/{rest...}", agentProxy)
+	srv.Handle("/v1/circuits", agentProxy)
+	srv.Handle("/v1/exchange-simulations", agentProxy)
 
 	srv.MarkReady(true)
 
@@ -75,8 +77,8 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-4-capital",
-		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service.",
+		"status":      "ch-5-contradictions",
+		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
 		"downstream": []string{
 			"commodity-service",
 			"agent-service",
