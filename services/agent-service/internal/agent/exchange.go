@@ -1,13 +1,5 @@
 package agent
 
-// Role identifies a party's position in a bilateral exchange.
-type Role string
-
-const (
-	RoleSeller Role = "seller"
-	RoleBuyer  Role = "buyer"
-)
-
 // ExchangeResult records the outcome of a bilateral exchange between parties A
 // and B. The invariant TotalBefore() == TotalAfter() must always hold.
 type ExchangeResult struct {
