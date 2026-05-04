@@ -1,6 +1,6 @@
 ---
 name: chapter-spec
-description: Generate a chapters/NN-<slug>.spec.md file from a chapter HTML — strips the raw Marx text to clean prose, then spawns a dedicated subagent to analyze concepts, extract test fixtures, derive invariants, and map scope to Go types and HTTP routes. Use this whenever the user asks to generate a chapter spec, convert a chapter HTML, "prep" a chapter for implementation, or says something like "create the spec for chapter N". Works both retrospectively (chapter already implemented — maps existing types) and prospectively (chapter not yet implemented — proposes what to build).
+description: Generate a chapters/volume-1/NN-<slug>.spec.md file from a chapter HTML — strips the raw Marx text to clean prose, then spawns a dedicated subagent to analyze concepts, extract test fixtures, derive invariants, and map scope to Go types and HTTP routes. Use this whenever the user asks to generate a chapter spec, convert a chapter HTML, "prep" a chapter for implementation, or says something like "create the spec for chapter N". Works both retrospectively (chapter already implemented — maps existing types) and prospectively (chapter not yet implemented — proposes what to build).
 ---
 
 # chapter-spec
@@ -17,9 +17,9 @@ delegates to a subagent.
 Before starting, confirm:
 
 1. **Chapter number and slug.** Infer from the branch name
-   (`chapter-NN-<slug>`) or the chapters/ directory listing. If ambiguous,
+   (`chapter-NN-<slug>`) or the chapters/volume-1/ directory listing. If ambiguous,
    ask once.
-2. **HTML path.** `chapters/NN-<slug>.html`. Must exist.
+2. **HTML path.** `chapters/volume-1/NN-<slug>.html`. Must exist.
 3. **Implementation status.** Is the chapter already implemented (types
    exist in `services/*/internal/`)? If yes, the spec will map them. If
    no, the spec will propose them. Ask if not obvious from context.
@@ -31,7 +31,7 @@ Before starting, confirm:
 Run the strip script to convert the chapter HTML to clean prose:
 
 ```bash
-python3 scripts/strip_chapter_html.py chapters/NN-<slug>.html
+python3 scripts/strip_chapter_html.py chapters/volume-1/NN-<slug>.html
 ```
 
 Capture the output. It will be 15–30KB — small enough to pass to a
@@ -66,7 +66,7 @@ Vol. I, implemented chapter by chapter.
 
 ## Your task
 
-Produce a `chapters/NN-<slug>.spec.md` file in exactly the format
+Produce a `chapters/volume-1/NN-<slug>.spec.md` file in exactly the format
 shown in the ## Output format section below. Do not add prose outside
 that format. Return only the markdown content of the spec file.
 
@@ -149,7 +149,7 @@ End of subagent prompt template.
 ### 4. Write the spec file
 
 Take the subagent's output and write it to
-`chapters/NN-<slug>.spec.md`.
+`chapters/volume-1/NN-<slug>.spec.md`.
 
 Verify it:
 - Has frontmatter (chapter, title, status, primary_service)
