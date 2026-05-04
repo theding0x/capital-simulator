@@ -222,8 +222,9 @@ export interface CreateWorldMoneyTransferInput {
 export interface Agent {
   id: string;
   name: string;
-  class: "capitalist" | "worker" | "miser";
+  class: "capitalist" | "worker" | "miser" | "owner";
   money_balance: number; // Pence (pennies); divide by 100 for £
+  labour_minutes: number;
   hoarding: boolean;
   created_at: string;
   updated_at: string;
@@ -242,13 +243,15 @@ export interface CapitalCircuit {
 
 export interface CreateAgentInput {
   name: string;
-  class: "capitalist" | "worker" | "miser";
+  class: "capitalist" | "worker" | "miser" | "owner";
   money_balance: number;
+  labour_minutes?: number;
 }
 
 export interface UpdateAgentInput {
   name?: string;
   money_balance?: number;
+  labour_minutes?: number;
 }
 
 export interface CreateAgentCircuitInput {
@@ -256,4 +259,33 @@ export interface CreateAgentCircuitInput {
   commodity_id: string;
   m_returned: number;
   circuit_type: "C-M-C" | "M-C-M-prime";
+}
+
+// --- agent-service types (Ch. 5: Contradictions in the General Formula) ----
+
+export interface CircuitProof {
+  m: number; // Pence
+  commodity_id?: string;
+  m_prime: number; // Pence
+  surplus_value: number; // Pence
+  origin: "equivalent" | "redistribution";
+}
+
+export interface ExchangeSimulation {
+  a_before: number; // Pence
+  b_before: number;
+  a_after: number;
+  b_after: number;
+  origin: "equivalent" | "redistribution";
+}
+
+export interface ComputeCircuitInput {
+  m: number;
+  commodity_id?: string;
+  m_prime: number;
+}
+
+export interface SimulateExchangeInput {
+  a_value: number;
+  b_value: number;
 }

@@ -31,6 +31,7 @@ export function Ch04Capital({ onSharedChanged: _onSharedChanged }: Ch04Props) {
   const capitalists = agents.filter((a) => a.class === "capitalist");
   const workers = agents.filter((a) => a.class === "worker");
   const misers = agents.filter((a) => a.class === "miser");
+  const owners = agents.filter((a) => a.class === "owner");
 
   return (
     <>
@@ -39,13 +40,14 @@ export function Ch04Capital({ onSharedChanged: _onSharedChanged }: Ch04Props) {
       <AgentClassSection title="Capitalists" agents={capitalists} onChanged={refreshAgents} />
       <AgentClassSection title="Workers" agents={workers} onChanged={refreshAgents} />
       <AgentClassSection title="Misers" agents={misers} onChanged={refreshAgents} />
+      <AgentClassSection title="Owners" agents={owners} onChanged={refreshAgents} />
     </>
   );
 }
 
 function CreateAgentPanel({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState("");
-  const [cls, setCls] = useState<"capitalist" | "worker" | "miser">("capitalist");
+  const [cls, setCls] = useState<"capitalist" | "worker" | "miser" | "owner">("capitalist");
   const [balance, setBalance] = useState(10000);
   const [err, setErr] = useState<string | null>(null);
 
@@ -75,6 +77,7 @@ function CreateAgentPanel({ onCreated }: { onCreated: () => void }) {
             <option value="capitalist">Capitalist</option>
             <option value="worker">Worker</option>
             <option value="miser">Miser</option>
+            <option value="owner">Owner</option>
           </select>
         </label>
         <label>
@@ -218,14 +221,14 @@ function CreateCircuitForm({
   onCreated,
 }: {
   agentId: string;
-  agentClass: "capitalist" | "worker" | "miser";
+  agentClass: "capitalist" | "worker" | "miser" | "owner";
   onCreated: () => void;
 }) {
   const [commodityId, setCommodityId] = useState("");
   const [mAdvanced, setMAdvanced] = useState(10000);
   const [mReturned, setMReturned] = useState(11000);
   const [circuitType, setCircuitType] = useState<"C-M-C" | "M-C-M-prime">(
-    agentClass === "worker" ? "C-M-C" : "M-C-M-prime"
+    agentClass === "worker" || agentClass === "owner" ? "C-M-C" : "M-C-M-prime"
   );
   const [err, setErr] = useState<string | null>(null);
 
@@ -269,7 +272,7 @@ function CreateCircuitForm({
           min={0}
         />
       </label>
-      {agentClass !== "worker" && (
+      {agentClass !== "worker" && agentClass !== "owner" && (
         <label>
           Circuit type
           <select
