@@ -251,6 +251,7 @@ export interface CreateAgentInput {
 export interface UpdateAgentInput {
   name?: string;
   money_balance?: number;
+  labour_minutes?: number;
 }
 
 export interface CreateAgentCircuitInput {

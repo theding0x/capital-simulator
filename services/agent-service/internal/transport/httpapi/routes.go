@@ -12,6 +12,6 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/agents/{id}/circuits", h.ListCircuits)
 	s.HandleFunc("POST /v1/agents/{id}/reinvest", h.Reinvest)
 	s.HandleFunc("POST /v1/agents/{id}/hoard", h.Hoard)
-	s.HandleFunc("POST /v1/circuits", h.ComputeCircuit)
+	s.HandleFunc("POST /v1/circuit-probes", h.ComputeCircuit)
 	s.HandleFunc("POST /v1/exchange-simulations", h.ComputeExchange)
 }

@@ -63,7 +63,7 @@ func main() {
 	}
 	srv.Handle("/v1/agents", agentProxy)
 	srv.Handle("/v1/agents/{rest...}", agentProxy)
-	srv.Handle("/v1/circuits", agentProxy)
+	srv.Handle("/v1/circuit-probes", agentProxy)
 	srv.Handle("/v1/exchange-simulations", agentProxy)
 
 	srv.MarkReady(true)
@@ -85,7 +85,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 4 - The General Formula for Capital",
+		"chapter": "Capital Vol. I, Ch. 5 - Contradictions in the General Formula",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
