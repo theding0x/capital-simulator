@@ -1,0 +1,46 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>
+.grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.acc { padding: 14px; background: var(--surface); border: 1px solid var(--border-subtle); border-radius: 4px; }
+.acc .top { display: flex; gap: 8px; margin-bottom: 10px; }
+.acc .chip { width: 38px; height: 38px; border-radius: 4px; }
+.acc .small-chip { width: 22px; height: 38px; border-radius: 4px; }
+.acc .label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.16em; text-transform: uppercase; }
+.acc .role { font-family: var(--font-sans); font-style: italic; font-size: 0.8rem; color: var(--ink-muted); margin-top: 4px; }
+.acc .vals { margin-top: 10px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--ink-muted); line-height: 1.7; }
+.acc .vals span { color: var(--ink); }
+</style></head><body><div class="card-frame">
+<div class="grid">
+  <div class="acc">
+    <div class="top">
+      <div class="chip" style="background:#4a5a8a"></div>
+      <div class="small-chip" style="background:#5a6a9e"></div>
+      <div class="small-chip" style="background:rgba(74,90,138,0.14)"></div>
+    </div>
+    <div class="label" style="color:#5a6a9e">lead</div>
+    <div class="role">primary action — slate-blue</div>
+    <div class="vals"><span>#4a5a8a</span> base<br><span>#5a6a9e</span> hover<br><span>14% α</span> dim fill</div>
+  </div>
+  <div class="acc">
+    <div class="top">
+      <div class="chip" style="background:#c0392b"></div>
+      <div class="small-chip" style="background:#d44030"></div>
+      <div class="small-chip" style="background:rgba(192,57,43,0.14)"></div>
+    </div>
+    <div class="label" style="color:#c0392b">red</div>
+    <div class="role">destructive — Bordeaux</div>
+    <div class="vals"><span>#c0392b</span> base<br><span>#d44030</span> hover<br><span>14% α</span> dim fill</div>
+  </div>
+  <div class="acc">
+    <div class="top">
+      <div class="chip" style="background:#9d7a2a"></div>
+      <div class="small-chip" style="background:#c8a240"></div>
+      <div class="small-chip" style="background:rgba(157,122,42,0.08)"></div>
+    </div>
+    <div class="label" style="color:#c8a240">gold</div>
+    <div class="role">reveal — antique brass</div>
+    <div class="vals"><span>#9d7a2a</span> base<br><span>#c8a240</span> bright<br><span>8% α</span> bg tint</div>
+  </div>
+</div>
+</div></body></html>
