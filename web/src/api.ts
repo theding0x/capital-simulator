@@ -224,7 +224,7 @@ export const api = {
   // --- agent-service (Ch. 5) ---
 
   computeCircuit: (input: ComputeCircuitInput) =>
-    http<CircuitProof>("/v1/circuits", { method: "POST", body: JSON.stringify(input) }),
+    http<CircuitProof>("/v1/circuit-probes", { method: "POST", body: JSON.stringify(input) }),
 
   simulateExchange: (input: SimulateExchangeInput) =>
     http<ExchangeSimulation>("/v1/exchange-simulations", {
