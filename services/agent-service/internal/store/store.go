@@ -15,13 +15,14 @@ var (
 // Update is a partial-update payload for PATCH /v1/agents/{id}.
 // Non-nil fields are applied; nil fields are left untouched.
 type Update struct {
-	Name         *string
-	MoneyBalance *agent.Pence
-	Hoarding     *bool
+	Name          *string
+	MoneyBalance  *agent.Pence
+	Hoarding      *bool
+	LabourMinutes *int64
 }
 
 func (u Update) IsEmpty() bool {
-	return u.Name == nil && u.MoneyBalance == nil && u.Hoarding == nil
+	return u.Name == nil && u.MoneyBalance == nil && u.Hoarding == nil && u.LabourMinutes == nil
 }
 
 func (u Update) Apply(a agent.Agent) agent.Agent {
@@ -34,6 +35,9 @@ func (u Update) Apply(a agent.Agent) agent.Agent {
 	}
 	if u.Hoarding != nil {
 		out.Hoarding = *u.Hoarding
+	}
+	if u.LabourMinutes != nil {
+		out.LabourMinutes = *u.LabourMinutes
 	}
 	return out
 }

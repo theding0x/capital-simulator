@@ -43,11 +43,11 @@ func (m *MySQL) Create(ctx context.Context, a agent.Agent) (agent.Agent, error) 
 	now := m.now().UTC()
 	a.CreatedAt = now
 	a.UpdatedAt = now
-	const q = `INSERT INTO agents (id, name, class, money_balance, hoarding, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	const q = `INSERT INTO agents (id, name, class, money_balance, hoarding, labour_minutes, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := m.db.ExecContext(ctx, q,
 		string(a.ID), a.Name, string(a.Class), int64(a.MoneyBalance), a.Hoarding,
-		a.CreatedAt, a.UpdatedAt,
+		a.LabourMinutes, a.CreatedAt, a.UpdatedAt,
 	)
 	if err != nil {
 		return agent.Agent{}, err
@@ -56,14 +56,14 @@ func (m *MySQL) Create(ctx context.Context, a agent.Agent) (agent.Agent, error) 
 }
 
 func (m *MySQL) Get(ctx context.Context, id agent.ID) (agent.Agent, error) {
-	const q = `SELECT id, name, class, money_balance, hoarding, created_at, updated_at
+	const q = `SELECT id, name, class, money_balance, hoarding, labour_minutes, created_at, updated_at
 		FROM agents WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	return scanAgent(row)
 }
 
 func (m *MySQL) List(ctx context.Context) ([]agent.Agent, error) {
-	const q = `SELECT id, name, class, money_balance, hoarding, created_at, updated_at
+	const q = `SELECT id, name, class, money_balance, hoarding, labour_minutes, created_at, updated_at
 		FROM agents ORDER BY name ASC`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
@@ -74,7 +74,7 @@ func (m *MySQL) List(ctx context.Context) ([]agent.Agent, error) {
 }
 
 func (m *MySQL) ListByClass(ctx context.Context, class agent.Class) ([]agent.Agent, error) {
-	const q = `SELECT id, name, class, money_balance, hoarding, created_at, updated_at
+	const q = `SELECT id, name, class, money_balance, hoarding, labour_minutes, created_at, updated_at
 		FROM agents WHERE class = ? ORDER BY name ASC`
 	rows, err := m.db.QueryContext(ctx, q, string(class))
 	if err != nil {
@@ -97,11 +97,11 @@ func (m *MySQL) Update(ctx context.Context, id agent.ID, u Update) (agent.Agent,
 		return agent.Agent{}, err
 	}
 	next.UpdatedAt = m.now().UTC()
-	const q = `UPDATE agents SET name = ?, class = ?, money_balance = ?, hoarding = ?, updated_at = ?
+	const q = `UPDATE agents SET name = ?, class = ?, money_balance = ?, hoarding = ?, labour_minutes = ?, updated_at = ?
 		WHERE id = ?`
 	res, err := m.db.ExecContext(ctx, q,
-		next.Name, string(next.Class), int64(next.MoneyBalance), next.Hoarding, next.UpdatedAt,
-		string(id),
+		next.Name, string(next.Class), int64(next.MoneyBalance), next.Hoarding,
+		next.LabourMinutes, next.UpdatedAt, string(id),
 	)
 	if err != nil {
 		return agent.Agent{}, err
@@ -213,7 +213,7 @@ func scanAgent(row *sql.Row) (agent.Agent, error) {
 	var id, class string
 	var balance int64
 	var hoarding bool
-	err := row.Scan(&id, &a.Name, &class, &balance, &hoarding, &a.CreatedAt, &a.UpdatedAt)
+	err := row.Scan(&id, &a.Name, &class, &balance, &hoarding, &a.LabourMinutes, &a.CreatedAt, &a.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.Agent{}, ErrNotFound
 	}
@@ -234,7 +234,7 @@ func scanAgents(rows *sql.Rows) ([]agent.Agent, error) {
 		var id, class string
 		var balance int64
 		var hoarding bool
-		if err := rows.Scan(&id, &a.Name, &class, &balance, &hoarding, &a.CreatedAt, &a.UpdatedAt); err != nil {
+		if err := rows.Scan(&id, &a.Name, &class, &balance, &hoarding, &a.LabourMinutes, &a.CreatedAt, &a.UpdatedAt); err != nil {
 			return nil, err
 		}
 		a.ID = agent.ID(id)
