@@ -17,6 +17,7 @@ const (
 	Capitalist Class = "capitalist"
 	Worker     Class = "worker"
 	Miser      Class = "miser"
+	Owner      Class = "owner"
 )
 
 const (
@@ -31,13 +32,14 @@ var (
 )
 
 type Agent struct {
-	ID           ID        `json:"id"`
-	Name         string    `json:"name"`
-	Class        Class     `json:"class"`
-	MoneyBalance Pence     `json:"money_balance"`
-	Hoarding     bool      `json:"hoarding"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID            ID        `json:"id"`
+	Name          string    `json:"name"`
+	Class         Class     `json:"class"`
+	MoneyBalance  Pence     `json:"money_balance"`
+	LabourMinutes int64     `json:"labour_minutes"`
+	Hoarding      bool      `json:"hoarding"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 // SurplusValue is always computed as MReturned - MAdvanced; never stored independently.
@@ -67,7 +69,7 @@ func (a Agent) Validate() error {
 		return errors.New("agent: name is required")
 	}
 	switch a.Class {
-	case Capitalist, Worker, Miser:
+	case Capitalist, Worker, Miser, Owner:
 	default:
 		return errors.New("agent: unknown class")
 	}
