@@ -54,6 +54,16 @@ func main() {
 	srv.Handle("/v1/prices", marketProxy)
 	srv.Handle("/v1/prices/{rest...}", marketProxy)
 
+	// Reverse-proxy routes to agent-service.
+	agentURL := getenv("AGENT_SERVICE_URL", "http://agent-service:8082")
+	agentProxy, err := proxy.New(agentURL, logger)
+	if err != nil {
+		logger.Error("failed to build agent proxy", "err", err)
+		os.Exit(1)
+	}
+	srv.Handle("/v1/agents", agentProxy)
+	srv.Handle("/v1/agents/{rest...}", agentProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -65,7 +75,7 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-2-exchange",
+		"status":      "ch-4-capital",
 		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service.",
 		"downstream": []string{
 			"commodity-service",
@@ -73,7 +83,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 2 - Exchange",
+		"chapter": "Capital Vol. I, Ch. 4 - The General Formula for Capital",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
