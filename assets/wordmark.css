@@ -1,0 +1,13 @@
+/* Capital Simulator — wordmark
+   The product has no SVG logo. The wordmark is the literal string set in
+   Playfair Display 700, color var(--gold-bright). Reuse via this snippet. */
+
+.wordmark {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #c8a240;
+  letter-spacing: -0.01em;
+}
+
+/* Used in topbar:    <span class="wordmark">Capital Simulator</span> */
