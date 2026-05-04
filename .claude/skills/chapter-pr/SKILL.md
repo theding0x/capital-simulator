@@ -1,6 +1,6 @@
 ---
 name: chapter-pr
-description: Run the end-of-chapter checklist for capital-simulator and open the PR. Verifies the branch name matches chapter-NN-<slug>, the chapters/NN-<slug>.html exists with real content, the docs/architecture.md roadmap row is flipped to Done, and that the diff against main is non-trivial. Then drafts a multi-paragraph conventional commit body referencing the chapter and runs gh pr create. Use when the user says "open the chapter PR", "ship this chapter", "we're done with chapter N", or asks to wrap up / finalize a Capital chapter. Do not use to scaffold a new chapter (use chapter-scaffold).
+description: Run the end-of-chapter checklist for capital-simulator and open the PR. Verifies the branch name matches chapter-NN-<slug>, the chapters/volume-1/NN-<slug>.html exists with real content, the docs/architecture.md roadmap row is flipped to Done, and that the diff against main is non-trivial. Then drafts a multi-paragraph conventional commit body referencing the chapter and runs gh pr create. Use when the user says "open the chapter PR", "ship this chapter", "we're done with chapter N", or asks to wrap up / finalize a Capital chapter. Do not use to scaffold a new chapter (use chapter-scaffold).
 ---
 
 # chapter-pr
@@ -9,7 +9,7 @@ The closeout step in the chapter workflow described in CLAUDE.md. By the
 time this runs, the user has:
 
 1. Implemented the chapter's domain logic
-2. Pasted the real Marx text into `chapters/NN-<slug>.html`
+2. Pasted the real Marx text into `chapters/volume-1/NN-<slug>.html`
 3. Run `make vet test build` and `cd web && npm run lint && npm run build`
    locally (the sandbox can't)
 
@@ -37,7 +37,7 @@ bash .claude/skills/chapter-pr/scripts/check.sh
 It verifies:
 
 - Current branch matches `chapter-NN-<slug>`
-- `chapters/NN-<slug>.html` exists and is larger than the placeholder
+- `chapters/volume-1/NN-<slug>.html` exists and is larger than the placeholder
   stub (real Marx content is ~50-100KB; the stub from `chapter-scaffold`
   is well under 1KB)
 - `docs/architecture.md` roadmap row for this chapter shows status
@@ -68,7 +68,7 @@ Highlights:
 - §2 ...
 - §3 ...
 
-Refs: chapters/NN-<slug>.html
+Refs: chapters/volume-1/NN-<slug>.html
 ```
 
 Use the section headings from Marx's chapter (visible in the chapter
@@ -102,7 +102,7 @@ Vol. I, Ch. NN - <Title>
 
 ## Chapter HTML
 
-chapters/NN-<slug>.html
+chapters/volume-1/NN-<slug>.html
 
 ## How I tested
 
