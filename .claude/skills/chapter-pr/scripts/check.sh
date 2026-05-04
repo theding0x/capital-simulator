@@ -30,7 +30,7 @@ chapter_num="${BASH_REMATCH[1]}"
 slug="${BASH_REMATCH[2]}"
 ok "branch $branch (chapter $chapter_num, slug $slug)"
 
-html="chapters/${chapter_num}-${slug}.html"
+html="chapters/volume-1/${chapter_num}-${slug}.html"
 if [[ ! -f $html ]]; then
   fail "chapter HTML missing: $html"
 fi

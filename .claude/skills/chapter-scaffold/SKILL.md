@@ -1,6 +1,6 @@
 ---
 name: chapter-scaffold
-description: Set up a new chapter branch in the capital-simulator repo - creates the chapter-NN-<slug> branch off main, drops the placeholder chapters/NN-<slug>.html, adds the roadmap row to docs/architecture.md, and stubs a domain test file with a Marx textual fixture. Use this whenever the user says they're starting a new chapter, mentions "chapter N", asks to scaffold/begin/kick off a Capital chapter, or references the chapter workflow described in CLAUDE.md. Do not use for service scaffolding (use store-scaffold) or for opening the end-of-chapter PR (use chapter-pr).
+description: Set up a new chapter branch in the capital-simulator repo - creates the chapter-NN-<slug> branch off main, drops the placeholder chapters/volume-1/NN-<slug>.html, adds the roadmap row to docs/architecture.md, and stubs a domain test file with a Marx textual fixture. Use this whenever the user says they're starting a new chapter, mentions "chapter N", asks to scaffold/begin/kick off a Capital chapter, or references the chapter workflow described in CLAUDE.md. Do not use for service scaffolding (use store-scaffold) or for opening the end-of-chapter PR (use chapter-pr).
 ---
 
 # chapter-scaffold
@@ -59,7 +59,7 @@ then retry the git command.
 ### 3. Create the chapter HTML placeholder
 
 The user will paste the real ~100KB Marx text in later. For now write a
-small stub at `chapters/NN-<slug>.html` so the path exists and the PR
+small stub at `chapters/volume-1/NN-<slug>.html` so the path exists and the PR
 template's "Chapter HTML" field has a target:
 
 ```html
@@ -122,7 +122,7 @@ commit, and signed commits fail in the sandbox anyway. Tell them what was
 changed and what to do next:
 
 > Branch `chapter-NN-<slug>` is set up. Roadmap row flipped to In progress,
-> chapter HTML stub at `chapters/NN-<slug>.html`, test stub in
+> chapter HTML stub at `chapters/volume-1/NN-<slug>.html`, test stub in
 > `services/<svc>/internal/<domain>/`. Next: implement the domain types.
 > Run `make vet test build` before committing - I can't run the Go toolchain
 > here.
