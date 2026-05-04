@@ -25,14 +25,16 @@ func New(s store.Store, cs store.CircuitStore, logger *slog.Logger) *Handler {
 }
 
 type createAgentRequest struct {
-	Name         string      `json:"name"`
-	Class        agent.Class `json:"class"`
-	MoneyBalance agent.Pence `json:"money_balance"`
+	Name          string      `json:"name"`
+	Class         agent.Class `json:"class"`
+	MoneyBalance  agent.Pence `json:"money_balance"`
+	LabourMinutes int64       `json:"labour_minutes"`
 }
 
 type updateAgentRequest struct {
-	Name         *string      `json:"name,omitempty"`
-	MoneyBalance *agent.Pence `json:"money_balance,omitempty"`
+	Name          *string      `json:"name,omitempty"`
+	MoneyBalance  *agent.Pence `json:"money_balance,omitempty"`
+	LabourMinutes *int64       `json:"labour_minutes,omitempty"`
 }
 
 type createCircuitRequest struct {
@@ -54,9 +56,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a := agent.Agent{
-		Name:         strings.TrimSpace(req.Name),
-		Class:        req.Class,
-		MoneyBalance: req.MoneyBalance,
+		Name:          strings.TrimSpace(req.Name),
+		Class:         req.Class,
+		MoneyBalance:  req.MoneyBalance,
+		LabourMinutes: req.LabourMinutes,
 	}
 	if err := a.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -114,8 +117,9 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		req.Name = &trimmed
 	}
 	updated, err := h.Store.Update(r.Context(), id, store.Update{
-		Name:         req.Name,
-		MoneyBalance: req.MoneyBalance,
+		Name:          req.Name,
+		MoneyBalance:  req.MoneyBalance,
+		LabourMinutes: req.LabourMinutes,
 	})
 	if err != nil {
 		writeAppError(w, err)
@@ -145,7 +149,7 @@ func (h *Handler) CreateCircuit(w http.ResponseWriter, r *http.Request) {
 		writeAppError(w, err)
 		return
 	}
-	if a.Class == agent.Worker && req.CircuitType == agent.CircuitMCM {
+	if (a.Class == agent.Worker || a.Class == agent.Owner) && req.CircuitType == agent.CircuitMCM {
 		writeError(w, http.StatusBadRequest, agent.ErrWrongClass.Error())
 		return
 	}
@@ -225,6 +229,78 @@ func (h *Handler) Hoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, saved)
+}
+
+type computeCircuitRequest struct {
+	M           agent.Pence `json:"m"`
+	CommodityID string      `json:"commodity_id"`
+	MPrime      agent.Pence `json:"m_prime"`
+}
+
+type computeCircuitResponse struct {
+	M            agent.Pence `json:"m"`
+	CommodityID  string      `json:"commodity_id,omitempty"`
+	MPrime       agent.Pence `json:"m_prime"`
+	SurplusValue agent.Pence `json:"surplus_value"`
+	Origin       string      `json:"origin"`
+}
+
+type computeExchangeRequest struct {
+	AValue agent.Pence `json:"a_value"`
+	BValue agent.Pence `json:"b_value"`
+}
+
+func (h *Handler) ComputeCircuit(w http.ResponseWriter, r *http.Request) {
+	var req computeCircuitRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.M <= 0 {
+		writeError(w, http.StatusBadRequest, "m must be positive")
+		return
+	}
+	if req.MPrime < 0 {
+		writeError(w, http.StatusBadRequest, "m_prime cannot be negative")
+		return
+	}
+	var surplusValue agent.Pence
+	var origin string
+	if req.CommodityID != "" {
+		mc := agent.MerchantsCapital{M: req.M, CommodityID: req.CommodityID, MPrime: req.MPrime}
+		surplusValue = mc.SurplusValue()
+		origin = mc.Origin()
+	} else {
+		uc := agent.UsurersCapital{M: req.M, MPrime: req.MPrime}
+		surplusValue = uc.SurplusValue()
+		origin = uc.Origin()
+	}
+	writeJSON(w, http.StatusOK, computeCircuitResponse{
+		M:            req.M,
+		CommodityID:  req.CommodityID,
+		MPrime:       req.MPrime,
+		SurplusValue: surplusValue,
+		Origin:       origin,
+	})
+}
+
+func (h *Handler) ComputeExchange(w http.ResponseWriter, r *http.Request) {
+	var req computeExchangeRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.AValue < 0 || req.BValue < 0 {
+		writeError(w, http.StatusBadRequest, "values cannot be negative")
+		return
+	}
+	var result agent.ExchangeResult
+	if req.AValue == req.BValue {
+		result = agent.ExchangeEquivalents(req.AValue, req.BValue)
+	} else {
+		result = agent.ExchangeNonEquivalents(req.AValue, req.BValue)
+	}
+	writeJSON(w, http.StatusOK, result)
 }
 
 func decodeJSON(r *http.Request, dst any) error {
