@@ -47,6 +47,14 @@ type UsurersCapital struct {
 // SurplusValue returns MPrime - M.
 func (uc UsurersCapital) SurplusValue() Pence { return uc.MPrime - uc.M }
 
+// Origin returns "equivalent" when SurplusValue is zero, "redistribution" otherwise.
+func (uc UsurersCapital) Origin() string {
+	if uc.SurplusValue() == 0 {
+		return "equivalent"
+	}
+	return "redistribution"
+}
+
 // ExchangeEquivalents models a bilateral swap of equal values: A's commodity
 // worth aValue trades for B's commodity worth bValue. Neither party gains
 // surplus-value.
