@@ -2,7 +2,9 @@ import type {
   Agent,
   CapitalCircuit,
   Circuit,
+  CircuitProof,
   Commodity,
+  ComputeCircuitInput,
   ComputePriceInput,
   CreateAgentCircuitInput,
   CreateAgentInput,
@@ -16,12 +18,14 @@ import type {
   CreateWorldMoneyTransferInput,
   Exchange,
   ExchangeRatio,
+  ExchangeSimulation,
   Hoard,
   MoneyCommodity,
   Offer,
   Owner,
   PaymentObligation,
   Price,
+  SimulateExchangeInput,
   SocialRelations,
   UniversalEquivalent,
   UpdateAgentInput,
@@ -216,4 +220,15 @@ export const api = {
 
   hoardAgent: (agentId: string) =>
     http<Agent>(`/v1/agents/${agentId}/hoard`, { method: "POST", body: JSON.stringify({}) }),
+
+  // --- agent-service (Ch. 5) ---
+
+  computeCircuit: (input: ComputeCircuitInput) =>
+    http<CircuitProof>("/v1/circuits", { method: "POST", body: JSON.stringify(input) }),
+
+  simulateExchange: (input: SimulateExchangeInput) =>
+    http<ExchangeSimulation>("/v1/exchange-simulations", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };
