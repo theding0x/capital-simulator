@@ -71,7 +71,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 2     | ✅ Done     | Exchange, owners, offers, barter ratio, universal equivalent, money-form, prices | market-service |
 | Ch. 3     | ✅ Done     | Money: hoarding, means of payment, world money            | market-service                |
 | Ch. 4     | ✅ Done     | Money → capital; M—C—M′, class positions, surplus-value  | agent-service                 |
-| Ch. 5-7   | Pending     | Labour-process, valorization, surplus-value              | agent-service, simulation-eng |
+| Ch. 5     | ✅ Done     | Contradictions in the general formula; value conservation proof | agent-service |
+| Ch. 6-7   | Pending     | Labour-process, valorization, surplus-value              | agent-service, simulation-eng |
 | Ch. 8-9   | Pending     | Constant/variable capital, rate of surplus-value         | commodity, simulation-eng     |
 | Ch. 10    | Pending     | The working day                                          | agent-service, simulation-eng |
 | Ch. 11+   | Pending     | Cooperation, machinery, wages, accumulation              | all                           |
@@ -125,3 +126,18 @@ The React UI adds a "Ch. 03 — Money" section with circuit recorder, hoard pane
 - **MySQL store.** `CreateCircuit` is fully atomic: `SELECT money_balance FOR UPDATE` → check ≥ MAdvanced → INSERT circuit → `UPDATE money_balance += SurplusValue`, all inside one transaction.
 
 The api-gateway reverse-proxies `/v1/agents` and `/v1/agents/{rest...}` to agent-service. The React UI adds a "Ch. 04 — The General Formula for Capital" panel with agent creation, per-class grouping, £-denominated balances, circuit history table (Type / M / C / M′ / ∆M), and Hoard action for Misers.
+
+### Ch. 5 — what was built
+
+`agent-service` extends Ch. 4 to prove the central contradiction of Capital Vol. I, Ch. 5 — that circulation alone cannot be the source of surplus-value:
+
+- **Owner class.** `Owner` added to `Class` enum — a simple commodity owner who buys and sells equivalents but cannot originate surplus-value (cannot do M—C—M′ circuits).
+- **LabourMinutes.** `labour_minutes int64` field added to `Agent`, tracking the abstract-labour magnitude the agent commands; persisted via migration `00004_ch05_labour_minutes.sql`.
+- **ExchangeResult.** Bilateral exchange outcome with before/after values for both parties and `origin` tag. `TotalBefore() == TotalAfter()` is the invariant.
+- **MerchantsCapital.** M-C-M' operating purely in circulation; `Origin()` returns `"redistribution"` if `SurplusValue != 0`.
+- **UsurersCapital.** Degenerate M-M' circuit (no commodity); the source of surplus cannot be located within the circuit. `Origin()` follows the same logic as `MerchantsCapital`.
+- **ExchangeEquivalents / ExchangeNonEquivalents / TotalValue.** Pure functions proving value conservation for any bilateral exchange.
+- **POST /v1/circuits** — stateless circuit probe; returns `surplus_value` and `origin` tag.
+- **POST /v1/exchange-simulations** — stateless exchange simulator; returns full `ExchangeResult` with conservation proof.
+
+The React UI adds a "Ch. 05 — Contradictions in the General Formula" panel with a circuit probe form and an exchange simulation table.
