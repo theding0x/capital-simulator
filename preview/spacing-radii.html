@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.box { padding: 14px; background: var(--surface); border: 1px solid var(--border-subtle); }
+.box h3 { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 12px; }
+.r-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.swatch { width: 56px; height: 36px; background: var(--surface-raised); border: 1px solid var(--border); }
+.k { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink); }
+.v { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-muted); margin-left: auto; }
+.grain-demo { height: 100px; position: relative; background: var(--bg); overflow: hidden; }
+.grain-demo::after { content:''; position:absolute; inset:0; opacity: 0.08; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"); }
+.grain-demo .lbl { position: absolute; left: 14px; top: 14px; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); }
+.grain-demo .val { position: absolute; right: 14px; bottom: 14px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-muted); }
+</style></head><body><div class="card-frame">
+<div class="cols">
+  <div class="box">
+    <h3>Radii</h3>
+    <div class="r-row"><div class="swatch" style="border-radius:4px"></div><span class="k">--radius-sm</span><span class="v">4px</span></div>
+    <div class="r-row"><div class="swatch" style="border-radius:8px"></div><span class="k">--radius</span><span class="v">8px</span></div>
+    <div class="r-row"><div class="swatch" style="border-radius:0"></div><span class="k">inputs / cards</span><span class="v">0px</span></div>
+  </div>
+  <div class="box">
+    <h3>Texture (grain)</h3>
+    <div class="grain-demo">
+      <span class="lbl">body::before</span>
+      <span class="val">opacity 0.032</span>
+    </div>
+    <div style="font-family:var(--font-sans); font-style:italic; font-size:0.78rem; color:var(--ink-muted); margin-top: 10px; line-height: 1.5">SVG fractal noise. The only background texture in the system. No gradients, no images.</div>
+  </div>
+</div>
+</div></body></html>
