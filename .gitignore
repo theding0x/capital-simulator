@@ -60,3 +60,5 @@ logs/
 
 # Superpowers brainstorm artefacts
 .superpowers/
+
+**/__pycache__/

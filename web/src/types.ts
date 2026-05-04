@@ -216,3 +216,44 @@ export interface CreateWorldMoneyTransferInput {
   receiver_id: string;
   gold_mg: number;
 }
+
+// --- agent-service types (Ch. 4: The General Formula for Capital) -----------
+
+export interface Agent {
+  id: string;
+  name: string;
+  class: "capitalist" | "worker" | "miser";
+  money_balance: number; // Pence (pennies); divide by 100 for £
+  hoarding: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CapitalCircuit {
+  id: string;
+  agent_id: string;
+  m_advanced: number; // Pence
+  commodity_id: string;
+  m_returned: number; // Pence
+  surplus_value: number; // Pence; = m_returned - m_advanced
+  circuit_type: "C-M-C" | "M-C-M-prime";
+  created_at: string;
+}
+
+export interface CreateAgentInput {
+  name: string;
+  class: "capitalist" | "worker" | "miser";
+  money_balance: number;
+}
+
+export interface UpdateAgentInput {
+  name?: string;
+  money_balance?: number;
+}
+
+export interface CreateAgentCircuitInput {
+  m_advanced: number;
+  commodity_id: string;
+  m_returned: number;
+  circuit_type: "C-M-C" | "M-C-M-prime";
+}

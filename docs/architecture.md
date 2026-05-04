@@ -69,8 +69,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 |-----------|-------------|----------------------------------------------------------|-------------------------------|
 | Ch. 1     | ✅ Done     | Commodity, use-value, value, exchange-value, value-forms, fetishism | commodity-service |
 | Ch. 2     | ✅ Done     | Exchange, owners, offers, barter ratio, universal equivalent, money-form, prices | market-service |
-| Ch. 3     | Next        | Money: hoarding, means of payment, world money            | market-service                |
-| Ch. 4     | Pending     | Money → capital; the general formula M-C-M'              | agent-service, market         |
+| Ch. 3     | ✅ Done     | Money: hoarding, means of payment, world money            | market-service                |
+| Ch. 4     | ✅ Done     | Money → capital; M—C—M′, class positions, surplus-value  | agent-service                 |
 | Ch. 5-7   | Pending     | Labour-process, valorization, surplus-value              | agent-service, simulation-eng |
 | Ch. 8-9   | Pending     | Constant/variable capital, rate of surplus-value         | commodity, simulation-eng     |
 | Ch. 10    | Pending     | The working day                                          | agent-service, simulation-eng |
@@ -100,3 +100,28 @@ MySQL is wired up via `pkg/mysql`; the `commodities` table has a unique case-ins
 - **Prices.** `Price`, `PriceAmount`, `ComputePrice` — value expressed as a quantity of the money-commodity. Encodes the Petty law (fn. 12): halving money SNLT doubles the price. Endpoints: `POST /v1/prices`, `GET /v1/prices`, `GET /v1/prices/{commodityID}`.
 
 The api-gateway reverse-proxies all market routes to market-service. The React UI adds a "Ch. 02 — Exchange" section with owner registration, offer board, exchange recorder, universal-equivalent election, money crystallisation, and price computation.
+
+### Ch. 3 — what was built
+
+`market-service` extends Ch. 2 to model the three functions of money from Capital Vol. I, Ch. 3:
+
+- **Circuits C—M—C.** `Circuit`, `CircuitLeg` — commodity sold for money, money spent on a different commodity; value realised and spent.
+- **Hoarding.** `Hoard` — the miser's withdrawal of money from circulation; tracks the gold quantity withheld.
+- **Means of payment / credit.** `PaymentObligation` — a deferred payment (creditor, debtor, due date); settled via `POST /v1/payment-obligations/{id}/settle`.
+- **World money.** `WorldMoneyTransfer` — cross-border gold movement; records sender, receiver, and gold milligrams.
+- **Quantity of money in circulation.** `GET /v1/circulation/money-required?sum_of_prices=&velocity=` — implements Marx's formula M = (ΣP) / V.
+
+The React UI adds a "Ch. 03 — Money" section with circuit recorder, hoard panel, payment-obligation tracker, and world-money transfer log.
+
+### Ch. 4 — what was built
+
+`agent-service` replaces the placeholder stub to model Capital Vol. I, Ch. 4 — the general formula for capital:
+
+- **Agent.** `Agent`, `ID`, `Class` (`Capitalist`/`Worker`/`Miser`), `Pence` — economic subjects with class positions and money balances (in pence). CRUD endpoints at `/v1/agents` with optional `?class=` filter.
+- **CapitalCircuit.** `CapitalCircuit`, `CircuitType` (`C-M-C` / `M-C-M-prime`) — a recorded movement of money through commodities. `SurplusValue = MReturned − MAdvanced` is enforced as a domain invariant. Endpoints: `POST/GET /v1/agents/{id}/circuits`.
+- **Reinvest.** `POST /v1/agents/{id}/reinvest` — Capitalist-only: the full current balance becomes M-advanced in a new circuit; balance is updated atomically in the same MySQL transaction.
+- **Hoard.** `POST /v1/agents/{id}/hoard` — Miser-only: sets the `hoarding` flag; the agent withdraws from circulation.
+- **Class restrictions.** Workers are barred from M—C—M′ circuits (`ErrWrongClass`); Misers and Workers cannot Reinvest or Advance (`ErrNotCapitalist`); only Misers can Hoard.
+- **MySQL store.** `CreateCircuit` is fully atomic: `SELECT money_balance FOR UPDATE` → check ≥ MAdvanced → INSERT circuit → `UPDATE money_balance += SurplusValue`, all inside one transaction.
+
+The api-gateway reverse-proxies `/v1/agents` and `/v1/agents/{rest...}` to agent-service. The React UI adds a "Ch. 04 — The General Formula for Capital" panel with agent creation, per-class grouping, £-denominated balances, circuit history table (Type / M / C / M′ / ∆M), and Hoard action for Misers.

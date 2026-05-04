@@ -1,0 +1,262 @@
+package httpapi
+
+import (
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+	"strings"
+
+	"github.com/theding0x/capital-simulator/services/agent-service/internal/agent"
+	"github.com/theding0x/capital-simulator/services/agent-service/internal/store"
+)
+
+type Handler struct {
+	Store        store.Store
+	CircuitStore store.CircuitStore
+	Logger       *slog.Logger
+}
+
+func New(s store.Store, cs store.CircuitStore, logger *slog.Logger) *Handler {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return &Handler{Store: s, CircuitStore: cs, Logger: logger}
+}
+
+type createAgentRequest struct {
+	Name         string      `json:"name"`
+	Class        agent.Class `json:"class"`
+	MoneyBalance agent.Pence `json:"money_balance"`
+}
+
+type updateAgentRequest struct {
+	Name         *string      `json:"name,omitempty"`
+	MoneyBalance *agent.Pence `json:"money_balance,omitempty"`
+}
+
+type createCircuitRequest struct {
+	MAdvanced   agent.Pence       `json:"m_advanced"`
+	CommodityID string            `json:"commodity_id"`
+	MReturned   agent.Pence       `json:"m_returned"`
+	CircuitType agent.CircuitType `json:"circuit_type"`
+}
+
+type reinvestRequest struct {
+	CommodityID string      `json:"commodity_id"`
+	MReturned   agent.Pence `json:"m_returned"`
+}
+
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	var req createAgentRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	a := agent.Agent{
+		Name:         strings.TrimSpace(req.Name),
+		Class:        req.Class,
+		MoneyBalance: req.MoneyBalance,
+	}
+	if err := a.Validate(); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	created, err := h.Store.Create(r.Context(), a)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, created)
+}
+
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	classParam := r.URL.Query().Get("class")
+	var (
+		agents []agent.Agent
+		err    error
+	)
+	if classParam != "" {
+		agents, err = h.Store.ListByClass(ctx, agent.Class(classParam))
+	} else {
+		agents, err = h.Store.List(ctx)
+	}
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	if agents == nil {
+		agents = []agent.Agent{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": agents})
+}
+
+func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
+	id := agent.ID(r.PathValue("id"))
+	a, err := h.Store.Get(r.Context(), id)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, a)
+}
+
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	id := agent.ID(r.PathValue("id"))
+	var req updateAgentRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.Name != nil {
+		trimmed := strings.TrimSpace(*req.Name)
+		req.Name = &trimmed
+	}
+	updated, err := h.Store.Update(r.Context(), id, store.Update{
+		Name:         req.Name,
+		MoneyBalance: req.MoneyBalance,
+	})
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
+}
+
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := agent.ID(r.PathValue("id"))
+	if err := h.Store.Delete(r.Context(), id); err != nil {
+		writeAppError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) CreateCircuit(w http.ResponseWriter, r *http.Request) {
+	agentID := agent.ID(r.PathValue("id"))
+	var req createCircuitRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	a, err := h.Store.Get(r.Context(), agentID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	if a.Class == agent.Worker && req.CircuitType == agent.CircuitMCM {
+		writeError(w, http.StatusBadRequest, agent.ErrWrongClass.Error())
+		return
+	}
+	c := agent.CapitalCircuit{
+		AgentID:      agentID,
+		MAdvanced:    req.MAdvanced,
+		CommodityID:  req.CommodityID,
+		MReturned:    req.MReturned,
+		SurplusValue: req.MReturned - req.MAdvanced,
+		CircuitType:  req.CircuitType,
+	}
+	if err := c.Validate(); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	saved, err := h.CircuitStore.CreateCircuit(r.Context(), c)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, saved)
+}
+
+func (h *Handler) ListCircuits(w http.ResponseWriter, r *http.Request) {
+	agentID := agent.ID(r.PathValue("id"))
+	circuits, err := h.CircuitStore.ListCircuits(r.Context(), agentID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	if circuits == nil {
+		circuits = []agent.CapitalCircuit{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": circuits})
+}
+
+func (h *Handler) Reinvest(w http.ResponseWriter, r *http.Request) {
+	agentID := agent.ID(r.PathValue("id"))
+	var req reinvestRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	a, err := h.Store.Get(r.Context(), agentID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	circuit, _, err := a.Reinvest(req.CommodityID, req.MReturned)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	saved, err := h.CircuitStore.CreateCircuit(r.Context(), circuit)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, saved)
+}
+
+func (h *Handler) Hoard(w http.ResponseWriter, r *http.Request) {
+	agentID := agent.ID(r.PathValue("id"))
+	a, err := h.Store.Get(r.Context(), agentID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	if _, err := a.Hoard(); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	hoarding := true
+	saved, err := h.Store.Update(r.Context(), agentID, store.Update{Hoarding: &hoarding})
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, saved)
+}
+
+func decodeJSON(r *http.Request, dst any) error {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
+		return errors.New("invalid json: " + err.Error())
+	}
+	return nil
+}
+
+func writeJSON(w http.ResponseWriter, status int, body any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+func writeAppError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, store.ErrNotFound):
+		writeError(w, http.StatusNotFound, err.Error())
+	case errors.Is(err, store.ErrAlreadyExists):
+		writeError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, agent.ErrInsufficientFunds),
+		errors.Is(err, agent.ErrNotCapitalist),
+		errors.Is(err, agent.ErrWrongClass):
+		writeError(w, http.StatusBadRequest, err.Error())
+	default:
+		writeError(w, http.StatusInternalServerError, err.Error())
+	}
+}

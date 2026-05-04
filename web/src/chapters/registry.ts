@@ -14,7 +14,7 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "ch02", number: 2,  title: "Exchange",                                              part: "Part I — Commodities & Money",                         status: "done"    },
   { id: "ch03", number: 3,  title: "Money, or the Circulation of Commodities",              part: "Part I — Commodities & Money",                         status: "done"    },
   // Part II — The Transformation of Money into Capital
-  { id: "ch04", number: 4,  title: "The General Formula for Capital",                       part: "Part II — The Transformation of Money into Capital",   status: "pending" },
+  { id: "ch04", number: 4,  title: "The General Formula for Capital",                       part: "Part II — The Transformation of Money into Capital",   status: "done"    },
   { id: "ch05", number: 5,  title: "Contradictions in the General Formula",                 part: "Part II — The Transformation of Money into Capital",   status: "pending" },
   { id: "ch06", number: 6,  title: "The Sale and Purchase of Labour-Power",                 part: "Part II — The Transformation of Money into Capital",   status: "pending" },
   // Part III — The Production of Absolute Surplus-Value

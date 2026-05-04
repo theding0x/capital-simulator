@@ -1,0 +1,162 @@
+package store
+
+import (
+	"context"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/theding0x/capital-simulator/services/agent-service/internal/agent"
+)
+
+// Memory implements Store and CircuitStore for tests and local dev.
+type Memory struct {
+	mu       sync.RWMutex
+	agents   map[agent.ID]agent.Agent
+	circuits map[agent.ID]agent.CapitalCircuit
+	now      func() time.Time
+}
+
+func NewMemory() *Memory {
+	return &Memory{
+		agents:   make(map[agent.ID]agent.Agent),
+		circuits: make(map[agent.ID]agent.CapitalCircuit),
+		now:      time.Now,
+	}
+}
+
+func (m *Memory) Create(_ context.Context, a agent.Agent) (agent.Agent, error) {
+	if err := a.Validate(); err != nil {
+		return agent.Agent{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if a.ID.IsZero() {
+		a.ID = agent.NewID()
+	}
+	now := m.now()
+	a.CreatedAt = now
+	a.UpdatedAt = now
+	m.agents[a.ID] = a
+	return a, nil
+}
+
+func (m *Memory) Get(_ context.Context, id agent.ID) (agent.Agent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	a, ok := m.agents[id]
+	if !ok {
+		return agent.Agent{}, ErrNotFound
+	}
+	return a, nil
+}
+
+func (m *Memory) List(_ context.Context) ([]agent.Agent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.Agent, 0, len(m.agents))
+	for _, a := range m.agents {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
+	})
+	return out, nil
+}
+
+func (m *Memory) ListByClass(_ context.Context, class agent.Class) ([]agent.Agent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []agent.Agent
+	for _, a := range m.agents {
+		if a.Class == class {
+			out = append(out, a)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
+	})
+	return out, nil
+}
+
+func (m *Memory) Update(_ context.Context, id agent.ID, u Update) (agent.Agent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cur, ok := m.agents[id]
+	if !ok {
+		return agent.Agent{}, ErrNotFound
+	}
+	next := u.Apply(cur)
+	if err := next.Validate(); err != nil {
+		return agent.Agent{}, err
+	}
+	next.UpdatedAt = m.now()
+	m.agents[id] = next
+	return next, nil
+}
+
+func (m *Memory) Delete(_ context.Context, id agent.ID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.agents[id]; !ok {
+		return ErrNotFound
+	}
+	delete(m.agents, id)
+	return nil
+}
+
+// CreateCircuit atomically inserts the circuit and updates the agent's
+// money_balance by circuit.SurplusValue. Returns ErrNotFound if the agent
+// doesn't exist; returns agent.ErrInsufficientFunds if balance < MAdvanced.
+func (m *Memory) CreateCircuit(_ context.Context, c agent.CapitalCircuit) (agent.CapitalCircuit, error) {
+	if err := c.Validate(); err != nil {
+		return agent.CapitalCircuit{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	a, ok := m.agents[c.AgentID]
+	if !ok {
+		return agent.CapitalCircuit{}, ErrNotFound
+	}
+	if c.MAdvanced > a.MoneyBalance {
+		return agent.CapitalCircuit{}, agent.ErrInsufficientFunds
+	}
+	if c.ID.IsZero() {
+		c.ID = agent.NewID()
+	}
+	c.CreatedAt = m.now()
+	m.circuits[c.ID] = c
+	a.MoneyBalance += c.SurplusValue
+	a.UpdatedAt = m.now()
+	m.agents[a.ID] = a
+	return c, nil
+}
+
+func (m *Memory) GetCircuit(_ context.Context, id agent.ID) (agent.CapitalCircuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	c, ok := m.circuits[id]
+	if !ok {
+		return agent.CapitalCircuit{}, ErrNotFound
+	}
+	return c, nil
+}
+
+func (m *Memory) ListCircuits(_ context.Context, agentID agent.ID) ([]agent.CapitalCircuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []agent.CapitalCircuit
+	for _, c := range m.circuits {
+		if c.AgentID == agentID {
+			out = append(out, c)
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
