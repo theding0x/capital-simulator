@@ -1,7 +1,11 @@
 import type {
+  Agent,
+  CapitalCircuit,
   Circuit,
   Commodity,
   ComputePriceInput,
+  CreateAgentCircuitInput,
+  CreateAgentInput,
   CreateCircuitInput,
   CreateCommodityInput,
   CreateExchangeInput,
@@ -20,6 +24,7 @@ import type {
   Price,
   SocialRelations,
   UniversalEquivalent,
+  UpdateAgentInput,
   UpdateCommodityInput,
   ValueResponse,
   WorldMoneyTransfer,
@@ -175,4 +180,40 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // --- agent-service (Ch. 4) ---
+
+  listAgents: (classFilter?: string) =>
+    http<{ items: Agent[] }>(
+      classFilter ? `/v1/agents?class=${encodeURIComponent(classFilter)}` : "/v1/agents"
+    ).then((r) => r.items),
+
+  createAgent: (input: CreateAgentInput) =>
+    http<Agent>("/v1/agents", { method: "POST", body: JSON.stringify(input) }),
+
+  getAgent: (id: string) => http<Agent>(`/v1/agents/${id}`),
+
+  updateAgent: (id: string, input: UpdateAgentInput) =>
+    http<Agent>(`/v1/agents/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+
+  deleteAgent: (id: string) =>
+    http<void>(`/v1/agents/${id}`, { method: "DELETE" }),
+
+  createAgentCircuit: (agentId: string, input: CreateAgentCircuitInput) =>
+    http<CapitalCircuit>(`/v1/agents/${agentId}/circuits`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listAgentCircuits: (agentId: string) =>
+    http<{ items: CapitalCircuit[] }>(`/v1/agents/${agentId}/circuits`).then((r) => r.items),
+
+  reinvestAgent: (agentId: string, commodityId: string, mReturned: number) =>
+    http<CapitalCircuit>(`/v1/agents/${agentId}/reinvest`, {
+      method: "POST",
+      body: JSON.stringify({ commodity_id: commodityId, m_returned: mReturned }),
+    }),
+
+  hoardAgent: (agentId: string) =>
+    http<Agent>(`/v1/agents/${agentId}/hoard`, { method: "POST", body: JSON.stringify({}) }),
 };

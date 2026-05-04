@@ -3,6 +3,7 @@ import type { Commodity, Owner } from "../types";
 import { Ch01Commodity } from "../chapters/Ch01Commodity";
 import { Ch02Exchange } from "../chapters/Ch02Exchange";
 import { Ch03Money } from "../chapters/Ch03Money";
+import { Ch04Capital } from "../chapters/Ch04Capital";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -15,6 +16,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch01: "The wealth of societies in which the capitalist mode of production prevails appears as an immense collection of commodities.",
   ch02: "Commodities cannot go to market and make exchanges of their own account.",
   ch03: "Money is a crystal formed of necessity in the course of exchanges.",
+  ch04: "The circulation of commodities is the starting-point of capital.",
 };
 
 export function ChapterShell({
@@ -54,6 +56,8 @@ export function ChapterShell({
           />
         ) : activeChapterId === "ch03" ? (
           <Ch03Money owners={owners} onSharedChanged={onSharedChanged} />
+        ) : activeChapterId === "ch04" ? (
+          <Ch04Capital onSharedChanged={onSharedChanged} />
         ) : null}
       </div>
     </main>
