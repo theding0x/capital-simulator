@@ -1,46 +1,79 @@
-// agent-service models the economic agents of the simulation: workers,
-// capitalists, and (later) landowners. Agents are the bearers of the class
-// relations through which capital reproduces itself.
 package main
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
+	"log/slog"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/theding0x/capital-simulator/pkg/httpx"
 	applog "github.com/theding0x/capital-simulator/pkg/log"
+	pmysql "github.com/theding0x/capital-simulator/pkg/mysql"
+	"github.com/theding0x/capital-simulator/services/agent-service/internal/store"
+	"github.com/theding0x/capital-simulator/services/agent-service/internal/transport/httpapi"
 )
 
 const serviceName = "agent-service"
+
+type agentStore interface {
+	store.Store
+	store.CircuitStore
+}
 
 func main() {
 	logger := applog.New(serviceName)
 	applog.SetDefault(logger)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	st, mysqlDB, err := openStore(ctx, logger)
+	if err != nil {
+		logger.Error("could not open any store", "err", err)
+		os.Exit(1)
+	}
+	if mysqlDB != nil {
+		defer func() { _ = mysqlDB.Close() }()
+	}
+
 	addr := getenv("SERVICE_ADDR", ":8082")
 	srv := httpx.New(httpx.Config{Addr: addr}, logger)
 
-	srv.HandleFunc("/v1/agents", handleAgents)
+	httpapi.Register(srv, httpapi.New(st, st, logger))
 	srv.MarkReady(true)
 
-	if err := srv.Run(context.Background()); err != nil {
+	if err := srv.Run(ctx); err != nil {
 		logger.Error("server exited with error", "err", err)
 		os.Exit(1)
 	}
 }
 
-func handleAgents(w http.ResponseWriter, _ *http.Request) {
-	resp := map[string]any{
-		"service":     serviceName,
-		"status":      "scaffolded",
-		"description": "Will host workers, capitalists, and other agents who bear class relations.",
-		"chapter_ref": "Introduced incrementally; relevant from Capital Vol. I, Ch. 4 onward.",
-		"items":       []any{},
+func openStore(ctx context.Context, logger *slog.Logger) (agentStore, *pmysql.DB, error) {
+	if strings.EqualFold(os.Getenv("MYSQL_DISABLED"), "true") {
+		logger.Warn("MYSQL_DISABLED=true; using in-memory store")
+		return store.NewMemory(), nil, nil
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
+	cfg := pmysql.ConfigFromEnv(serviceName)
+	dialCtx, cancel := context.WithTimeout(ctx, cfg.ConnectTimeout)
+	defer cancel()
+	cli, err := pmysql.Connect(dialCtx, cfg)
+	if err != nil {
+		if strings.EqualFold(os.Getenv("FALLBACK_MEMORY"), "true") {
+			logger.Warn("mysql connect failed; falling back to in-memory store", "err", err)
+			return store.NewMemory(), nil, nil
+		}
+		return nil, nil, err
+	}
+	initCtx, initCancel := context.WithTimeout(ctx, 30*time.Second)
+	defer initCancel()
+	mstore, err := store.NewMySQL(initCtx, cli.SQL)
+	if err != nil {
+		_ = cli.Close()
+		return nil, nil, err
+	}
+	logger.Info("mysql store ready", "dsn_prefix", cfg.DSN[:min(len(cfg.DSN), 30)])
+	return mstore, cli, nil
 }
 
 func getenv(key, fallback string) string {

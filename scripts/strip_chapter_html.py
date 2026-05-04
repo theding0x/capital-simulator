@@ -2,7 +2,7 @@
 """Strip a capital-simulator chapter HTML to clean prose for LLM consumption.
 
 Usage:
-    python3 scripts/strip_chapter_html.py chapters/01-the-commodity.html
+    python3 scripts/strip_chapter_html.py chapters/volume-1/01-the-commodity.html
 
 Output is UTF-8 markdown-flavoured plain text on stdout. Sections become
 ## headings, paragraphs are preserved, value-form tables are rendered as
