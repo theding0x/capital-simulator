@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capital Simulator — UI kit</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="chapters.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="Shell.jsx"></script>
+<script type="text/babel" src="Commodity.jsx"></script>
+<script type="text/babel" src="Ch02.jsx"></script>
+<script type="text/babel" src="Ch03.jsx"></script>
+<script type="text/babel" src="Ch04.jsx"></script>
+<script type="text/babel">
+const SEED = [
+  { id: "c_linen", name: "linen", use_value: { description: "linen for clothing", unit: "yards" }, concrete_labour: { kind: "weaving" }, snlt_per_unit: 30 },
+  { id: "c_coat",  name: "coat",  use_value: { description: "coat for warmth",   unit: "coat"  }, concrete_labour: { kind: "tailoring" }, snlt_per_unit: 600 },
+  { id: "c_corn",  name: "corn",  use_value: { description: "grain for nourishment", unit: "quarter" }, concrete_labour: { kind: "cultivating" }, snlt_per_unit: 2400 },
+];
+
+// Tiny per-chapter store: each slice is `{ ...state, set(key, fn) }`.
+function useStore(initial) {
+  const [state, setState] = React.useState(initial);
+  const set = React.useCallback((key, fn) => {
+    setState((s) => ({ ...s, [key]: typeof fn === "function" ? fn(s[key]) : fn }));
+  }, []);
+  return { ...state, set };
+}
+
+function App() {
+  const [activeId, setActiveId] = React.useState("ch01");
+  const [commodities, setCommodities] = React.useState(SEED);
+  const [revealed, setRevealed] = React.useState(null);
+
+  // Mock state per chapter — survives navigation but not reload.
+  const ch02 = useStore({
+    owners: [
+      { id: "ow_weaver",  name: "weaver" },
+      { id: "ow_tailor",  name: "tailor" },
+      { id: "ow_farmer",  name: "farmer" },
+    ],
+    offers: [],
+    exchanges: [],
+    money: { universalEquivalent: null, moneyCommodity: null, prices: [] },
+  });
+  const ch03 = useStore({ circuits: [], hoards: [], obligations: [], transfers: [] });
+  const ch04 = useStore({
+    agents: [
+      { id: "ag_smith",   name: "Smith",   class: "capitalist", money_balance: 1000000, hoarding: false },
+      { id: "ag_jones",   name: "Jones",   class: "worker",     money_balance: 4000,    hoarding: false },
+      { id: "ag_silas",   name: "Silas",   class: "miser",      money_balance: 250000,  hoarding: false },
+    ],
+    circuits: [],
+  });
+
+  const chapter = window.CHAPTERS.find((c) => c.id === activeId);
+  const quote = window.QUOTES[activeId];
+
+  function addCommodity(c) { setCommodities((xs) => [...xs, c]); }
+  function delCommodity(id) { setCommodities((xs) => xs.filter((c) => c.id !== id)); if (revealed === id) setRevealed(null); }
+  function toggleReveal(id) { setRevealed((r) => (r === id ? null : id)); }
+
+  return (
+    <div className="app-shell" data-screen-label={`${String(chapter.number).padStart(2, "0")} ${chapter.title}`}>
+      <Topbar chapter={chapter} />
+      <Sidebar activeId={activeId} onSelect={setActiveId} />
+      <main className="chapter-main">
+        <ChapterHeader chapter={chapter} quote={quote} />
+        <div className="chapter-body">
+          {chapter.status === "pending" ? (
+            <Placeholder>
+              <p>Not yet implemented</p>
+              <p className="small muted">Coming in a future chapter branch</p>
+            </Placeholder>
+          ) : activeId === "ch01" ? (
+            <>
+              <CommodityForm onCreate={addCommodity} />
+              <CommodityTable commodities={commodities} onDelete={delCommodity} onReveal={toggleReveal} revealed={revealed} />
+              <ExchangeRatio commodities={commodities} />
+            </>
+          ) : activeId === "ch02" ? (
+            <Ch02ExchangeView commodities={commodities} ch02={ch02} />
+          ) : activeId === "ch03" ? (
+            <Ch03MoneyView ch02={ch02} ch03={ch03} />
+          ) : activeId === "ch04" ? (
+            <Ch04CapitalView ch04={ch04} />
+          ) : (
+            <Card title={`Chapter ${String(chapter.number).padStart(2, "0")}`} description="This chapter's panels follow the same component vocabulary — see Ch. 01–04 for reference.">
+              <div className="empty-state">
+                <p>Component vocabulary covered.</p>
+                <p className="small">Switch to chapters 01–04 to interact with the live forms.</p>
+              </div>
+            </Card>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

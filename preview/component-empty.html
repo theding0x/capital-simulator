@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.frame { background: var(--surface); border: 1px solid var(--border-subtle); }
+.empty { text-align: center; padding: 3rem 1rem; color: var(--ink-dim); font-size: 0.875rem; }
+.empty p + p { margin-top: 0.5rem; font-size: 0.78rem; }
+.placeholder { padding: 2.4rem 1.5rem; color: var(--ink-dim); font-size: 0.875rem; text-align: center; border: 1px dashed var(--border-subtle); border-radius: 8px; margin: 14px; }
+.placeholder p + p { margin-top: 0.5rem; font-size: 0.78rem; color: var(--ink-muted); font-style: italic; }
+.cap { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing:0.22em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 8px; }
+</style></head><body><div class="card-frame">
+<div class="cols">
+  <div>
+    <div class="cap">Empty state</div>
+    <div class="frame">
+      <div class="empty"><p>No commodities registered yet.</p><p>Use the form above to add the first one.</p></div>
+    </div>
+  </div>
+  <div>
+    <div class="cap">Pending chapter</div>
+    <div class="frame">
+      <div class="placeholder"><p>Not yet implemented</p><p>Coming in a future chapter branch</p></div>
+    </div>
+  </div>
+</div>
+</div></body></html>

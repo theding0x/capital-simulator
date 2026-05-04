@@ -1,0 +1,41 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>
+.shell { background: var(--surface); width: 240px; padding: 12px 0; border: 1px solid var(--border-subtle); }
+.part { padding: 10px 16px 4px; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-dim); }
+.item { display: flex; align-items: center; padding: 0.38rem 1rem; font-family: var(--font-sans); font-size: 0.8rem; gap: 6px; }
+.item.done { color: var(--ink-muted); }
+.item.pending { color: var(--ink-dim); }
+.item.active { color: var(--ink); background: var(--surface-raised); }
+.num { font-family: var(--font-mono); font-size: 0.65rem; min-width: 1.75rem; }
+.title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon { font-size: 0.75rem; }
+.done .num, .done .icon { color: #9d7a2a; }
+.active .num, .active .icon { color: #5a6a9e; }
+.pending .num { color: var(--ink-dim); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.cap { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing:0.22em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 8px; }
+</style></head><body><div class="card-frame">
+<div class="cols">
+  <div>
+    <div class="cap">Sidebar — single part</div>
+    <div class="shell">
+      <div class="part">Part I — Commodities &amp; Money</div>
+      <div class="item done"><span class="num">01</span><span class="title">The Commodity</span><span class="icon">✓</span></div>
+      <div class="item active"><span class="num">02</span><span class="title">Exchange</span><span class="icon">›</span></div>
+      <div class="item done"><span class="num">03</span><span class="title">Money, or Circulation</span><span class="icon">✓</span></div>
+      <div class="part">Part II — Capital</div>
+      <div class="item done"><span class="num">04</span><span class="title">General Formula for Capital</span><span class="icon">✓</span></div>
+      <div class="item pending"><span class="num">05</span><span class="title">Contradictions</span></div>
+    </div>
+  </div>
+  <div>
+    <div class="cap">States</div>
+    <div class="shell">
+      <div class="item done"><span class="num">01</span><span class="title">Done — bone-muted</span><span class="icon">✓</span></div>
+      <div class="item active"><span class="num">02</span><span class="title">Active — raised bg</span><span class="icon">›</span></div>
+      <div class="item pending"><span class="num">03</span><span class="title">Pending — dim</span></div>
+    </div>
+  </div>
+</div>
+</div></body></html>

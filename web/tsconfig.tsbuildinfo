@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/api.ts","./src/main.tsx","./src/types.ts"],"version":"5.9.3"}
+{"root":["./src/App.tsx","./src/api.ts","./src/format.ts","./src/main.tsx","./src/types.ts","./src/chapters/Ch01Commodity.tsx","./src/chapters/Ch02Exchange.tsx","./src/chapters/Ch03Money.tsx","./src/chapters/Ch04Capital.tsx","./src/chapters/Ch05Contradictions.tsx","./src/chapters/registry.ts","./src/components/ChapterShell.tsx","./src/components/Sidebar.tsx"],"version":"5.9.3"}
