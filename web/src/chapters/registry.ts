@@ -16,7 +16,7 @@ export const CHAPTERS: ChapterDef[] = [
   // Part II — The Transformation of Money into Capital
   { id: "ch04", number: 4,  title: "The General Formula for Capital",                       part: "Part II — The Transformation of Money into Capital",   status: "done"    },
   { id: "ch05", number: 5,  title: "Contradictions in the General Formula",                 part: "Part II — The Transformation of Money into Capital",   status: "done"    },
-  { id: "ch06", number: 6,  title: "The Sale and Purchase of Labour-Power",                 part: "Part II — The Transformation of Money into Capital",   status: "pending" },
+  { id: "ch06", number: 6,  title: "The Sale and Purchase of Labour-Power",                 part: "Part II — The Transformation of Money into Capital",   status: "done"    },
   // Part III — The Production of Absolute Surplus-Value
   { id: "ch07", number: 7,  title: "The Labour-Process and the Valorization Process",       part: "Part III — The Production of Absolute Surplus-Value",  status: "pending" },
   { id: "ch08", number: 8,  title: "Constant Capital and Variable Capital",                 part: "Part III — The Production of Absolute Surplus-Value",  status: "pending" },

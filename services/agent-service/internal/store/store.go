@@ -60,3 +60,18 @@ type CircuitStore interface {
 	GetCircuit(ctx context.Context, id agent.ID) (agent.CapitalCircuit, error)
 	ListCircuits(ctx context.Context, agentID agent.ID) ([]agent.CapitalCircuit, error)
 }
+
+// LabourPowerStore is the persistence contract for Ch. 6 labour-power domain objects.
+type LabourPowerStore interface {
+	CreateWorker(ctx context.Context, w agent.Worker) (agent.Worker, error)
+	GetWorker(ctx context.Context, id agent.AgentID) (agent.Worker, error)
+	ListWorkers(ctx context.Context) ([]agent.Worker, error)
+	CreateCapitalist(ctx context.Context, c agent.Capitalist) (agent.Capitalist, error)
+	GetCapitalist(ctx context.Context, id agent.AgentID) (agent.Capitalist, error)
+	ListCapitalists(ctx context.Context) ([]agent.Capitalist, error)
+	CreateOffering(ctx context.Context, o agent.LabourPowerOffering) (agent.LabourPowerOffering, error)
+	ListOfferings(ctx context.Context) ([]agent.LabourPowerOffering, error)
+	CreatePurchase(ctx context.Context, p agent.LabourPowerPurchase) (agent.LabourPowerPurchase, error)
+	GetPurchase(ctx context.Context, id agent.PurchaseID) (agent.LabourPowerPurchase, error)
+	ListPurchases(ctx context.Context) ([]agent.LabourPowerPurchase, error)
+}

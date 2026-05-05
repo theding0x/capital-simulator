@@ -282,6 +282,285 @@ func scanCircuitRow(rows *sql.Rows) (agent.CapitalCircuit, error) {
 	return c, nil
 }
 
+func (m *MySQL) CreateWorker(ctx context.Context, w agent.Worker) (agent.Worker, error) {
+	if err := w.Validate(); err != nil {
+		return agent.Worker{}, err
+	}
+	if w.ID.IsZero() {
+		w.ID = agent.NewAgentID()
+	}
+	now := m.now().UTC()
+	w.CreatedAt = now
+	w.UpdatedAt = now
+	w.Kind = agent.AgentKindWorker
+	const q = `INSERT INTO labour_workers
+		(id, kind, owns_labour_power, owns_commodities_to_sell, capacity_minutes_per_day, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(w.ID), string(w.Kind),
+		w.OwnsLabourPower, w.OwnsCommoditiesToSell,
+		int64(w.LabourPower.CapacityMinutesPerDay),
+		w.CreatedAt, w.UpdatedAt,
+	)
+	if err != nil {
+		return agent.Worker{}, err
+	}
+	return w, nil
+}
+
+func (m *MySQL) GetWorker(ctx context.Context, id agent.AgentID) (agent.Worker, error) {
+	const q = `SELECT id, kind, owns_labour_power, owns_commodities_to_sell,
+		capacity_minutes_per_day, created_at, updated_at
+		FROM labour_workers WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	return scanWorker(row)
+}
+
+func (m *MySQL) ListWorkers(ctx context.Context) ([]agent.Worker, error) {
+	const q = `SELECT id, kind, owns_labour_power, owns_commodities_to_sell,
+		capacity_minutes_per_day, created_at, updated_at
+		FROM labour_workers ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.Worker
+	for rows.Next() {
+		w, err := scanWorkerRow(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, w)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) CreateCapitalist(ctx context.Context, c agent.Capitalist) (agent.Capitalist, error) {
+	if err := c.Validate(); err != nil {
+		return agent.Capitalist{}, err
+	}
+	if c.ID.IsZero() {
+		c.ID = agent.NewAgentID()
+	}
+	now := m.now().UTC()
+	c.CreatedAt = now
+	c.UpdatedAt = now
+	c.Kind = agent.AgentKindCapitalist
+	const q = `INSERT INTO labour_capitalists
+		(id, kind, money_capital, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(c.ID), string(c.Kind),
+		int64(c.MoneyCapital),
+		c.CreatedAt, c.UpdatedAt,
+	)
+	if err != nil {
+		return agent.Capitalist{}, err
+	}
+	return c, nil
+}
+
+func (m *MySQL) GetCapitalist(ctx context.Context, id agent.AgentID) (agent.Capitalist, error) {
+	const q = `SELECT id, kind, money_capital, created_at, updated_at
+		FROM labour_capitalists WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	return scanCapitalist(row)
+}
+
+func (m *MySQL) ListCapitalists(ctx context.Context) ([]agent.Capitalist, error) {
+	const q = `SELECT id, kind, money_capital, created_at, updated_at
+		FROM labour_capitalists ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.Capitalist
+	for rows.Next() {
+		c, err := scanCapitalistRow(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) CreateOffering(ctx context.Context, o agent.LabourPowerOffering) (agent.LabourPowerOffering, error) {
+	if err := o.Validate(); err != nil {
+		return agent.LabourPowerOffering{}, err
+	}
+	if o.ID.IsZero() {
+		o.ID = agent.NewAgentID()
+	}
+	o.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO labour_power_offerings
+		(id, owner_id, capacity_minutes_per_day, contract_days, asking_wage, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(o.ID), string(o.OwnerID),
+		int64(o.CapacityMinutesPerDay), o.ContractDays,
+		int64(o.AskingWage), o.CreatedAt,
+	)
+	if err != nil {
+		return agent.LabourPowerOffering{}, err
+	}
+	return o, nil
+}
+
+func (m *MySQL) ListOfferings(ctx context.Context) ([]agent.LabourPowerOffering, error) {
+	const q = `SELECT id, owner_id, capacity_minutes_per_day, contract_days, asking_wage, created_at
+		FROM labour_power_offerings ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.LabourPowerOffering
+	for rows.Next() {
+		var o agent.LabourPowerOffering
+		var id, ownerID string
+		var cap, wage int64
+		if err := rows.Scan(&id, &ownerID, &cap, &o.ContractDays, &wage, &o.CreatedAt); err != nil {
+			return nil, err
+		}
+		o.ID = agent.AgentID(id)
+		o.OwnerID = agent.AgentID(ownerID)
+		o.CapacityMinutesPerDay = agent.LabourMinutes(cap)
+		o.AskingWage = agent.LabourMinutes(wage)
+		out = append(out, o)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) CreatePurchase(ctx context.Context, p agent.LabourPowerPurchase) (agent.LabourPowerPurchase, error) {
+	if err := p.Validate(); err != nil {
+		return agent.LabourPowerPurchase{}, err
+	}
+	if p.ID.IsZero() {
+		p.ID = agent.NewPurchaseID()
+	}
+	p.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO labour_power_purchases
+		(id, seller_id, buyer_id, wage_minutes, contract_days, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(p.ID), string(p.SellerID), string(p.BuyerID),
+		int64(p.WageMinutes), p.ContractDays, p.CreatedAt,
+	)
+	if err != nil {
+		return agent.LabourPowerPurchase{}, err
+	}
+	return p, nil
+}
+
+func (m *MySQL) GetPurchase(ctx context.Context, id agent.PurchaseID) (agent.LabourPowerPurchase, error) {
+	const q = `SELECT id, seller_id, buyer_id, wage_minutes, contract_days, created_at
+		FROM labour_power_purchases WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	var p agent.LabourPowerPurchase
+	var pid, sellerID, buyerID string
+	var wage int64
+	err := row.Scan(&pid, &sellerID, &buyerID, &wage, &p.ContractDays, &p.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.LabourPowerPurchase{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.LabourPowerPurchase{}, err
+	}
+	p.ID = agent.PurchaseID(pid)
+	p.SellerID = agent.AgentID(sellerID)
+	p.BuyerID = agent.AgentID(buyerID)
+	p.WageMinutes = agent.LabourMinutes(wage)
+	return p, nil
+}
+
+func (m *MySQL) ListPurchases(ctx context.Context) ([]agent.LabourPowerPurchase, error) {
+	const q = `SELECT id, seller_id, buyer_id, wage_minutes, contract_days, created_at
+		FROM labour_power_purchases ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.LabourPowerPurchase
+	for rows.Next() {
+		var p agent.LabourPowerPurchase
+		var pid, sellerID, buyerID string
+		var wage int64
+		if err := rows.Scan(&pid, &sellerID, &buyerID, &wage, &p.ContractDays, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		p.ID = agent.PurchaseID(pid)
+		p.SellerID = agent.AgentID(sellerID)
+		p.BuyerID = agent.AgentID(buyerID)
+		p.WageMinutes = agent.LabourMinutes(wage)
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
+func scanWorker(row *sql.Row) (agent.Worker, error) {
+	var w agent.Worker
+	var id, kind string
+	var cap int64
+	err := row.Scan(&id, &kind, &w.OwnsLabourPower, &w.OwnsCommoditiesToSell, &cap, &w.CreatedAt, &w.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.Worker{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.Worker{}, err
+	}
+	w.ID = agent.AgentID(id)
+	w.Kind = agent.AgentKind(kind)
+	w.LabourPower.CapacityMinutesPerDay = agent.LabourMinutes(cap)
+	return w, nil
+}
+
+func scanWorkerRow(rows *sql.Rows) (agent.Worker, error) {
+	var w agent.Worker
+	var id, kind string
+	var cap int64
+	if err := rows.Scan(&id, &kind, &w.OwnsLabourPower, &w.OwnsCommoditiesToSell, &cap, &w.CreatedAt, &w.UpdatedAt); err != nil {
+		return agent.Worker{}, err
+	}
+	w.ID = agent.AgentID(id)
+	w.Kind = agent.AgentKind(kind)
+	w.LabourPower.CapacityMinutesPerDay = agent.LabourMinutes(cap)
+	return w, nil
+}
+
+func scanCapitalist(row *sql.Row) (agent.Capitalist, error) {
+	var c agent.Capitalist
+	var id, kind string
+	var mc int64
+	err := row.Scan(&id, &kind, &mc, &c.CreatedAt, &c.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.Capitalist{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.Capitalist{}, err
+	}
+	c.ID = agent.AgentID(id)
+	c.Kind = agent.AgentKind(kind)
+	c.MoneyCapital = agent.LabourMinutes(mc)
+	return c, nil
+}
+
+func scanCapitalistRow(rows *sql.Rows) (agent.Capitalist, error) {
+	var c agent.Capitalist
+	var id, kind string
+	var mc int64
+	if err := rows.Scan(&id, &kind, &mc, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		return agent.Capitalist{}, err
+	}
+	c.ID = agent.AgentID(id)
+	c.Kind = agent.AgentKind(kind)
+	c.MoneyCapital = agent.LabourMinutes(mc)
+	return c, nil
+}
+
 func isDuplicate(err error) bool {
 	if err == nil {
 		return false

@@ -14,4 +14,16 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/agents/{id}/hoard", h.Hoard)
 	s.HandleFunc("POST /v1/circuit-probes", h.ComputeCircuit)
 	s.HandleFunc("POST /v1/exchange-simulations", h.ComputeExchange)
+	// Ch. 6 — The Buying and Selling of Labour-Power
+	s.HandleFunc("POST /v1/workers", h.CreateWorker)
+	s.HandleFunc("GET /v1/workers", h.ListWorkers)
+	s.HandleFunc("GET /v1/workers/{id}", h.GetWorker)
+	s.HandleFunc("POST /v1/capitalists", h.CreateCapitalist)
+	s.HandleFunc("GET /v1/capitalists", h.ListCapitalists)
+	s.HandleFunc("GET /v1/capitalists/{id}", h.GetCapitalist)
+	s.HandleFunc("POST /v1/labour-power/offerings", h.CreateOffering)
+	s.HandleFunc("GET /v1/labour-power/offerings", h.ListOfferings)
+	s.HandleFunc("POST /v1/labour-power/purchases", h.CreatePurchase)
+	s.HandleFunc("GET /v1/labour-power/purchases", h.ListPurchases)
+	s.HandleFunc("GET /v1/labour-power/purchases/{id}", h.GetPurchase)
 }

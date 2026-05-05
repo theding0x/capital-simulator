@@ -66,6 +66,14 @@ func main() {
 	srv.Handle("/v1/circuit-probes", agentProxy)
 	srv.Handle("/v1/exchange-simulations", agentProxy)
 
+	// Ch. 6 — labour-power routes proxy to agent-service
+	srv.Handle("/v1/workers", agentProxy)
+	srv.Handle("/v1/workers/{rest...}", agentProxy)
+	srv.Handle("/v1/capitalists", agentProxy)
+	srv.Handle("/v1/capitalists/{rest...}", agentProxy)
+	srv.Handle("/v1/labour-power", agentProxy)
+	srv.Handle("/v1/labour-power/{rest...}", agentProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -77,7 +85,7 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-5-contradictions",
+		"status":      "ch-6-labour-power",
 		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
 		"downstream": []string{
 			"commodity-service",
@@ -85,7 +93,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 5 - Contradictions in the General Formula",
+		"chapter": "Capital Vol. I, Ch. 6 - The Buying and Selling of Labour-Power",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
