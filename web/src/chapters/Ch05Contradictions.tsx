@@ -46,13 +46,13 @@ function CircuitProbePanel() {
   return (
     <section className="card">
       <h2>Circuit Probe</h2>
-      <p className="muted small">
+      <p className="description">
         Test whether M—C—M′ can produce surplus-value through circulation alone.
         Leave commodity blank for M—M′ (usurer&rsquo;s capital).
       </p>
       <form className="form-grid" onSubmit={submit}>
         <label>
-          M advanced (pence)
+          <span>M advanced (pence)</span>
           <input
             type="number"
             value={m}
@@ -61,11 +61,11 @@ function CircuitProbePanel() {
           />
         </label>
         <label>
-          Commodity ID (blank = M—M′)
+          <span>Commodity ID (blank = M—M′)</span>
           <input value={commodityId} onChange={(e) => setCommodityId(e.target.value)} />
         </label>
         <label>
-          M′ returned (pence)
+          <span>M′ returned (pence)</span>
           <input
             type="number"
             value={mPrime}
@@ -73,8 +73,10 @@ function CircuitProbePanel() {
             min={0}
           />
         </label>
-        <button type="submit">Compute</button>
-        {err && <span className="error">{err}</span>}
+        <div className="form-actions span2">
+          <button type="submit" className="primary">Compute</button>
+          {err && <span className="error">{err}</span>}
+        </div>
       </form>
       {result && (
         <div className="item-card">
@@ -125,12 +127,12 @@ function ExchangeSimulationPanel() {
   return (
     <section className="card">
       <h2>Exchange Simulation</h2>
-      <p className="muted small">
+      <p className="description">
         Prove that bilateral exchange conserves total social value.
       </p>
       <form className="form-grid" onSubmit={submit}>
         <label>
-          A holds (pence)
+          <span>A holds (pence)</span>
           <input
             type="number"
             value={aValue}
@@ -139,7 +141,7 @@ function ExchangeSimulationPanel() {
           />
         </label>
         <label>
-          B holds (pence)
+          <span>B holds (pence)</span>
           <input
             type="number"
             value={bValue}
@@ -147,8 +149,10 @@ function ExchangeSimulationPanel() {
             min={0}
           />
         </label>
-        <button type="submit">Simulate</button>
-        {err && <span className="error">{err}</span>}
+        <div className="form-actions span2">
+          <button type="submit" className="primary">Simulate</button>
+          {err && <span className="error">{err}</span>}
+        </div>
       </form>
       {result && (
         <>
