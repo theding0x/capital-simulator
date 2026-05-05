@@ -9,9 +9,10 @@ import (
 )
 
 type createWorkerRequest struct {
-	OwnsLabourPower       bool                `json:"owns_labour_power"`
-	OwnsCommoditiesToSell bool                `json:"owns_commodities_to_sell"`
-	CapacityMinutesPerDay agent.LabourMinutes `json:"capacity_minutes_per_day"`
+	OwnsLabourPower         bool                `json:"owns_labour_power"`
+	OwnsCommoditiesToSell   bool                `json:"owns_commodities_to_sell"`
+	CapacityMinutesPerDay   agent.LabourMinutes `json:"capacity_minutes_per_day"`
+	LabourPowerValueMinutes agent.LabourMinutes `json:"labour_power_value_minutes"`
 }
 
 type createCapitalistRequest struct {
@@ -39,9 +40,10 @@ func (h *Handler) CreateWorker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	worker := agent.Worker{
-		OwnsLabourPower:       req.OwnsLabourPower,
-		OwnsCommoditiesToSell: req.OwnsCommoditiesToSell,
-		LabourPower:           agent.LabourPower{CapacityMinutesPerDay: req.CapacityMinutesPerDay},
+		OwnsLabourPower:         req.OwnsLabourPower,
+		OwnsCommoditiesToSell:   req.OwnsCommoditiesToSell,
+		LabourPower:             agent.LabourPower{CapacityMinutesPerDay: req.CapacityMinutesPerDay},
+		LabourPowerValueMinutes: req.LabourPowerValueMinutes,
 	}
 	if err := worker.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())

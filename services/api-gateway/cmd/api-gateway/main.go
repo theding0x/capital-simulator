@@ -74,6 +74,10 @@ func main() {
 	srv.Handle("/v1/labour-power", agentProxy)
 	srv.Handle("/v1/labour-power/{rest...}", agentProxy)
 
+	// Ch. 7 — labour-process routes proxy to agent-service
+	srv.Handle("/v1/labour-processes", agentProxy)
+	srv.Handle("/v1/labour-processes/{rest...}", agentProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -85,7 +89,7 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-6-labour-power",
+		"status":      "ch-7-labour-process",
 		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
 		"downstream": []string{
 			"commodity-service",
@@ -93,7 +97,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 6 - The Buying and Selling of Labour-Power",
+		"chapter": "Capital Vol. I, Ch. 7 - The Labour-Process and the Production of Surplus-Value",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
