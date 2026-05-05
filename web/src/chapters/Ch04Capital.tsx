@@ -68,11 +68,11 @@ function CreateAgentPanel({ onCreated }: { onCreated: () => void }) {
       <h2>Create Agent</h2>
       <form className="form-grid" onSubmit={submit}>
         <label>
-          Name
+          <span>Name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} required />
         </label>
         <label>
-          Class
+          <span>Class</span>
           <select value={cls} onChange={(e) => setCls(e.target.value as typeof cls)}>
             <option value="capitalist">Capitalist</option>
             <option value="worker">Worker</option>
@@ -81,7 +81,7 @@ function CreateAgentPanel({ onCreated }: { onCreated: () => void }) {
           </select>
         </label>
         <label>
-          Initial balance (pence)
+          <span>Initial balance (pence)</span>
           <input
             type="number"
             value={balance}
@@ -89,8 +89,10 @@ function CreateAgentPanel({ onCreated }: { onCreated: () => void }) {
             min={0}
           />
         </label>
-        <button type="submit">Create</button>
-        {err && <span className="error">{err}</span>}
+        <div className="form-actions span2">
+          <button type="submit" className="primary">Create</button>
+          {err && <span className="error">{err}</span>}
+        </div>
       </form>
     </section>
   );
@@ -251,11 +253,11 @@ function CreateCircuitForm({
   return (
     <form className="form-grid" onSubmit={submit}>
       <label>
-        Commodity ID
+        <span>Commodity ID</span>
         <input value={commodityId} onChange={(e) => setCommodityId(e.target.value)} required />
       </label>
       <label>
-        M advanced (pence)
+        <span>M advanced (pence)</span>
         <input
           type="number"
           value={mAdvanced}
@@ -264,7 +266,7 @@ function CreateCircuitForm({
         />
       </label>
       <label>
-        M′ returned (pence)
+        <span>M′ returned (pence)</span>
         <input
           type="number"
           value={mReturned}
@@ -274,7 +276,7 @@ function CreateCircuitForm({
       </label>
       {agentClass !== "worker" && agentClass !== "owner" && (
         <label>
-          Circuit type
+          <span>Circuit type</span>
           <select
             value={circuitType}
             onChange={(e) => setCircuitType(e.target.value as typeof circuitType)}
@@ -284,8 +286,10 @@ function CreateCircuitForm({
           </select>
         </label>
       )}
-      <button type="submit">Record circuit</button>
-      {err && <span className="error">{err}</span>}
+      <div className="form-actions span2">
+        <button type="submit" className="primary">Record circuit</button>
+        {err && <span className="error">{err}</span>}
+      </div>
     </form>
   );
 }
