@@ -7,6 +7,8 @@ import { Ch04Capital } from "../chapters/Ch04Capital";
 import { Ch05Contradictions } from "../chapters/Ch05Contradictions";
 import { Ch06LabourPower } from "../chapters/Ch06LabourPower";
 import { Ch07LabourProcess } from "../chapters/Ch07LabourProcess";
+import { Ch08ConstantVariableCapital } from "../chapters/Ch08ConstantVariableCapital";
+import { Ch09RateOfSurplusValue } from "../chapters/Ch09RateOfSurplusValue";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -23,6 +25,8 @@ const QUOTES: Partial<Record<string, string>> = {
   ch05: "Circulation, or the exchange of commodities, begets no value.",
   ch06: "The owner of labour-power is mortal. If his appearance in the market is to be continuous, the seller of labour-power must perpetuate himself.",
   ch07: "The secret of the self-expansion of capital resolves itself into having the disposal of a definite quantity of other people's unpaid labour.",
+  ch08: "That part of capital which is represented by the means of production ... does not, in the process of production, undergo any quantitative alteration of value.",
+  ch09: "The rate of surplus-value is therefore an exact expression for the degree of exploitation of labour-power by capital.",
 };
 
 export function ChapterShell({
@@ -70,6 +74,10 @@ export function ChapterShell({
           <Ch06LabourPower onSharedChanged={onSharedChanged} />
         ) : activeChapterId === "ch07" ? (
           <Ch07LabourProcess onSharedChanged={onSharedChanged} />
+        ) : activeChapterId === "ch08" ? (
+          <Ch08ConstantVariableCapital onSharedChanged={onSharedChanged} />
+        ) : activeChapterId === "ch09" ? (
+          <Ch09RateOfSurplusValue onSharedChanged={onSharedChanged} />
         ) : null}
       </div>
     </main>

@@ -16,16 +16,17 @@ import (
 
 // Handler bundles the dependencies for the HTTP layer.
 type Handler struct {
-	Store  store.Store
-	Logger *slog.Logger
+	Store                  store.Store
+	ProductionAccountStore store.ProductionAccountStore
+	Logger                 *slog.Logger
 }
 
 // New constructs a Handler.
-func New(s store.Store, logger *slog.Logger) *Handler {
+func New(s store.Store, pas store.ProductionAccountStore, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Store: s, Logger: logger}
+	return &Handler{Store: s, ProductionAccountStore: pas, Logger: logger}
 }
 
 // --- request/response types -------------------------------------------------
