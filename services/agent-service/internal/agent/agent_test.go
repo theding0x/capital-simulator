@@ -8,7 +8,7 @@ import (
 )
 
 func newCapitalist(balance agent.Pence) agent.Agent {
-	return agent.Agent{ID: agent.NewID(), Name: "Capitalist", Class: agent.Capitalist, MoneyBalance: balance}
+	return agent.Agent{ID: agent.NewID(), Name: "Capitalist", Class: agent.CapitalistClass, MoneyBalance: balance}
 }
 
 func newMiser(balance agent.Pence) agent.Agent {
@@ -16,7 +16,7 @@ func newMiser(balance agent.Pence) agent.Agent {
 }
 
 func newWorker(balance agent.Pence) agent.Agent {
-	return agent.Agent{ID: agent.NewID(), Name: "Worker", Class: agent.Worker, MoneyBalance: balance}
+	return agent.Agent{ID: agent.NewID(), Name: "Worker", Class: agent.WorkerClass, MoneyBalance: balance}
 }
 
 // §1: Advance deducts balance to zero.

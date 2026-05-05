@@ -72,7 +72,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 3     | ✅ Done     | Money: hoarding, means of payment, world money            | market-service                |
 | Ch. 4     | ✅ Done     | Money → capital; M—C—M′, class positions, surplus-value  | agent-service                 |
 | Ch. 5     | ✅ Done     | Contradictions in the general formula; value conservation proof | agent-service |
-| Ch. 6-7   | Pending     | Labour-process, valorization, surplus-value              | agent-service, simulation-eng |
+| Ch. 6     | ✅ Done     | Labour-power as commodity; workers, capitalists, labour-power value, wage, subsistence basket; buying and selling of labour-power | agent-service |
+| Ch. 7     | Pending     | Labour-process, valorization, surplus-value production   | agent-service, simulation-eng |
 | Ch. 8-9   | Pending     | Constant/variable capital, rate of surplus-value         | commodity, simulation-eng     |
 | Ch. 10    | Pending     | The working day                                          | agent-service, simulation-eng |
 | Ch. 11+   | Pending     | Cooperation, machinery, wages, accumulation              | all                           |
@@ -141,3 +142,18 @@ The api-gateway reverse-proxies `/v1/agents` and `/v1/agents/{rest...}` to agent
 - **POST /v1/exchange-simulations** — stateless exchange simulator; returns full `ExchangeResult` with conservation proof.
 
 The React UI adds a "Ch. 05 — Contradictions in the General Formula" panel with a circuit probe form and an exchange simulation table.
+
+### Ch. 6 — what was built
+
+`agent-service` implements Capital Vol. I, Ch. 6 — labour-power as a commodity bought and sold on the market:
+
+- **LabourMinutes type.** `type LabourMinutes int64` — canonical value-magnitude unit for all Ch. 6 domain objects (separate from Ch. 4's pence-denominated money balances).
+- **Worker.** A labourer who owns their capacity for labour (`OwnsLabourPower`) but not the means of production (`OwnsCommoditiesToSell = false`); the "double freedom" of the free labourer. `IsFreeLabourer()` encodes this condition.
+- **Capitalist.** The owner of money-capital (`MoneyCapital LabourMinutes`) who appears on the market to purchase labour-power. Both `Worker` and `Capitalist` embed `LabourAgent` (base) with stable `AgentID` identifiers.
+- **SubsistenceBasket / LabourPowerValue.** `SubsistenceBasket` is a slice of `SubsistenceItem` (name, SNLT in labour-minutes, essential flag). `LabourPowerValue` wraps a basket and exposes `DailyValue()`, `MinimumValue()` (essential items only), and `ReproductionCost()` (= `DailyValue()`).
+- **LabourPowerOffering.** A worker posts their capacity for sale for a finite `ContractDays` at an `AskingWage`; validated to prevent perpetual or zero-duration contracts (`ErrInvalidContract`).
+- **LabourPowerPurchase.** Records the act of buying labour-power: seller (Worker), buyer (Capitalist), `WageMinutes` per day, and `ContractDays`. Server validates that both parties exist in their respective roles.
+- **MySQL migration.** `00005_ch06_labour_power.sql` adds four tables: `labour_workers`, `labour_capitalists`, `labour_power_offerings`, `labour_power_purchases`.
+- **Endpoints.** `POST/GET /v1/workers`, `POST/GET /v1/capitalists`, `POST/GET /v1/labour-power/offerings`, `POST/GET/GET(id) /v1/labour-power/purchases`.
+
+The React UI adds a "Ch. 06 — The Sale and Purchase of Labour-Power" panel with worker registration, capitalist registration, offering posting, and purchase recording forms, plus live lists of all entities.

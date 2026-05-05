@@ -12,16 +12,17 @@ import (
 )
 
 type Handler struct {
-	Store        store.Store
-	CircuitStore store.CircuitStore
-	Logger       *slog.Logger
+	Store            store.Store
+	CircuitStore     store.CircuitStore
+	LabourPowerStore store.LabourPowerStore
+	Logger           *slog.Logger
 }
 
-func New(s store.Store, cs store.CircuitStore, logger *slog.Logger) *Handler {
+func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Store: s, CircuitStore: cs, Logger: logger}
+	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, Logger: logger}
 }
 
 type createAgentRequest struct {
@@ -149,7 +150,7 @@ func (h *Handler) CreateCircuit(w http.ResponseWriter, r *http.Request) {
 		writeAppError(w, err)
 		return
 	}
-	if (a.Class == agent.Worker || a.Class == agent.Owner) && req.CircuitType == agent.CircuitMCM {
+	if (a.Class == agent.WorkerClass || a.Class == agent.Owner) && req.CircuitType == agent.CircuitMCM {
 		writeError(w, http.StatusBadRequest, agent.ErrWrongClass.Error())
 		return
 	}

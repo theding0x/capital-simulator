@@ -289,3 +289,75 @@ export interface SimulateExchangeInput {
   a_value: number;
   b_value: number;
 }
+
+// --- agent-service types (Ch. 6: The Buying and Selling of Labour-Power) -----
+
+export interface LabourPower {
+  capacity_minutes_per_day: number; // labour-minutes
+}
+
+export interface SubsistenceItem {
+  name: string;
+  snlt_minutes: number; // labour-minutes
+  essential: boolean;
+}
+
+export interface LabourWorker {
+  id: string;
+  kind: "worker";
+  owns_labour_power: boolean;
+  owns_commodities_to_sell: boolean;
+  labour_power: LabourPower;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LabourCapitalist {
+  id: string;
+  kind: "capitalist";
+  money_capital: number; // labour-minutes (capital in value form)
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LabourPowerOffering {
+  id: string;
+  owner_id: string;
+  capacity_minutes_per_day: number; // labour-minutes
+  contract_days: number;
+  asking_wage: number; // labour-minutes
+  created_at: string;
+}
+
+export interface LabourPowerPurchase {
+  id: string;
+  seller_id: string;
+  buyer_id: string;
+  wage_minutes: number; // labour-minutes
+  contract_days: number;
+  created_at: string;
+}
+
+export interface CreateLabourWorkerInput {
+  owns_labour_power: boolean;
+  owns_commodities_to_sell: boolean;
+  capacity_minutes_per_day: number;
+}
+
+export interface CreateLabourCapitalistInput {
+  money_capital: number;
+}
+
+export interface CreateLabourPowerOfferingInput {
+  owner_id: string;
+  capacity_minutes_per_day: number;
+  contract_days: number;
+  asking_wage: number;
+}
+
+export interface CreateLabourPowerPurchaseInput {
+  seller_id: string;
+  buyer_id: string;
+  wage_minutes: number;
+  contract_days: number;
+}
