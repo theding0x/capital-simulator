@@ -75,3 +75,9 @@ type LabourPowerStore interface {
 	GetPurchase(ctx context.Context, id agent.PurchaseID) (agent.LabourPowerPurchase, error)
 	ListPurchases(ctx context.Context) ([]agent.LabourPowerPurchase, error)
 }
+
+// LabourProcessStore is the persistence contract for Ch. 7 labour process records.
+type LabourProcessStore interface {
+	CreateLabourProcess(ctx context.Context, lp agent.LabourProcess) (agent.LabourProcess, error)
+	GetLabourProcess(ctx context.Context, id agent.LabourProcessID) (agent.LabourProcess, error)
+}

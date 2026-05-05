@@ -26,4 +26,7 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/labour-power/purchases", h.CreatePurchase)
 	s.HandleFunc("GET /v1/labour-power/purchases", h.ListPurchases)
 	s.HandleFunc("GET /v1/labour-power/purchases/{id}", h.GetPurchase)
+	// Ch. 7 — The Labour-Process and the Production of Surplus-Value
+	s.HandleFunc("POST /v1/labour-processes", h.RunLabourProcess)
+	s.HandleFunc("GET /v1/labour-processes/{id}", h.GetLabourProcessRecord)
 }
