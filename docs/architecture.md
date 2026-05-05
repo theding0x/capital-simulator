@@ -73,7 +73,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 4     | ✅ Done     | Money → capital; M—C—M′, class positions, surplus-value  | agent-service                 |
 | Ch. 5     | ✅ Done     | Contradictions in the general formula; value conservation proof | agent-service |
 | Ch. 6     | ✅ Done     | Labour-power as commodity; workers, capitalists, labour-power value, wage, subsistence basket; buying and selling of labour-power | agent-service |
-| Ch. 7     | Pending     | Labour-process, valorization, surplus-value production   | agent-service, simulation-eng |
+| Ch. 7     | ✅ Done     | Labour-process, valorization, surplus-value production   | agent-service, simulation-eng |
 | Ch. 8-9   | Pending     | Constant/variable capital, rate of surplus-value         | commodity, simulation-eng     |
 | Ch. 10    | Pending     | The working day                                          | agent-service, simulation-eng |
 | Ch. 11+   | Pending     | Cooperation, machinery, wages, accumulation              | all                           |
@@ -157,3 +157,17 @@ The React UI adds a "Ch. 05 — Contradictions in the General Formula" panel wit
 - **Endpoints.** `POST/GET /v1/workers`, `POST/GET /v1/capitalists`, `POST/GET /v1/labour-power/offerings`, `POST/GET/GET(id) /v1/labour-power/purchases`.
 
 The React UI adds a "Ch. 06 — The Sale and Purchase of Labour-Power" panel with worker registration, capitalist registration, offering posting, and purchase recording forms, plus live lists of all entities.
+
+### Ch. 7 — what was built
+
+`agent-service` and `simulation-engine` model Capital Vol. I, Ch. 7 — the labour-process as the unity of the labour-process proper and the valorization process:
+
+- **LabourProcess.** `LabourProcess`, `LabourProcessID`, `NewLabourProcessID` — one purposeful act of production tying `WorkerID`, `CapitalistID`, `MeansOfProduction`, and `Duration` together. `Validate()` enforces §1.d: zero-duration runs and missing parties are rejected.
+- **MeansOfProduction.** `RawMaterial` (commodity reference + quantity + SNLT per unit) and `Instrument` (commodity reference + wear per run) — Marx's three factors of §1.c.
+- **ValorizationProcess.** Wraps a `LabourProcess`; exposes `NecessaryLabour()`, `SurplusLabour()`, `SurplusValue()`, and `ProductValue()`. All seven invariants from the spec are test-covered.
+- **Pure functions.** `TransferredValue(MeansOfProduction)` (constant capital), `ValueAdded(duration)` (living labour, identity for uniform skill), `SurplusLabour(wd, nl) = wd - nl`.
+- **Worker extension.** `Worker` gains `LabourPowerValueMinutes` — the daily reproduction cost of labour-power, snapshotted into each `LabourProcess` record at run-time.
+- **Store.** `LabourProcessStore` interface; `Memory` and `MySQL` implementations. Migration `00006` adds `labour_processes` table (means stored as JSON) and `labour_power_value_minutes` column on `labour_workers`.
+- **HTTP.** `POST /v1/labour-processes` (run a process; returns product + full valorization summary), `GET /v1/labour-processes/{id}` (fetch a recorded run). Proxied through api-gateway.
+- **ProductionRun.** `simulation-engine/engine.ProductionRun` type introduced; full tick scheduler deferred to Ch. 10+.
+- **React UI.** Ch. 07 panel: worker/capitalist picker, means-of-production builder (raw materials + instruments), working-day duration input, valorization result card (necessary / surplus labour breakdown, rate of surplus value, product total value).

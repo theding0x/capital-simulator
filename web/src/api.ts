@@ -40,6 +40,8 @@ import type {
   UpdateCommodityInput,
   ValueResponse,
   WorldMoneyTransfer,
+  RunLabourProcessInput,
+  RunLabourProcessResult,
 } from "./types";
 
 const BASE = "/api";
@@ -278,4 +280,15 @@ export const api = {
 
   getLabourPurchase: (id: string) =>
     http<LabourPowerPurchase>(`/v1/labour-power/purchases/${id}`),
+
+  // --- agent-service (Ch. 7: Labour-Process) ---
+
+  runLabourProcess: (input: RunLabourProcessInput) =>
+    http<RunLabourProcessResult>("/v1/labour-processes", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getLabourProcess: (id: string) =>
+    http<RunLabourProcessResult>(`/v1/labour-processes/${id}`),
 };

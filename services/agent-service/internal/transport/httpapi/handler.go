@@ -12,17 +12,18 @@ import (
 )
 
 type Handler struct {
-	Store            store.Store
-	CircuitStore     store.CircuitStore
-	LabourPowerStore store.LabourPowerStore
-	Logger           *slog.Logger
+	Store              store.Store
+	CircuitStore       store.CircuitStore
+	LabourPowerStore   store.LabourPowerStore
+	LabourProcessStore store.LabourProcessStore
+	Logger             *slog.Logger
 }
 
-func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, logger *slog.Logger) *Handler {
+func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, lproc store.LabourProcessStore, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, Logger: logger}
+	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, LabourProcessStore: lproc, Logger: logger}
 }
 
 type createAgentRequest struct {
@@ -331,7 +332,9 @@ func writeAppError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, err.Error())
 	case errors.Is(err, agent.ErrInsufficientFunds),
 		errors.Is(err, agent.ErrNotCapitalist),
-		errors.Is(err, agent.ErrWrongClass):
+		errors.Is(err, agent.ErrWrongClass),
+		errors.Is(err, agent.ErrInvalidProcess),
+		errors.Is(err, agent.ErrInvalidContract):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, err.Error())

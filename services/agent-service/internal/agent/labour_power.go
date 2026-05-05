@@ -70,9 +70,10 @@ type LabourPower struct {
 // of subsistence [§3, §4].
 type Worker struct {
 	LabourAgent
-	OwnsLabourPower       bool        `json:"owns_labour_power"`
-	OwnsCommoditiesToSell bool        `json:"owns_commodities_to_sell"`
-	LabourPower           LabourPower `json:"labour_power"`
+	OwnsLabourPower         bool          `json:"owns_labour_power"`
+	OwnsCommoditiesToSell   bool          `json:"owns_commodities_to_sell"`
+	LabourPower             LabourPower   `json:"labour_power"`
+	LabourPowerValueMinutes LabourMinutes `json:"labour_power_value_minutes"`
 }
 
 func (w Worker) Validate() error {

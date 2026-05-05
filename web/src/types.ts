@@ -308,6 +308,7 @@ export interface LabourWorker {
   owns_labour_power: boolean;
   owns_commodities_to_sell: boolean;
   labour_power: LabourPower;
+  labour_power_value_minutes: number; // LabourMinutes; daily reproduction cost
   created_at: string;
   updated_at: string;
 }
@@ -342,6 +343,7 @@ export interface CreateLabourWorkerInput {
   owns_labour_power: boolean;
   owns_commodities_to_sell: boolean;
   capacity_minutes_per_day: number;
+  labour_power_value_minutes?: number; // optional; defaults to 0 on the server
 }
 
 export interface CreateLabourCapitalistInput {
@@ -360,4 +362,62 @@ export interface CreateLabourPowerPurchaseInput {
   buyer_id: string;
   wage_minutes: number;
   contract_days: number;
+}
+
+// --- agent-service types (Ch. 7: The Labour-Process and Valorization) --------
+
+export interface RawMaterial {
+  commodity_id: string;
+  quantity: number;
+  snlt_per_unit: number; // LabourMinutes per unit
+}
+
+export interface Instrument {
+  commodity_id: string;
+  wear_per_run: number; // LabourMinutes transferred per run
+}
+
+export interface MeansOfProduction {
+  raw_materials: RawMaterial[];
+  instruments: Instrument[];
+}
+
+export interface LabourProcess {
+  id: string;
+  worker_id: string;
+  capitalist_id: string;
+  means: MeansOfProduction;
+  duration: number; // LabourMinutes
+  necessary_labour_minutes: number;
+  product_kind: string;
+  product_quantity: number;
+  created_at: string;
+}
+
+export interface Product {
+  commodity_kind: string;
+  quantity: number;
+  total_value: number; // LabourMinutes
+}
+
+export interface ValorizationSummary {
+  necessary_labour: number;
+  surplus_labour: number;
+  surplus_value: number;
+  product_value: number;
+}
+
+export interface RunLabourProcessResult {
+  labour_process: LabourProcess;
+  product: Product;
+  valorization: ValorizationSummary;
+}
+
+export interface RunLabourProcessInput {
+  worker_id: string;
+  capitalist_id: string;
+  means_of_production: MeansOfProduction;
+  duration_minutes: number;
+  product_kind: string;
+  product_quantity: number;
 }

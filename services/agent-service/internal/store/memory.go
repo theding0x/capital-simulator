@@ -19,6 +19,7 @@ type Memory struct {
 	labourCapitalists map[agent.AgentID]agent.Capitalist
 	offerings         map[agent.AgentID]agent.LabourPowerOffering
 	purchases         map[agent.PurchaseID]agent.LabourPowerPurchase
+	labourProcesses   map[agent.LabourProcessID]agent.LabourProcess
 	now               func() time.Time
 }
 
@@ -30,6 +31,7 @@ func NewMemory() *Memory {
 		labourCapitalists: make(map[agent.AgentID]agent.Capitalist),
 		offerings:         make(map[agent.AgentID]agent.LabourPowerOffering),
 		purchases:         make(map[agent.PurchaseID]agent.LabourPowerPurchase),
+		labourProcesses:   make(map[agent.LabourProcessID]agent.LabourProcess),
 		now:               time.Now,
 	}
 }
@@ -311,4 +313,28 @@ func (m *Memory) ListPurchases(_ context.Context) ([]agent.LabourPowerPurchase, 
 		return out[i].CreatedAt.Before(out[j].CreatedAt)
 	})
 	return out, nil
+}
+
+func (m *Memory) CreateLabourProcess(_ context.Context, lp agent.LabourProcess) (agent.LabourProcess, error) {
+	if err := lp.Validate(); err != nil {
+		return agent.LabourProcess{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if lp.ID.IsZero() {
+		lp.ID = agent.NewLabourProcessID()
+	}
+	lp.CreatedAt = m.now()
+	m.labourProcesses[lp.ID] = lp
+	return lp, nil
+}
+
+func (m *Memory) GetLabourProcess(_ context.Context, id agent.LabourProcessID) (agent.LabourProcess, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	lp, ok := m.labourProcesses[id]
+	if !ok {
+		return agent.LabourProcess{}, ErrNotFound
+	}
+	return lp, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"encoding/json"
 	"errors"
 	"io/fs"
 	"strings"
@@ -294,12 +295,14 @@ func (m *MySQL) CreateWorker(ctx context.Context, w agent.Worker) (agent.Worker,
 	w.UpdatedAt = now
 	w.Kind = agent.AgentKindWorker
 	const q = `INSERT INTO labour_workers
-		(id, kind, owns_labour_power, owns_commodities_to_sell, capacity_minutes_per_day, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`
+		(id, kind, owns_labour_power, owns_commodities_to_sell,
+		 capacity_minutes_per_day, labour_power_value_minutes, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := m.db.ExecContext(ctx, q,
 		string(w.ID), string(w.Kind),
 		w.OwnsLabourPower, w.OwnsCommoditiesToSell,
 		int64(w.LabourPower.CapacityMinutesPerDay),
+		int64(w.LabourPowerValueMinutes),
 		w.CreatedAt, w.UpdatedAt,
 	)
 	if err != nil {
@@ -310,7 +313,7 @@ func (m *MySQL) CreateWorker(ctx context.Context, w agent.Worker) (agent.Worker,
 
 func (m *MySQL) GetWorker(ctx context.Context, id agent.AgentID) (agent.Worker, error) {
 	const q = `SELECT id, kind, owns_labour_power, owns_commodities_to_sell,
-		capacity_minutes_per_day, created_at, updated_at
+		capacity_minutes_per_day, labour_power_value_minutes, created_at, updated_at
 		FROM labour_workers WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	return scanWorker(row)
@@ -318,7 +321,7 @@ func (m *MySQL) GetWorker(ctx context.Context, id agent.AgentID) (agent.Worker, 
 
 func (m *MySQL) ListWorkers(ctx context.Context) ([]agent.Worker, error) {
 	const q = `SELECT id, kind, owns_labour_power, owns_commodities_to_sell,
-		capacity_minutes_per_day, created_at, updated_at
+		capacity_minutes_per_day, labour_power_value_minutes, created_at, updated_at
 		FROM labour_workers ORDER BY created_at ASC`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
@@ -504,8 +507,9 @@ func (m *MySQL) ListPurchases(ctx context.Context) ([]agent.LabourPowerPurchase,
 func scanWorker(row *sql.Row) (agent.Worker, error) {
 	var w agent.Worker
 	var id, kind string
-	var cap int64
-	err := row.Scan(&id, &kind, &w.OwnsLabourPower, &w.OwnsCommoditiesToSell, &cap, &w.CreatedAt, &w.UpdatedAt)
+	var cap, lpv int64
+	err := row.Scan(&id, &kind, &w.OwnsLabourPower, &w.OwnsCommoditiesToSell,
+		&cap, &lpv, &w.CreatedAt, &w.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.Worker{}, ErrNotFound
 	}
@@ -515,19 +519,22 @@ func scanWorker(row *sql.Row) (agent.Worker, error) {
 	w.ID = agent.AgentID(id)
 	w.Kind = agent.AgentKind(kind)
 	w.LabourPower.CapacityMinutesPerDay = agent.LabourMinutes(cap)
+	w.LabourPowerValueMinutes = agent.LabourMinutes(lpv)
 	return w, nil
 }
 
 func scanWorkerRow(rows *sql.Rows) (agent.Worker, error) {
 	var w agent.Worker
 	var id, kind string
-	var cap int64
-	if err := rows.Scan(&id, &kind, &w.OwnsLabourPower, &w.OwnsCommoditiesToSell, &cap, &w.CreatedAt, &w.UpdatedAt); err != nil {
+	var cap, lpv int64
+	if err := rows.Scan(&id, &kind, &w.OwnsLabourPower, &w.OwnsCommoditiesToSell,
+		&cap, &lpv, &w.CreatedAt, &w.UpdatedAt); err != nil {
 		return agent.Worker{}, err
 	}
 	w.ID = agent.AgentID(id)
 	w.Kind = agent.AgentKind(kind)
 	w.LabourPower.CapacityMinutesPerDay = agent.LabourMinutes(cap)
+	w.LabourPowerValueMinutes = agent.LabourMinutes(lpv)
 	return w, nil
 }
 
@@ -567,4 +574,63 @@ func isDuplicate(err error) bool {
 	}
 	s := err.Error()
 	return strings.Contains(s, "1062") || strings.Contains(s, "Duplicate entry")
+}
+
+func (m *MySQL) CreateLabourProcess(ctx context.Context, lp agent.LabourProcess) (agent.LabourProcess, error) {
+	if err := lp.Validate(); err != nil {
+		return agent.LabourProcess{}, err
+	}
+	if lp.ID.IsZero() {
+		lp.ID = agent.NewLabourProcessID()
+	}
+	lp.CreatedAt = m.now().UTC()
+	meansJSON, err := json.Marshal(lp.Means)
+	if err != nil {
+		return agent.LabourProcess{}, err
+	}
+	const q = `INSERT INTO labour_processes
+		(id, worker_id, capitalist_id, duration, necessary_labour_minutes,
+		 means_json, product_kind, product_quantity, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(lp.ID), string(lp.WorkerID), string(lp.CapitalistID),
+		int64(lp.Duration), int64(lp.NecessaryLabourMinutes),
+		string(meansJSON), lp.ProductKind, lp.ProductQuantity,
+		lp.CreatedAt,
+	)
+	if err != nil {
+		return agent.LabourProcess{}, err
+	}
+	return lp, nil
+}
+
+func (m *MySQL) GetLabourProcess(ctx context.Context, id agent.LabourProcessID) (agent.LabourProcess, error) {
+	const q = `SELECT id, worker_id, capitalist_id, duration,
+		necessary_labour_minutes, means_json, product_kind, product_quantity, created_at
+		FROM labour_processes WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	return scanLabourProcess(row)
+}
+
+func scanLabourProcess(row *sql.Row) (agent.LabourProcess, error) {
+	var lp agent.LabourProcess
+	var id, workerID, capitalistID, meansJSON string
+	var dur, nl int64
+	err := row.Scan(&id, &workerID, &capitalistID, &dur, &nl,
+		&meansJSON, &lp.ProductKind, &lp.ProductQuantity, &lp.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.LabourProcess{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.LabourProcess{}, err
+	}
+	lp.ID = agent.LabourProcessID(id)
+	lp.WorkerID = agent.AgentID(workerID)
+	lp.CapitalistID = agent.AgentID(capitalistID)
+	lp.Duration = agent.LabourMinutes(dur)
+	lp.NecessaryLabourMinutes = agent.LabourMinutes(nl)
+	if err := json.Unmarshal([]byte(meansJSON), &lp.Means); err != nil {
+		return agent.LabourProcess{}, err
+	}
+	return lp, nil
 }
