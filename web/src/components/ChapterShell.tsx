@@ -6,6 +6,7 @@ import { Ch03Money } from "../chapters/Ch03Money";
 import { Ch04Capital } from "../chapters/Ch04Capital";
 import { Ch05Contradictions } from "../chapters/Ch05Contradictions";
 import { Ch06LabourPower } from "../chapters/Ch06LabourPower";
+import { Ch07LabourProcess } from "../chapters/Ch07LabourProcess";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -21,6 +22,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch04: "The circulation of commodities is the starting-point of capital.",
   ch05: "Circulation, or the exchange of commodities, begets no value.",
   ch06: "The owner of labour-power is mortal. If his appearance in the market is to be continuous, the seller of labour-power must perpetuate himself.",
+  ch07: "The secret of the self-expansion of capital resolves itself into having the disposal of a definite quantity of other people's unpaid labour.",
 };
 
 export function ChapterShell({
@@ -66,6 +68,8 @@ export function ChapterShell({
           <Ch05Contradictions onSharedChanged={onSharedChanged} />
         ) : activeChapterId === "ch06" ? (
           <Ch06LabourPower onSharedChanged={onSharedChanged} />
+        ) : activeChapterId === "ch07" ? (
+          <Ch07LabourProcess onSharedChanged={onSharedChanged} />
         ) : null}
       </div>
     </main>
