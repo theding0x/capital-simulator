@@ -10,19 +10,27 @@ import (
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/agent"
 )
 
-// Memory implements Store and CircuitStore for tests and local dev.
+// Memory implements Store, CircuitStore, and LabourPowerStore for tests and local dev.
 type Memory struct {
-	mu       sync.RWMutex
-	agents   map[agent.ID]agent.Agent
-	circuits map[agent.ID]agent.CapitalCircuit
-	now      func() time.Time
+	mu                sync.RWMutex
+	agents            map[agent.ID]agent.Agent
+	circuits          map[agent.ID]agent.CapitalCircuit
+	labourWorkers     map[agent.AgentID]agent.Worker
+	labourCapitalists map[agent.AgentID]agent.Capitalist
+	offerings         map[agent.AgentID]agent.LabourPowerOffering
+	purchases         map[agent.PurchaseID]agent.LabourPowerPurchase
+	now               func() time.Time
 }
 
 func NewMemory() *Memory {
 	return &Memory{
-		agents:   make(map[agent.ID]agent.Agent),
-		circuits: make(map[agent.ID]agent.CapitalCircuit),
-		now:      time.Now,
+		agents:            make(map[agent.ID]agent.Agent),
+		circuits:          make(map[agent.ID]agent.CapitalCircuit),
+		labourWorkers:     make(map[agent.AgentID]agent.Worker),
+		labourCapitalists: make(map[agent.AgentID]agent.Capitalist),
+		offerings:         make(map[agent.AgentID]agent.LabourPowerOffering),
+		purchases:         make(map[agent.PurchaseID]agent.LabourPowerPurchase),
+		now:               time.Now,
 	}
 }
 
@@ -156,6 +164,150 @@ func (m *Memory) ListCircuits(_ context.Context, agentID agent.ID) ([]agent.Capi
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
 			return out[i].ID < out[j].ID
 		}
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func (m *Memory) CreateWorker(_ context.Context, w agent.Worker) (agent.Worker, error) {
+	if err := w.Validate(); err != nil {
+		return agent.Worker{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if w.ID.IsZero() {
+		w.ID = agent.NewAgentID()
+	}
+	now := m.now()
+	w.CreatedAt = now
+	w.UpdatedAt = now
+	w.Kind = agent.AgentKindWorker
+	m.labourWorkers[w.ID] = w
+	return w, nil
+}
+
+func (m *Memory) GetWorker(_ context.Context, id agent.AgentID) (agent.Worker, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	w, ok := m.labourWorkers[id]
+	if !ok {
+		return agent.Worker{}, ErrNotFound
+	}
+	return w, nil
+}
+
+func (m *Memory) ListWorkers(_ context.Context) ([]agent.Worker, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.Worker, 0, len(m.labourWorkers))
+	for _, w := range m.labourWorkers {
+		out = append(out, w)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func (m *Memory) CreateCapitalist(_ context.Context, c agent.Capitalist) (agent.Capitalist, error) {
+	if err := c.Validate(); err != nil {
+		return agent.Capitalist{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if c.ID.IsZero() {
+		c.ID = agent.NewAgentID()
+	}
+	now := m.now()
+	c.CreatedAt = now
+	c.UpdatedAt = now
+	c.Kind = agent.AgentKindCapitalist
+	m.labourCapitalists[c.ID] = c
+	return c, nil
+}
+
+func (m *Memory) GetCapitalist(_ context.Context, id agent.AgentID) (agent.Capitalist, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	c, ok := m.labourCapitalists[id]
+	if !ok {
+		return agent.Capitalist{}, ErrNotFound
+	}
+	return c, nil
+}
+
+func (m *Memory) ListCapitalists(_ context.Context) ([]agent.Capitalist, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.Capitalist, 0, len(m.labourCapitalists))
+	for _, c := range m.labourCapitalists {
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func (m *Memory) CreateOffering(_ context.Context, o agent.LabourPowerOffering) (agent.LabourPowerOffering, error) {
+	if err := o.Validate(); err != nil {
+		return agent.LabourPowerOffering{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if o.ID.IsZero() {
+		o.ID = agent.NewAgentID()
+	}
+	o.CreatedAt = m.now()
+	m.offerings[o.ID] = o
+	return o, nil
+}
+
+func (m *Memory) ListOfferings(_ context.Context) ([]agent.LabourPowerOffering, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.LabourPowerOffering, 0, len(m.offerings))
+	for _, o := range m.offerings {
+		out = append(out, o)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func (m *Memory) CreatePurchase(_ context.Context, p agent.LabourPowerPurchase) (agent.LabourPowerPurchase, error) {
+	if err := p.Validate(); err != nil {
+		return agent.LabourPowerPurchase{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if p.ID.IsZero() {
+		p.ID = agent.NewPurchaseID()
+	}
+	p.CreatedAt = m.now()
+	m.purchases[p.ID] = p
+	return p, nil
+}
+
+func (m *Memory) GetPurchase(_ context.Context, id agent.PurchaseID) (agent.LabourPowerPurchase, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	p, ok := m.purchases[id]
+	if !ok {
+		return agent.LabourPowerPurchase{}, ErrNotFound
+	}
+	return p, nil
+}
+
+func (m *Memory) ListPurchases(_ context.Context) ([]agent.LabourPowerPurchase, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.LabourPowerPurchase, 0, len(m.purchases))
+	for _, p := range m.purchases {
+		out = append(out, p)
+	}
+	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.Before(out[j].CreatedAt)
 	})
 	return out, nil

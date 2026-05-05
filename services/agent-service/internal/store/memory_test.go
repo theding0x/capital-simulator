@@ -17,7 +17,7 @@ func TestMemory_CreateGet(t *testing.T) {
 	t.Parallel()
 	m := store.NewMemory()
 	ctx := context.Background()
-	created, err := m.Create(ctx, makeAgent(agent.Capitalist, 10000))
+	created, err := m.Create(ctx, makeAgent(agent.CapitalistClass, 10000))
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -46,23 +46,23 @@ func TestMemory_ListByClass(t *testing.T) {
 	t.Parallel()
 	m := store.NewMemory()
 	ctx := context.Background()
-	if _, err := m.Create(ctx, makeAgent(agent.Capitalist, 10000)); err != nil {
+	if _, err := m.Create(ctx, makeAgent(agent.CapitalistClass, 10000)); err != nil {
 		t.Fatalf("Create capitalist: %v", err)
 	}
-	if _, err := m.Create(ctx, makeAgent(agent.Worker, 500)); err != nil {
+	if _, err := m.Create(ctx, makeAgent(agent.WorkerClass, 500)); err != nil {
 		t.Fatalf("Create worker: %v", err)
 	}
-	if _, err := m.Create(ctx, agent.Agent{Name: "Worker2", Class: agent.Worker, MoneyBalance: 300}); err != nil {
+	if _, err := m.Create(ctx, agent.Agent{Name: "Worker2", Class: agent.WorkerClass, MoneyBalance: 300}); err != nil {
 		t.Fatalf("Create worker2: %v", err)
 	}
-	caps, err := m.ListByClass(ctx, agent.Capitalist)
+	caps, err := m.ListByClass(ctx, agent.CapitalistClass)
 	if err != nil {
 		t.Fatalf("ListByClass: %v", err)
 	}
 	if len(caps) != 1 {
 		t.Errorf("want 1 capitalist, got %d", len(caps))
 	}
-	workers, err := m.ListByClass(ctx, agent.Worker)
+	workers, err := m.ListByClass(ctx, agent.WorkerClass)
 	if err != nil {
 		t.Fatalf("ListByClass: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestMemory_Update(t *testing.T) {
 	t.Parallel()
 	m := store.NewMemory()
 	ctx := context.Background()
-	a, err := m.Create(ctx, makeAgent(agent.Capitalist, 10000))
+	a, err := m.Create(ctx, makeAgent(agent.CapitalistClass, 10000))
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestMemory_Delete(t *testing.T) {
 	t.Parallel()
 	m := store.NewMemory()
 	ctx := context.Background()
-	a, err := m.Create(ctx, makeAgent(agent.Capitalist, 10000))
+	a, err := m.Create(ctx, makeAgent(agent.CapitalistClass, 10000))
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestMemory_CreateCircuit_UpdatesBalance(t *testing.T) {
 	t.Parallel()
 	m := store.NewMemory()
 	ctx := context.Background()
-	a, err := m.Create(ctx, makeAgent(agent.Capitalist, 10000))
+	a, err := m.Create(ctx, makeAgent(agent.CapitalistClass, 10000))
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -143,7 +143,7 @@ func TestMemory_CreateCircuit_InsufficientFunds(t *testing.T) {
 	t.Parallel()
 	m := store.NewMemory()
 	ctx := context.Background()
-	a, err := m.Create(ctx, makeAgent(agent.Capitalist, 5000))
+	a, err := m.Create(ctx, makeAgent(agent.CapitalistClass, 5000))
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -165,7 +165,7 @@ func TestMemory_ListCircuits(t *testing.T) {
 	t.Parallel()
 	m := store.NewMemory()
 	ctx := context.Background()
-	a, err := m.Create(ctx, makeAgent(agent.Capitalist, 30000))
+	a, err := m.Create(ctx, makeAgent(agent.CapitalistClass, 30000))
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}

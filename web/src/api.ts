@@ -12,6 +12,10 @@ import type {
   CreateCommodityInput,
   CreateExchangeInput,
   CreateHoardInput,
+  CreateLabourCapitalistInput,
+  CreateLabourPowerOfferingInput,
+  CreateLabourPowerPurchaseInput,
+  CreateLabourWorkerInput,
   CreateOfferInput,
   CreateOwnerInput,
   CreatePaymentObligationInput,
@@ -20,6 +24,10 @@ import type {
   ExchangeRatio,
   ExchangeSimulation,
   Hoard,
+  LabourCapitalist,
+  LabourPowerOffering,
+  LabourPowerPurchase,
+  LabourWorker,
   MoneyCommodity,
   Offer,
   Owner,
@@ -231,4 +239,43 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // --- agent-service (Ch. 6: Labour-Power) ---
+
+  listLabourWorkers: () =>
+    http<{ items: LabourWorker[] }>("/v1/workers").then((r) => r.items),
+
+  createLabourWorker: (input: CreateLabourWorkerInput) =>
+    http<LabourWorker>("/v1/workers", { method: "POST", body: JSON.stringify(input) }),
+
+  getLabourWorker: (id: string) => http<LabourWorker>(`/v1/workers/${id}`),
+
+  listLabourCapitalists: () =>
+    http<{ items: LabourCapitalist[] }>("/v1/capitalists").then((r) => r.items),
+
+  createLabourCapitalist: (input: CreateLabourCapitalistInput) =>
+    http<LabourCapitalist>("/v1/capitalists", { method: "POST", body: JSON.stringify(input) }),
+
+  getLabourCapitalist: (id: string) => http<LabourCapitalist>(`/v1/capitalists/${id}`),
+
+  listOfferings: () =>
+    http<{ items: LabourPowerOffering[] }>("/v1/labour-power/offerings").then((r) => r.items),
+
+  createOffering: (input: CreateLabourPowerOfferingInput) =>
+    http<LabourPowerOffering>("/v1/labour-power/offerings", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listLabourPurchases: () =>
+    http<{ items: LabourPowerPurchase[] }>("/v1/labour-power/purchases").then((r) => r.items),
+
+  createLabourPurchase: (input: CreateLabourPowerPurchaseInput) =>
+    http<LabourPowerPurchase>("/v1/labour-power/purchases", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getLabourPurchase: (id: string) =>
+    http<LabourPowerPurchase>(`/v1/labour-power/purchases/${id}`),
 };
