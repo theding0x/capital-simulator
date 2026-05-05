@@ -19,6 +19,7 @@ const serviceName = "agent-service"
 type agentStore interface {
 	store.Store
 	store.CircuitStore
+	store.LabourPowerStore
 }
 
 func main() {
@@ -40,7 +41,7 @@ func main() {
 	addr := getenv("SERVICE_ADDR", ":8082")
 	srv := httpx.New(httpx.Config{Addr: addr}, logger)
 
-	httpapi.Register(srv, httpapi.New(st, st, logger))
+	httpapi.Register(srv, httpapi.New(st, st, st, logger))
 	srv.MarkReady(true)
 
 	if err := srv.Run(ctx); err != nil {

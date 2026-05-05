@@ -14,10 +14,10 @@ type Pence int64
 type CircuitType string
 
 const (
-	Capitalist Class = "capitalist"
-	Worker     Class = "worker"
-	Miser      Class = "miser"
-	Owner      Class = "owner"
+	CapitalistClass Class = "capitalist"
+	WorkerClass     Class = "worker"
+	Miser           Class = "miser"
+	Owner           Class = "owner"
 )
 
 const (
@@ -69,7 +69,7 @@ func (a Agent) Validate() error {
 		return errors.New("agent: name is required")
 	}
 	switch a.Class {
-	case Capitalist, Worker, Miser, Owner:
+	case CapitalistClass, WorkerClass, Miser, Owner:
 	default:
 		return errors.New("agent: unknown class")
 	}
@@ -123,7 +123,7 @@ func (a Agent) Realise(circuit CapitalCircuit) Agent {
 // Reinvest creates a new M-C-M' circuit using the agent's full balance as
 // MAdvanced. Valid only for Capitalist agents.
 func (a Agent) Reinvest(commodityID string, mReturned Pence) (CapitalCircuit, Agent, error) {
-	if a.Class != Capitalist {
+	if a.Class != CapitalistClass {
 		return CapitalCircuit{}, Agent{}, ErrNotCapitalist
 	}
 	if a.MoneyBalance <= 0 {
