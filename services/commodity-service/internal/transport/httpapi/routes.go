@@ -14,4 +14,13 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/commodities/{id}/value-form", h.ValueForm)
 	s.HandleFunc("GET /v1/commodities/{id}/social-relations", h.SocialRelations)
 	s.HandleFunc("POST /v1/exchange-ratio", h.ExchangeRatio)
+
+	// Ch. 8 — Constant & Variable Capital (stateless)
+	s.HandleFunc("POST /v1/capital/decompose", h.DecomposeCapital)
+	s.HandleFunc("GET /v1/capital/composition", h.CapitalCompositionHandler)
+	// Ch. 9 — Rate of Surplus-Value
+	s.HandleFunc("POST /v1/production-accounts", h.CreateProductionAccount)
+	s.HandleFunc("GET /v1/production-accounts", h.ListProductionAccounts)
+	s.HandleFunc("GET /v1/production-accounts/{id}", h.GetProductionAccount)
+	s.HandleFunc("POST /v1/rate-of-surplus-value", h.RateOfSurplusValue)
 }

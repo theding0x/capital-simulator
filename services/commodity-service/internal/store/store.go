@@ -71,3 +71,12 @@ type Store interface {
 	Update(ctx context.Context, id commodity.ID, u Update) (commodity.Commodity, error)
 	Delete(ctx context.Context, id commodity.ID) error
 }
+
+// ProductionAccountStore is the persistence contract for Ch. 8-9 production accounts.
+// Production accounts record constant capital (c), variable capital (v), and surplus (s)
+// for a single production run, with all values measured in labour-minutes.
+type ProductionAccountStore interface {
+	CreateProductionAccount(ctx context.Context, a commodity.ProductionAccount) (commodity.ProductionAccount, error)
+	GetProductionAccount(ctx context.Context, id commodity.ProductionAccountID) (commodity.ProductionAccount, error)
+	ListProductionAccounts(ctx context.Context) ([]commodity.ProductionAccount, error)
+}

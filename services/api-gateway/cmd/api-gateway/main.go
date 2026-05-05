@@ -36,6 +36,13 @@ func main() {
 	srv.Handle("/v1/commodities/{rest...}", commodityProxy)
 	srv.Handle("/v1/exchange-ratio", commodityProxy)
 
+	// Ch. 8-9 — capital decomposition and production accounts → commodity-service
+	srv.Handle("/v1/capital", commodityProxy)
+	srv.Handle("/v1/capital/{rest...}", commodityProxy)
+	srv.Handle("/v1/production-accounts", commodityProxy)
+	srv.Handle("/v1/production-accounts/{rest...}", commodityProxy)
+	srv.Handle("/v1/rate-of-surplus-value", commodityProxy)
+
 	// Reverse-proxy routes to market-service.
 	marketURL := getenv("MARKET_SERVICE_URL", "http://market-service:8083")
 	marketProxy, err := proxy.New(marketURL, logger)
@@ -89,7 +96,7 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-7-labour-process",
+		"status":      "ch-9-rate-of-surplus-value",
 		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
 		"downstream": []string{
 			"commodity-service",
@@ -97,7 +104,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 7 - The Labour-Process and the Production of Surplus-Value",
+		"chapter": "Capital Vol. I, Ch. 9 - The Rate of Surplus-Value",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)

@@ -196,3 +196,81 @@ func isDuplicate(err error) bool {
 	s := err.Error()
 	return strings.Contains(s, "1062") || strings.Contains(s, "Duplicate entry")
 }
+
+func (m *MySQL) CreateProductionAccount(ctx context.Context, a commodity.ProductionAccount) (commodity.ProductionAccount, error) {
+	if err := a.Validate(); err != nil {
+		return commodity.ProductionAccount{}, err
+	}
+	if a.ID.IsZero() {
+		a.ID = commodity.NewProductionAccountID()
+	}
+	a.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO production_accounts (id, constant, variable, surplus, created_at) VALUES (?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID),
+		int64(a.Constant),
+		int64(a.Variable),
+		int64(a.Surplus),
+		a.CreatedAt,
+	)
+	if err != nil {
+		return commodity.ProductionAccount{}, err
+	}
+	return a, nil
+}
+
+func (m *MySQL) GetProductionAccount(ctx context.Context, id commodity.ProductionAccountID) (commodity.ProductionAccount, error) {
+	const q = `SELECT id, constant, variable, surplus, created_at FROM production_accounts WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	return scanProductionAccount(row)
+}
+
+func (m *MySQL) ListProductionAccounts(ctx context.Context) ([]commodity.ProductionAccount, error) {
+	const q = `SELECT id, constant, variable, surplus, created_at FROM production_accounts ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []commodity.ProductionAccount
+	for rows.Next() {
+		a, err := scanProductionAccountRow(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
+func scanProductionAccount(row *sql.Row) (commodity.ProductionAccount, error) {
+	var a commodity.ProductionAccount
+	var id string
+	var c, v, s int64
+	err := row.Scan(&id, &c, &v, &s, &a.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return commodity.ProductionAccount{}, ErrNotFound
+	}
+	if err != nil {
+		return commodity.ProductionAccount{}, err
+	}
+	a.ID = commodity.ProductionAccountID(id)
+	a.Constant = commodity.LabourMinutes(c)
+	a.Variable = commodity.LabourMinutes(v)
+	a.Surplus = commodity.SurplusValue(s)
+	return a, nil
+}
+
+func scanProductionAccountRow(rows *sql.Rows) (commodity.ProductionAccount, error) {
+	var a commodity.ProductionAccount
+	var id string
+	var c, v, s int64
+	if err := rows.Scan(&id, &c, &v, &s, &a.CreatedAt); err != nil {
+		return commodity.ProductionAccount{}, err
+	}
+	a.ID = commodity.ProductionAccountID(id)
+	a.Constant = commodity.LabourMinutes(c)
+	a.Variable = commodity.LabourMinutes(v)
+	a.Surplus = commodity.SurplusValue(s)
+	return a, nil
+}
