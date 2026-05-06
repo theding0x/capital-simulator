@@ -28,7 +28,7 @@ primary_service: simulation-engine
 
 - **§1** `"a variable capital of 300s. will produce a daily surplus-value of 300s."` (100 labourers, rate 100%) → `MassByWorkers(LabourPowerValue(3), SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 6}, WorkerCount(100)) == SurplusValueMass(300)`
 
-- **§1** `"if the rate of surplus-value doubles … and at the same time variable capital is lessened by half … it yields also a surplus-value of 150s."` (rate 100%→200%, capital 300s→150s, workers 100→50) → `MassByRate(SurplusValueRate{SurplusLabour: 12, NecessaryLabour: 6}, VariableCapital(150)) == SurplusValueMass(150)`
+- **§1** `"if the rate of surplus-value doubles … and at the same time variable capital is lessened by half … it yields also a surplus-value of 150s."` (rate 100%→200%, capital 300s→150s, workers 100→50) → `MassByRate(SurplusValueRate{SurplusLabour: 12, NecessaryLabour: 6}, VariableCapital(150)) == SurplusValueMass(300)` *(note: the Marx quote says "150s" but S = (12/6)×150 = 300; the compensation law keeps S constant when rate doubles and workers halve — the expected value is 300, not 150)*
 
 - **§1** `"a variable capital of 1,500s., that employs 500 labourers at a rate of surplus-value of 100% … produces daily a surplus-value of 1,500s."` → `MassByRate(SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 6}, VariableCapital(1500)) == SurplusValueMass(1500)`
 
