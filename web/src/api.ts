@@ -55,6 +55,9 @@ import type {
   WorkingDayResponse,
   CreateRelayScheduleInput,
   RelaySchedule,
+  ComputeMassInput,
+  SurplusLimitsResponse,
+  SurplusValueSnapshot,
 } from "./types";
 
 const BASE = "/api";
@@ -365,4 +368,20 @@ export const api = {
 
   getRelaySchedule: (id: string) =>
     http<RelaySchedule>(`/v1/relay-schedules/${id}`),
+
+  // --- simulation-engine (Ch. 11: Rate and Mass of Surplus-Value) ---
+
+  computeSurplusMass: (input: ComputeMassInput) =>
+    http<SurplusValueSnapshot>("/v1/surplus/mass", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getSurplusLimits: (labourPowerValue?: number, workerCount?: number) => {
+    const params = new URLSearchParams();
+    if (labourPowerValue !== undefined) params.set("labour_power_value", String(labourPowerValue));
+    if (workerCount !== undefined) params.set("worker_count", String(workerCount));
+    const qs = params.toString();
+    return http<SurplusLimitsResponse>(`/v1/surplus/limits${qs ? `?${qs}` : ""}`);
+  },
 };
