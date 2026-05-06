@@ -551,3 +551,34 @@ export interface RelaySetInput {
 export interface CreateRelayScheduleInput {
   sets: [RelaySetInput, RelaySetInput];
 }
+
+// --- simulation-engine types (Ch. 11: Rate and Mass of Surplus-Value) ---------
+
+export interface SurplusValueRate {
+  surplus_labour: number;   // LabourMinutes
+  necessary_labour: number; // LabourMinutes
+}
+
+export interface SurplusValueSnapshot {
+  rate: SurplusValueRate;
+  variable_capital: number;
+  worker_count?: number;     // omitted when worker-count formula not used
+  mass: number;              // primary result
+  mass_by_rate: number;      // formula I: (s/v) × V
+  mass_by_workers?: number;  // omitted when worker-count formula not used
+}
+
+export interface ComputeMassInput {
+  surplus_labour: number;
+  necessary_labour: number;
+  variable_capital?: number;
+  labour_power_value?: number;
+  worker_count?: number;
+}
+
+export interface SurplusLimitsResponse {
+  absolute_workday_limit: number; // always 1440
+  minimum_capital?: number;
+  labour_power_value?: number;
+  worker_count?: number;
+}
