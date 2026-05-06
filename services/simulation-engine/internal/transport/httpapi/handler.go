@@ -32,6 +32,17 @@ type massRequest struct {
 	WorkerCount      *int   `json:"worker_count,omitempty"`
 }
 
+// massResponse is the response DTO for POST /v1/surplus/mass.
+// Optional fields use pointers so they are omitted when not computed.
+type massResponse struct {
+	Rate            surplus.SurplusValueRate `json:"rate"`
+	VariableCapital int64                    `json:"variable_capital"`
+	WorkerCount     *int                     `json:"worker_count,omitempty"`
+	Mass            int64                    `json:"mass"`
+	MassByRate      int64                    `json:"mass_by_rate"`
+	MassByWorkers   *int64                   `json:"mass_by_workers,omitempty"`
+}
+
 // ComputeMass handles POST /v1/surplus/mass.
 func (h *Handler) ComputeMass(w http.ResponseWriter, r *http.Request) {
 	var req massRequest
@@ -47,6 +58,18 @@ func (h *Handler) ComputeMass(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "surplus_labour cannot be negative")
 		return
 	}
+	if req.VariableCapital != nil && *req.VariableCapital <= 0 {
+		writeError(w, http.StatusBadRequest, "variable_capital must be positive")
+		return
+	}
+	if req.LabourPowerValue != nil && *req.LabourPowerValue <= 0 {
+		writeError(w, http.StatusBadRequest, "labour_power_value must be positive")
+		return
+	}
+	if req.WorkerCount != nil && *req.WorkerCount <= 0 {
+		writeError(w, http.StatusBadRequest, "worker_count must be positive")
+		return
+	}
 	if req.VariableCapital == nil && (req.LabourPowerValue == nil || req.WorkerCount == nil) {
 		writeError(w, http.StatusBadRequest, "provide variable_capital or both labour_power_value and worker_count")
 		return
@@ -57,35 +80,36 @@ func (h *Handler) ComputeMass(w http.ResponseWriter, r *http.Request) {
 		NecessaryLabour: req.NecessaryLabour,
 	}
 
-	var snap surplus.SurplusValueSnapshot
-	snap.Rate = rate
+	resp := massResponse{Rate: rate}
 
+	var vc surplus.VariableCapital
 	if req.VariableCapital != nil {
-		vc := surplus.VariableCapital(*req.VariableCapital)
-		snap.VariableCapital = vc
-		snap.MassByRate = surplus.MassByRate(rate, vc)
+		vc = surplus.VariableCapital(*req.VariableCapital)
 	}
+
 	if req.LabourPowerValue != nil && req.WorkerCount != nil {
 		v := surplus.LabourPowerValue(*req.LabourPowerValue)
 		n := surplus.WorkerCount(*req.WorkerCount)
-		snap.WorkerCount = n
-		snap.MassByWorkers = surplus.MassByWorkers(v, rate, n)
-		// Derive variable_capital if not supplied
+		wc := int(*req.WorkerCount)
+		resp.WorkerCount = &wc
+		mw := int64(surplus.MassByWorkers(v, rate, n))
+		resp.MassByWorkers = &mw
 		if req.VariableCapital == nil {
-			vc := surplus.MinimumCapital(v, n)
-			snap.VariableCapital = vc
-			snap.MassByRate = surplus.MassByRate(rate, vc)
+			vc = surplus.MinimumCapital(v, n)
 		}
 	}
 
-	// Primary mass: prefer worker-count formula when both available, else rate formula.
-	if req.LabourPowerValue != nil && req.WorkerCount != nil {
-		snap.Mass = snap.MassByWorkers
+	resp.VariableCapital = int64(vc)
+	resp.MassByRate = int64(surplus.MassByRate(rate, vc))
+
+	// Primary mass: prefer worker formula when available, else rate formula.
+	if resp.MassByWorkers != nil {
+		resp.Mass = *resp.MassByWorkers
 	} else {
-		snap.Mass = snap.MassByRate
+		resp.Mass = resp.MassByRate
 	}
 
-	writeJSON(w, http.StatusOK, snap)
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // limitsResponse is the GET /v1/surplus/limits response shape.
