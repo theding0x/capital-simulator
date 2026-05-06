@@ -11,6 +11,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/pkg/httpx"
 	applog "github.com/theding0x/capital-simulator/pkg/log"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/transport/httpapi"
 )
 
 const serviceName = "simulation-engine"
@@ -23,6 +24,11 @@ func main() {
 	srv := httpx.New(httpx.Config{Addr: addr}, logger)
 
 	srv.HandleFunc("/v1/sim/status", handleStatus)
+
+	// Ch. 11 — Rate and Mass of Surplus-Value
+	h := httpapi.New(logger)
+	httpapi.Register(srv, h)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -34,7 +40,7 @@ func main() {
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "scaffolded",
+		"status":      "ch-11-rate-mass-surplus-value",
 		"description": "Drives the simulated economy forward one period at a time.",
 		"tick":        0,
 		"running":     false,
