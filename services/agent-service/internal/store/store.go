@@ -81,3 +81,11 @@ type LabourProcessStore interface {
 	CreateLabourProcess(ctx context.Context, lp agent.LabourProcess) (agent.LabourProcess, error)
 	GetLabourProcess(ctx context.Context, id agent.LabourProcessID) (agent.LabourProcess, error)
 }
+
+// WorkingDayStore is the persistence contract for Ch. 10 working-day records.
+type WorkingDayStore interface {
+	CreateWorkingDay(ctx context.Context, wd agent.WorkingDay) (agent.WorkingDay, error)
+	GetWorkingDay(ctx context.Context, id agent.WorkingDayID) (agent.WorkingDay, error)
+	CreateRelaySchedule(ctx context.Context, rs agent.RelaySchedule) (agent.RelaySchedule, error)
+	GetRelaySchedule(ctx context.Context, id agent.RelayScheduleID) (agent.RelaySchedule, error)
+}
