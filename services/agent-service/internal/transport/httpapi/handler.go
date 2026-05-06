@@ -16,14 +16,15 @@ type Handler struct {
 	CircuitStore       store.CircuitStore
 	LabourPowerStore   store.LabourPowerStore
 	LabourProcessStore store.LabourProcessStore
+	WorkingDayStore    store.WorkingDayStore
 	Logger             *slog.Logger
 }
 
-func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, lproc store.LabourProcessStore, logger *slog.Logger) *Handler {
+func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, lproc store.LabourProcessStore, wds store.WorkingDayStore, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, LabourProcessStore: lproc, Logger: logger}
+	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, LabourProcessStore: lproc, WorkingDayStore: wds, Logger: logger}
 }
 
 type createAgentRequest struct {
@@ -334,7 +335,10 @@ func writeAppError(w http.ResponseWriter, err error) {
 		errors.Is(err, agent.ErrNotCapitalist),
 		errors.Is(err, agent.ErrWrongClass),
 		errors.Is(err, agent.ErrInvalidProcess),
-		errors.Is(err, agent.ErrInvalidContract):
+		errors.Is(err, agent.ErrInvalidContract),
+		errors.Is(err, agent.ErrWorkingDayExceedsPhysicalMax),
+		errors.Is(err, agent.ErrWorkingDayExceedsStatutoryLimit),
+		errors.Is(err, agent.ErrNecessaryLabourRequired):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, err.Error())
