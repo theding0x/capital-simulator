@@ -124,3 +124,35 @@ func TestInvariant_WorkingDayBelowAbsoluteLimit(t *testing.T) {
 		t.Fatalf("working day %d must be < %d", total, surplus.AbsoluteWorkdayLimit)
 	}
 }
+
+func TestRate_ZeroNecessaryLabour(t *testing.T) {
+	t.Parallel()
+	rate := surplus.SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 0}
+	if got := rate.Rate(); got != 0 {
+		t.Fatalf("expected 0 for zero necessary_labour, got %f", got)
+	}
+}
+
+func TestMassByRate_ZeroNecessaryLabour(t *testing.T) {
+	t.Parallel()
+	rate := surplus.SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 0}
+	if got := surplus.MassByRate(rate, surplus.VariableCapital(300)); got != 0 {
+		t.Fatalf("expected 0 for zero necessary_labour, got %d", got)
+	}
+}
+
+func TestMassByWorkers_ZeroNecessaryLabour(t *testing.T) {
+	t.Parallel()
+	rate := surplus.SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 0}
+	if got := surplus.MassByWorkers(surplus.LabourPowerValue(3), rate, surplus.WorkerCount(100)); got != 0 {
+		t.Fatalf("expected 0 for zero necessary_labour, got %d", got)
+	}
+}
+
+func TestIndividualSurplus_ZeroNecessaryLabour(t *testing.T) {
+	t.Parallel()
+	rate := surplus.SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 0}
+	if got := surplus.IndividualSurplus(rate, surplus.LabourPowerValue(3)); got != 0 {
+		t.Fatalf("expected 0 for zero necessary_labour, got %d", got)
+	}
+}
