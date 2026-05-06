@@ -493,3 +493,61 @@ export interface RateOfSurplusValueResult {
   value_product: number;
   surplus_produce_fraction: number;
 }
+
+// --- agent-service types (Ch. 10: The Working-Day) ---------------------------
+
+export interface WorkingDay {
+  id: string;
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+  created_at: string;
+}
+
+export interface WorkingDayResponse {
+  working_day: WorkingDay;
+  total_minutes: number;
+  rate_of_surplus_value: number;
+  exceeds_statutory?: boolean;
+}
+
+export interface ValidateWorkingDayResponse {
+  total_minutes: number;
+  rate_of_surplus_value: number;
+  valid: boolean;
+  error?: string;
+}
+
+export interface RelaySet {
+  shift_kind: "day" | "night";
+  working_day: WorkingDay;
+  worker_ids: string[];
+}
+
+export interface RelaySchedule {
+  id: string;
+  sets: [RelaySet, RelaySet];
+  created_at: string;
+}
+
+export interface CreateWorkingDayInput {
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+  statutory_limit_minutes?: number;
+}
+
+export interface ValidateWorkingDayInput {
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+  statutory_limit_minutes?: number;
+}
+
+export interface RelaySetInput {
+  shift_kind: "day" | "night";
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+  worker_ids: string[];
+}
+
+export interface CreateRelayScheduleInput {
+  sets: [RelaySetInput, RelaySetInput];
+}
