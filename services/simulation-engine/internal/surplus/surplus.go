@@ -39,17 +39,6 @@ type LabourPowerValue int64
 // WorkerCount is the number of simultaneously employed workers [§1].
 type WorkerCount int
 
-// SurplusValueSnapshot carries the aggregate calculation result returned by
-// POST /v1/surplus/mass. Both formula results are included for cross-validation.
-type SurplusValueSnapshot struct {
-	Rate            SurplusValueRate `json:"rate"`
-	VariableCapital VariableCapital  `json:"variable_capital"`
-	WorkerCount     WorkerCount      `json:"worker_count"`
-	Mass            SurplusValueMass `json:"mass"`
-	MassByRate      SurplusValueMass `json:"mass_by_rate"`
-	MassByWorkers   SurplusValueMass `json:"mass_by_workers"`
-}
-
 // IndividualSurplus returns the surplus-value produced by a single worker
 // given the rate and the value of their labour-power [§1].
 // s_individual = v × (a′/a) = v × SurplusLabour / NecessaryLabour
