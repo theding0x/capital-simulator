@@ -20,6 +20,8 @@ type Memory struct {
 	offerings         map[agent.AgentID]agent.LabourPowerOffering
 	purchases         map[agent.PurchaseID]agent.LabourPowerPurchase
 	labourProcesses   map[agent.LabourProcessID]agent.LabourProcess
+	workingDays       map[agent.WorkingDayID]agent.WorkingDay
+	relaySchedules    map[agent.RelayScheduleID]agent.RelaySchedule
 	now               func() time.Time
 }
 
@@ -32,6 +34,8 @@ func NewMemory() *Memory {
 		offerings:         make(map[agent.AgentID]agent.LabourPowerOffering),
 		purchases:         make(map[agent.PurchaseID]agent.LabourPowerPurchase),
 		labourProcesses:   make(map[agent.LabourProcessID]agent.LabourProcess),
+		workingDays:       make(map[agent.WorkingDayID]agent.WorkingDay),
+		relaySchedules:    make(map[agent.RelayScheduleID]agent.RelaySchedule),
 		now:               time.Now,
 	}
 }
@@ -337,4 +341,52 @@ func (m *Memory) GetLabourProcess(_ context.Context, id agent.LabourProcessID) (
 		return agent.LabourProcess{}, ErrNotFound
 	}
 	return lp, nil
+}
+
+func (m *Memory) CreateWorkingDay(_ context.Context, wd agent.WorkingDay) (agent.WorkingDay, error) {
+	if err := wd.Validate(); err != nil {
+		return agent.WorkingDay{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if wd.ID.IsZero() {
+		wd.ID = agent.NewWorkingDayID()
+	}
+	wd.CreatedAt = m.now()
+	m.workingDays[wd.ID] = wd
+	return wd, nil
+}
+
+func (m *Memory) GetWorkingDay(_ context.Context, id agent.WorkingDayID) (agent.WorkingDay, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	wd, ok := m.workingDays[id]
+	if !ok {
+		return agent.WorkingDay{}, ErrNotFound
+	}
+	return wd, nil
+}
+
+func (m *Memory) CreateRelaySchedule(_ context.Context, rs agent.RelaySchedule) (agent.RelaySchedule, error) {
+	if err := rs.Validate(); err != nil {
+		return agent.RelaySchedule{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if rs.ID.IsZero() {
+		rs.ID = agent.NewRelayScheduleID()
+	}
+	rs.CreatedAt = m.now()
+	m.relaySchedules[rs.ID] = rs
+	return rs, nil
+}
+
+func (m *Memory) GetRelaySchedule(_ context.Context, id agent.RelayScheduleID) (agent.RelaySchedule, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	rs, ok := m.relaySchedules[id]
+	if !ok {
+		return agent.RelaySchedule{}, ErrNotFound
+	}
+	return rs, nil
 }
