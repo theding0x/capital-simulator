@@ -91,6 +91,19 @@ func main() {
 	srv.Handle("/v1/relay-schedules", agentProxy)
 	srv.Handle("/v1/relay-schedules/{rest...}", agentProxy)
 
+	// Reverse-proxy routes to simulation-engine.
+	simURL := getenv("SIM_ENGINE_URL", "http://simulation-engine:8084")
+	simProxy, err := proxy.New(simURL, logger)
+	if err != nil {
+		logger.Error("failed to build simulation-engine proxy", "err", err)
+		os.Exit(1)
+	}
+	srv.Handle("/v1/sim/status", simProxy)
+
+	// Ch. 11 — Rate and Mass of Surplus-Value → simulation-engine
+	srv.Handle("/v1/surplus/mass", simProxy)
+	srv.Handle("/v1/surplus/limits", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -102,7 +115,7 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-10-working-day",
+		"status":      "ch-11-rate-mass-surplus-value",
 		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
 		"downstream": []string{
 			"commodity-service",
@@ -110,7 +123,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 10 - The Working-Day",
+		"chapter": "Capital Vol. I, Ch. 11 - The Rate and Mass of Surplus-Value",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
