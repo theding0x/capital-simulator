@@ -19,6 +19,13 @@ import (
 
 const serviceName = "commodity-service"
 
+// commodityStore embeds both store interfaces, enabling the openStore return
+// type to be used by handlers requiring either Store or ProductionAccountStore.
+type commodityStore interface {
+	store.Store
+	store.ProductionAccountStore
+}
+
 func main() {
 	logger := applog.New(serviceName)
 	applog.SetDefault(logger)
@@ -40,7 +47,7 @@ func main() {
 	addr := getenv("SERVICE_ADDR", ":8081")
 	srv := httpx.New(httpx.Config{Addr: addr}, logger)
 
-	httpapi.Register(srv, httpapi.New(st, logger))
+	httpapi.Register(srv, httpapi.New(st, st, logger))
 	srv.MarkReady(true)
 
 	if err := srv.Run(ctx); err != nil {
@@ -50,8 +57,8 @@ func main() {
 }
 
 // openStore tries MySQL first; if MYSQL_DISABLED=true or the dial fails and
-// FALLBACK_MEMORY=true, returns an in-memory store. Returns (store, *mysql.DB or nil, error).
-func openStore(ctx context.Context, logger *slog.Logger) (store.Store, *pmysql.DB, error) {
+// FALLBACK_MEMORY=true, returns an in-memory store. Returns (commodityStore, *mysql.DB or nil, error).
+func openStore(ctx context.Context, logger *slog.Logger) (commodityStore, *pmysql.DB, error) {
 	if strings.EqualFold(os.Getenv("MYSQL_DISABLED"), "true") {
 		logger.Warn("MYSQL_DISABLED=true; using in-memory store")
 		return store.NewMemory(), nil, nil

@@ -13,16 +13,18 @@ import (
 // Memory is an in-memory Store. Used by unit tests and as a fallback when
 // MongoDB is unavailable in local development.
 type Memory struct {
-	mu    sync.RWMutex
-	items map[commodity.ID]commodity.Commodity
-	now   func() time.Time
+	mu       sync.RWMutex
+	items    map[commodity.ID]commodity.Commodity
+	accounts map[commodity.ProductionAccountID]commodity.ProductionAccount
+	now      func() time.Time
 }
 
 // NewMemory returns an empty Memory store.
 func NewMemory() *Memory {
 	return &Memory{
-		items: make(map[commodity.ID]commodity.Commodity),
-		now:   time.Now,
+		items:    make(map[commodity.ID]commodity.Commodity),
+		accounts: make(map[commodity.ProductionAccountID]commodity.ProductionAccount),
+		now:      time.Now,
 	}
 }
 
@@ -114,3 +116,40 @@ func (m *Memory) Delete(_ context.Context, id commodity.ID) error {
 }
 
 func normalizeName(s string) string { return strings.ToLower(strings.TrimSpace(s)) }
+
+func (m *Memory) CreateProductionAccount(_ context.Context, a commodity.ProductionAccount) (commodity.ProductionAccount, error) {
+	if err := a.Validate(); err != nil {
+		return commodity.ProductionAccount{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if a.ID.IsZero() {
+		a.ID = commodity.NewProductionAccountID()
+	}
+	a.CreatedAt = m.now()
+	m.accounts[a.ID] = a
+	return a, nil
+}
+
+func (m *Memory) GetProductionAccount(_ context.Context, id commodity.ProductionAccountID) (commodity.ProductionAccount, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	a, ok := m.accounts[id]
+	if !ok {
+		return commodity.ProductionAccount{}, ErrNotFound
+	}
+	return a, nil
+}
+
+func (m *Memory) ListProductionAccounts(_ context.Context) ([]commodity.ProductionAccount, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]commodity.ProductionAccount, 0, len(m.accounts))
+	for _, a := range m.accounts {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}

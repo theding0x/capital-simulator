@@ -20,7 +20,7 @@ import (
 func newTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	t.Helper()
 	mem := store.NewMemory()
-	h := New(mem, nil)
+	h := New(mem, mem, nil)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/commodities", h.Create)

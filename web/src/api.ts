@@ -1,6 +1,7 @@
 import type {
   Agent,
   CapitalCircuit,
+  CapitalCompositionResult,
   Circuit,
   CircuitProof,
   Commodity,
@@ -19,7 +20,10 @@ import type {
   CreateOfferInput,
   CreateOwnerInput,
   CreatePaymentObligationInput,
+  CreateProductionAccountInput,
   CreateWorldMoneyTransferInput,
+  DecomposeCapitalInput,
+  DecomposeCapitalResult,
   Exchange,
   ExchangeRatio,
   ExchangeSimulation,
@@ -33,6 +37,9 @@ import type {
   Owner,
   PaymentObligation,
   Price,
+  ProductionAccountResult,
+  RateOfSurplusValueInput,
+  RateOfSurplusValueResult,
   SimulateExchangeInput,
   SocialRelations,
   UniversalEquivalent,
@@ -291,4 +298,39 @@ export const api = {
 
   getLabourProcess: (id: string) =>
     http<RunLabourProcessResult>(`/v1/labour-processes/${id}`),
+
+  // --- commodity-service (Ch. 8: Constant & Variable Capital) ---
+
+  decomposeCapital: (input: DecomposeCapitalInput) =>
+    http<DecomposeCapitalResult>("/v1/capital/decompose", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getCapitalComposition: (constantValue: number, variableValue: number) =>
+    http<CapitalCompositionResult>(
+      `/v1/capital/composition?constant_value=${constantValue}&variable_value=${variableValue}`
+    ),
+
+  // --- commodity-service (Ch. 9: Rate of Surplus-Value) ---
+
+  createProductionAccount: (input: CreateProductionAccountInput) =>
+    http<ProductionAccountResult>("/v1/production-accounts", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listProductionAccounts: () =>
+    http<{ items: ProductionAccountResult[] }>("/v1/production-accounts").then(
+      (r) => r.items
+    ),
+
+  getProductionAccount: (id: string) =>
+    http<ProductionAccountResult>(`/v1/production-accounts/${id}`),
+
+  computeRateOfSurplusValue: (input: RateOfSurplusValueInput) =>
+    http<RateOfSurplusValueResult>("/v1/rate-of-surplus-value", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

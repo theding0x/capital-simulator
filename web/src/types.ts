@@ -421,3 +421,75 @@ export interface RunLabourProcessInput {
   product_kind: string;
   product_quantity: number;
 }
+
+// --- commodity-service types (Ch. 8: Constant & Variable Capital) ------------
+
+export interface ConstantCapitalInput {
+  original_value: number;       // LabourMinutes
+  kind: "instrument" | "raw_material" | "auxiliary";
+  service_life_days: number;    // 0 = consumed wholly in one cycle
+}
+
+export interface VariableCapitalInput {
+  wage_value: number;           // LabourMinutes — value of labour-power
+  working_day: number;          // LabourMinutes — total hours worked
+}
+
+export interface ProductValue {
+  constant: number;             // c: transferred value
+  variable: number;             // v: reproduced value
+  surplus: number;              // s: surplus-value
+}
+
+export interface CapitalCompositionResult {
+  constant: number;
+  variable: number;
+  composition_ratio: number;    // c/v
+}
+
+export interface DecomposeCapitalInput {
+  constant_capitals: ConstantCapitalInput[];
+  variable_capital: VariableCapitalInput;
+}
+
+export interface DecomposeCapitalResult {
+  product_value: ProductValue;
+  capital_composition: CapitalCompositionResult;
+  composition_ratio: number;
+}
+
+// --- commodity-service types (Ch. 9: Rate of Surplus-Value) ------------------
+
+export interface ProductionAccount {
+  id: string;
+  constant: number;             // c (LabourMinutes)
+  variable: number;             // v (LabourMinutes)
+  surplus: number;              // s (LabourMinutes)
+  created_at: string;
+}
+
+export interface ProductionAccountResult extends ProductionAccount {
+  rate_of_surplus_value: number;    // s/v as float
+  value_product: number;            // v + s (LabourMinutes)
+  expanded_capital: number;         // c + v + s (LabourMinutes)
+  surplus_produce_fraction: number; // s/(v+s) as float
+}
+
+export interface CreateProductionAccountInput {
+  constant: number;
+  variable: number;
+  surplus: number;
+}
+
+export interface RateOfSurplusValueInput {
+  surplus: number;
+  variable: number;
+}
+
+export interface RateOfSurplusValueResult {
+  rate: number;
+  surplus: number;
+  variable: number;
+  value_product: number;
+  surplus_produce_fraction: number;
+}
