@@ -1,0 +1,139 @@
+package httpapi
+
+import (
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+	"strconv"
+
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
+)
+
+// Handler holds the logger; all surplus endpoints are stateless.
+type Handler struct {
+	Logger *slog.Logger
+}
+
+func New(logger *slog.Logger) *Handler {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return &Handler{Logger: logger}
+}
+
+// massRequest accepts either {rate, variable_capital} or
+// {rate, labour_power_value, worker_count}, or all fields for cross-validation.
+type massRequest struct {
+	SurplusLabour    int64  `json:"surplus_labour"`
+	NecessaryLabour  int64  `json:"necessary_labour"`
+	VariableCapital  *int64 `json:"variable_capital,omitempty"`
+	LabourPowerValue *int64 `json:"labour_power_value,omitempty"`
+	WorkerCount      *int   `json:"worker_count,omitempty"`
+}
+
+// ComputeMass handles POST /v1/surplus/mass.
+func (h *Handler) ComputeMass(w http.ResponseWriter, r *http.Request) {
+	var req massRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.NecessaryLabour <= 0 {
+		writeError(w, http.StatusBadRequest, "necessary_labour must be positive")
+		return
+	}
+	if req.SurplusLabour < 0 {
+		writeError(w, http.StatusBadRequest, "surplus_labour cannot be negative")
+		return
+	}
+	if req.VariableCapital == nil && (req.LabourPowerValue == nil || req.WorkerCount == nil) {
+		writeError(w, http.StatusBadRequest, "provide variable_capital or both labour_power_value and worker_count")
+		return
+	}
+
+	rate := surplus.SurplusValueRate{
+		SurplusLabour:   req.SurplusLabour,
+		NecessaryLabour: req.NecessaryLabour,
+	}
+
+	var snap surplus.SurplusValueSnapshot
+	snap.Rate = rate
+
+	if req.VariableCapital != nil {
+		vc := surplus.VariableCapital(*req.VariableCapital)
+		snap.VariableCapital = vc
+		snap.MassByRate = surplus.MassByRate(rate, vc)
+	}
+	if req.LabourPowerValue != nil && req.WorkerCount != nil {
+		v := surplus.LabourPowerValue(*req.LabourPowerValue)
+		n := surplus.WorkerCount(*req.WorkerCount)
+		snap.WorkerCount = n
+		snap.MassByWorkers = surplus.MassByWorkers(v, rate, n)
+		// Derive variable_capital if not supplied
+		if req.VariableCapital == nil {
+			vc := surplus.MinimumCapital(v, n)
+			snap.VariableCapital = vc
+			snap.MassByRate = surplus.MassByRate(rate, vc)
+		}
+	}
+
+	// Primary mass: prefer worker-count formula when both available, else rate formula.
+	if req.LabourPowerValue != nil && req.WorkerCount != nil {
+		snap.Mass = snap.MassByWorkers
+	} else {
+		snap.Mass = snap.MassByRate
+	}
+
+	writeJSON(w, http.StatusOK, snap)
+}
+
+// limitsResponse is the GET /v1/surplus/limits response shape.
+type limitsResponse struct {
+	AbsoluteWorkdayLimit int64  `json:"absolute_workday_limit"`
+	MinimumCapital       *int64 `json:"minimum_capital,omitempty"`
+	LabourPowerValue     *int64 `json:"labour_power_value,omitempty"`
+	WorkerCount          *int   `json:"worker_count,omitempty"`
+}
+
+// GetLimits handles GET /v1/surplus/limits.
+func (h *Handler) GetLimits(w http.ResponseWriter, r *http.Request) {
+	limit := int64(surplus.AbsoluteWorkdayLimit)
+	resp := limitsResponse{AbsoluteWorkdayLimit: limit}
+
+	lpvStr := r.URL.Query().Get("labour_power_value")
+	wcStr := r.URL.Query().Get("worker_count")
+	if lpvStr != "" && wcStr != "" {
+		lpv, err1 := strconv.ParseInt(lpvStr, 10, 64)
+		wc, err2 := strconv.Atoi(wcStr)
+		if err1 != nil || err2 != nil || lpv <= 0 || wc <= 0 {
+			writeError(w, http.StatusBadRequest, "labour_power_value and worker_count must be positive integers")
+			return
+		}
+		mc := int64(surplus.MinimumCapital(surplus.LabourPowerValue(lpv), surplus.WorkerCount(wc)))
+		resp.MinimumCapital = &mc
+		resp.LabourPowerValue = &lpv
+		resp.WorkerCount = &wc
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func decodeJSON(r *http.Request, dst any) error {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
+		return errors.New("invalid json: " + err.Error())
+	}
+	return nil
+}
+
+func writeJSON(w http.ResponseWriter, status int, body any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
+}
