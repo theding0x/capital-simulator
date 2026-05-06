@@ -22,7 +22,7 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "ch08", number: 8,  title: "Constant Capital and Variable Capital",                 part: "Part III — The Production of Absolute Surplus-Value",  status: "done" },
   { id: "ch09", number: 9,  title: "The Rate of Surplus-Value",                             part: "Part III — The Production of Absolute Surplus-Value",  status: "done" },
   { id: "ch10", number: 10, title: "The Working Day",                                       part: "Part III — The Production of Absolute Surplus-Value",  status: "done" },
-  { id: "ch11", number: 11, title: "The Rate and Mass of Surplus-Value",                    part: "Part III — The Production of Absolute Surplus-Value",  status: "pending" },
+  { id: "ch11", number: 11, title: "The Rate and Mass of Surplus-Value",                    part: "Part III — The Production of Absolute Surplus-Value",  status: "done" },
   // Part IV — The Production of Relative Surplus-Value
   { id: "ch12", number: 12, title: "The Concept of Relative Surplus-Value",                 part: "Part IV — The Production of Relative Surplus-Value",   status: "pending" },
   { id: "ch13", number: 13, title: "Co-operation",                                          part: "Part IV — The Production of Relative Surplus-Value",   status: "pending" },
