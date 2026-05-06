@@ -634,3 +634,115 @@ func scanLabourProcess(row *sql.Row) (agent.LabourProcess, error) {
 	}
 	return lp, nil
 }
+
+func (m *MySQL) CreateWorkingDay(ctx context.Context, wd agent.WorkingDay) (agent.WorkingDay, error) {
+	if err := wd.Validate(); err != nil {
+		return agent.WorkingDay{}, err
+	}
+	if wd.ID.IsZero() {
+		wd.ID = agent.NewWorkingDayID()
+	}
+	wd.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO working_days (id, necessary_labour_minutes, surplus_labour_minutes, created_at)
+		VALUES (?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(wd.ID),
+		int64(wd.NecessaryLabourMinutes),
+		int64(wd.SurplusLabourMinutes),
+		wd.CreatedAt,
+	)
+	if err != nil {
+		return agent.WorkingDay{}, err
+	}
+	return wd, nil
+}
+
+func (m *MySQL) GetWorkingDay(ctx context.Context, id agent.WorkingDayID) (agent.WorkingDay, error) {
+	const q = `SELECT id, necessary_labour_minutes, surplus_labour_minutes, created_at
+		FROM working_days WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	var wd agent.WorkingDay
+	var wid string
+	var nl, sl int64
+	err := row.Scan(&wid, &nl, &sl, &wd.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.WorkingDay{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.WorkingDay{}, err
+	}
+	wd.ID = agent.WorkingDayID(wid)
+	wd.NecessaryLabourMinutes = agent.NecessaryLabourMinutes(nl)
+	wd.SurplusLabourMinutes = agent.SurplusLabourMinutes(sl)
+	return wd, nil
+}
+
+func (m *MySQL) CreateRelaySchedule(ctx context.Context, rs agent.RelaySchedule) (agent.RelaySchedule, error) {
+	if err := rs.Validate(); err != nil {
+		return agent.RelaySchedule{}, err
+	}
+	if rs.ID.IsZero() {
+		rs.ID = agent.NewRelayScheduleID()
+	}
+	rs.CreatedAt = m.now().UTC()
+	wids0, err := json.Marshal(rs.Sets[0].WorkerIDs)
+	if err != nil {
+		return agent.RelaySchedule{}, err
+	}
+	wids1, err := json.Marshal(rs.Sets[1].WorkerIDs)
+	if err != nil {
+		return agent.RelaySchedule{}, err
+	}
+	const q = `INSERT INTO relay_schedules
+		(id, shift_kind_0, nl_minutes_0, sl_minutes_0, worker_ids_0,
+		     shift_kind_1, nl_minutes_1, sl_minutes_1, worker_ids_1, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(rs.ID),
+		string(rs.Sets[0].ShiftKind),
+		int64(rs.Sets[0].WorkingDay.NecessaryLabourMinutes),
+		int64(rs.Sets[0].WorkingDay.SurplusLabourMinutes),
+		string(wids0),
+		string(rs.Sets[1].ShiftKind),
+		int64(rs.Sets[1].WorkingDay.NecessaryLabourMinutes),
+		int64(rs.Sets[1].WorkingDay.SurplusLabourMinutes),
+		string(wids1),
+		rs.CreatedAt,
+	)
+	if err != nil {
+		return agent.RelaySchedule{}, err
+	}
+	return rs, nil
+}
+
+func (m *MySQL) GetRelaySchedule(ctx context.Context, id agent.RelayScheduleID) (agent.RelaySchedule, error) {
+	const q = `SELECT id, shift_kind_0, nl_minutes_0, sl_minutes_0, worker_ids_0,
+		shift_kind_1, nl_minutes_1, sl_minutes_1, worker_ids_1, created_at
+		FROM relay_schedules WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	var rs agent.RelaySchedule
+	var rid, sk0, sk1 string
+	var nl0, sl0, nl1, sl1 int64
+	var wids0raw, wids1raw string
+	err := row.Scan(&rid, &sk0, &nl0, &sl0, &wids0raw, &sk1, &nl1, &sl1, &wids1raw, &rs.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.RelaySchedule{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.RelaySchedule{}, err
+	}
+	rs.ID = agent.RelayScheduleID(rid)
+	rs.Sets[0].ShiftKind = agent.ShiftKind(sk0)
+	rs.Sets[0].WorkingDay.NecessaryLabourMinutes = agent.NecessaryLabourMinutes(nl0)
+	rs.Sets[0].WorkingDay.SurplusLabourMinutes = agent.SurplusLabourMinutes(sl0)
+	rs.Sets[1].ShiftKind = agent.ShiftKind(sk1)
+	rs.Sets[1].WorkingDay.NecessaryLabourMinutes = agent.NecessaryLabourMinutes(nl1)
+	rs.Sets[1].WorkingDay.SurplusLabourMinutes = agent.SurplusLabourMinutes(sl1)
+	if err := json.Unmarshal([]byte(wids0raw), &rs.Sets[0].WorkerIDs); err != nil {
+		return agent.RelaySchedule{}, err
+	}
+	if err := json.Unmarshal([]byte(wids1raw), &rs.Sets[1].WorkerIDs); err != nil {
+		return agent.RelaySchedule{}, err
+	}
+	return rs, nil
+}
