@@ -49,6 +49,12 @@ import type {
   WorldMoneyTransfer,
   RunLabourProcessInput,
   RunLabourProcessResult,
+  CreateWorkingDayInput,
+  ValidateWorkingDayInput,
+  ValidateWorkingDayResponse,
+  WorkingDayResponse,
+  CreateRelayScheduleInput,
+  RelaySchedule,
 } from "./types";
 
 const BASE = "/api";
@@ -333,4 +339,30 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // --- agent-service (Ch. 10: The Working-Day) ---
+
+  createWorkingDay: (input: CreateWorkingDayInput) =>
+    http<WorkingDayResponse>("/v1/working-days", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getWorkingDay: (id: string) =>
+    http<WorkingDayResponse>(`/v1/working-days/${id}`),
+
+  validateWorkingDay: (input: ValidateWorkingDayInput) =>
+    http<ValidateWorkingDayResponse>("/v1/working-days/validate", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createRelaySchedule: (input: CreateRelayScheduleInput) =>
+    http<RelaySchedule>("/v1/relay-schedules", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getRelaySchedule: (id: string) =>
+    http<RelaySchedule>(`/v1/relay-schedules/${id}`),
 };
