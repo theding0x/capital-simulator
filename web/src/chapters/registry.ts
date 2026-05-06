@@ -19,8 +19,8 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "ch06", number: 6,  title: "The Sale and Purchase of Labour-Power",                 part: "Part II — The Transformation of Money into Capital",   status: "done"    },
   // Part III — The Production of Absolute Surplus-Value
   { id: "ch07", number: 7,  title: "The Labour-Process and the Valorization Process",       part: "Part III — The Production of Absolute Surplus-Value",  status: "done"    },
-  { id: "ch08", number: 8,  title: "Constant Capital and Variable Capital",                 part: "Part III — The Production of Absolute Surplus-Value",  status: "pending" },
-  { id: "ch09", number: 9,  title: "The Rate of Surplus-Value",                             part: "Part III — The Production of Absolute Surplus-Value",  status: "pending" },
+  { id: "ch08", number: 8,  title: "Constant Capital and Variable Capital",                 part: "Part III — The Production of Absolute Surplus-Value",  status: "done" },
+  { id: "ch09", number: 9,  title: "The Rate of Surplus-Value",                             part: "Part III — The Production of Absolute Surplus-Value",  status: "done" },
   { id: "ch10", number: 10, title: "The Working Day",                                       part: "Part III — The Production of Absolute Surplus-Value",  status: "pending" },
   { id: "ch11", number: 11, title: "The Rate and Mass of Surplus-Value",                    part: "Part III — The Production of Absolute Surplus-Value",  status: "pending" },
   // Part IV — The Production of Relative Surplus-Value

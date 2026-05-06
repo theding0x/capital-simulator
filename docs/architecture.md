@@ -74,7 +74,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 5     | ✅ Done     | Contradictions in the general formula; value conservation proof | agent-service |
 | Ch. 6     | ✅ Done     | Labour-power as commodity; workers, capitalists, labour-power value, wage, subsistence basket; buying and selling of labour-power | agent-service |
 | Ch. 7     | ✅ Done     | Labour-process, valorization, surplus-value production   | agent-service, simulation-eng |
-| Ch. 8-9   | Pending     | Constant/variable capital, rate of surplus-value         | commodity, simulation-eng     |
+| Ch. 8-9   | ✅ Done     | Constant/variable capital, rate of surplus-value         | commodity-service             |
 | Ch. 10    | Pending     | The working day                                          | agent-service, simulation-eng |
 | Ch. 11+   | Pending     | Cooperation, machinery, wages, accumulation              | all                           |
 
@@ -171,3 +171,17 @@ The React UI adds a "Ch. 06 — The Sale and Purchase of Labour-Power" panel wit
 - **HTTP.** `POST /v1/labour-processes` (run a process; returns product + full valorization summary), `GET /v1/labour-processes/{id}` (fetch a recorded run). Proxied through api-gateway.
 - **ProductionRun.** `simulation-engine/engine.ProductionRun` type introduced; full tick scheduler deferred to Ch. 10+.
 - **React UI.** Ch. 07 panel: worker/capitalist picker, means-of-production builder (raw materials + instruments), working-day duration input, valorization result card (necessary / surplus labour breakdown, rate of surplus value, product total value).
+
+### Ch. 8–9 — what was built
+
+`commodity-service` models Capital Vol. I, Ch. 8 (Constant and Variable Capital) and Ch. 9 (The Rate of Surplus-Value):
+
+- **ConstantCapital.** `ConstantCapital` struct (OriginalValue, Kind, ServiceLifeDays) with `Validate()`; `ConstantKind` enum (`instrument`, `raw_material`, `auxiliary`). `WearFractionFor` returns the fraction of value transferred per production cycle (1/ServiceLifeDays for instruments, 1.0 for materials consumed in one cycle). `TransferredValue` computes the LabourMinutes transferred using `math.Round`.
+- **VariableCapital.** `VariableCapital` struct (WageValue, WorkingDay) with `Validate()` and `SurplusLabourFrom()`.
+- **ProductValue.** `ProductValue` (c/v/s decomposition) with `Total()`; `DecomposeProductValue` accumulates constant-capital transfers across a list of inputs plus one variable-capital input.
+- **CapitalComposition.** `CapitalComposition` with `Ratio()` (c/v).
+- **ProductionAccount.** `ProductionAccount` records the scalar c/v/s for a completed production run. Methods: `ValueProduct()` (v+s), `ExpandedCapital()` (c+v+s), `Rate()` (s/v). `ComputeRate` returns `ErrDivisionByZero` when v=0. `SurplusProduceRatio` = s/(v+s).
+- **MySQL migration.** `00002_ch08_production_accounts.sql` adds the `production_accounts` table.
+- **Endpoints (stateless, Ch.8).** `POST /v1/capital/decompose` — decomposes product value given constant and variable capital inputs. `GET /v1/capital/composition?constant_value=&variable_value=` — returns c/v ratio.
+- **Endpoints (persistent, Ch.9).** `POST /v1/production-accounts` — records a production account; rejects zero variable capital. `GET /v1/production-accounts` — lists all accounts. `GET /v1/production-accounts/{id}` — fetches one. `POST /v1/rate-of-surplus-value` — stateless s/v probe.
+- **React UI.** Ch. 08 panel: Decompose Capital form (dynamic constant-capital list with kind/value/service-life, variable capital block) and Capital Composition form. Ch. 09 panel: Rate of Surplus-Value probe with fixture buttons (1871 Spinning Mill, Jacob's Wheat 1815, Cotton Spinner), Record Production Account form, and list of recorded accounts.
