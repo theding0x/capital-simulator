@@ -75,7 +75,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 6     | ✅ Done     | Labour-power as commodity; workers, capitalists, labour-power value, wage, subsistence basket; buying and selling of labour-power | agent-service |
 | Ch. 7     | ✅ Done     | Labour-process, valorization, surplus-value production   | agent-service, simulation-eng |
 | Ch. 8-9   | ✅ Done     | Constant/variable capital, rate of surplus-value         | commodity-service             |
-| Ch. 10    | Pending     | The working day                                          | agent-service, simulation-eng |
+| Ch. 10    | ✅ Done     | Working-day segments (necessary/surplus), relay schedules, statutory limits, Factory Acts, overwork | agent-service |
 | Ch. 11+   | Pending     | Cooperation, machinery, wages, accumulation              | all                           |
 
 ### Ch. 1 — what was built
