@@ -29,4 +29,10 @@ func Register(s *httpx.Server, h *Handler) {
 	// Ch. 7 — The Labour-Process and the Production of Surplus-Value
 	s.HandleFunc("POST /v1/labour-processes", h.RunLabourProcess)
 	s.HandleFunc("GET /v1/labour-processes/{id}", h.GetLabourProcessRecord)
+	// Ch. 10 — The Working-Day
+	s.HandleFunc("POST /v1/working-days", h.CreateWorkingDay)
+	s.HandleFunc("GET /v1/working-days/{id}", h.GetWorkingDay)
+	s.HandleFunc("POST /v1/working-days/validate", h.ValidateWorkingDay)
+	s.HandleFunc("POST /v1/relay-schedules", h.CreateRelaySchedule)
+	s.HandleFunc("GET /v1/relay-schedules/{id}", h.GetRelaySchedule)
 }

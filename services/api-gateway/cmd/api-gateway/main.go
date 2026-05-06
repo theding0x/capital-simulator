@@ -85,6 +85,12 @@ func main() {
 	srv.Handle("/v1/labour-processes", agentProxy)
 	srv.Handle("/v1/labour-processes/{rest...}", agentProxy)
 
+	// Ch. 10 — working-day routes proxy to agent-service
+	srv.Handle("/v1/working-days", agentProxy)
+	srv.Handle("/v1/working-days/{rest...}", agentProxy)
+	srv.Handle("/v1/relay-schedules", agentProxy)
+	srv.Handle("/v1/relay-schedules/{rest...}", agentProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -96,7 +102,7 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-9-rate-of-surplus-value",
+		"status":      "ch-10-working-day",
 		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
 		"downstream": []string{
 			"commodity-service",
@@ -104,7 +110,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 9 - The Rate of Surplus-Value",
+		"chapter": "Capital Vol. I, Ch. 10 - The Working-Day",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
