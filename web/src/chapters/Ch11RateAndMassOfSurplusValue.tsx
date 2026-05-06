@@ -182,7 +182,7 @@ function MassCalculatorPanel() {
               <td><strong>Total Surplus-Value S</strong></td>
               <td><strong>{result.mass}</strong></td>
             </tr>
-            {result.mass_by_rate > 0 && result.mass_by_workers !== undefined && result.mass_by_workers > 0 && (
+            {result.mass_by_workers !== undefined && (
               <tr>
                 <td>Formulas agree?</td>
                 <td>
