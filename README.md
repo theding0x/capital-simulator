@@ -1,6 +1,6 @@
 # Capital Simulator
 
-A simulation of an economy modeled chapter by chapter on Karl Marx's *Capital, Volume I*. Each chapter is implemented as its own branch + pull request, accompanied by an HTML chapter summary that lives in `chapters/volume-1/`.
+A simulation of an economy modeled chapter by chapter on Karl Marx's *Capital, Volume I*. Each chapter is implemented as its own branch + pull request, accompanied by an HTML chapter summary and generated spec sheet that live in `chapters/volume-1/`.
 
 ## Stack
 
@@ -10,6 +10,7 @@ A simulation of an economy modeled chapter by chapter on Karl Marx's *Capital, V
 - **Caching:** Redis
 - **Platform:** Docker / Kubernetes
 - **Repository host:** GitHub
+- **Cloud Platform:** Google Cloud Platform
 
 ## Repository layout
 
