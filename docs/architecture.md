@@ -77,7 +77,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 8-9   | ✅ Done     | Constant/variable capital, rate of surplus-value         | commodity-service             |
 | Ch. 10    | ✅ Done     | Working-day segments (necessary/surplus), relay schedules, statutory limits, Factory Acts, overwork | agent-service |
 | Ch. 11    | ✅ Done     | Rate and mass of surplus-value; SurplusValueRate, MassByRate, MassByWorkers, compensation law | simulation-engine |
-| Ch. 12+   | Pending     | Relative surplus-value, cooperation, machinery, wages, accumulation | all            |
+| Ch. 12    | ✅ Done     | Relative surplus-value; WorkingDay, ShortenNecessaryLabour, RateOfSurplusValue, ExtraSurplusValue, ApplyProductivityToSNLT | simulation-engine |
+| Ch. 13+   | Pending     | Co-operation, machinery, wages, accumulation | all            |
 
 ### Ch. 1 — what was built
 

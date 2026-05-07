@@ -58,6 +58,13 @@ import type {
   ComputeMassInput,
   SurplusLimitsResponse,
   SurplusValueSnapshot,
+  ProductionWorkingDay,
+  ShortenWorkingDayResponse,
+  ProductionRateResult,
+  ExtraSurplusValueResult,
+  RecordWorkingDayInput,
+  ShortenWorkingDayInput,
+  ExtraSurplusValueInput,
 } from "./types";
 
 const BASE = "/api";
@@ -384,4 +391,29 @@ export const api = {
     const qs = params.toString();
     return http<SurplusLimitsResponse>(`/v1/surplus/limits${qs ? `?${qs}` : ""}`);
   },
+
+  // --- simulation-engine (Ch. 12: Relative Surplus-Value) ---
+
+  recordWorkingDay: (input: RecordWorkingDayInput) =>
+    http<ProductionWorkingDay>("/v1/production/working-day", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  shortenWorkingDay: (input: ShortenWorkingDayInput) =>
+    http<ShortenWorkingDayResponse>("/v1/production/working-day/shorten", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getProductionRate: (necessary: number, surplus: number) =>
+    http<ProductionRateResult>(
+      `/v1/production/rate-of-surplus-value?necessary=${necessary}&surplus=${surplus}`
+    ),
+
+  computeExtraSurplusValue: (input: ExtraSurplusValueInput) =>
+    http<ExtraSurplusValueResult>("/v1/production/extra-surplus-value", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };
