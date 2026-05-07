@@ -24,7 +24,7 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "ch10", number: 10, title: "The Working Day",                                       part: "Part III — The Production of Absolute Surplus-Value",  status: "done" },
   { id: "ch11", number: 11, title: "The Rate and Mass of Surplus-Value",                    part: "Part III — The Production of Absolute Surplus-Value",  status: "done" },
   // Part IV — The Production of Relative Surplus-Value
-  { id: "ch12", number: 12, title: "The Concept of Relative Surplus-Value",                 part: "Part IV — The Production of Relative Surplus-Value",   status: "pending" },
+  { id: "ch12", number: 12, title: "The Concept of Relative Surplus-Value",                 part: "Part IV — The Production of Relative Surplus-Value",   status: "done" },
   { id: "ch13", number: 13, title: "Co-operation",                                          part: "Part IV — The Production of Relative Surplus-Value",   status: "pending" },
   { id: "ch14", number: 14, title: "Division of Labour and Manufacture",                    part: "Part IV — The Production of Relative Surplus-Value",   status: "pending" },
   { id: "ch15", number: 15, title: "Machinery and Modern Industry",                         part: "Part IV — The Production of Relative Surplus-Value",   status: "pending" },

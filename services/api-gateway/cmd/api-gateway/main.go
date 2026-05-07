@@ -104,6 +104,12 @@ func main() {
 	srv.Handle("/v1/surplus/mass", simProxy)
 	srv.Handle("/v1/surplus/limits", simProxy)
 
+	// Ch. 12 — Relative Surplus-Value → simulation-engine
+	srv.Handle("/v1/production/working-day", simProxy)
+	srv.Handle("/v1/production/working-day/shorten", simProxy)
+	srv.Handle("/v1/production/rate-of-surplus-value", simProxy)
+	srv.Handle("/v1/production/extra-surplus-value", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -115,7 +121,7 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-11-rate-mass-surplus-value",
+		"status":      "ch-12-relative-surplus-value",
 		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
 		"downstream": []string{
 			"commodity-service",
@@ -123,7 +129,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 11 - The Rate and Mass of Surplus-Value",
+		"chapter": "Capital Vol. I, Ch. 12 - The Concept of Relative Surplus-Value",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
