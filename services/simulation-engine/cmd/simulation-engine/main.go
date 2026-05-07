@@ -25,7 +25,7 @@ func main() {
 
 	srv.HandleFunc("/v1/sim/status", handleStatus)
 
-	// Ch. 11 — Rate and Mass of Surplus-Value
+	// Ch. 11–12 — Surplus-Value (rate/mass + relative)
 	h := httpapi.New(logger)
 	httpapi.Register(srv, h)
 
@@ -40,7 +40,7 @@ func main() {
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-11-rate-mass-surplus-value",
+		"status":      "ch-12-relative-surplus-value",
 		"description": "Drives the simulated economy forward one period at a time.",
 		"tick":        0,
 		"running":     false,
