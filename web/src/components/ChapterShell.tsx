@@ -11,6 +11,7 @@ import { Ch08ConstantVariableCapital } from "../chapters/Ch08ConstantVariableCap
 import { Ch09RateOfSurplusValue } from "../chapters/Ch09RateOfSurplusValue";
 import { Ch10WorkingDay } from "../chapters/Ch10WorkingDay";
 import { Ch11RateAndMassOfSurplusValue } from "../chapters/Ch11RateAndMassOfSurplusValue";
+import { Ch12RelativeSurplusValue } from "../chapters/Ch12RelativeSurplusValue";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -31,6 +32,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch09: "The rate of surplus-value is therefore an exact expression for the degree of exploitation of labour-power by capital.",
   ch10: "The capitalist maintains his rights as a purchaser when he tries to make the working-day as long as possible.",
   ch11: "The mass of the surplus-value produced is equal to the amount of the variable capital advanced, multiplied by the rate of surplus-value.",
+  ch12: "The shortening of the working-day is, therefore, by no means what is aimed at, in capitalist production, when labour is economised by increasing its productiveness.",
 };
 
 export function ChapterShell({
@@ -86,6 +88,8 @@ export function ChapterShell({
           <Ch10WorkingDay onSharedChanged={onSharedChanged} />
         ) : activeChapterId === "ch11" ? (
           <Ch11RateAndMassOfSurplusValue onSharedChanged={onSharedChanged} />
+        ) : activeChapterId === "ch12" ? (
+          <Ch12RelativeSurplusValue onSharedChanged={onSharedChanged} />
         ) : null}
       </div>
     </main>

@@ -582,3 +582,48 @@ export interface SurplusLimitsResponse {
   labour_power_value?: number;
   worker_count?: number;
 }
+
+// --- simulation-engine types (Ch. 12: Relative Surplus-Value) ----------------
+
+export interface ProductionWorkingDay {
+  total: number;             // LabourMinutes
+  necessary_labour: number;  // LabourMinutes
+  surplus_labour: number;    // LabourMinutes
+}
+
+export interface ShortenWorkingDayResponse {
+  working_day: ProductionWorkingDay;
+  relative_surplus_value: number; // LabourMinutes delta (new SL − old SL)
+}
+
+export interface ProductionRateResult {
+  rate: number;              // s/v as float
+  surplus_labour: number;    // LabourMinutes (echoed)
+  necessary_labour: number;  // LabourMinutes (echoed)
+}
+
+export interface ExtraSurplusValueResult {
+  extra_surplus_value: number; // LabourMinutes total
+  per_unit: number;            // LabourMinutes per article
+  individual_value: number;
+  social_value: number;
+  quantity: number;
+}
+
+export interface RecordWorkingDayInput {
+  total: number;
+  labour_power_value: number;
+}
+
+export interface ShortenWorkingDayInput {
+  total: number;
+  necessary_labour: number;
+  surplus_labour: number;
+  new_labour_power_value: number;
+}
+
+export interface ExtraSurplusValueInput {
+  individual_value: number;
+  social_value: number;
+  quantity: number;
+}
