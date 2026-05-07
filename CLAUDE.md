@@ -61,7 +61,7 @@ cd web && npm run build     # vite production build
 
 ## Chapter workflow (do this; don't re-discuss)
 
-1. Branch: `chapter-NN-<slug>` off `main`.
+1. Branch: `volume-N/chapter-NN` off `main`.
 2. Implement in the relevant service(s). Add tests using Marx's examples.
 3. Drop `chapters/volume-1/NN-<slug>.html` (user supplies; treat as canonical reference text, not source for parsing — it's 100KB+).
 4. Update `docs/architecture.md` chapter table.
