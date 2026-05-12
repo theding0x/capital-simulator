@@ -76,6 +76,12 @@ import type {
   ProportionalGroupSizeResult,
   ManufactureMinimumCapitalResult,
   ManufactureForm,
+  Machine,
+  CreateMachineInput,
+  CreateFactoryInput,
+  Factory,
+  MachineWearResponse,
+  FactoryTickResult,
 } from "./types";
 
 const BASE = "/api";
@@ -504,4 +510,37 @@ export const api = {
         String(rawMaterialCostFactor)
       )}`
     ),
+
+  // --- simulation-engine (Ch. 15: Machinery and Modern Industry) ---
+
+  listMachines: () =>
+    http<{ items: Machine[] }>("/v1/machines").then((r) => r.items),
+
+  getMachine: (id: string) => http<Machine>(`/v1/machines/${id}`),
+
+  createMachine: (input: CreateMachineInput) =>
+    http<Machine>("/v1/machines", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getMachineWear: (id: string) =>
+    http<MachineWearResponse>(`/v1/machines/${id}/wear`),
+
+  listFactories: () =>
+    http<{ items: Factory[] }>("/v1/factories").then((r) => r.items),
+
+  getFactory: (id: string) => http<Factory>(`/v1/factories/${id}`),
+
+  createFactory: (input: CreateFactoryInput) =>
+    http<Factory>("/v1/factories", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  tickFactory: (id: string) =>
+    http<FactoryTickResult>(`/v1/factories/${id}/tick`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    }),
 };

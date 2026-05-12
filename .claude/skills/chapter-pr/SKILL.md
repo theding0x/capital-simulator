@@ -51,6 +51,17 @@ If any check fails, the script prints which one and exits non-zero. Stop
 and surface the failure to the user; don't try to "fix" by editing the
 roadmap or HTML on their behalf - those are content decisions.
 
+Before declaring the precheck "passed," also confirm by eye:
+
+- **Seed migration shipped.** If the chapter introduces a new domain
+  type (new table, or new fields on an existing one), there must be a
+  `services/<svc>/internal/store/migrations/NNNNN_chNN_seed.sql` that
+  inserts Marx-faithful exemplars and has a complete `-- +goose Down`
+  that DELETEs every seeded id. The dashboard must come up populated on
+  a fresh MySQL volume. If the seed is missing, write it before opening
+  the PR — empty panels on first boot are a regression (CLAUDE.md
+  Conventions → Seeds).
+
 ### 2. Draft the commit + PR body
 
 If commits aren't already pushed (which is the common case in this

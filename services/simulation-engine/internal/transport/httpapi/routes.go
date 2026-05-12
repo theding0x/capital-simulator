@@ -12,4 +12,14 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/production/working-day/shorten", h.ShortenWorkingDay)
 	s.HandleFunc("GET /v1/production/rate-of-surplus-value", h.GetProductionRate)
 	s.HandleFunc("POST /v1/production/extra-surplus-value", h.ComputeExtraSurplusValue)
+
+	// Ch. 15 — Machinery and Modern Industry
+	s.HandleFunc("POST /v1/machines", h.CreateMachine)
+	s.HandleFunc("GET /v1/machines", h.ListMachines)
+	s.HandleFunc("GET /v1/machines/{id}", h.GetMachine)
+	s.HandleFunc("GET /v1/machines/{id}/wear", h.GetMachineWear)
+	s.HandleFunc("POST /v1/factories", h.CreateFactory)
+	s.HandleFunc("GET /v1/factories", h.ListFactories)
+	s.HandleFunc("GET /v1/factories/{id}", h.GetFactory)
+	s.HandleFunc("POST /v1/factories/{id}/tick", h.TickFactory)
 }
