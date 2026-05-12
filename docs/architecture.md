@@ -78,7 +78,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 10    | ✅ Done     | Working-day segments (necessary/surplus), relay schedules, statutory limits, Factory Acts, overwork | agent-service |
 | Ch. 11    | ✅ Done     | Rate and mass of surplus-value; SurplusValueRate, MassByRate, MassByWorkers, compensation law | simulation-engine |
 | Ch. 12    | ✅ Done     | Relative surplus-value; WorkingDay, ShortenNecessaryLabour, RateOfSurplusValue, ExtraSurplusValue, ApplyProductivityToSNLT | simulation-engine |
-| Ch. 13+   | Pending     | Co-operation, machinery, wages, accumulation | all            |
+| Ch. 13    | ✅ Done     | Co-operation; collective working-day, average social labour, scale of co-operation, minimum capital, supervision, cooperative productive power as property of capital | agent-service |
+| Ch. 14+   | Pending     | Division of labour, machinery, wages, accumulation | all            |
 
 ### Ch. 1 — what was built
 
@@ -187,3 +188,16 @@ The React UI adds a "Ch. 06 — The Sale and Purchase of Labour-Power" panel wit
 - **Endpoints (stateless, Ch.8).** `POST /v1/capital/decompose` — decomposes product value given constant and variable capital inputs. `GET /v1/capital/composition?constant_value=&variable_value=` — returns c/v ratio.
 - **Endpoints (persistent, Ch.9).** `POST /v1/production-accounts` — records a production account; rejects zero variable capital. `GET /v1/production-accounts` — lists all accounts. `GET /v1/production-accounts/{id}` — fetches one. `POST /v1/rate-of-surplus-value` — stateless s/v probe.
 - **React UI.** Ch. 08 panel: Decompose Capital form (dynamic constant-capital list with kind/value/service-life, variable capital block) and Capital Composition form. Ch. 09 panel: Rate of Surplus-Value probe with fixture buttons (1871 Spinning Mill, Jacob's Wheat 1815, Cotton Spinner), Record Production Account form, and list of recorded accounts.
+
+### Ch. 13 — what was built
+
+`agent-service` models simple co-operation from Capital Vol. I, Ch. 13:
+
+- **Cooperation.** `Cooperation` struct (ID, Name, CapitalistID, Members, CreatedAt) — a named pool of `Worker` agents assembled by one `Capitalist` agent doing the same or same-kind work.
+- **CooperationMember & Supervisor.** Each member has `WorkerID`, a `Supervisory bool` flag, and `WorkingDayMinutes`. Supervisors are wage-labourers with a directing role, not capitalists. `Supervisors()` returns the directing-authority subset.
+- **CooperationSize.** `int` count of workers. `CooperationMinSize = 5` codifies the Burke footnote (§3): five workers cancel individual deviations.
+- **Pure functions.** `CollectiveWorkingDay(n, d) = n × d` (§2: value addition is strictly additive). `AverageSocialLabour(collective, n) = collective / n` (§3: the social law reduces back to the per-worker average). `CollectiveProductivePower(n, d)` returns a use-value output factor ≥ 1.0 (§5: the qualitative cooperation bonus). `MinimumCapital(n, dailyWage) = n × dailyWage` (§8: capital-minimum constraint). `CooperativeOrigin()` returns `"capital"` (§13: the social productive power appears as a property of capital).
+- **Store.** `CooperationStore` interface with `Memory` and `MySQL` implementations. Migration `00010_ch13_cooperations.sql` adds the `cooperations` table (members stored as JSON; indexed by `capitalist_id`).
+- **HTTP endpoints.** `POST /v1/cooperations` (assemble), `GET /v1/cooperations` (list, optional `?capitalist_id=`), `GET /v1/cooperations/{id}` (fetch with computed aggregates), `POST /v1/cooperations/{id}/collective-working-day` (computed n × d plus output factor), `POST /v1/cooperations/{id}/average-social-labour` (reduces collective back to per-worker), `POST /v1/cooperations/minimum-capital` (stateless probe for n × wage).
+- **api-gateway.** Reverse-proxies `/v1/cooperations` and `/v1/cooperations/{rest...}` to agent-service.
+- **React UI.** Ch. 13 panel with: assembly form (pick capitalist + workers, mark some as supervisory, set working-day), ledger of assembled cooperations with computed Collective Working-Day / Average Social Labour / Output Factor / Supervisors columns, and a Minimum Capital probe with Marx's §8 fixture buttons (300 @ 6 s., 10 @ 6 s., 1,200 @ 6 s.).

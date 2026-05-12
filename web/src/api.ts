@@ -65,6 +65,12 @@ import type {
   RecordWorkingDayInput,
   ShortenWorkingDayInput,
   ExtraSurplusValueInput,
+  Cooperation,
+  CreateCooperationInput,
+  CollectiveWorkingDayResult,
+  AverageSocialLabourResult,
+  MinimumCapitalInput,
+  MinimumCapitalResult,
 } from "./types";
 
 const BASE = "/api";
@@ -413,6 +419,41 @@ export const api = {
 
   computeExtraSurplusValue: (input: ExtraSurplusValueInput) =>
     http<ExtraSurplusValueResult>("/v1/production/extra-surplus-value", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  // --- agent-service (Ch. 13: Co-operation) ---
+
+  listCooperations: (capitalistId?: string) =>
+    http<{ items: Cooperation[] }>(
+      capitalistId
+        ? `/v1/cooperations?capitalist_id=${encodeURIComponent(capitalistId)}`
+        : "/v1/cooperations"
+    ).then((r) => r.items),
+
+  getCooperation: (id: string) => http<Cooperation>(`/v1/cooperations/${id}`),
+
+  createCooperation: (input: CreateCooperationInput) =>
+    http<Cooperation>("/v1/cooperations", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  computeCollectiveWorkingDay: (id: string) =>
+    http<CollectiveWorkingDayResult>(`/v1/cooperations/${id}/collective-working-day`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    }),
+
+  computeAverageSocialLabour: (id: string) =>
+    http<AverageSocialLabourResult>(`/v1/cooperations/${id}/average-social-labour`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    }),
+
+  computeMinimumCapital: (input: MinimumCapitalInput) =>
+    http<MinimumCapitalResult>("/v1/cooperations/minimum-capital", {
       method: "POST",
       body: JSON.stringify(input),
     }),

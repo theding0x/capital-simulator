@@ -89,3 +89,11 @@ type WorkingDayStore interface {
 	CreateRelaySchedule(ctx context.Context, rs agent.RelaySchedule) (agent.RelaySchedule, error)
 	GetRelaySchedule(ctx context.Context, id agent.RelayScheduleID) (agent.RelaySchedule, error)
 }
+
+// CooperationStore is the persistence contract for Ch. 13 cooperation records.
+type CooperationStore interface {
+	CreateCooperation(ctx context.Context, c agent.Cooperation) (agent.Cooperation, error)
+	GetCooperation(ctx context.Context, id agent.CooperationID) (agent.Cooperation, error)
+	ListCooperations(ctx context.Context) ([]agent.Cooperation, error)
+	ListCooperationsByCapitalist(ctx context.Context, capitalistID agent.AgentID) ([]agent.Cooperation, error)
+}
