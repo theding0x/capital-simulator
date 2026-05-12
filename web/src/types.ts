@@ -688,3 +688,63 @@ export interface CreateCooperationInput {
   capitalist_id: string;
   members: CooperationMember[];
 }
+
+// Ch. 14 — Division of Labour and Manufacture
+export type ManufactureForm = "heterogeneous" | "serial";
+export type ManufactureOrigin = "combination" | "splitting";
+export type SkillLevel = "skilled" | "unskilled";
+
+export interface DetailRole {
+  name: string;
+  skill_level: SkillLevel;
+  output_rate_per_hour: number;
+  head_count: number;
+  tool_name: string;
+}
+
+export interface CollectiveLabourerSummary {
+  roles: DetailRole[];
+  total_workers: number;
+  output_per_period_minutes: number;
+  period_minutes: number;
+  is_paralysed_if_absent_one: boolean;
+}
+
+export interface Manufacture {
+  id: string;
+  name: string;
+  capitalist_id: string;
+  form: ManufactureForm;
+  origin: ManufactureOrigin;
+  individual_working_day_minutes: number;
+  roles: DetailRole[];
+  created_at: string;
+  total_workers: number;
+  collective_labourer: CollectiveLabourerSummary;
+  hierarchy: DetailRole[];
+  productive_power_factor: number;
+  productive_power_minutes: number;
+  cooperation_baseline_minutes: number;
+}
+
+export interface CreateManufactureInput {
+  name: string;
+  capitalist_id: string;
+  form: ManufactureForm;
+  origin: ManufactureOrigin;
+  individual_working_day_minutes: number;
+  roles: DetailRole[];
+}
+
+export interface ProportionalGroupSizeResult {
+  manufacture_id: string;
+  target_output_rate: number;
+  headcounts: Record<string, number>;
+}
+
+export interface ManufactureMinimumCapitalResult {
+  manufacture_id: string;
+  raw_material_cost_factor: number;
+  minimum_capital_pence: number;
+  cooperation_baseline_pence: number;
+}

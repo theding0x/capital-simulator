@@ -97,3 +97,12 @@ type CooperationStore interface {
 	ListCooperations(ctx context.Context) ([]agent.Cooperation, error)
 	ListCooperationsByCapitalist(ctx context.Context, capitalistID agent.AgentID) ([]agent.Cooperation, error)
 }
+
+// ManufactureStore is the persistence contract for Ch. 14 manufacture records.
+type ManufactureStore interface {
+	CreateManufacture(ctx context.Context, m agent.Manufacture) (agent.Manufacture, error)
+	GetManufacture(ctx context.Context, id agent.ManufactureID) (agent.Manufacture, error)
+	ListManufactures(ctx context.Context) ([]agent.Manufacture, error)
+	ListManufacturesByCapitalist(ctx context.Context, capitalistID agent.AgentID) ([]agent.Manufacture, error)
+	ListManufacturesByForm(ctx context.Context, form agent.ManufactureForm) ([]agent.Manufacture, error)
+}
