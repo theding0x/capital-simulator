@@ -17,14 +17,15 @@ type Handler struct {
 	LabourPowerStore   store.LabourPowerStore
 	LabourProcessStore store.LabourProcessStore
 	WorkingDayStore    store.WorkingDayStore
+	CooperationStore   store.CooperationStore
 	Logger             *slog.Logger
 }
 
-func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, lproc store.LabourProcessStore, wds store.WorkingDayStore, logger *slog.Logger) *Handler {
+func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, lproc store.LabourProcessStore, wds store.WorkingDayStore, coop store.CooperationStore, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, LabourProcessStore: lproc, WorkingDayStore: wds, Logger: logger}
+	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, LabourProcessStore: lproc, WorkingDayStore: wds, CooperationStore: coop, Logger: logger}
 }
 
 type createAgentRequest struct {
@@ -338,7 +339,12 @@ func writeAppError(w http.ResponseWriter, err error) {
 		errors.Is(err, agent.ErrInvalidContract),
 		errors.Is(err, agent.ErrWorkingDayExceedsPhysicalMax),
 		errors.Is(err, agent.ErrWorkingDayExceedsStatutoryLimit),
-		errors.Is(err, agent.ErrNecessaryLabourRequired):
+		errors.Is(err, agent.ErrNecessaryLabourRequired),
+		errors.Is(err, agent.ErrCooperationCapitalistID),
+		errors.Is(err, agent.ErrCooperationNoMembers),
+		errors.Is(err, agent.ErrCooperationMemberInvalid),
+		errors.Is(err, agent.ErrCooperationWorkingDay),
+		errors.Is(err, agent.ErrCooperationSizeTooSmall):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, err.Error())

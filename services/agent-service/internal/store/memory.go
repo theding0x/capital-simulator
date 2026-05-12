@@ -22,6 +22,7 @@ type Memory struct {
 	labourProcesses   map[agent.LabourProcessID]agent.LabourProcess
 	workingDays       map[agent.WorkingDayID]agent.WorkingDay
 	relaySchedules    map[agent.RelayScheduleID]agent.RelaySchedule
+	cooperations      map[agent.CooperationID]agent.Cooperation
 	now               func() time.Time
 }
 
@@ -36,6 +37,7 @@ func NewMemory() *Memory {
 		labourProcesses:   make(map[agent.LabourProcessID]agent.LabourProcess),
 		workingDays:       make(map[agent.WorkingDayID]agent.WorkingDay),
 		relaySchedules:    make(map[agent.RelayScheduleID]agent.RelaySchedule),
+		cooperations:      make(map[agent.CooperationID]agent.Cooperation),
 		now:               time.Now,
 	}
 }
@@ -389,4 +391,76 @@ func (m *Memory) GetRelaySchedule(_ context.Context, id agent.RelayScheduleID) (
 		return agent.RelaySchedule{}, ErrNotFound
 	}
 	return rs, nil
+}
+
+func (m *Memory) CreateCooperation(_ context.Context, c agent.Cooperation) (agent.Cooperation, error) {
+	if err := c.Validate(); err != nil {
+		return agent.Cooperation{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if c.ID.IsZero() {
+		c.ID = agent.NewCooperationID()
+	}
+	c.CreatedAt = m.now()
+	stored := agent.Cooperation{
+		ID:           c.ID,
+		Name:         c.Name,
+		CapitalistID: c.CapitalistID,
+		Members:      append([]agent.CooperationMember(nil), c.Members...),
+		CreatedAt:    c.CreatedAt,
+	}
+	m.cooperations[c.ID] = stored
+	return stored, nil
+}
+
+func (m *Memory) GetCooperation(_ context.Context, id agent.CooperationID) (agent.Cooperation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	c, ok := m.cooperations[id]
+	if !ok {
+		return agent.Cooperation{}, ErrNotFound
+	}
+	out := c
+	out.Members = append([]agent.CooperationMember(nil), c.Members...)
+	return out, nil
+}
+
+func (m *Memory) ListCooperations(_ context.Context) ([]agent.Cooperation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.Cooperation, 0, len(m.cooperations))
+	for _, c := range m.cooperations {
+		copyC := c
+		copyC.Members = append([]agent.CooperationMember(nil), c.Members...)
+		out = append(out, copyC)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func (m *Memory) ListCooperationsByCapitalist(_ context.Context, capitalistID agent.AgentID) ([]agent.Cooperation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []agent.Cooperation
+	for _, c := range m.cooperations {
+		if c.CapitalistID != capitalistID {
+			continue
+		}
+		copyC := c
+		copyC.Members = append([]agent.CooperationMember(nil), c.Members...)
+		out = append(out, copyC)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
 }
