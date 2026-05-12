@@ -118,6 +118,12 @@ func main() {
 	srv.Handle("/v1/production/rate-of-surplus-value", simProxy)
 	srv.Handle("/v1/production/extra-surplus-value", simProxy)
 
+	// Ch. 15 — Machinery and Modern Industry → simulation-engine
+	srv.Handle("/v1/machines", simProxy)
+	srv.Handle("/v1/machines/{rest...}", simProxy)
+	srv.Handle("/v1/factories", simProxy)
+	srv.Handle("/v1/factories/{rest...}", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -129,15 +135,15 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-14-manufacture",
-		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
+		"status":      "ch-15-machinery-and-modern-industry",
+		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service; machine/factory routes to simulation-engine.",
 		"downstream": []string{
 			"commodity-service",
 			"agent-service",
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 14 - Division of Labour and Manufacture",
+		"chapter": "Capital Vol. I, Ch. 15 - Machinery and Modern Industry",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)

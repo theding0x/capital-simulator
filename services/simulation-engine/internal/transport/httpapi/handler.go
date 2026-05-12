@@ -7,19 +7,23 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
 
-// Handler holds the logger; all surplus endpoints are stateless.
+// Handler holds the logger plus the machinery store (added in Ch. 15).
+// Pre-Ch.15 surplus and production endpoints remain stateless.
 type Handler struct {
-	Logger *slog.Logger
+	Logger    *slog.Logger
+	Machines  store.MachineStore
+	Factories store.FactoryStore
 }
 
-func New(logger *slog.Logger) *Handler {
+func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Logger: logger}
+	return &Handler{Logger: logger, Machines: ms, Factories: fs}
 }
 
 // massRequest accepts either {rate, variable_capital} or
