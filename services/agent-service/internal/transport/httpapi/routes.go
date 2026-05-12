@@ -42,4 +42,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/cooperations/{id}/collective-working-day", h.ComputeCollectiveWorkingDay)
 	s.HandleFunc("POST /v1/cooperations/{id}/average-social-labour", h.ComputeAverageSocialLabour)
 	s.HandleFunc("POST /v1/cooperations/minimum-capital", h.ComputeMinimumCapital)
+	// Ch. 14 — Division of Labour and Manufacture
+	s.HandleFunc("POST /v1/manufactures", h.CreateManufacture)
+	s.HandleFunc("GET /v1/manufactures", h.ListManufactures)
+	s.HandleFunc("GET /v1/manufactures/{id}", h.GetManufacture)
+	s.HandleFunc("POST /v1/manufactures/{id}/proportional-group-size", h.ProportionalGroupSize)
+	s.HandleFunc("POST /v1/manufactures/{id}/scale", h.ScaleManufacture)
+	s.HandleFunc("GET /v1/manufactures/{id}/collective-labourer", h.GetCollectiveLabourer)
+	s.HandleFunc("GET /v1/manufactures/{id}/minimum-capital", h.GetManufactureMinimumCapital)
 }
