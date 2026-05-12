@@ -91,6 +91,10 @@ func main() {
 	srv.Handle("/v1/relay-schedules", agentProxy)
 	srv.Handle("/v1/relay-schedules/{rest...}", agentProxy)
 
+	// Ch. 13 — co-operation routes proxy to agent-service
+	srv.Handle("/v1/cooperations", agentProxy)
+	srv.Handle("/v1/cooperations/{rest...}", agentProxy)
+
 	// Reverse-proxy routes to simulation-engine.
 	simURL := getenv("SIM_ENGINE_URL", "http://simulation-engine:8084")
 	simProxy, err := proxy.New(simURL, logger)
@@ -121,7 +125,7 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-12-relative-surplus-value",
+		"status":      "ch-13-co-operation",
 		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service.",
 		"downstream": []string{
 			"commodity-service",
@@ -129,7 +133,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 12 - The Concept of Relative Surplus-Value",
+		"chapter": "Capital Vol. I, Ch. 13 - Co-operation",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)

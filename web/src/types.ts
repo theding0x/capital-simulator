@@ -627,3 +627,64 @@ export interface ExtraSurplusValueInput {
   social_value: number;
   quantity: number;
 }
+
+// --- agent-service types (Ch. 13: Co-operation) ------------------------------
+
+export interface CooperationMember {
+  worker_id: string;
+  supervisory: boolean;
+  working_day_minutes: number;
+}
+
+export interface Supervisor {
+  worker_id: string;
+}
+
+export interface Cooperation {
+  id: string;
+  name: string;
+  capitalist_id: string;
+  members: CooperationMember[];
+  created_at: string;
+  size: number;
+  collective_working_day_minutes: number;
+  average_social_labour_minutes: number;
+  collective_power_factor: number;
+  cooperative_origin: string;
+  supervisors: Supervisor[];
+}
+
+export interface CollectiveWorkingDayResult {
+  cooperation_id: string;
+  size: number;
+  individual_working_day_minutes: number;
+  collective_working_day_minutes: number;
+  collective_power_factor: number;
+  collective_output_use_value_units: number;
+  cooperative_origin: string;
+}
+
+export interface AverageSocialLabourResult {
+  cooperation_id: string;
+  size: number;
+  collective_working_day_minutes: number;
+  average_social_labour_minutes: number;
+  meets_burke_minimum_platoon: boolean;
+}
+
+export interface MinimumCapitalInput {
+  worker_count: number;
+  daily_wage_pence: number;
+}
+
+export interface MinimumCapitalResult {
+  worker_count: number;
+  daily_wage_pence: number;
+  minimum_capital_pence: number;
+}
+
+export interface CreateCooperationInput {
+  name: string;
+  capitalist_id: string;
+  members: CooperationMember[];
+}
