@@ -23,6 +23,7 @@ type agentStore interface {
 	store.LabourProcessStore
 	store.WorkingDayStore
 	store.CooperationStore
+	store.ManufactureStore
 }
 
 func main() {
@@ -44,7 +45,7 @@ func main() {
 	addr := getenv("SERVICE_ADDR", ":8082")
 	srv := httpx.New(httpx.Config{Addr: addr}, logger)
 
-	httpapi.Register(srv, httpapi.New(st, st, st, st, st, st, logger))
+	httpapi.Register(srv, httpapi.New(st, st, st, st, st, st, st, logger))
 	srv.MarkReady(true)
 
 	if err := srv.Run(ctx); err != nil {

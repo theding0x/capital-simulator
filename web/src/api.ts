@@ -71,6 +71,11 @@ import type {
   AverageSocialLabourResult,
   MinimumCapitalInput,
   MinimumCapitalResult,
+  Manufacture,
+  CreateManufactureInput,
+  ProportionalGroupSizeResult,
+  ManufactureMinimumCapitalResult,
+  ManufactureForm,
 } from "./types";
 
 const BASE = "/api";
@@ -457,4 +462,46 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // --- agent-service (Ch. 14: Division of Labour and Manufacture) ---
+
+  listManufactures: (filters?: { capitalistId?: string; form?: ManufactureForm }) => {
+    const q = new URLSearchParams();
+    if (filters?.capitalistId) q.set("capitalist_id", filters.capitalistId);
+    if (filters?.form) q.set("form", filters.form);
+    const qs = q.toString();
+    return http<{ items: Manufacture[] }>(
+      qs ? `/v1/manufactures?${qs}` : "/v1/manufactures"
+    ).then((r) => r.items);
+  },
+
+  getManufacture: (id: string) => http<Manufacture>(`/v1/manufactures/${id}`),
+
+  createManufacture: (input: CreateManufactureInput) =>
+    http<Manufacture>("/v1/manufactures", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  proportionalGroupSize: (id: string, targetOutputRate: number) =>
+    http<ProportionalGroupSizeResult>(
+      `/v1/manufactures/${id}/proportional-group-size`,
+      {
+        method: "POST",
+        body: JSON.stringify({ target_output_rate: targetOutputRate }),
+      }
+    ),
+
+  scaleManufacture: (id: string, multiplier: number) =>
+    http<Manufacture>(`/v1/manufactures/${id}/scale`, {
+      method: "POST",
+      body: JSON.stringify({ multiplier }),
+    }),
+
+  getManufactureMinimumCapital: (id: string, rawMaterialCostFactor: number) =>
+    http<ManufactureMinimumCapitalResult>(
+      `/v1/manufactures/${id}/minimum-capital?raw_material_cost_factor=${encodeURIComponent(
+        String(rawMaterialCostFactor)
+      )}`
+    ),
 };

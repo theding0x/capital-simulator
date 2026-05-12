@@ -79,7 +79,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 11    | ✅ Done     | Rate and mass of surplus-value; SurplusValueRate, MassByRate, MassByWorkers, compensation law | simulation-engine |
 | Ch. 12    | ✅ Done     | Relative surplus-value; WorkingDay, ShortenNecessaryLabour, RateOfSurplusValue, ExtraSurplusValue, ApplyProductivityToSNLT | simulation-engine |
 | Ch. 13    | ✅ Done     | Co-operation; collective working-day, average social labour, scale of co-operation, minimum capital, supervision, cooperative productive power as property of capital | agent-service |
-| Ch. 14+   | Pending     | Division of labour, machinery, wages, accumulation | all            |
+| Ch. 14    | ✅ Done     | Division of labour and manufacture; detail roles, collective labourer, two-fold origin (combination / splitting), heterogeneous vs serial form, proportional group size, scaling by integer multiples, skill hierarchy, manufacture minimum capital | agent-service |
+| Ch. 15+   | Pending     | Machinery, wages, accumulation | all            |
 
 ### Ch. 1 — what was built
 
@@ -201,3 +202,16 @@ The React UI adds a "Ch. 06 — The Sale and Purchase of Labour-Power" panel wit
 - **HTTP endpoints.** `POST /v1/cooperations` (assemble), `GET /v1/cooperations` (list, optional `?capitalist_id=`), `GET /v1/cooperations/{id}` (fetch with computed aggregates), `POST /v1/cooperations/{id}/collective-working-day` (computed n × d plus output factor), `POST /v1/cooperations/{id}/average-social-labour` (reduces collective back to per-worker), `POST /v1/cooperations/minimum-capital` (stateless probe for n × wage).
 - **api-gateway.** Reverse-proxies `/v1/cooperations` and `/v1/cooperations/{rest...}` to agent-service.
 - **React UI.** Ch. 13 panel with: assembly form (pick capitalist + workers, mark some as supervisory, set working-day), ledger of assembled cooperations with computed Collective Working-Day / Average Social Labour / Output Factor / Supervisors columns, and a Minimum Capital probe with Marx's §8 fixture buttons (300 @ 6 s., 10 @ 6 s., 1,200 @ 6 s.).
+
+### Ch. 14 — what was built
+
+`agent-service` adds the Manufacture domain from Capital Vol. I, Ch. 14:
+
+- **Manufacture.** `Manufacture` struct (ID, Name, CapitalistID, Form, Origin, IndividualWorkingDayMinutes, Roles, CreatedAt) — a `Cooperation` reorganised around a fixed division of detail labour, owned by one capitalist. `ManufactureForm` enumerates `"heterogeneous"` and `"serial"`; `ManufactureOrigin` enumerates `"combination"` (diverse handicrafts united) and `"splitting"` (one handicraft subdivided).
+- **DetailRole, SkillLevel, SpecialisedTool.** Each role names a fractional function (`Name`, `SkillLevel`, `OutputRatePerHour`, `HeadCount`, `ToolName`). `SkillLevel` is `"skilled"` or `"unskilled"`. `PartialProduct` is a `LabourMinutes` alias deliberately without an exchange-value — detail labour produces no commodities (§4).
+- **CollectiveLabourer & LabourHierarchy.** `CollectiveLabourer.TotalWorkers`, `IsParalysed(absentRoles)`, `OutputPerPeriod(periodMinutes)` (bottleneck-bounded by the slowest role-group). `LabourHierarchy` is the roles ordered skilled-first with an `Unskilled()` helper (§5).
+- **Pure functions.** `ProportionalGroupSize(roles, target)` returns headcount per role so rate × headcount equals the target — Marx's "iron law" (§2); returns `ErrBottleneck` if no integer solution exists. `ManufactureProductivePower(m, period)` exceeds the simple-cooperation baseline whenever `len(Roles) > 1`. `RoleLabourPowerValue(role, apprenticeshipMinutes)` returns subsistence + apprenticeship for skilled roles, subsistence only for unskilled (§5). `ManufactureMinimumCapital(m, rawMaterialCostFactor)` always exceeds `MinimumCapital(totalWorkers, averageWage)` (§5). `ScaleManufacture(m, k)` multiplies every role headcount by `k`; `ErrInvalidMultiplier` for `k < 1` (§3).
+- **Store.** `ManufactureStore` interface with `Memory` and `MySQL` implementations. Migration `00012_ch14_manufacture.sql` adds the `manufactures` and `detail_roles` tables.
+- **HTTP endpoints.** `POST /v1/manufactures` (create), `GET /v1/manufactures` (list, optional `?capitalist_id=` / `?form=`), `GET /v1/manufactures/{id}` (fetch with collective-labourer / hierarchy / productive-power summary), `POST /v1/manufactures/{id}/proportional-group-size` (Marx's iron law), `POST /v1/manufactures/{id}/scale` (integer-multiple preview), `GET /v1/manufactures/{id}/collective-labourer`, `GET /v1/manufactures/{id}/minimum-capital?raw_material_cost_factor=F`.
+- **api-gateway.** Reverse-proxies `/v1/manufactures` and `/v1/manufactures/{rest...}` to agent-service.
+- **React UI.** Ch. 14 panel with: establish-manufacture form (capitalist, form, origin, working-day, detail-role table with skill / output-rate / headcount / tool) and §2 seed buttons (type-foundry 4/2/1, needle wire serial); manufactures table with output factor and productive power; inspector that lists the labour hierarchy, runs `ProportionalGroupSize` for a target output rate, previews integer scaling, and shows manufacture minimum capital against the cooperation baseline. Note on the panel that detail labour produces no commodities — only the collective product enters exchange.
