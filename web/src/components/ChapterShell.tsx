@@ -14,6 +14,7 @@ import { Ch11RateAndMassOfSurplusValue } from "../chapters/Ch11RateAndMassOfSurp
 import { Ch12RelativeSurplusValue } from "../chapters/Ch12RelativeSurplusValue";
 import { Ch13Cooperation } from "../chapters/Ch13Cooperation";
 import { Ch14Manufacture } from "../chapters/Ch14Manufacture";
+import { Ch15Machinery } from "../chapters/Ch15Machinery";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -37,6 +38,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch12: "The shortening of the working-day is, therefore, by no means what is aimed at, in capitalist production, when labour is economised by increasing its productiveness.",
   ch13: "When the labourer co-operates systematically with others, he strips off the fetters of his individuality, and develops the capabilities of his species.",
   ch14: "While simple co-operation leaves the mode of working by the individual ... unchanged, manufacture revolutionises it ... it converts the worker into a crippled monstrosity by furthering his particular skill ... at the expense of a world of productive drives and inclinations.",
+  ch15: "The machine ... enters into the value-begetting process only by bits. It never adds more value than it loses, on an average, by wear and tear.",
 };
 
 export function ChapterShell({
@@ -98,6 +100,8 @@ export function ChapterShell({
           <Ch13Cooperation onSharedChanged={onSharedChanged} />
         ) : activeChapterId === "ch14" ? (
           <Ch14Manufacture onSharedChanged={onSharedChanged} />
+        ) : activeChapterId === "ch15" ? (
+          <Ch15Machinery onSharedChanged={onSharedChanged} />
         ) : null}
       </div>
     </main>
