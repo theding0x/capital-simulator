@@ -23,6 +23,7 @@ type Memory struct {
 	workingDays       map[agent.WorkingDayID]agent.WorkingDay
 	relaySchedules    map[agent.RelayScheduleID]agent.RelaySchedule
 	cooperations      map[agent.CooperationID]agent.Cooperation
+	manufactures      map[agent.ManufactureID]agent.Manufacture
 	now               func() time.Time
 }
 
@@ -38,6 +39,7 @@ func NewMemory() *Memory {
 		workingDays:       make(map[agent.WorkingDayID]agent.WorkingDay),
 		relaySchedules:    make(map[agent.RelayScheduleID]agent.RelaySchedule),
 		cooperations:      make(map[agent.CooperationID]agent.Cooperation),
+		manufactures:      make(map[agent.ManufactureID]agent.Manufacture),
 		now:               time.Now,
 	}
 }
@@ -455,6 +457,91 @@ func (m *Memory) ListCooperationsByCapitalist(_ context.Context, capitalistID ag
 		copyC := c
 		copyC.Members = append([]agent.CooperationMember(nil), c.Members...)
 		out = append(out, copyC)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func cloneManufacture(m agent.Manufacture) agent.Manufacture {
+	out := m
+	out.Roles = append([]agent.DetailRole(nil), m.Roles...)
+	return out
+}
+
+func (m *Memory) CreateManufacture(_ context.Context, mf agent.Manufacture) (agent.Manufacture, error) {
+	if err := mf.Validate(); err != nil {
+		return agent.Manufacture{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if mf.ID.IsZero() {
+		mf.ID = agent.NewManufactureID()
+	}
+	mf.CreatedAt = m.now()
+	stored := cloneManufacture(mf)
+	m.manufactures[mf.ID] = stored
+	return cloneManufacture(stored), nil
+}
+
+func (m *Memory) GetManufacture(_ context.Context, id agent.ManufactureID) (agent.Manufacture, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	mf, ok := m.manufactures[id]
+	if !ok {
+		return agent.Manufacture{}, ErrNotFound
+	}
+	return cloneManufacture(mf), nil
+}
+
+func (m *Memory) ListManufactures(_ context.Context) ([]agent.Manufacture, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.Manufacture, 0, len(m.manufactures))
+	for _, mf := range m.manufactures {
+		out = append(out, cloneManufacture(mf))
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func (m *Memory) ListManufacturesByCapitalist(_ context.Context, capitalistID agent.AgentID) ([]agent.Manufacture, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []agent.Manufacture
+	for _, mf := range m.manufactures {
+		if mf.CapitalistID != capitalistID {
+			continue
+		}
+		out = append(out, cloneManufacture(mf))
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func (m *Memory) ListManufacturesByForm(_ context.Context, form agent.ManufactureForm) ([]agent.Manufacture, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []agent.Manufacture
+	for _, mf := range m.manufactures {
+		if mf.Form != form {
+			continue
+		}
+		out = append(out, cloneManufacture(mf))
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

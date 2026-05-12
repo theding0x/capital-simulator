@@ -804,6 +804,168 @@ func scanCooperations(rows *sql.Rows) ([]agent.Cooperation, error) {
 	return out, rows.Err()
 }
 
+func (m *MySQL) CreateManufacture(ctx context.Context, mf agent.Manufacture) (agent.Manufacture, error) {
+	if err := mf.Validate(); err != nil {
+		return agent.Manufacture{}, err
+	}
+	if mf.ID.IsZero() {
+		mf.ID = agent.NewManufactureID()
+	}
+	mf.CreatedAt = m.now().UTC()
+
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return agent.Manufacture{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const insertManufacture = `INSERT INTO manufactures
+		(id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	if _, err := tx.ExecContext(ctx, insertManufacture,
+		string(mf.ID), mf.Name, string(mf.CapitalistID),
+		string(mf.Form), string(mf.Origin),
+		int64(mf.IndividualWorkingDayMinutes),
+		mf.CreatedAt,
+	); err != nil {
+		return agent.Manufacture{}, err
+	}
+
+	const insertRole = `INSERT INTO detail_roles
+		(manufacture_id, ordinal, role_name, skill_level, output_rate_per_hour, head_count, tool_name)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	for i, r := range mf.Roles {
+		if _, err := tx.ExecContext(ctx, insertRole,
+			string(mf.ID), i, r.Name, string(r.SkillLevel),
+			r.OutputRatePerHour, r.HeadCount, r.ToolName,
+		); err != nil {
+			return agent.Manufacture{}, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return agent.Manufacture{}, err
+	}
+	return mf, nil
+}
+
+func (m *MySQL) GetManufacture(ctx context.Context, id agent.ManufactureID) (agent.Manufacture, error) {
+	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at
+		FROM manufactures WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	mf, err := scanManufactureRow(row)
+	if err != nil {
+		return agent.Manufacture{}, err
+	}
+	roles, err := m.loadDetailRoles(ctx, mf.ID)
+	if err != nil {
+		return agent.Manufacture{}, err
+	}
+	mf.Roles = roles
+	return mf, nil
+}
+
+func (m *MySQL) ListManufactures(ctx context.Context) ([]agent.Manufacture, error) {
+	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at
+		FROM manufactures ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return m.scanManufactures(ctx, rows)
+}
+
+func (m *MySQL) ListManufacturesByCapitalist(ctx context.Context, capitalistID agent.AgentID) ([]agent.Manufacture, error) {
+	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at
+		FROM manufactures WHERE capitalist_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(capitalistID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return m.scanManufactures(ctx, rows)
+}
+
+func (m *MySQL) ListManufacturesByForm(ctx context.Context, form agent.ManufactureForm) ([]agent.Manufacture, error) {
+	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at
+		FROM manufactures WHERE form = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(form))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return m.scanManufactures(ctx, rows)
+}
+
+func (m *MySQL) loadDetailRoles(ctx context.Context, id agent.ManufactureID) ([]agent.DetailRole, error) {
+	const q = `SELECT role_name, skill_level, output_rate_per_hour, head_count, tool_name
+		FROM detail_roles WHERE manufacture_id = ? ORDER BY ordinal ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(id))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.DetailRole
+	for rows.Next() {
+		var r agent.DetailRole
+		var skill string
+		if err := rows.Scan(&r.Name, &skill, &r.OutputRatePerHour, &r.HeadCount, &r.ToolName); err != nil {
+			return nil, err
+		}
+		r.SkillLevel = agent.SkillLevel(skill)
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) scanManufactures(ctx context.Context, rows *sql.Rows) ([]agent.Manufacture, error) {
+	var out []agent.Manufacture
+	for rows.Next() {
+		var mf agent.Manufacture
+		var id, capID, form, origin string
+		var wd int64
+		if err := rows.Scan(&id, &mf.Name, &capID, &form, &origin, &wd, &mf.CreatedAt); err != nil {
+			return nil, err
+		}
+		mf.ID = agent.ManufactureID(id)
+		mf.CapitalistID = agent.AgentID(capID)
+		mf.Form = agent.ManufactureForm(form)
+		mf.Origin = agent.ManufactureOrigin(origin)
+		mf.IndividualWorkingDayMinutes = agent.LabourMinutes(wd)
+		out = append(out, mf)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	for i, mf := range out {
+		roles, err := m.loadDetailRoles(ctx, mf.ID)
+		if err != nil {
+			return nil, err
+		}
+		out[i].Roles = roles
+	}
+	return out, nil
+}
+
+func scanManufactureRow(row *sql.Row) (agent.Manufacture, error) {
+	var mf agent.Manufacture
+	var id, capID, form, origin string
+	var wd int64
+	err := row.Scan(&id, &mf.Name, &capID, &form, &origin, &wd, &mf.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.Manufacture{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.Manufacture{}, err
+	}
+	mf.ID = agent.ManufactureID(id)
+	mf.CapitalistID = agent.AgentID(capID)
+	mf.Form = agent.ManufactureForm(form)
+	mf.Origin = agent.ManufactureOrigin(origin)
+	mf.IndividualWorkingDayMinutes = agent.LabourMinutes(wd)
+	return mf, nil
+}
+
 func (m *MySQL) GetRelaySchedule(ctx context.Context, id agent.RelayScheduleID) (agent.RelaySchedule, error) {
 	const q = `SELECT id, shift_kind_0, nl_minutes_0, sl_minutes_0, worker_ids_0,
 		shift_kind_1, nl_minutes_1, sl_minutes_1, worker_ids_1, created_at

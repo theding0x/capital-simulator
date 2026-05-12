@@ -18,14 +18,15 @@ type Handler struct {
 	LabourProcessStore store.LabourProcessStore
 	WorkingDayStore    store.WorkingDayStore
 	CooperationStore   store.CooperationStore
+	ManufactureStore   store.ManufactureStore
 	Logger             *slog.Logger
 }
 
-func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, lproc store.LabourProcessStore, wds store.WorkingDayStore, coop store.CooperationStore, logger *slog.Logger) *Handler {
+func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, lproc store.LabourProcessStore, wds store.WorkingDayStore, coop store.CooperationStore, man store.ManufactureStore, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, LabourProcessStore: lproc, WorkingDayStore: wds, CooperationStore: coop, Logger: logger}
+	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, LabourProcessStore: lproc, WorkingDayStore: wds, CooperationStore: coop, ManufactureStore: man, Logger: logger}
 }
 
 type createAgentRequest struct {
@@ -344,7 +345,18 @@ func writeAppError(w http.ResponseWriter, err error) {
 		errors.Is(err, agent.ErrCooperationNoMembers),
 		errors.Is(err, agent.ErrCooperationMemberInvalid),
 		errors.Is(err, agent.ErrCooperationWorkingDay),
-		errors.Is(err, agent.ErrCooperationSizeTooSmall):
+		errors.Is(err, agent.ErrCooperationSizeTooSmall),
+		errors.Is(err, agent.ErrManufactureCapitalistID),
+		errors.Is(err, agent.ErrManufactureForm),
+		errors.Is(err, agent.ErrManufactureOrigin),
+		errors.Is(err, agent.ErrManufactureWorkingDay),
+		errors.Is(err, agent.ErrManufactureNoRoles),
+		errors.Is(err, agent.ErrManufactureRoleName),
+		errors.Is(err, agent.ErrManufactureSkillLevel),
+		errors.Is(err, agent.ErrManufactureOutputRate),
+		errors.Is(err, agent.ErrManufactureHeadCount),
+		errors.Is(err, agent.ErrBottleneck),
+		errors.Is(err, agent.ErrInvalidMultiplier):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, err.Error())
