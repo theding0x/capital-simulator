@@ -715,6 +715,95 @@ func (m *MySQL) CreateRelaySchedule(ctx context.Context, rs agent.RelaySchedule)
 	return rs, nil
 }
 
+func (m *MySQL) CreateCooperation(ctx context.Context, c agent.Cooperation) (agent.Cooperation, error) {
+	if err := c.Validate(); err != nil {
+		return agent.Cooperation{}, err
+	}
+	if c.ID.IsZero() {
+		c.ID = agent.NewCooperationID()
+	}
+	c.CreatedAt = m.now().UTC()
+	membersJSON, err := json.Marshal(c.Members)
+	if err != nil {
+		return agent.Cooperation{}, err
+	}
+	const q = `INSERT INTO cooperations
+		(id, name, capitalist_id, members_json, created_at)
+		VALUES (?, ?, ?, ?, ?)`
+	if _, err := m.db.ExecContext(ctx, q,
+		string(c.ID), c.Name, string(c.CapitalistID),
+		string(membersJSON), c.CreatedAt,
+	); err != nil {
+		return agent.Cooperation{}, err
+	}
+	return c, nil
+}
+
+func (m *MySQL) GetCooperation(ctx context.Context, id agent.CooperationID) (agent.Cooperation, error) {
+	const q = `SELECT id, name, capitalist_id, members_json, created_at
+		FROM cooperations WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	return scanCooperation(row)
+}
+
+func (m *MySQL) ListCooperations(ctx context.Context) ([]agent.Cooperation, error) {
+	const q = `SELECT id, name, capitalist_id, members_json, created_at
+		FROM cooperations ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanCooperations(rows)
+}
+
+func (m *MySQL) ListCooperationsByCapitalist(ctx context.Context, capitalistID agent.AgentID) ([]agent.Cooperation, error) {
+	const q = `SELECT id, name, capitalist_id, members_json, created_at
+		FROM cooperations WHERE capitalist_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(capitalistID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanCooperations(rows)
+}
+
+func scanCooperation(row *sql.Row) (agent.Cooperation, error) {
+	var c agent.Cooperation
+	var id, capID, membersRaw string
+	err := row.Scan(&id, &c.Name, &capID, &membersRaw, &c.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.Cooperation{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.Cooperation{}, err
+	}
+	c.ID = agent.CooperationID(id)
+	c.CapitalistID = agent.AgentID(capID)
+	if err := json.Unmarshal([]byte(membersRaw), &c.Members); err != nil {
+		return agent.Cooperation{}, err
+	}
+	return c, nil
+}
+
+func scanCooperations(rows *sql.Rows) ([]agent.Cooperation, error) {
+	var out []agent.Cooperation
+	for rows.Next() {
+		var c agent.Cooperation
+		var id, capID, membersRaw string
+		if err := rows.Scan(&id, &c.Name, &capID, &membersRaw, &c.CreatedAt); err != nil {
+			return nil, err
+		}
+		c.ID = agent.CooperationID(id)
+		c.CapitalistID = agent.AgentID(capID)
+		if err := json.Unmarshal([]byte(membersRaw), &c.Members); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
 func (m *MySQL) GetRelaySchedule(ctx context.Context, id agent.RelayScheduleID) (agent.RelaySchedule, error) {
 	const q = `SELECT id, shift_kind_0, nl_minutes_0, sl_minutes_0, worker_ids_0,
 		shift_kind_1, nl_minutes_1, sl_minutes_1, worker_ids_1, created_at

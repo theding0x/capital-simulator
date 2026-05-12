@@ -35,4 +35,11 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/working-days/validate", h.ValidateWorkingDay)
 	s.HandleFunc("POST /v1/relay-schedules", h.CreateRelaySchedule)
 	s.HandleFunc("GET /v1/relay-schedules/{id}", h.GetRelaySchedule)
+	// Ch. 13 — Co-operation
+	s.HandleFunc("POST /v1/cooperations", h.CreateCooperation)
+	s.HandleFunc("GET /v1/cooperations", h.ListCooperations)
+	s.HandleFunc("GET /v1/cooperations/{id}", h.GetCooperation)
+	s.HandleFunc("POST /v1/cooperations/{id}/collective-working-day", h.ComputeCollectiveWorkingDay)
+	s.HandleFunc("POST /v1/cooperations/{id}/average-social-labour", h.ComputeAverageSocialLabour)
+	s.HandleFunc("POST /v1/cooperations/minimum-capital", h.ComputeMinimumCapital)
 }
