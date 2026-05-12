@@ -123,9 +123,15 @@ changed and what to do next:
 
 > Branch `chapter-NN-<slug>` is set up. Roadmap row flipped to In progress,
 > chapter HTML stub at `chapters/volume-1/NN-<slug>.html`, test stub in
-> `services/<svc>/internal/<domain>/`. Next: implement the domain types.
-> Run `make vet test build` before committing - I can't run the Go toolchain
+> `services/<svc>/internal/<domain>/`. Next: implement the domain types,
+> add a schema migration AND a paired seed migration (`NNNNN_chNN_seed.sql`)
+> with Marx-faithful exemplars so the dashboard comes up populated. Run
+> `make vet test build` before committing - I can't run the Go toolchain
 > here.
+
+The seed migration is part of the chapter's deliverable, not a polish
+step. `chapter-pr` will check for it before opening the PR (CLAUDE.md
+Conventions → Seeds).
 
 ## What this skill does NOT do
 

@@ -41,6 +41,7 @@ docs/architecture.md            authoritative topology + chapter status
 - **HTTP**: pkg/httpx.Server. Routes use Go 1.22+ mux syntax (`POST /v1/...`).
 - **Persistence**: every domain service gets `internal/store/{store.go,memory.go,mysql.go}`. Store interface, Memory for tests, MySQL for prod.
 - **Migrations**: `github.com/pressly/goose/v3`. SQL files live at `internal/store/migrations/NNNNN_chNN_<slug>.sql`, embedded via `//go:embed` and applied by `pkg/mysql.Migrate` inside `NewMySQL`. Add a new numbered file per chapter; never edit existing ones.
+- **Seeds**: every chapter that adds a domain type also ships a `NNNNN_chNN_seed.sql` migration that inserts Marx-faithful exemplars (named after his actual fixtures), with a `-- +goose Down` that DELETEs every seeded id. Seed IDs follow `5eed00000000000000<CC><…>` so they're recognisable on sight and never collide with `commodity.NewID()`. The dashboard must come up populated on a fresh MySQL volume — empty panels are a regression.
 - **Errors**: sentinel `ErrNotFound`/`ErrAlreadyExists` in store; HTTP layer maps via `errors.Is`.
 - **Time/labour**: `LabourMinutes int64` is the canonical value-magnitude unit.
 - **IDs**: `commodity.NewID()` style — 96-bit hex from crypto/rand. No google/uuid.
@@ -63,10 +64,11 @@ cd web && npm run build     # vite production build
 
 1. Branch: `volume-N/chapter-NN` off `main`.
 2. Implement in the relevant service(s). Add tests using Marx's examples.
-3. Drop `chapters/volume-1/NN-<slug>.html` (user supplies; treat as canonical reference text, not source for parsing — it's 100KB+).
-4. Update `docs/architecture.md` chapter table.
-5. Commit signed (`commit.gpgsign=true` is set per-repo). Use a multi-line conventional commit; the PR template fills from it.
-6. Push; open PR against `main`.
+3. Add a seed migration (`NNNNN_chNN_seed.sql`) for every new domain type the chapter introduces — Marx-faithful exemplars (named after his actual fixtures), with a `-- +goose Down` that DELETEs every seeded id. The dashboard must come up populated on a fresh `docker compose up`.
+4. Drop `chapters/volume-1/NN-<slug>.html` (user supplies; treat as canonical reference text, not source for parsing — it's 100KB+).
+5. Update `docs/architecture.md` chapter table.
+6. Commit signed (`commit.gpgsign=true` is set per-repo). Use a multi-line conventional commit; the PR template fills from it.
+7. Push; open PR against `main`.
 
 ## Sandbox limits (Cowork)
 

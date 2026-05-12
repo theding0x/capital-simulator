@@ -748,3 +748,83 @@ export interface ManufactureMinimumCapitalResult {
   minimum_capital_pence: number;
   cooperation_baseline_pence: number;
 }
+
+// Ch. 15 — Machinery and Modern Industry
+export type PrimeMoverKind = "steam" | "water" | "electric" | "animal";
+
+export interface PrimeMover {
+  kind: PrimeMoverKind;
+  horsepower: number;
+}
+
+export interface Machine {
+  id: string;
+  name: string;
+  motor_mechanism: string;
+  transmitting_mechanism: string;
+  working_tool: string;
+  machine_value: number;
+  lifespan_days: number;
+  productive_power: number;
+  hand_labour_per_unit: number;
+  accumulated_wear: number;
+  accumulated_depreciation: number;
+  daily_wear_and_tear: number;
+  value_transferred_per_unit: number;
+  daily_labour_displaced: number;
+  created_at?: string;
+}
+
+export interface CreateMachineInput {
+  name: string;
+  motor_mechanism?: string;
+  transmitting_mechanism?: string;
+  working_tool?: string;
+  machine_value: number;
+  lifespan_days: number;
+  productive_power: number;
+  hand_labour_per_unit?: number;
+}
+
+export interface MachineEntryInput {
+  id?: string;
+  name?: string;
+  motor_mechanism?: string;
+  transmitting_mechanism?: string;
+  working_tool?: string;
+  machine_value?: number;
+  lifespan_days?: number;
+  productive_power?: number;
+  hand_labour_per_unit?: number;
+}
+
+export interface CreateFactoryInput {
+  name: string;
+  prime_mover: PrimeMover;
+  machines: MachineEntryInput[];
+}
+
+export interface Factory {
+  id: string;
+  name: string;
+  prime_mover: PrimeMover;
+  machines: Machine[];
+  tick_count: number;
+  total_productive_power: number;
+  daily_value_transfer: number;
+  created_at?: string;
+}
+
+export interface MachineWearResponse {
+  id: string;
+  accumulated_wear: number;
+  accumulated_depreciation: number;
+  remaining_value: number;
+}
+
+export interface FactoryTickResult {
+  factory: Factory;
+  value_transferred: number;
+  units_produced: number;
+  hand_labour_saved: number;
+}
