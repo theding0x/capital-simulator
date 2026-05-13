@@ -26,5 +26,4 @@ Vol. I, Ch. NN — <chapter title>
 
 - [ ] Concept(s) above are represented as types/endpoints in the relevant services
 - [ ] Tests cover the new behavior
-- [ ] `chapters/NN-<slug>.html` is added
-- [ ] PR opened against `main` from branch `chapter-NN-<slug>`
+- [ ] PR opened against `main` from branch `volume-X/chapter-Y`

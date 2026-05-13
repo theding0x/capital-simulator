@@ -4,7 +4,7 @@ A design system for **Capital Simulator** — a microservice simulation of an ec
 
 ## What the product is
 
-Capital Simulator is a developer-facing dashboard that lets you instantiate the economic concepts of Marx's *Capital* one chapter at a time. Each chapter of the source text is implemented as its own branch + PR in the repo, accompanied by an HTML chapter summary in `chapters/volume-1/`. The web UI exposes the resulting domain models — commodities, owners, offers, exchanges, the universal equivalent, money, capital circuits — through small, form-driven panels.
+Capital Simulator is a developer-facing dashboard that lets you instantiate the economic concepts of Marx's *Capital* one chapter at a time. Each chapter of the source text is implemented as its own branch + PR in the repo. The web UI exposes the resulting domain models — commodities, owners, offers, exchanges, the universal equivalent, money, capital circuits — through small, form-driven panels.
 
 The **vibe** is a 19th-century scholarly journal rendered as a dark-mode terminal: serif display type for headings (Playfair Display), monospaced labels and numerals (Meslo LG, replacing the upstream's IBM Plex Mono — see `fonts/README.md`), italicized notes pulled directly from Marx, and a restrained palette of bone-white ink on near-black surfaces, accented with Bordeaux red and antique gold.
 
@@ -12,7 +12,7 @@ The **vibe** is a 19th-century scholarly journal rendered as a dark-mode termina
 
 This system was reverse-engineered from a single source — the user's own codebase:
 
-- **GitHub:** `theding0x/capital-simulator` (private). The web client lives at `web/`. The chapter HTML summaries (Marx's source text) live at `chapters/volume-1/`. Project memory in `CLAUDE.md`.
+- **GitHub:** `theding0x/capital-simulator` (private). The web client lives at `web/`. Marx's source text and chapter specs live in the maintainer's `red-vault` Obsidian vault, accessed via the `obsidian` MCP server (not in this repo). Project memory in `CLAUDE.md`.
 - **Stack (per CLAUDE.md):** Go 1.25 monorepo · React 18 + Vite + TypeScript · MySQL 8 · Redis · Docker · k8s.
 - **Web entry:** `web/src/App.tsx`, styled by `web/src/index.css` (the canonical token + component sheet).
 

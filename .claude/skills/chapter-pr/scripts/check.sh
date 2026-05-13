@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # End-of-chapter precheck for capital-simulator.
 #
-# Verifies branch name, chapter HTML, architecture.md status row, and that
-# there's a real diff to ship. Exits non-zero on any failure with a clear
-# message naming the offending check.
+# Verifies branch name, architecture.md status row, and that there's a
+# real diff to ship. Exits non-zero on any failure with a clear message
+# naming the offending check. Chapter source text and spec live in the
+# red-vault Obsidian vault, not in this repo, so they are not validated
+# here.
 
 set -u
 shopt -s nullglob
@@ -25,30 +27,12 @@ ok() {
 branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ $branch =~ ^chapter-([0-9]{2})-([a-z0-9-]+)$ ]]; then
   chapter_num="${BASH_REMATCH[1]}"
-  slug="${BASH_REMATCH[2]}"
-  html="chapters/volume-1/${chapter_num}-${slug}.html"
 elif [[ $branch =~ ^volume-[0-9]+/chapter-([0-9]+)(-([a-z0-9-]+))?$ ]]; then
   chapter_num=$(printf '%02d' "${BASH_REMATCH[1]}")
-  slug="${BASH_REMATCH[3]}"
-  # Find the HTML file by chapter number prefix (slug may differ from branch name)
-  html=$(ls "chapters/volume-1/${chapter_num}"-*.html 2>/dev/null | head -1)
-  [[ -z $html ]] && fail "chapter HTML missing: chapters/volume-1/${chapter_num}-*.html"
 else
   fail "branch '$branch' does not match chapter-NN-<slug> or volume-N/chapter-NN"
 fi
 ok "branch $branch (chapter $chapter_num)"
-
-if [[ ! -f $html ]]; then
-  fail "chapter HTML missing: $html"
-fi
-size=$(wc -c <"$html" | tr -d '[:space:]')
-# The chapter-scaffold stub is well under 1KB; real Marx content is 50KB+.
-# 5KB is a generous threshold that catches the stub without false-flagging
-# a short chapter.
-if (( size < 5000 )); then
-  fail "chapter HTML at $html is only $size bytes — looks like the placeholder stub. Paste the real chapter text before opening the PR."
-fi
-ok "chapter HTML present ($size bytes)"
 
 arch="docs/architecture.md"
 if [[ ! -f $arch ]]; then
