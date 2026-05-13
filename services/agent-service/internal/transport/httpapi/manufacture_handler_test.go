@@ -264,7 +264,12 @@ func TestGetManufactureMinimumCapital_ExceedsCooperationBaseline(t *testing.T) {
 	json.NewDecoder(cr.Body).Decode(&created) //nolint
 	cr.Body.Close()
 
-	mc, err := http.Get(ts.URL + "/v1/manufactures/" + string(created.ID) + "/minimum-capital?raw_material_cost_factor=0.01")
+	// raw_material_cost_factor 0.1 ≈ a tenth of a penny per LabourMinute
+	// of collective output. With Caslon's role mix (3 unskilled to 4
+	// skilled) the wage bill is below the skilled-rate baseline used by
+	// CooperationBaseline; the §5 invariant only re-asserts itself once
+	// raw materials flow at a non-trivial rate.
+	mc, err := http.Get(ts.URL + "/v1/manufactures/" + string(created.ID) + "/minimum-capital?raw_material_cost_factor=0.1")
 	if err != nil {
 		t.Fatalf("GET: %v", err)
 	}
