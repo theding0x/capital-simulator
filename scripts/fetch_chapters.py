@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 """Fetch all Capital Vol. I chapters from marxists.org.
 
-Starts at ch01.htm, follows "Next:" links to the end of the volume,
-and saves each chapter as chapters/volume-1/NN-<slug>.html.
+Starts at ch01.htm, follows "Next:" links to the end of the volume, and
+saves each chapter as raw HTML into the red-vault staging directory at
+`marx-engels/1867/capital-volume-i/raw-html/NN-<slug>.html`. The polished
+markdown in the sibling `texts/` directory is hand-tuned and is NOT
+written by this script — staged HTML is raw material for whatever
+conversion pipeline you run separately.
 
 Usage:
     python3 scripts/fetch_chapters.py
 
-Existing files are skipped. Politely rate-limited to 1 request/second.
+Set the env var `RED_VAULT_DIR` to point at a different vault root if
+needed (defaults to the maintainer's local clone path). Existing files
+are skipped. Politely rate-limited to 1 request/second.
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 import time
@@ -18,7 +25,11 @@ import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
 
-CHAPTERS_DIR = Path(__file__).parent.parent / "chapters" / "volume-1"
+DEFAULT_RED_VAULT_DIR = Path(
+    "/mnt/c/Users/AaronHulse/Repositories/github.com/theding0x/red-vault"
+)
+VAULT_DIR = Path(os.environ.get("RED_VAULT_DIR", str(DEFAULT_RED_VAULT_DIR)))
+OUTPUT_DIR = VAULT_DIR / "marx-engels" / "1867" / "capital-volume-i" / "raw-html"
 START_URL = "https://www.marxists.org/archive/marx/works/1867-c1/ch01.htm"
 DELAY_S = 1.0
 
@@ -126,7 +137,8 @@ def chapter_num(url: str) -> int | None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    CHAPTERS_DIR.mkdir(exist_ok=True)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"Output dir: {OUTPUT_DIR}")
     url: str = START_URL
     visited: set[str] = set()
     saved = 0
@@ -162,9 +174,9 @@ def main() -> None:
             print(f"  Title: {subtitle}")
             print(f"  Slug:  {slug}")
 
-        out_path = CHAPTERS_DIR / f"{num:02d}-{slug}.html"
+        out_path = OUTPUT_DIR / f"{num:02d}-{slug}.html"
 
-        existing = list(CHAPTERS_DIR.glob(f"{num:02d}-*.html"))
+        existing = list(OUTPUT_DIR.glob(f"{num:02d}-*.html"))
         if existing:
             print(f"  Skipped (exists): {existing[0].name}")
             skipped += 1
