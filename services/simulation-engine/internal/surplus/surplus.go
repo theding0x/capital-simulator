@@ -2,9 +2,11 @@
 // Capital Vol. I, Ch. 11. All functions are pure; no persistence is needed.
 package surplus
 
-// LabourMinutes is the canonical value-magnitude unit, reused from agent-service
-// semantics (identical definition, separate package to avoid import cycles).
-type LabourMinutes int64
+import "github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+
+// LabourMinutes re-exported for legacy callers; the canonical type lives in
+// the labour package as of the Part IV cohesion refactor.
+type LabourMinutes = labour.LabourMinutes
 
 // AbsoluteWorkdayLimit is the physical ceiling of any working day: 24 h × 60 min.
 const AbsoluteWorkdayLimit LabourMinutes = 24 * 60

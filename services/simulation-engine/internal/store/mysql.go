@@ -10,6 +10,7 @@ import (
 	"time"
 
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 )
 
@@ -171,11 +172,11 @@ func (m *MySQL) CreateFactory(ctx context.Context, f machinery.Factory) (machine
 	}
 
 	const insertF = `INSERT INTO factories
-		(id, name, prime_mover_kind, prime_mover_horsepower, tick_count, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)`
+		(id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
 	if _, err := tx.ExecContext(ctx, insertF,
 		string(f.ID), f.Name, string(f.PrimeMover.Kind), f.PrimeMover.Horsepower,
-		f.TickCount, f.CreatedAt,
+		f.TickCount, float64(f.IntensityFactor), f.CreatedAt,
 	); err != nil {
 		return machinery.Factory{}, err
 	}
@@ -194,7 +195,7 @@ func (m *MySQL) CreateFactory(ctx context.Context, f machinery.Factory) (machine
 }
 
 func (m *MySQL) GetFactory(ctx context.Context, id machinery.FactoryID) (machinery.Factory, error) {
-	const q = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, created_at
+	const q = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, created_at
 		FROM factories WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	f, err := scanFactory(row.Scan)
@@ -210,7 +211,7 @@ func (m *MySQL) GetFactory(ctx context.Context, id machinery.FactoryID) (machine
 }
 
 func (m *MySQL) ListFactories(ctx context.Context) ([]machinery.Factory, error) {
-	const q = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, created_at
+	const q = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, created_at
 		FROM factories ORDER BY name ASC`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
@@ -239,42 +240,42 @@ func (m *MySQL) ListFactories(ctx context.Context) ([]machinery.Factory, error) 
 	return out, nil
 }
 
-func (m *MySQL) AdvanceTick(ctx context.Context, id machinery.FactoryID) (machinery.Factory, machinery.TickResult, error) {
+func (m *MySQL) AdvanceTick(ctx context.Context, id machinery.FactoryID) (machinery.Factory, engine.Tick, error) {
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
-		return machinery.Factory{}, machinery.TickResult{}, err
+		return machinery.Factory{}, engine.Tick{}, err
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	const fq = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, created_at
+	const fq = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, created_at
 		FROM factories WHERE id = ? FOR UPDATE`
 	row := tx.QueryRowContext(ctx, fq, string(id))
 	f, err := scanFactory(row.Scan)
 	if err != nil {
-		return machinery.Factory{}, machinery.TickResult{}, err
+		return machinery.Factory{}, engine.Tick{}, err
 	}
 	rows, err := tx.QueryContext(ctx, `SELECT machine_id FROM factory_machines WHERE factory_id = ? ORDER BY ordinal ASC`, string(id))
 	if err != nil {
-		return machinery.Factory{}, machinery.TickResult{}, err
+		return machinery.Factory{}, engine.Tick{}, err
 	}
 	var ids []machinery.MachineID
 	for rows.Next() {
 		var s string
 		if err := rows.Scan(&s); err != nil {
 			rows.Close()
-			return machinery.Factory{}, machinery.TickResult{}, err
+			return machinery.Factory{}, engine.Tick{}, err
 		}
 		ids = append(ids, machinery.MachineID(s))
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
-		return machinery.Factory{}, machinery.TickResult{}, err
+		return machinery.Factory{}, engine.Tick{}, err
 	}
 	machines := make([]machinery.Machine, 0, len(ids))
 	for _, mid := range ids {
 		mc, err := m.getMachineTx(ctx, tx, mid)
 		if err != nil {
-			return machinery.Factory{}, machinery.TickResult{}, err
+			return machinery.Factory{}, engine.Tick{}, err
 		}
 		machines = append(machines, mc)
 	}
@@ -289,7 +290,7 @@ func (m *MySQL) AdvanceTick(ctx context.Context, id machinery.FactoryID) (machin
 			`UPDATE machines SET accumulated_wear = ? WHERE id = ?`,
 			int64(mc.AccumulatedWear.Value), string(mc.ID),
 		); err != nil {
-			return machinery.Factory{}, machinery.TickResult{}, err
+			return machinery.Factory{}, engine.Tick{}, err
 		}
 	}
 	f.TickCount++
@@ -298,18 +299,55 @@ func (m *MySQL) AdvanceTick(ctx context.Context, id machinery.FactoryID) (machin
 		`UPDATE factories SET tick_count = ? WHERE id = ?`,
 		f.TickCount, string(id),
 	); err != nil {
-		return machinery.Factory{}, machinery.TickResult{}, err
+		return machinery.Factory{}, engine.Tick{}, err
+	}
+	tick := engine.Tick{
+		FactoryID:        string(id),
+		Sequence:         f.TickCount,
+		ValueTransferred: int64(result.ValueTransferred),
+		UnitsProduced:    result.UnitsProduced,
+		HandLabourSaved:  int64(result.HandLabourSaved),
+		OccurredAt:       now,
 	}
 	if _, err := tx.ExecContext(ctx,
 		`INSERT INTO factory_ticks (factory_id, sequence, value_transferred, units_produced, hand_labour_saved, occurred_at) VALUES (?, ?, ?, ?, ?, ?)`,
-		string(id), f.TickCount, int64(result.ValueTransferred), result.UnitsProduced, int64(result.HandLabourSaved), now,
+		tick.FactoryID, tick.Sequence, tick.ValueTransferred, tick.UnitsProduced, tick.HandLabourSaved, tick.OccurredAt,
 	); err != nil {
-		return machinery.Factory{}, machinery.TickResult{}, err
+		return machinery.Factory{}, engine.Tick{}, err
 	}
 	if err := tx.Commit(); err != nil {
-		return machinery.Factory{}, machinery.TickResult{}, err
+		return machinery.Factory{}, engine.Tick{}, err
 	}
-	return f, result, nil
+	return f, tick, nil
+}
+
+func (m *MySQL) ListTicks(ctx context.Context, id machinery.FactoryID, limit int) ([]engine.Tick, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	const q = `SELECT factory_id, sequence, value_transferred, units_produced, hand_labour_saved, occurred_at
+		FROM factory_ticks WHERE factory_id = ? ORDER BY sequence DESC LIMIT ?`
+	rows, err := m.db.QueryContext(ctx, q, string(id), limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []engine.Tick
+	for rows.Next() {
+		var t engine.Tick
+		if err := rows.Scan(&t.FactoryID, &t.Sequence, &t.ValueTransferred, &t.UnitsProduced, &t.HandLabourSaved, &t.OccurredAt); err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	// Reverse to ascending-sequence order so the UI can render left-to-right.
+	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
+		out[i], out[j] = out[j], out[i]
+	}
+	return out, nil
 }
 
 // machinesForFactory returns the embedded machines for a given factory.
@@ -374,7 +412,8 @@ func scanFactory(scan scanFn) (machinery.Factory, error) {
 	var f machinery.Factory
 	var id, kind string
 	var hp, tickCount int64
-	err := scan(&id, &f.Name, &kind, &hp, &tickCount, &f.CreatedAt)
+	var intensity float64
+	err := scan(&id, &f.Name, &kind, &hp, &tickCount, &intensity, &f.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return machinery.Factory{}, ErrNotFound
 	}
@@ -384,5 +423,6 @@ func scanFactory(scan scanFn) (machinery.Factory, error) {
 	f.ID = machinery.FactoryID(id)
 	f.PrimeMover = machinery.PrimeMover{Kind: machinery.PrimeMoverKind(kind), Horsepower: hp}
 	f.TickCount = tickCount
+	f.IntensityFactor = machinery.IntensityFactor(intensity)
 	return f, nil
 }

@@ -2,10 +2,17 @@
 // Capital Vol. I, Ch. 12. All functions are pure; no persistence is needed.
 package production
 
-import "math"
+import (
+	"math"
 
-// LabourMinutes is the canonical value-magnitude unit.
-type LabourMinutes int64
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+)
+
+// LabourMinutes and ProductivityFactor live in the labour package so every
+// chapter implemented in simulation-engine speaks the same value-magnitude
+// vocabulary. The aliases here keep call-sites compiling.
+type LabourMinutes = labour.LabourMinutes
+type ProductivityFactor = labour.ProductivityFactor
 
 // Named LabourMinutes types for distinct domain roles (Ch. 12, §1).
 type AbsoluteSurplusValue LabourMinutes
@@ -16,11 +23,13 @@ type LabourPowerValue LabourMinutes
 type IndividualValue LabourMinutes
 type SocialValue LabourMinutes
 
-// ProductivityFactor is a multiplicative scalar on SNLT: value ∝ 1/productivity [§1].
-type ProductivityFactor float64
-
 // Quantity is the number of articles produced or sold.
 type Quantity int64
+
+// Compile-time guards: keep the alias-vs-defined-type distinction honest.
+// A bare LabourMinutes value must round-trip via the labour package.
+var _ labour.LabourMinutes = LabourMinutes(0)
+var _ labour.ProductivityFactor = ProductivityFactor(0)
 
 // WorkingDay holds the tripartite split of the total working day [§1].
 // Invariant: NecessaryLabour + SurplusLabour == Total.

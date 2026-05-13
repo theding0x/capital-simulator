@@ -25,6 +25,7 @@ type cooperationResponse struct {
 	CollectiveWorkingDay  agent.LabourMinutes   `json:"collective_working_day_minutes"`
 	AverageSocialLabour   agent.LabourMinutes   `json:"average_social_labour_minutes"`
 	CollectivePowerFactor float64               `json:"collective_power_factor"`
+	ProductivityFactor    float64               `json:"productivity_factor"`
 	CooperativeOrigin     string                `json:"cooperative_origin"`
 	Supervisors           []agent.Supervisor    `json:"supervisors"`
 }
@@ -36,12 +37,14 @@ func buildCooperationResponse(c agent.Cooperation) cooperationResponse {
 	if c.Members == nil {
 		c.Members = []agent.CooperationMember{}
 	}
+	factor := agent.CollectiveProductivePower(n, d)
 	return cooperationResponse{
 		Cooperation:           c,
 		Size:                  n,
 		CollectiveWorkingDay:  collective,
 		AverageSocialLabour:   agent.AverageSocialLabour(collective, n),
-		CollectivePowerFactor: agent.CollectiveProductivePower(n, d),
+		CollectivePowerFactor: factor,
+		ProductivityFactor:    factor, // Part IV bridge: feed into Ch. 12.
 		CooperativeOrigin:     agent.CooperativeOrigin(),
 		Supervisors:           c.Supervisors(),
 	}
