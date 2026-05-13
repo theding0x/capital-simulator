@@ -1,188 +1,79 @@
 ---
 name: chapter-spec
-description: Generate a chapters/volume-1/NN-<slug>.spec.md file from a chapter HTML — strips the raw Marx text to clean prose, then spawns a dedicated subagent to analyze concepts, extract test fixtures, derive invariants, and map scope to Go types and HTTP routes. Use this whenever the user asks to generate a chapter spec, convert a chapter HTML, "prep" a chapter for implementation, or says something like "create the spec for chapter N". Works both retrospectively (chapter already implemented — maps existing types) and prospectively (chapter not yet implemented — proposes what to build).
+description: Load the chapter spec for a given chapter from the red-vault Obsidian vault. Specs are fully authored ahead of time and live at `marx-engels/1867/capital-volume-i/specs/NN-<slug>.spec.md` in the vault. Use this whenever the user asks to read, fetch, or inspect a chapter spec, or says "load the spec for chapter N", "what's in the spec for chapter N", or "prep me to implement chapter N".
 ---
 
 # chapter-spec
 
-Chapter HTML files are 100–200KB of raw Marx prose. The spec is a
-~100-line companion file that distils what the chapter means for code:
-concepts → types, Marx's own numbers → test fixtures, economic laws →
-invariants, and section scope. Generating it well requires reading the
-full chapter, which is too large for the main context — so this skill
-delegates to a subagent.
+Chapter specs (concepts → Go types, Marx's fixtures, invariants, scope)
+are authored and committed in the red-vault Obsidian vault, not in this
+repo. This skill is a thin wrapper around `mcp__obsidian__obsidian_get_file_contents`
+that names where to look and what to do with the result.
 
 ## Inputs to gather
 
-Before starting, confirm:
-
-1. **Chapter number and slug.** Infer from the branch name
-   (`chapter-NN-<slug>`) or the chapters/volume-1/ directory listing. If ambiguous,
-   ask once.
-2. **HTML path.** `chapters/volume-1/NN-<slug>.html`. Must exist.
-3. **Implementation status.** Is the chapter already implemented (types
-   exist in `services/*/internal/`)? If yes, the spec will map them. If
-   no, the spec will propose them. Ask if not obvious from context.
+1. **Chapter number.** Infer from the current branch (`volume-X/chapter-Y`)
+   if you're already on a chapter branch. Otherwise ask once.
+2. **Volume.** Defaults to 1. We only have Vol. I specs right now.
 
 ## Steps
 
-### 1. Strip the HTML
+### 1. Resolve the slug
 
-Run the strip script to convert the chapter HTML to clean prose:
-
-```bash
-python3 scripts/strip_chapter_html.py chapters/volume-1/NN-<slug>.html
-```
-
-Capture the output. It will be 15–30KB — small enough to pass to a
-subagent. Do not read the raw HTML directly.
-
-### 2. Collect codebase context
-
-Read the following (small, fast) — these go into the subagent prompt:
-
-- `services/<svc>/internal/<domain>/` — all `.go` files for the chapter's
-  primary service (to list existing or analogous types)
-- `services/<svc>/internal/transport/httpapi/routes.go` — existing routes
-- `docs/architecture.md` — the roadmap row for this chapter
-
-For a prospective spec (not yet implemented), read the equivalent files
-from the closest analogous service (commodity-service is always the
-reference implementation).
-
-### 3. Spawn the spec subagent
-
-Use the Agent tool (general-purpose) with this prompt, substituting the
-actual stripped prose and codebase snippets inline:
-
----
-
-**Subagent prompt template:**
+The vault file is named with the chapter number + slug, e.g.
+`17-changes-of-magnitude-in-the-price-of-labour-power-and-in-surplus-value.spec.md`.
+List the specs directory once to pick the matching file:
 
 ```
-You are generating a chapter spec for the capital-simulator project.
-The project is a Go + React microservices simulation of Marx's Capital,
-Vol. I, implemented chapter by chapter.
-
-## Your task
-
-Produce a `chapters/volume-1/NN-<slug>.spec.md` file in exactly the format
-shown in the ## Output format section below. Do not add prose outside
-that format. Return only the markdown content of the spec file.
-
-## Chapter
-
-Chapter NN: <Title>
-Implementation status: <already implemented | not yet implemented>
-Primary service: <svc>-service (port <port>)
-
-## Existing Go types (for reference)
-
-<paste the relevant .go file contents here>
-
-## Existing HTTP routes
-
-<paste routes.go content here>
-
-## Architecture roadmap row
-
-<paste the relevant row from docs/architecture.md>
-
-## Stripped chapter prose
-
-<paste the full output of strip_chapter_html.py here>
-
-## Output format
-
-Produce exactly this structure (fill in the brackets):
-
----
-chapter: NN
-title: "<Marx's chapter title>"
-status: <implemented | proposed>
-primary_service: <svc>-service
----
-
-## Concepts → types
-
-| Marx term | Go identifier | Kind | Package | Notes |
-|---|---|---|---|---|
-| [term] | [Type or FuncName] | type/func/method | [pkg] | [one-line note] |
-
-Include every concept the chapter names that maps to something in code.
-For a prospective spec, propose identifiers that follow repo conventions
-(PascalCase types, camelCase methods, snake_case JSON tags).
-
-## Fixtures
-
-Marx's own numbers and examples from the text. These become test case
-names and values verbatim — copy the wording from the text exactly.
-Format:
-
-- **§N** `<exact quote or equation from text>` → `<what it asserts in code>`
-
-Include at least one fixture per section. Prefer equations and
-quantitative comparisons over prose.
-
-## Invariants
-
-Mathematical or logical laws the chapter establishes that tests must
-enforce. State each as a code-checkable assertion:
-
-- `<expression> == <expression>` or `<condition>` [cite §N]
-
-## Scope
-
-### This chapter builds
-- Services: [list]
-- New domain types: [list with one-line descriptions]
-- New HTTP endpoints: [METHOD /path — description]
-- React: [what UI changes, if any]
-
-### Explicitly deferred to later chapters
-- [thing left out] — [why / which chapter picks it up]
-
----
-End of subagent prompt template.
+mcp__obsidian__obsidian_list_files_in_dir
+  dirpath: marx-engels/1867/capital-volume-i/specs
 ```
 
-### 4. Write the spec file
+Match by the `NN-` prefix.
 
-Take the subagent's output and write it to
-`chapters/volume-1/NN-<slug>.spec.md`.
+### 2. Fetch the spec
 
-Verify it:
-- Has frontmatter (chapter, title, status, primary_service)
-- Has all four sections (Concepts, Fixtures, Invariants, Scope)
-- Fixtures cite section numbers (§1, §2, etc.)
-- Invariants are checkable expressions, not prose descriptions
-- Scope lists deferred items explicitly
+```
+mcp__obsidian__obsidian_get_file_contents
+  filepath: marx-engels/1867/capital-volume-i/specs/NN-<slug>.spec.md
+```
 
-If any section is thin (< 2 entries), run a quick pass yourself — the
-subagent may have missed examples in dense prose sections.
+The spec is small (~100 lines) — fine to keep in context for the
+implementation work that follows.
 
-### 5. Don't commit
+### 3. Present what matters
 
-Leave the spec uncommitted. The user should review it — the subagent
-reads prose correctly but can mis-map Go types for prospective specs
-where naming conventions are ambiguous. The spec is a starting point,
-not a final artifact.
+When handing the spec back to the user, lead with the four sections in
+this order:
+
+1. **Concepts → types** (the Go identifiers to introduce)
+2. **Fixtures** (Marx's numbers for tests)
+3. **Invariants** (laws the tests must enforce)
+4. **Scope** (what this chapter builds vs. defers)
+
+Don't reprint the spec wholesale — summarize the planned domain types
+and endpoints, and quote fixtures verbatim (their wording becomes test
+case names).
 
 ## What this skill does NOT do
 
-- **Implement the chapter.** The spec is planning material. Chapter
-  implementation is separate.
-- **Replace the HTML.** The HTML stays as the canonical authoritative
-  source. The spec is a code-facing view of it.
-- **Run `make vet test build`.** That's the user's job after
-  implementing from the spec.
+- **Author or rewrite specs.** Specs live in the vault and are authored
+  by the user out-of-band. If the user asks to edit a spec, write the
+  change with `mcp__obsidian__obsidian_patch_content` against the same
+  vault path — but treat that as an explicit content edit, not a
+  generation step.
+- **Read the chapter source text.** The Marx prose lives at
+  `marx-engels/1867/capital-volume-i/texts/NN-<slug>.md`. Pull it only
+  when the spec is genuinely insufficient for the implementation
+  decision at hand — the spec is the code-facing view, the text is the
+  audit trail.
+- **Implement the chapter.** Use the spec as planning material; the
+  implementation work is a separate task.
 
 ## Anti-patterns
 
-- Don't read the HTML directly — it will consume most of the context
-  window and the strip script produces much cleaner output.
-- Don't invent Go types not warranted by the chapter text. If the chapter
-  doesn't introduce a concept, it shouldn't appear in the spec.
-- Don't put implementation details (function bodies, algorithms) in the
-  spec — just identifiers and signatures. The spec is a map, not the
-  territory.
+- Don't look for `chapters/volume-1/*.spec.md` in the repo — those were
+  migrated out. The vault is the source of truth.
+- Don't generate a spec from the chapter text. Specs are pre-authored.
+  If the vault is missing a spec the user expects, surface that as a gap
+  rather than fabricating one.

@@ -1,6 +1,6 @@
 ---
 name: chapter-scaffold
-description: Set up a new chapter branch in the capital-simulator repo - creates the chapter-NN-<slug> branch off main, drops the placeholder chapters/volume-1/NN-<slug>.html, adds the roadmap row to docs/architecture.md, and stubs a domain test file with a Marx textual fixture. Use this whenever the user says they're starting a new chapter, mentions "chapter N", asks to scaffold/begin/kick off a Capital chapter, or references the chapter workflow described in CLAUDE.md. Do not use for service scaffolding (use store-scaffold) or for opening the end-of-chapter PR (use chapter-pr).
+description: Set up a new chapter branch in the capital-simulator repo - creates the chapter-NN-<slug> branch off main, adds the roadmap row to docs/architecture.md, and stubs a domain test file with a Marx textual fixture. Use this whenever the user says they're starting a new chapter, mentions "chapter N", asks to scaffold/begin/kick off a Capital chapter, or references the chapter workflow described in CLAUDE.md. Do not use for service scaffolding (use store-scaffold) or for opening the end-of-chapter PR (use chapter-pr).
 ---
 
 # chapter-scaffold
@@ -8,7 +8,7 @@ description: Set up a new chapter branch in the capital-simulator repo - creates
 Sets up the workspace at the *start* of a new Capital chapter. The actual
 domain implementation is chapter-specific - that's the user's job - but the
 boilerplate around it is the same every time, and getting it wrong (branch
-name, chapter HTML slug, roadmap row format) creates rework.
+name, slug, roadmap row format) creates rework.
 
 ## When the user invokes this
 
@@ -22,7 +22,10 @@ If the chapter number and slug aren't both given, ask once. Slug is
 kebab-case and matches Marx's section heading without articles -
 `02-the-process-of-exchange`, `04-the-general-formula-for-capital`. Look at
 existing entries in `docs/architecture.md` (the roadmap table) before
-inventing one - the chapter range is already mapped there.
+inventing one - the chapter range is already mapped there. The vault
+authoritative slug also lives at
+`marx-engels/1867/capital-volume-i/texts/NN-<slug>.md` and
+`.../specs/NN-<slug>.spec.md` — match those exactly.
 
 ## Steps
 
@@ -56,30 +59,7 @@ mv .git/index.lock .git/index.lock.bak
 
 then retry the git command.
 
-### 3. Create the chapter HTML placeholder
-
-The user will paste the real ~100KB Marx text in later. For now write a
-small stub at `chapters/volume-1/NN-<slug>.html` so the path exists and the PR
-template's "Chapter HTML" field has a target:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Capital Vol. I, Ch. NN - <Title></title>
-  </head>
-  <body>
-    <h1>Capital Vol. I, Ch. NN - <Title></h1>
-    <p><em>Chapter source text to be pasted here by the user.</em></p>
-  </body>
-</html>
-```
-
-Replace `NN` and `<Title>` with the chapter number and Marx's chapter
-heading (e.g. "The Process of Exchange").
-
-### 4. Update the roadmap in docs/architecture.md
+### 3. Update the roadmap in docs/architecture.md
 
 Find the row for this chapter in the "Roadmap (chapter-driven)" table and
 flip its Status from `Pending` (or `Next`) to `In progress`. Don't add a
@@ -89,7 +69,7 @@ canonical.
 For chapters that touch a brand-new service for the first time, also note
 this in the Status column ("In progress · scaffolds X-service").
 
-### 5. Stub a test file with a Marx textual fixture
+### 4. Stub a test file with a Marx textual fixture
 
 The repo convention is that every chapter's tests use Marx's own examples
 as fixtures: `20 yards linen = 1 coat`, `1 quarter corn = x cwt iron`,
@@ -115,19 +95,21 @@ func TestChapterNN_<slug>(t *testing.T) {
 Skipped tests serve as a TODO list visible to `go test ./...` rather than
 buried in a comment.
 
-### 6. Don't commit
+### 5. Don't commit
 
 Leave the working tree dirty. The user wants to see the diff before any
 commit, and signed commits fail in the sandbox anyway. Tell them what was
 changed and what to do next:
 
 > Branch `chapter-NN-<slug>` is set up. Roadmap row flipped to In progress,
-> chapter HTML stub at `chapters/volume-1/NN-<slug>.html`, test stub in
-> `services/<svc>/internal/<domain>/`. Next: implement the domain types,
-> add a schema migration AND a paired seed migration (`NNNNN_chNN_seed.sql`)
-> with Marx-faithful exemplars so the dashboard comes up populated. Run
-> `make vet test build` before committing - I can't run the Go toolchain
-> here.
+> test stub in `services/<svc>/internal/<domain>/`. The chapter spec lives
+> in the red-vault at
+> `marx-engels/1867/capital-volume-i/specs/NN-<slug>.spec.md` — pull it via
+> `chapter-spec` for the implementation plan. Next: implement the domain
+> types, add a schema migration AND a paired seed migration
+> (`NNNNN_chNN_seed.sql`) with Marx-faithful exemplars so the dashboard
+> comes up populated. Run `make vet test build` before committing - I
+> can't run the Go toolchain here.
 
 The seed migration is part of the chapter's deliverable, not a polish
 step. `chapter-pr` will check for it before opening the PR (CLAUDE.md
@@ -142,6 +124,8 @@ Conventions → Seeds).
   is the heart of the chapter and is judgment-laden - it's Marx's
   argument turned into types. Don't pre-populate it.
 - **Open a PR.** That's `chapter-pr`'s job, run at the end of the chapter.
+- **Author the chapter spec.** Specs are pre-authored in the vault. Use
+  `chapter-spec` to read one, not to write one.
 
 ## Anti-patterns
 
@@ -149,5 +133,5 @@ Conventions → Seeds).
   single module.
 - Don't add a TypeScript router or new web routes here - one `App.tsx`
   composes panels until a chapter forces otherwise (CLAUDE.md).
-- Don't generate fake/lorem text for the chapter HTML. Leave the stub
-  obviously unfilled so the user remembers to paste the real text.
+- Don't try to drop a chapter HTML or spec into `chapters/volume-1/` —
+  that directory was retired. Source text and specs live in the red-vault.

@@ -1,6 +1,6 @@
 ---
 name: chapter-pr
-description: Manage the per-chapter PR for capital-simulator across its three phases — (A) open a draft PR upfront populated from the chapter spec, (B) sync the PR description after commits land so it reflects what actually shipped, (C) wait for GitHub Actions, fix failures, and mark the PR ready for merge. Auto-detects the phase from `gh pr view` for the current branch. Use when the user says "open the draft PR", "sync the chapter PR", "update the PR description", "mark this PR ready", "wrap up the chapter", "is this chapter shippable", or any other phase of the chapter PR flow. Branch convention is `volume-X/chapter-Y` (no slug). Do not use to scaffold a new chapter (use chapter-scaffold) or to generate the chapter spec (use chapter-spec).
+description: Manage the per-chapter PR for capital-simulator across its three phases — (A) open a draft PR upfront populated from the chapter spec, (B) sync the PR description after commits land so it reflects what actually shipped, (C) wait for GitHub Actions, fix failures, and mark the PR ready for merge. Auto-detects the phase from `gh pr view` for the current branch. Use when the user says "open the draft PR", "sync the chapter PR", "update the PR description", "mark this PR ready", "wrap up the chapter", "is this chapter shippable", or any other phase of the chapter PR flow. Branch convention is `volume-X/chapter-Y` (no slug). Do not use to scaffold a new chapter (use chapter-scaffold) or to load the chapter spec (use chapter-spec).
 ---
 
 # chapter-pr
@@ -12,11 +12,11 @@ the PR ready (steps 6–8). This skill handles all three phases.
 
 ## Phases at a glance
 
-| Phase | Workflow step | Trigger condition                                              | What this skill does                                                                 |
-|-------|---------------|----------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| A     | step 2        | branch exists, no PR yet for the branch                        | Open a **draft** PR populated from `chapters/volume-X/Y-*.spec.md` + the PR template |
-| B     | step 5        | draft PR exists; new commits since the description last synced | Re-derive Services touched + Summary from the actual diff; `gh pr edit --body`       |
-| C     | steps 6–8     | implementation done; awaiting / chasing CI                     | Run the precheck, poll `gh pr checks`, fix failures, then `gh pr ready`              |
+| Phase | Workflow step | Trigger condition                                              | What this skill does                                                                                                       |
+|-------|---------------|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| A     | step 2        | branch exists, no PR yet for the branch                        | Open a **draft** PR populated from the vault spec (`marx-engels/1867/capital-volume-i/specs/NN-*.spec.md`) + the PR template |
+| B     | step 5        | draft PR exists; new commits since the description last synced | Re-derive Services touched + Summary from the actual diff; `gh pr edit --body`                                             |
+| C     | steps 6–8     | implementation done; awaiting / chasing CI                     | Run the precheck, poll `gh pr checks`, fix failures, then `gh pr ready`                                                    |
 
 ## Detect the phase first
 
@@ -46,13 +46,23 @@ If ambiguous, infer from the phase detection above.
 
 ## Phase A — Open the draft PR
 
-Prereqs: branch `volume-X/chapter-Y` exists, `chapters/volume-X/Y-<slug>.spec.md`
-exists. If the spec is missing, stop and tell the user to run `chapter-spec`.
+Prereqs: branch `volume-X/chapter-Y` exists; the vault spec
+`marx-engels/1867/capital-volume-i/specs/NN-<slug>.spec.md` exists (where
+`NN` is the zero-padded chapter number). Specs are pre-authored — if one
+is genuinely missing for the chapter, surface that as a gap to the user
+rather than fabricating one.
 
 ### Steps
 
 1. Verify branch name matches `^volume-[0-9]+/chapter-[0-9]+$`. Bail if not.
-2. Locate the chapter spec via `ls chapters/volume-X/Y-*.spec.md`.
+2. Locate the chapter spec by listing the vault specs directory and
+   matching the `NN-` prefix:
+   ```
+   mcp__obsidian__obsidian_list_files_in_dir
+     dirpath: marx-engels/1867/capital-volume-i/specs
+   ```
+   Then fetch it via `mcp__obsidian__obsidian_get_file_contents`. If the
+   matching file is absent, stop and tell the user.
 3. Read the spec frontmatter (`title`, `primary_service`) and the
    **Scope → This chapter builds** section to extract planned domain
    types, endpoints, and UI work.
@@ -91,10 +101,6 @@ Phase B refreshes it.>
 - [ ] pkg/* (shared)
 - [ ] deploy/k8s
 - [ ] docker-compose.yml
-
-## Chapter HTML
-
-chapters/volume-X/Y-<slug>.html
 
 ## How I tested
 
@@ -159,18 +165,16 @@ bullets are now out of date.
 
 ### Steps
 
-1. Run the precheck script (it covers branch name, chapter HTML present
-   and non-stub, architecture roadmap row marked Done, branch ahead of
-   main, real diff):
+1. Run the precheck script (it covers branch name, architecture roadmap
+   row marked Done, branch ahead of main, real diff):
 
    ```bash
    sed -i 's/\r$//' .claude/skills/chapter-pr/scripts/check.sh   # WSL CRLF guard
    bash .claude/skills/chapter-pr/scripts/check.sh 2>&1
    ```
 
-   If a check fails, surface it to the user. Roadmap-row flips and HTML
-   drops are content decisions — confirm before editing them on the
-   user's behalf.
+   If a check fails, surface it to the user. Roadmap-row flips are
+   content decisions — confirm before editing on the user's behalf.
 
 2. Confirm by eye that the **seed migration shipped** for any new
    domain type the chapter introduced
@@ -210,21 +214,23 @@ bullets are now out of date.
 
 - **Run the Go or web test suites locally.** The sandbox can't. CI in
   Phase C covers it.
-- **Edit the chapter HTML.** Content decision; user owns it.
+- **Edit the chapter spec or source text.** Those live in the red-vault
+  and the user owns them. If a spec needs an update mid-PR, the user
+  edits it in Obsidian.
 - **Write the architecture.md roadmap row.** Content decision.
 - **Resolve merge conflicts on main.** If the branch is behind, tell
   the user and let them rebase.
 - **Scaffold a new chapter** — use `chapter-scaffold`.
-- **Generate the chapter spec** — use `chapter-spec`.
+- **Load the chapter spec** — use `chapter-spec`.
 
 ## Anti-patterns
 
-- Don't open the PR as non-draft in Phase A. The whole point of the new
+- Don't open the PR as non-draft in Phase A. The whole point of the
   workflow is a paper trail spec → planned → shipped.
-- Don't open a PR with the placeholder chapter HTML from
-  `chapter-scaffold`. Phase C's precheck guards this.
 - Don't bundle multiple chapters in one PR. One chapter, one branch,
   one PR.
 - Don't rewrite the conventional commit format. The PR description in
   Phase B fills from the commit body; deviating from `feat(<svc>): ...`
   breaks that.
+- Don't reference `chapters/volume-1/` — that directory was retired.
+  Spec + chapter text live in the red-vault.

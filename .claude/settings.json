@@ -1,0 +1,20 @@
+{
+  "enabledPlugins": {
+    "ecc@ecc": true,
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "obsidian@obsidian-skills": true,
+    "ruflo-core@ruflo": true,
+    "ruflo-swarm@ruflo": true,
+    "ruflo-autopilot@ruflo": true
+  },
+  "mcpServers": {
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "http://localhost:22360/sse"
+      ],
+      "env": {}
+    }
+  }
+}
