@@ -117,6 +117,9 @@ func main() {
 	srv.Handle("/v1/production/working-day/shorten", simProxy)
 	srv.Handle("/v1/production/rate-of-surplus-value", simProxy)
 	srv.Handle("/v1/production/extra-surplus-value", simProxy)
+	// Part IV bridge — Ch.13/14/15 productivity → Ch.12 relative surplus-value
+	srv.Handle("/v1/production/relative-surplus", simProxy)
+	srv.Handle("/v1/production/relative-surplus-from-productivity", simProxy)
 
 	// Ch. 15 — Machinery and Modern Industry → simulation-engine
 	srv.Handle("/v1/machines", simProxy)

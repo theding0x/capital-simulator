@@ -13,6 +13,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/production/rate-of-surplus-value", h.GetProductionRate)
 	s.HandleFunc("POST /v1/production/extra-surplus-value", h.ComputeExtraSurplusValue)
 
+	// Part IV bridge — Ch. 13/14/15 productivity → Ch. 12 relative surplus-value
+	s.HandleFunc("POST /v1/production/relative-surplus", h.RelativeSurplus)
+	s.HandleFunc("POST /v1/production/relative-surplus-from-productivity", h.RelativeSurplusFromProductivity)
+
 	// Ch. 15 — Machinery and Modern Industry
 	s.HandleFunc("POST /v1/machines", h.CreateMachine)
 	s.HandleFunc("GET /v1/machines", h.ListMachines)
@@ -22,4 +26,5 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/factories", h.ListFactories)
 	s.HandleFunc("GET /v1/factories/{id}", h.GetFactory)
 	s.HandleFunc("POST /v1/factories/{id}/tick", h.TickFactory)
+	s.HandleFunc("GET /v1/factories/{id}/ticks", h.ListFactoryTicks)
 }

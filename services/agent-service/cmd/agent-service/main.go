@@ -16,15 +16,10 @@ import (
 
 const serviceName = "agent-service"
 
-type agentStore interface {
-	store.Store
-	store.CircuitStore
-	store.LabourPowerStore
-	store.LabourProcessStore
-	store.WorkingDayStore
-	store.CooperationStore
-	store.ManufactureStore
-}
+// agentStore is the composite store interface main needs. The handler's
+// AgentStore (in transport/httpapi) is the canonical one; this alias keeps
+// the main / openStore signature stable.
+type agentStore = httpapi.AgentStore
 
 func main() {
 	logger := applog.New(serviceName)
@@ -45,7 +40,7 @@ func main() {
 	addr := getenv("SERVICE_ADDR", ":8082")
 	srv := httpx.New(httpx.Config{Addr: addr}, logger)
 
-	httpapi.Register(srv, httpapi.New(st, st, st, st, st, st, st, logger))
+	httpapi.Register(srv, httpapi.New(st, logger))
 	srv.MarkReady(true)
 
 	if err := srv.Run(ctx); err != nil {

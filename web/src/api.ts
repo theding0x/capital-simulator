@@ -82,6 +82,10 @@ import type {
   Factory,
   MachineWearResponse,
   FactoryTickResult,
+  RelativeSurplusInput,
+  RelativeSurplusFromSourceInput,
+  RelativeSurplusResult,
+  FactoryTick,
 } from "./types";
 
 const BASE = "/api";
@@ -542,5 +546,24 @@ export const api = {
     http<FactoryTickResult>(`/v1/factories/${id}/tick`, {
       method: "POST",
       body: JSON.stringify({}),
+    }),
+
+  listFactoryTicks: (id: string, limit?: number) => {
+    const qs = limit ? `?limit=${limit}` : "";
+    return http<{ items: FactoryTick[] }>(`/v1/factories/${id}/ticks${qs}`).then((r) => r.items);
+  },
+
+  // --- simulation-engine (Part IV bridge: Ch.13/14/15 → Ch.12) ---
+
+  relativeSurplus: (input: RelativeSurplusInput) =>
+    http<RelativeSurplusResult>("/v1/production/relative-surplus", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  relativeSurplusFromSource: (input: RelativeSurplusFromSourceInput) =>
+    http<RelativeSurplusResult>("/v1/production/relative-surplus-from-productivity", {
+      method: "POST",
+      body: JSON.stringify(input),
     }),
 };

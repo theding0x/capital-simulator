@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
+import { RelativeSurplusBridge } from "../components/RelativeSurplusBridge";
+import { fmtHoursLong as minutesToHours, fmtPounds as poundsFromPence } from "../format";
 import type {
   Agent,
   CollectiveWorkingDayResult,
@@ -11,20 +13,6 @@ import type {
 
 interface Ch13Props {
   onSharedChanged: () => void;
-}
-
-function minutesToHours(m: number): string {
-  const h = Math.floor(m / 60);
-  const min = m % 60;
-  return min === 0 ? `${h}h` : `${h}h ${min}m`;
-}
-
-function poundsFromPence(p: number): string {
-  const sign = p < 0 ? "-" : "";
-  const abs = Math.abs(p);
-  const pounds = Math.floor(abs / 100);
-  const pence = abs % 100;
-  return `${sign}£${pounds}.${pence.toString().padStart(2, "0")}`;
 }
 
 export function Ch13Cooperation({ onSharedChanged: _unused }: Ch13Props) {
@@ -325,6 +313,12 @@ function CooperationsList({
             The bonus costs the capitalist nothing — "because, on the other hand, the workman
             himself does not develop it before his labour belongs to capital." (§13)
           </p>
+          <RelativeSurplusBridge
+            source="cooperation"
+            sourceId={selectedId}
+            factor={cwd.collective_power_factor}
+            sourceLabel={`Cooperation of ${cwd.size}`}
+          />
         </div>
       )}
     </section>

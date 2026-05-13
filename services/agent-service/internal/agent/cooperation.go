@@ -176,3 +176,13 @@ func MinimumCapital(n CooperationSize, dailyWage Pence) Pence {
 func CooperativeOrigin() string {
 	return "capital"
 }
+
+// CooperationProductivityFactor returns the productivity gain of a
+// cooperation as a multiplicative factor on SNLT. It is the bridge that
+// lets a Ch. 13 record drive a Ch. 12 relative-surplus-value calculation:
+// each cooperation produces a factor ≥ 1.0 by which the social value of
+// commodities is reduced. The float64 return type matches the wire
+// format expected by simulation-engine's production.ProductivityFactor.
+func CooperationProductivityFactor(c Cooperation) float64 {
+	return CollectiveProductivePower(c.Size(), c.AverageIndividualWorkingDay())
+}

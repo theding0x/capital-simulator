@@ -43,6 +43,8 @@ spec:
               value: "root:capital@tcp(mysql:3306)/simulation?parseTime=true&loc=UTC"
             - name: REDIS_ADDR
               value: redis:6379
+            - name: AGENT_SERVICE_URL
+              value: http://agent-service:8082
           readinessProbe:
             httpGet:
               path: /readyz
