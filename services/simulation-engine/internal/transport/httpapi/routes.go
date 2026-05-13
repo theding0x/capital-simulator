@@ -27,4 +27,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/factories/{id}", h.GetFactory)
 	s.HandleFunc("POST /v1/factories/{id}/tick", h.TickFactory)
 	s.HandleFunc("GET /v1/factories/{id}/ticks", h.ListFactoryTicks)
+
+	// Ch. 16 — Absolute and Relative Surplus-Value
+	s.HandleFunc("POST /v1/surplus-value/absolute", h.ComputeAbsoluteSurplusValue)
+	s.HandleFunc("POST /v1/surplus-value/relative", h.ComputeRelativeSurplusValue)
+	s.HandleFunc("GET /v1/surplus-value/rate", h.GetSurplusValueRate)
 }

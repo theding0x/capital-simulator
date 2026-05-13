@@ -86,6 +86,11 @@ import type {
   RelativeSurplusFromSourceInput,
   RelativeSurplusResult,
   FactoryTick,
+  AbsoluteSurplusValueInput,
+  AbsoluteSurplusValueResult,
+  RelativeSurplusValueInput,
+  RelativeSurplusValueResult,
+  SurplusValueRateResult,
 } from "./types";
 
 const BASE = "/api";
@@ -566,4 +571,32 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // --- simulation-engine (Ch. 16: Absolute and Relative Surplus-Value) ---
+
+  computeAbsoluteSurplusValue: (input: AbsoluteSurplusValueInput) =>
+    http<AbsoluteSurplusValueResult>("/v1/surplus-value/absolute", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  computeRelativeSurplusValue: (input: RelativeSurplusValueInput) =>
+    http<RelativeSurplusValueResult>("/v1/surplus-value/relative", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getSurplusValueRate: (params: {
+    surplus_labour: number;
+    necessary_labour: number;
+    total_capital: number;
+    surplus_value?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    qs.set("surplus_labour", String(params.surplus_labour));
+    qs.set("necessary_labour", String(params.necessary_labour));
+    qs.set("total_capital", String(params.total_capital));
+    if (params.surplus_value !== undefined) qs.set("surplus_value", String(params.surplus_value));
+    return http<SurplusValueRateResult>(`/v1/surplus-value/rate?${qs.toString()}`);
+  },
 };

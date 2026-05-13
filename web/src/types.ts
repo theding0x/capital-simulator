@@ -844,6 +844,48 @@ export interface FactoryTickResult {
   hand_labour_saved: number;
 }
 
+// Ch. 16 — Absolute and Relative Surplus-Value.
+export type SurplusValueOrigin = "absolute" | "relative";
+
+export interface SurplusValueShape {
+  labour_minutes: number;
+  origin: SurplusValueOrigin;
+}
+
+export interface AbsoluteSurplusValueInput {
+  working_day_minutes: number;
+  necessary_labour_minutes: number;
+  extension_minutes: number;
+}
+
+export interface AbsoluteSurplusValueResult {
+  old_working_day: ProductionWorkingDayShape;
+  new_working_day: ProductionWorkingDayShape;
+  absolute_surplus_value: SurplusValueShape;
+}
+
+export interface RelativeSurplusValueInput {
+  working_day_minutes: number;
+  necessary_labour_minutes: number;
+  productivity_factor: number;
+}
+
+export interface RelativeSurplusValueResult {
+  old_working_day: ProductionWorkingDayShape;
+  new_working_day: ProductionWorkingDayShape;
+  relative_surplus_value: SurplusValueShape;
+}
+
+export interface SurplusValueRateResult {
+  surplus_labour_minutes: number;
+  necessary_labour_minutes: number;
+  surplus_value_minutes: number;
+  total_capital_advanced: number;
+  rate_of_surplus_value: number;
+  rate_of_profit: number;
+  mill_critique_holds: boolean;
+}
+
 // Part IV bridge — Ch.13/14/15 productivity → Ch.12 relative surplus-value.
 export type ProductivitySource = "cooperation" | "manufacture" | "factory";
 
