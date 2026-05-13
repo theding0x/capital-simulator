@@ -62,13 +62,16 @@ cd web && npm run build     # vite production build
 
 ## Chapter workflow (do this; don't re-discuss)
 
-1. Branch: `volume-N/chapter-NN` off `main`.
-2. Implement in the relevant service(s). Add tests using Marx's examples.
-3. Add a seed migration (`NNNNN_chNN_seed.sql`) for every new domain type the chapter introduces — Marx-faithful exemplars (named after his actual fixtures), with a `-- +goose Down` that DELETEs every seeded id. The dashboard must come up populated on a fresh `docker compose up`.
-4. Drop `chapters/volume-1/NN-<slug>.html` (user supplies; treat as canonical reference text, not source for parsing — it's 100KB+).
-5. Update `docs/architecture.md` chapter table.
-6. Commit signed (`commit.gpgsign=true` is set per-repo). Use a multi-line conventional commit; the PR template fills from it.
-7. Push the branch and open the PR against `main` via the `chapter-pr` skill — it runs the precheck (`scripts/check.sh`), then calls `gh pr create` with title/body filled from `.github/pull_request_template.md` (Chapter, Summary, Services touched, Chapter HTML, How I tested, Notes for review). This is the final step of every chapter implementation.
+1. Create a new branch off `main` named `volume-X/chapter-Y` (X = volume number, Y = chapter number — no slug suffix).
+2. Open a **draft** PR against `main` populated from `.github/pull_request_template.md`, with the *planned* changes drawn from the chapter spec under `chapters/volume-X/Y-<slug>.spec.md` (Chapter, Summary, Services touched, Chapter HTML, planned tests, Notes for review).
+3. Implement the planned chapter changes (domain types in the relevant service(s), tests using Marx's examples, seed migration `NNNNN_chNN_seed.sql` for every new domain type, chapter HTML drop, `docs/architecture.md` roadmap row flipped to Done).
+4. Commit signed (`commit.gpgsign=true` is set per-repo). Use a multi-line conventional commit; the PR description fills from it.
+5. Compare the committed changes against the draft PR and update the PR description so it reflects what actually landed.
+6. Wait for GitHub Actions to finish running checks on the PR.
+7. If checks fail, fetch the output (`gh run view --log-failed`), fix the failure, and commit again. Loop to step 5.
+8. If all checks pass, mark the PR ready for review and notify the user that the PR is ready to merge into `main`.
+
+> **Note:** If the user says "implement the next pending chapter", look up the next `Pending` row in `docs/architecture.md` (Roadmap table) — that's the authoritative source for chapter ordering and primary services.
 
 ## Sandbox limits (Cowork)
 
