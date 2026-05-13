@@ -1,166 +1,230 @@
 ---
 name: chapter-pr
-description: Run the end-of-chapter checklist for capital-simulator and open the PR. Verifies the branch name matches chapter-NN-<slug>, the chapters/volume-1/NN-<slug>.html exists with real content, the docs/architecture.md roadmap row is flipped to Done, and that the diff against main is non-trivial. Then drafts a multi-paragraph conventional commit body referencing the chapter and runs gh pr create. Use when the user says "open the chapter PR", "ship this chapter", "we're done with chapter N", or asks to wrap up / finalize a Capital chapter. Do not use to scaffold a new chapter (use chapter-scaffold).
+description: Manage the per-chapter PR for capital-simulator across its three phases — (A) open a draft PR upfront populated from the chapter spec, (B) sync the PR description after commits land so it reflects what actually shipped, (C) wait for GitHub Actions, fix failures, and mark the PR ready for merge. Auto-detects the phase from `gh pr view` for the current branch. Use when the user says "open the draft PR", "sync the chapter PR", "update the PR description", "mark this PR ready", "wrap up the chapter", "is this chapter shippable", or any other phase of the chapter PR flow. Branch convention is `volume-X/chapter-Y` (no slug). Do not use to scaffold a new chapter (use chapter-scaffold) or to generate the chapter spec (use chapter-spec).
 ---
 
 # chapter-pr
 
-The closeout step in the chapter workflow described in CLAUDE.md. By the
-time this runs, the user has:
+The PR-management skill for the chapter workflow described in CLAUDE.md. The
+workflow opens a **draft** PR upfront from the spec (step 2), iterates on
+commits and re-syncs the description (step 5), then waits on CI and marks
+the PR ready (steps 6–8). This skill handles all three phases.
 
-1. Implemented the chapter's domain logic
-2. Pasted the real Marx text into `chapters/volume-1/NN-<slug>.html`
-3. Run `make vet test build` and `cd web && npm run lint && npm run build`
-   locally (the sandbox can't)
+## Phases at a glance
 
-This skill does the last-mile verification, then opens the PR.
+| Phase | Workflow step | Trigger condition                                              | What this skill does                                                                 |
+|-------|---------------|----------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| A     | step 2        | branch exists, no PR yet for the branch                        | Open a **draft** PR populated from `chapters/volume-X/Y-*.spec.md` + the PR template |
+| B     | step 5        | draft PR exists; new commits since the description last synced | Re-derive Services touched + Summary from the actual diff; `gh pr edit --body`       |
+| C     | steps 6–8     | implementation done; awaiting / chasing CI                     | Run the precheck, poll `gh pr checks`, fix failures, then `gh pr ready`              |
+
+## Detect the phase first
+
+Before acting, run:
+
+```bash
+gh pr view --json number,isDraft,state,headRefName 2>/dev/null
+```
+
+- No PR found → Phase A.
+- PR exists, `isDraft: true` → Phase B if the user wants to sync the description, Phase C if they want to ship.
+- PR exists, `isDraft: false` → Phase C (already marked ready; only thing left is the merge, which the user owns).
+
+Announce which phase you're entering before doing anything else.
 
 ## When the user invokes this
 
-- "Open the chapter PR"
-- "Ship this chapter"
-- "We're done with Ch. 3, push it"
-- "Wrap up the chapter"
+| User says                                            | Phase |
+|------------------------------------------------------|-------|
+| "Open the draft PR for chapter N"                    | A     |
+| "Kick off chapter N's PR"                            | A     |
+| "Sync the chapter PR" / "Update the PR description"  | B     |
+| "Mark this PR ready" / "Wrap up the chapter"         | C     |
+| "Is this chapter shippable?" / "Are checks green?"   | C     |
 
-If unsure whether the chapter is actually done, ask: "Have you run
-`make vet test build` and the web build? Both need to pass before this -
-I can't verify them here." Wait for confirmation before proceeding.
+If ambiguous, infer from the phase detection above.
 
-## Steps
+## Phase A — Open the draft PR
 
-### 1. Run the precheck script
+Prereqs: branch `volume-X/chapter-Y` exists, `chapters/volume-X/Y-<slug>.spec.md`
+exists. If the spec is missing, stop and tell the user to run `chapter-spec`.
 
-```bash
-bash .claude/skills/chapter-pr/scripts/check.sh
-```
+### Steps
 
-It verifies:
+1. Verify branch name matches `^volume-[0-9]+/chapter-[0-9]+$`. Bail if not.
+2. Locate the chapter spec via `ls chapters/volume-X/Y-*.spec.md`.
+3. Read the spec frontmatter (`title`, `primary_service`) and the
+   **Scope → This chapter builds** section to extract planned domain
+   types, endpoints, and UI work.
+4. Push the branch to origin (`git push -u origin volume-X/chapter-Y`).
+   GitHub needs a remote branch to attach the PR to. If there are no
+   commits yet, make an empty marker commit first:
+   `git commit --allow-empty -m "chore(chN): kick off chapter N branch"`.
+5. Run `gh pr create --draft --base main --title ... --body ...` with
+   the body template below.
 
-- Current branch matches `chapter-NN-<slug>`
-- `chapters/volume-1/NN-<slug>.html` exists and is larger than the placeholder
-  stub (real Marx content is ~50-100KB; the stub from `chapter-scaffold`
-  is well under 1KB)
-- `docs/architecture.md` roadmap row for this chapter shows status
-  containing `Done` or a checkmark, not `In progress` / `Next` /
-  `Pending`
-- The diff against `origin/main` is non-empty
-- There is at least one chapter-relevant commit on the branch beyond
-  what's on `main`
+### PR body template (Phase A)
 
-If any check fails, the script prints which one and exits non-zero. Stop
-and surface the failure to the user; don't try to "fix" by editing the
-roadmap or HTML on their behalf - those are content decisions.
+Match `.github/pull_request_template.md` sections. All `How I tested`
+boxes start unchecked.
 
-Before declaring the precheck "passed," also confirm by eye:
-
-- **Seed migration shipped.** If the chapter introduces a new domain
-  type (new table, or new fields on an existing one), there must be a
-  `services/<svc>/internal/store/migrations/NNNNN_chNN_seed.sql` that
-  inserts Marx-faithful exemplars and has a complete `-- +goose Down`
-  that DELETEs every seeded id. The dashboard must come up populated on
-  a fresh MySQL volume. If the seed is missing, write it before opening
-  the PR — empty panels on first boot are a regression (CLAUDE.md
-  Conventions → Seeds).
-
-### 2. Draft the commit + PR body
-
-If commits aren't already pushed (which is the common case in this
-sandbox - signed commits fail here, so the user typically does the final
-commit themselves on their machine), draft a conventional commit body
-the user can paste:
-
-```
-feat(<svc>): implement Capital Vol. I, Ch. NN - <Title>
-
-<2-4 sentence summary of what was built and the economic concept>
-
-Highlights:
-- §1 ...
-- §2 ...
-- §3 ...
-
-Refs: chapters/volume-1/NN-<slug>.html
-```
-
-Use the section headings from Marx's chapter (visible in the chapter
-HTML <h2>/<h3>) to drive the bullet list. The `<svc>` scope is the
-primary service touched (e.g. `commodity` for Ch. 1, `market` for
-Ch. 2-3).
-
-Look at the existing `9560923 feat(commodity): implement Capital Vol. I,
-Ch. 1 - The Commodity` commit (`git log --format=%B -1 9560923` if it
-still exists, otherwise reference the structure above) for tone.
-
-### 3. Open the PR
-
-Once commits are pushed, run:
-
-```bash
-gh pr create --base main --title "<conventional commit title>" --body "$(cat <<'EOF'
+```markdown
 ## Chapter
 
-Vol. I, Ch. NN - <Title>
+Vol. X, Ch. Y — <Title from spec>
 
-## Summary
+## Summary (planned)
 
-<2-4 sentence economic argument summary>
+<2–4 sentences drawn from the spec describing the economic argument and
+what this chapter will add to the simulation. Mark as "(planned)" until
+Phase B refreshes it.>
 
 ## Services touched
 
-- [x] <service>
-- [x] web (UI)
-<...>
+- [x] <primary_service from spec frontmatter>
+- [ ] api-gateway
+- [ ] commodity-service
+- [ ] agent-service
+- [ ] market-service
+- [ ] simulation-engine
+- [ ] web (UI)
+- [ ] pkg/* (shared)
+- [ ] deploy/k8s
+- [ ] docker-compose.yml
 
 ## Chapter HTML
 
-chapters/volume-1/NN-<slug>.html
+chapters/volume-X/Y-<slug>.html
 
 ## How I tested
 
-- [x] `make vet`
-- [x] `make test`
-- [x] `make build`
+- [ ] `make vet`
+- [ ] `make test`
+- [ ] `make build`
 - [ ] `docker compose up --build` smoke
-- [ ] Other:
+- [ ] Other (describe):
+
+## Planned changes (from spec)
+
+**New domain types**
+- `Type1` — short description
+- `Type2` — short description
+
+**New HTTP endpoints**
+- `POST /v1/...` — description
+- `GET /v1/...` — description
+
+**UI**
+- "Ch. Y — <Title>" panel with <feature list>
 
 ## Notes for review
 
-<anything notable - tricky tests, intentional patterns, open questions>
+<Anything the spec flagged as deferred to a later chapter, or design
+tension worth raising.>
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
-EOF
-)"
 ```
 
-Match the body to the repo's `.github/pull_request_template.md` -
-sections and ordering. Tick the boxes the user actually ran; leave
-unchecked the ones they explicitly said they skipped.
+## Phase B — Sync the PR description
 
-### 4. Don't do destructive things
+Triggered when commits land on the branch and the draft PR's planned
+bullets are now out of date.
 
-- Don't `git push --force`. The chapter branches are fresh and shouldn't
-  need it; if they do, surface the situation to the user.
-- Don't commit or push from the sandbox without explicit user
-  confirmation - signed commits fail locally and pushing unsigned
-  commits would break the repo's signing convention.
-- Don't merge the PR. Let the user merge after review.
+### Steps
+
+1. `gh pr view --json number,body,headRefName` to get the current PR
+   number and body.
+2. `git diff --name-only origin/main..HEAD` to list every file that
+   changed since branching.
+3. Group the file list by service to derive **Services touched**:
+   - `services/<svc>/...` → that service
+   - `web/...` → `web (UI)`
+   - `pkg/...` → `pkg/* (shared)`
+   - `deploy/k8s/...` → `deploy/k8s`
+   - `docker-compose.yml` → `docker-compose.yml`
+4. Re-read the relevant commit message bodies (`git log origin/main..HEAD --format=%B`)
+   to derive the **Summary** bullets — the conventional commit body is
+   the canonical source.
+5. Replace **Planned changes (from spec)** with a refreshed **Summary**
+   section reflecting what actually shipped. Keep the **Notes for review**
+   section, appending anything new the user wants flagged for reviewers.
+6. Tick **How I tested** boxes only for what the user has explicitly
+   confirmed they ran locally. Leave the rest unchecked — CI in Phase C
+   covers the rest.
+7. `gh pr edit <number> --body "$(cat <<'EOF' ... EOF)"` with the new body.
+
+**Do not flip the PR out of draft in Phase B.** Mark-ready belongs to Phase C.
+
+## Phase C — Wait for CI, fix, mark ready
+
+### Steps
+
+1. Run the precheck script (it covers branch name, chapter HTML present
+   and non-stub, architecture roadmap row marked Done, branch ahead of
+   main, real diff):
+
+   ```bash
+   sed -i 's/\r$//' .claude/skills/chapter-pr/scripts/check.sh   # WSL CRLF guard
+   bash .claude/skills/chapter-pr/scripts/check.sh 2>&1
+   ```
+
+   If a check fails, surface it to the user. Roadmap-row flips and HTML
+   drops are content decisions — confirm before editing them on the
+   user's behalf.
+
+2. Confirm by eye that the **seed migration shipped** for any new
+   domain type the chapter introduced
+   (`services/<svc>/internal/store/migrations/NNNNN_chNN_seed.sql`,
+   with a `-- +goose Down` deleting every seeded id). Empty panels on
+   first boot are a regression — see CLAUDE.md → Seeds.
+
+3. Run `gh pr checks <number>` to inspect CI status:
+
+   - **In progress** — tell the user the status. Don't block on it; the
+     user can re-invoke this skill once checks complete. If asked to
+     wait, use a `ScheduleWakeup` (60–270s) or `Monitor` rather than
+     a blind sleep loop.
+   - **Failed** — fetch the failing log:
+     ```bash
+     gh run view <run-id> --log-failed
+     ```
+     Surface the failure to the user, diagnose the root cause, fix in
+     code, commit (signed), push. Loop back to step 3. **Do not** "fix"
+     by skipping the check, deleting the test, or using `--no-verify`.
+   - **All passing** — run `gh pr ready <number>` to flip the PR out of
+     draft, then tell the user: "PR #N is ready to merge into main."
+
+4. Do not merge the PR yourself. The user merges after review.
+
+## Don't do destructive things
+
+- Don't `git push --force`. Chapter branches shouldn't need rewriting;
+  if they do, surface to the user.
+- Don't skip pre-commit hooks (`--no-verify`) or signing
+  (`--no-gpg-sign`).
+- Don't merge the PR.
+- Don't "fix" CI failures by deleting the failing check, stubbing the
+  test, or pinning around it — fix the underlying issue.
 
 ## What this skill does NOT do
 
-- **Run the Go or web test suites.** The sandbox can't. Trust the user's
-  confirmation that they passed locally.
-- **Edit the chapter HTML or architecture.md.** Those are content
-  decisions; this skill verifies them, doesn't write them.
-- **Resolve merge conflicts on main.** If the precheck reveals the
-  branch is behind, tell the user and let them rebase.
+- **Run the Go or web test suites locally.** The sandbox can't. CI in
+  Phase C covers it.
+- **Edit the chapter HTML.** Content decision; user owns it.
+- **Write the architecture.md roadmap row.** Content decision.
+- **Resolve merge conflicts on main.** If the branch is behind, tell
+  the user and let them rebase.
+- **Scaffold a new chapter** — use `chapter-scaffold`.
+- **Generate the chapter spec** — use `chapter-spec`.
 
 ## Anti-patterns
 
+- Don't open the PR as non-draft in Phase A. The whole point of the new
+  workflow is a paper trail spec → planned → shipped.
 - Don't open a PR with the placeholder chapter HTML from
-  `chapter-scaffold` - the precheck guards this, but if the user
-  insists, they should know the chapter HTML is part of the merge
-  artifact (CLAUDE.md `Done is when`).
+  `chapter-scaffold`. Phase C's precheck guards this.
 - Don't bundle multiple chapters in one PR. One chapter, one branch,
-  one PR (CLAUDE.md chapter workflow).
-- Don't rewrite the conventional commit format. The PR template fills
-  from the commit body; deviating from `feat(<svc>): ...` breaks that.
+  one PR.
+- Don't rewrite the conventional commit format. The PR description in
+  Phase B fills from the commit body; deviating from `feat(<svc>): ...`
+  breaks that.
