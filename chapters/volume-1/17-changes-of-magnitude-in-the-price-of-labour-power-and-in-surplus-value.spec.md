@@ -1,9 +1,20 @@
 ---
 chapter: 17
 title: "Changes of Magnitude in the Price of Labour-Power and in Surplus-Value"
-status: proposed
+status: in_progress
 primary_service: agent-service
 ---
+
+> **Implementation note (2026-05-13):** The proposed `WorkingDay` shape
+> in this spec conflicts with the persisted `agent.WorkingDay` already
+> introduced in Ch. 10. The actual implementation reuses
+> `agent.WorkingDay` (which carries `NecessaryLabourMinutes` and
+> `SurplusLabourMinutes`) and adds `LabourScenario` as a parametric
+> wrapper layering `LabourIntensity` and `LabourProductivity` over it.
+> `NecessaryLabour`/`SurplusLabour` are not introduced as separate
+> types — they are fields of the existing entity. Endpoint is
+> stateless: `POST /v1/labour-scenarios`.
+
 
 ## Concepts → types
 

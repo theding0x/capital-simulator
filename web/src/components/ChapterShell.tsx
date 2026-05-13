@@ -16,6 +16,7 @@ import { Ch13Cooperation } from "../chapters/Ch13Cooperation";
 import { Ch14Manufacture } from "../chapters/Ch14Manufacture";
 import { Ch15Machinery } from "../chapters/Ch15Machinery";
 import { Ch16AbsoluteAndRelative } from "../chapters/Ch16AbsoluteAndRelative";
+import { Ch17MagnitudeChanges } from "../chapters/Ch17MagnitudeChanges";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -41,6 +42,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch14: "While simple co-operation leaves the mode of working by the individual ... unchanged, manufacture revolutionises it ... it converts the worker into a crippled monstrosity by furthering his particular skill ... at the expense of a world of productive drives and inclinations.",
   ch15: "The machine ... enters into the value-begetting process only by bits. It never adds more value than it loses, on an average, by wear and tear.",
   ch16: "From one standpoint, any distinction between absolute and relative surplus-value appears illusory. Relative surplus-value is absolute, since it compels the absolute prolongation of the working-day beyond the labour-time necessary to the existence of the labourer himself.",
+  ch17: "The value of labour-power, and the surplus-value, vary in opposite directions. The value of labour-power cannot fall, and therefore surplus-value cannot rise, without a rise in the productiveness of labour.",
 };
 
 export function ChapterShell({
@@ -106,6 +108,8 @@ export function ChapterShell({
           <Ch15Machinery onSharedChanged={onSharedChanged} />
         ) : activeChapterId === "ch16" ? (
           <Ch16AbsoluteAndRelative onSharedChanged={onSharedChanged} />
+        ) : activeChapterId === "ch17" ? (
+          <Ch17MagnitudeChanges onSharedChanged={onSharedChanged} />
         ) : null}
       </div>
     </main>
