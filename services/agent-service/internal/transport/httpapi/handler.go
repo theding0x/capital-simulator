@@ -11,6 +11,20 @@ import (
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/store"
 )
 
+// AgentStore is the composite store interface every agent-service handler
+// reaches into. Combining the per-chapter stores into one composite lets
+// New take a single argument and the test harness pass `store.NewMemory()`
+// once instead of seven times.
+type AgentStore interface {
+	store.Store
+	store.CircuitStore
+	store.LabourPowerStore
+	store.LabourProcessStore
+	store.WorkingDayStore
+	store.CooperationStore
+	store.ManufactureStore
+}
+
 type Handler struct {
 	Store              store.Store
 	CircuitStore       store.CircuitStore
@@ -22,11 +36,22 @@ type Handler struct {
 	Logger             *slog.Logger
 }
 
-func New(s store.Store, cs store.CircuitStore, lps store.LabourPowerStore, lproc store.LabourProcessStore, wds store.WorkingDayStore, coop store.CooperationStore, man store.ManufactureStore, logger *slog.Logger) *Handler {
+// New constructs a Handler. AgentStore is a composite interface that the
+// in-memory and MySQL stores both satisfy.
+func New(s AgentStore, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Store: s, CircuitStore: cs, LabourPowerStore: lps, LabourProcessStore: lproc, WorkingDayStore: wds, CooperationStore: coop, ManufactureStore: man, Logger: logger}
+	return &Handler{
+		Store:              s,
+		CircuitStore:       s,
+		LabourPowerStore:   s,
+		LabourProcessStore: s,
+		WorkingDayStore:    s,
+		CooperationStore:   s,
+		ManufactureStore:   s,
+		Logger:             logger,
+	}
 }
 
 type createAgentRequest struct {

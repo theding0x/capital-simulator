@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
+import { RelativeSurplusBridge } from "../components/RelativeSurplusBridge";
+import { fmtHoursLong as minutesToHours, fmtPounds as poundsFromPence } from "../format";
 import type {
   Agent,
   DetailRole,
@@ -14,21 +16,6 @@ import type {
 
 interface Ch14Props {
   onSharedChanged: () => void;
-}
-
-function minutesToHours(m: number): string {
-  if (!Number.isFinite(m)) return "—";
-  const h = Math.floor(m / 60);
-  const min = m % 60;
-  return min === 0 ? `${h}h` : `${h}h ${min}m`;
-}
-
-function poundsFromPence(p: number): string {
-  const sign = p < 0 ? "-" : "";
-  const abs = Math.abs(Math.trunc(p));
-  const pounds = Math.floor(abs / 100);
-  const pence = abs % 100;
-  return `${sign}£${pounds}.${pence.toString().padStart(2, "0")}`;
 }
 
 const FORMS: ManufactureForm[] = ["heterogeneous", "serial"];
@@ -331,6 +318,12 @@ function ManufacturesListPanel({
           <ProportionalGroupPanel m={selected} />
           <ScalePanel m={selected} onScaled={onChanged} />
           <MinimumCapitalPanel m={selected} />
+          <RelativeSurplusBridge
+            source="manufacture"
+            sourceId={selected.id}
+            factor={selected.productive_power_factor}
+            sourceLabel={`Manufacture ${selected.name || selected.id.slice(0, 8)}`}
+          />
         </div>
       )}
     </section>

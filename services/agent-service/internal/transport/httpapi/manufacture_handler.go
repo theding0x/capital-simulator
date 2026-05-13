@@ -31,6 +31,7 @@ type manufactureResponse struct {
 	CollectiveLabourer     collectiveLabourer  `json:"collective_labourer"`
 	Hierarchy              []agent.DetailRole  `json:"hierarchy"`
 	ProductivePowerFactor  float64             `json:"productive_power_factor"`
+	ProductivityFactor     float64             `json:"productivity_factor"`
 	ProductivePowerMinutes agent.LabourMinutes `json:"productive_power_minutes"`
 	CooperationBaseline    agent.LabourMinutes `json:"cooperation_baseline_minutes"`
 }
@@ -53,6 +54,7 @@ func buildManufactureResponse(m agent.Manufacture) manufactureResponse {
 		period = 480
 	}
 	hierarchy := []agent.DetailRole(m.Hierarchy())
+	factor := agent.ManufactureProductivePowerFactor(m)
 	return manufactureResponse{
 		Manufacture:  m,
 		TotalWorkers: m.TotalWorkers(),
@@ -64,7 +66,8 @@ func buildManufactureResponse(m agent.Manufacture) manufactureResponse {
 			IsParalysedIfAbsentOne: cl.IsParalysed(1),
 		},
 		Hierarchy:              hierarchy,
-		ProductivePowerFactor:  agent.ManufactureProductivePowerFactor(m),
+		ProductivePowerFactor:  factor,
+		ProductivityFactor:     factor, // Part IV bridge: feed into Ch. 12.
 		ProductivePowerMinutes: agent.ManufactureProductivePower(m, period),
 		CooperationBaseline: agent.CollectiveWorkingDay(
 			agent.CooperationSize(m.TotalWorkers()), m.IndividualWorkingDayMinutes),

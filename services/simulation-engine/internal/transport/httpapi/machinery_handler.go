@@ -3,7 +3,9 @@ package httpapi
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 )
@@ -163,8 +165,10 @@ type factoryDTO struct {
 	PrimeMover           primeMoverDTO `json:"prime_mover"`
 	Machines             []machineDTO `json:"machines"`
 	TickCount            int64        `json:"tick_count"`
+	IntensityFactor      float64      `json:"intensity_factor"`
 	TotalProductivePower int64        `json:"total_productive_power"`
 	DailyValueTransfer   int64        `json:"daily_value_transfer"`
+	ProductivityFactor   float64      `json:"productivity_factor"`
 	CreatedAt            string       `json:"created_at,omitempty"`
 }
 
@@ -180,8 +184,10 @@ func dtoFromFactory(f machinery.Factory) factoryDTO {
 		PrimeMover:           primeMoverDTO{Kind: string(f.PrimeMover.Kind), Horsepower: f.PrimeMover.Horsepower},
 		Machines:             make([]machineDTO, 0, len(f.Machines)),
 		TickCount:            f.TickCount,
+		IntensityFactor:      float64(f.IntensityFactor),
 		TotalProductivePower: int64(f.TotalProductivePower()),
 		DailyValueTransfer:   int64(f.DailyValueTransfer()),
+		ProductivityFactor:   machinery.FactoryProductivityFactor(f),
 	}
 	for _, m := range f.Machines {
 		d.Machines = append(d.Machines, dtoFromMachine(m))
@@ -196,9 +202,10 @@ func dtoFromFactory(f machinery.Factory) factoryDTO {
 // Each Machines entry may carry a bare `id` (referencing an existing record)
 // or the full Machine fields (which the server then persists).
 type createFactoryRequest struct {
-	Name       string                 `json:"name"`
-	PrimeMover primeMoverDTO          `json:"prime_mover"`
-	Machines   []createMachineEntry   `json:"machines"`
+	Name            string               `json:"name"`
+	PrimeMover      primeMoverDTO        `json:"prime_mover"`
+	Machines        []createMachineEntry `json:"machines"`
+	IntensityFactor float64              `json:"intensity_factor,omitempty"`
 }
 
 type createMachineEntry struct {
@@ -246,13 +253,18 @@ func (h *Handler) CreateFactory(w http.ResponseWriter, r *http.Request) {
 			HandLabourPerUnit:     machinery.LabourMinutes(e.HandLabourPerUnit),
 		})
 	}
+	intensity := machinery.IntensityFactor(req.IntensityFactor)
+	if req.IntensityFactor > 0 {
+		intensity = machinery.NewIntensityFactor(req.IntensityFactor)
+	}
 	f, err := h.Factories.CreateFactory(r.Context(), machinery.Factory{
 		Name: req.Name,
 		PrimeMover: machinery.PrimeMover{
 			Kind:       machinery.PrimeMoverKind(req.PrimeMover.Kind),
 			Horsepower: req.PrimeMover.Horsepower,
 		},
-		Machines: machines,
+		Machines:        machines,
+		IntensityFactor: intensity,
 	})
 	if err != nil {
 		writeMachineryError(w, err)
@@ -294,12 +306,34 @@ func (h *Handler) ListFactories(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"items": out})
 }
 
-// tickResponse is POST /v1/factories/{id}/tick.
+// tickResponse is POST /v1/factories/{id}/tick. The persisted Tick is
+// echoed back; the canonical history is queryable via GET .../ticks.
 type tickResponse struct {
 	Factory          factoryDTO `json:"factory"`
+	Tick             engineTickDTO `json:"tick"`
 	ValueTransferred int64      `json:"value_transferred"`
 	UnitsProduced    int64      `json:"units_produced"`
 	HandLabourSaved  int64      `json:"hand_labour_saved"`
+}
+
+type engineTickDTO struct {
+	FactoryID        string `json:"factory_id"`
+	Sequence         int64  `json:"sequence"`
+	ValueTransferred int64  `json:"value_transferred"`
+	UnitsProduced    int64  `json:"units_produced"`
+	HandLabourSaved  int64  `json:"hand_labour_saved"`
+	OccurredAt       string `json:"occurred_at"`
+}
+
+func dtoFromTick(t engine.Tick) engineTickDTO {
+	return engineTickDTO{
+		FactoryID:        t.FactoryID,
+		Sequence:         t.Sequence,
+		ValueTransferred: t.ValueTransferred,
+		UnitsProduced:    t.UnitsProduced,
+		HandLabourSaved:  t.HandLabourSaved,
+		OccurredAt:       t.OccurredAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
+	}
 }
 
 // TickFactory handles POST /v1/factories/{id}/tick.
@@ -309,17 +343,43 @@ func (h *Handler) TickFactory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("id")
-	f, result, err := h.Factories.AdvanceTick(r.Context(), machinery.FactoryID(id))
+	f, tick, err := h.Factories.AdvanceTick(r.Context(), machinery.FactoryID(id))
 	if err != nil {
 		writeMachineryError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, tickResponse{
 		Factory:          dtoFromFactory(f),
-		ValueTransferred: int64(result.ValueTransferred),
-		UnitsProduced:    result.UnitsProduced,
-		HandLabourSaved:  int64(result.HandLabourSaved),
+		Tick:             dtoFromTick(tick),
+		ValueTransferred: tick.ValueTransferred,
+		UnitsProduced:    tick.UnitsProduced,
+		HandLabourSaved:  tick.HandLabourSaved,
 	})
+}
+
+// ListFactoryTicks handles GET /v1/factories/{id}/ticks?limit=N.
+func (h *Handler) ListFactoryTicks(w http.ResponseWriter, r *http.Request) {
+	if h.Factories == nil {
+		writeError(w, http.StatusServiceUnavailable, "machinery store not configured")
+		return
+	}
+	id := r.PathValue("id")
+	limit := 100
+	if s := r.URL.Query().Get("limit"); s != "" {
+		if v, err := strconv.Atoi(s); err == nil && v > 0 {
+			limit = v
+		}
+	}
+	ticks, err := h.Factories.ListTicks(r.Context(), machinery.FactoryID(id), limit)
+	if err != nil {
+		writeMachineryError(w, err)
+		return
+	}
+	out := make([]engineTickDTO, 0, len(ticks))
+	for _, t := range ticks {
+		out = append(out, dtoFromTick(t))
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out})
 }
 
 func writeMachineryError(w http.ResponseWriter, err error) {

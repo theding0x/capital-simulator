@@ -650,6 +650,7 @@ export interface Cooperation {
   collective_working_day_minutes: number;
   average_social_labour_minutes: number;
   collective_power_factor: number;
+  productivity_factor: number;
   cooperative_origin: string;
   supervisors: Supervisor[];
 }
@@ -723,6 +724,7 @@ export interface Manufacture {
   collective_labourer: CollectiveLabourerSummary;
   hierarchy: DetailRole[];
   productive_power_factor: number;
+  productivity_factor: number;
   productive_power_minutes: number;
   cooperation_baseline_minutes: number;
 }
@@ -802,6 +804,7 @@ export interface CreateFactoryInput {
   name: string;
   prime_mover: PrimeMover;
   machines: MachineEntryInput[];
+  intensity_factor?: number;
 }
 
 export interface Factory {
@@ -810,9 +813,20 @@ export interface Factory {
   prime_mover: PrimeMover;
   machines: Machine[];
   tick_count: number;
+  intensity_factor: number;
   total_productive_power: number;
   daily_value_transfer: number;
+  productivity_factor: number;
   created_at?: string;
+}
+
+export interface FactoryTick {
+  factory_id: string;
+  sequence: number;
+  value_transferred: number;
+  units_produced: number;
+  hand_labour_saved: number;
+  occurred_at: string;
 }
 
 export interface MachineWearResponse {
@@ -824,7 +838,39 @@ export interface MachineWearResponse {
 
 export interface FactoryTickResult {
   factory: Factory;
+  tick: FactoryTick;
   value_transferred: number;
   units_produced: number;
   hand_labour_saved: number;
+}
+
+// Part IV bridge — Ch.13/14/15 productivity → Ch.12 relative surplus-value.
+export type ProductivitySource = "cooperation" | "manufacture" | "factory";
+
+export interface RelativeSurplusInput {
+  working_day_total: number;
+  current_lpv: number;
+  productivity_factor: number;
+}
+
+export interface RelativeSurplusFromSourceInput {
+  working_day_total: number;
+  current_lpv: number;
+  source: ProductivitySource;
+  source_id: string;
+}
+
+export interface ProductionWorkingDayShape {
+  total: number;
+  necessary_labour: number;
+  surplus_labour: number;
+}
+
+export interface RelativeSurplusResult {
+  productivity_factor: number;
+  old_working_day: ProductionWorkingDayShape;
+  new_working_day: ProductionWorkingDayShape;
+  new_labour_power_value: number;
+  relative_surplus_value: number;
+  source?: { source: ProductivitySource; id: string };
 }

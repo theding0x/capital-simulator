@@ -2,26 +2,28 @@ package engine_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 )
 
-// Capital Vol. I, Ch. 15, §7:
-// "the life of modern industry becomes a series of periods of moderate
-//  activity, prosperity, over-production, crisis and stagnation."
-func TestCyclePhase_Para7_FourCanonicalPhases(t *testing.T) {
+// Tick is the §1c simulation period. Construction is plain — the test
+// guards against accidental field-renaming.
+func TestTick_Construction(t *testing.T) {
 	t.Parallel()
-	for _, p := range []engine.CyclePhase{
-		engine.CyclePhaseProsperity,
-		engine.CyclePhaseOverproduction,
-		engine.CyclePhaseCrisis,
-		engine.CyclePhaseStagnation,
-	} {
-		if !p.IsValid() {
-			t.Fatalf("CyclePhase %q must be valid", p)
-		}
+	now := time.Date(2026, 5, 12, 9, 0, 0, 0, time.UTC)
+	tk := engine.Tick{
+		FactoryID:        "needle-works",
+		Sequence:         1,
+		ValueTransferred: 2400,
+		UnitsProduced:    580_000,
+		HandLabourSaved:  0,
+		OccurredAt:       now,
 	}
-	if engine.CyclePhase("boom").IsValid() {
-		t.Fatal("non-canonical phase should be invalid")
+	if tk.Sequence != 1 {
+		t.Fatalf("Sequence = %d, want 1", tk.Sequence)
+	}
+	if !tk.OccurredAt.Equal(now) {
+		t.Fatalf("OccurredAt = %v, want %v", tk.OccurredAt, now)
 	}
 }

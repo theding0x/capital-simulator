@@ -14,11 +14,15 @@ import (
 	"errors"
 	"io"
 	"time"
+
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 )
 
-// LabourMinutes is the canonical value-magnitude unit, redeclared here to
-// avoid an import cycle with the surplus and production packages.
-type LabourMinutes int64
+// LabourMinutes is the canonical value-magnitude unit. The canonical
+// definition lives in the labour package; this alias keeps existing
+// machinery call-sites compiling while letting Ch. 15 values be passed
+// to Ch. 12 production / Ch. 11 surplus functions without explicit casts.
+type LabourMinutes = labour.LabourMinutes
 
 // MachineValue is the total labour crystallised in the machine at the moment
 // it leaves its place of production. Expressed in LabourMinutes.

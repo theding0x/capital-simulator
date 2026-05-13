@@ -110,6 +110,7 @@ services:
       SERVICE_ADDR: ":8084"
       MYSQL_DSN: "root:capital@tcp(mysql:3306)/simulation?parseTime=true&loc=UTC"
       REDIS_ADDR: redis:6379
+      AGENT_SERVICE_URL: http://agent-service:8082
     ports:
       - "8084:8084"
     depends_on:

@@ -16,6 +16,7 @@ import (
 	"github.com/theding0x/capital-simulator/pkg/httpx"
 	applog "github.com/theding0x/capital-simulator/pkg/log"
 	pmysql "github.com/theding0x/capital-simulator/pkg/mysql"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/productivity"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/transport/httpapi"
 )
@@ -48,7 +49,10 @@ func main() {
 
 	srv.HandleFunc("/v1/sim/status", handleStatus)
 
-	h := httpapi.New(logger, st, st)
+	agentURL := getenv("AGENT_SERVICE_URL", "http://agent-service:8082")
+	pf := productivity.New(agentURL, st)
+
+	h := httpapi.New(logger, st, st, pf)
 	httpapi.Register(srv, h)
 
 	srv.MarkReady(true)

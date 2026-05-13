@@ -401,6 +401,15 @@ func ManufactureMinimumCapital(m Manufacture, rawMaterialCostFactor float64) Pen
 	return wages + raw
 }
 
+// ManufactureProductivityFactor returns the manufacture's productivity gain
+// as a multiplicative factor on SNLT — the same lingua franca as
+// CooperationProductivityFactor and (in simulation-engine) the machinery
+// factory factor. By construction it strictly dominates the simple-
+// cooperation baseline for any manufacture with more than one DetailRole.
+func ManufactureProductivityFactor(m Manufacture) float64 {
+	return ManufactureProductivePowerFactor(m)
+}
+
 // ScaleManufacture returns a new Manufacture whose every DetailRole has
 // its HeadCount multiplied by the given integer. (Ch. 14 §3: once the
 // proportion is set, "that scale can be extended only by employing a
