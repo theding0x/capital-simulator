@@ -81,7 +81,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 13    | ✅ Done     | Co-operation; collective working-day, average social labour, scale of co-operation, minimum capital, supervision, cooperative productive power as property of capital | agent-service |
 | Ch. 14    | ✅ Done     | Division of labour and manufacture; detail roles, collective labourer, two-fold origin (combination / splitting), heterogeneous vs serial form, proportional group size, scaling by integer multiples, skill hierarchy, manufacture minimum capital | agent-service |
 | Ch. 15    | ✅ Done     | Machinery and modern industry; Machine (motor / transmission / tool), MachineValue, LifespanDays, DailyWearAndTear, ValueTransferredPerUnit, MaterialWear, MoralDepreciation, ProductivePower, Factory + PrimeMover, Tick loop, LabourDisplaced, IntensityFactor, capital-composition (V/C) conservation, CyclePhase enum | simulation-engine |
-| Ch. 16+   | Pending     | Absolute / relative surplus-value composition, wages, accumulation | all |
+| Ch. 16    | ✅ Done     | Absolute and relative surplus-value; SurplusValue (Origin tag), AbsoluteSurplusValue, RelativeSurplusValue, ProlongWorkingDay, ReduceNecessaryLabour, RateSurplusValue, RateOfProfit, formal vs. real subjection, Mill critique | simulation-engine |
+| Ch. 17+   | Pending     | Wages, accumulation | all |
 
 ### Ch. 1 — what was built
 
@@ -247,3 +248,17 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **Shared React format helpers.** `minutesToHours` and `poundsFromPence` (previously byte-identical in Ch.13 and Ch.14) and Ch.15's `compactNumber` / `poundsFromLabourMinutes` all live in `web/src/format.ts` as `fmtHoursLong`, `fmtPounds`, `fmtCompact`, and `fmtLabourMinutes`. Chapter files import via aliases for minimal churn.
 - **Agent-service handler tests.** `cooperation_handler_test.go` and `manufacture_handler_test.go` mirror the structure of the sim-engine handler tests (Burke five-man platoon, Caslon type-foundry 4/2/1 proportionality, iron-law headcount probe, integer scaling, manufacture-minimum vs cooperation-baseline). Brings the section to parity.
 - **Agent-service handler constructor.** `httpapi.New` now takes a single `AgentStore` composite interface instead of seven positional stores. `cmd/agent-service/main.go`'s `agentStore` is a one-line alias to keep the bootstrap signature stable.
+
+### Ch. 16 — what was built
+
+`simulation-engine` adds the §1 synthesis of Chs. 11–15 into the `surplus` package — the two analytically distinct forms of surplus-value, treated as a single magnitude type with a tag:
+
+- **SurplusValue + Origin.** `SurplusValue` is a `(LabourMinutes, Origin)` pair; `Origin` is the enum `"absolute" | "relative"`. The magnitude type is shared; the tag is the only thing that distinguishes the two mechanisms. `AbsoluteSurplusValue` and `RelativeSurplusValue` are zero-overhead wrappers that embed `SurplusValue`.
+- **WorkingDay.** `WorkingDay{Total, NecessaryLabour, SurplusLabour}` with the partition invariant `Total == NecessaryLabour + SurplusLabour`. Fields use bare `labour.LabourMinutes` per the chapter spec.
+- **ProlongWorkingDay(wd, extraMinutes).** §1 mechanism for absolute SV: raises `Total` and `SurplusLabour` by `extraMinutes`, holds `NecessaryLabour` fixed. Returns the new partition plus an `AbsoluteSurplusValue` carrying the gain.
+- **ReduceNecessaryLabour(wd, factor).** §1 mechanism for relative SV: applies a `ProductivityFactor` (re-exported from the `labour` package) to `NecessaryLabour`, holds `Total` fixed. Returns the new partition plus a `RelativeSurplusValue` carrying the reduction. Guards against driving `NecessaryLabour` to zero (the wage relation must survive).
+- **RateSurplusValue / RateOfProfit.** Two functions surfacing Marx's §1 correction of Mill. `RateSurplusValue = surplusLabour / necessaryLabour`; `RateOfProfit = surplusValue / totalCapitalAdvanced`. The two return different values for the same surplus magnitude whenever constant capital is positive.
+- **ProductiveLabour / CollectiveLabourer / SubjectionKind.** Labelled placeholders for the §1 supporting cast: productive labour is labour that produces surplus-value for capital (not merely useful labour); the collective labourer is the agent-group the analysis treats as a unit (cooperation chapter computes its productive power); `SubjectionKind` is the `"formal" | "real"` enum distinguishing capital's formal seizure of an existing labour-process from its real revolutionisation of the technical process.
+- **HTTP endpoints (stateless).** `POST /v1/surplus-value/absolute` (compute ASV by prolongation), `POST /v1/surplus-value/relative` (compute RSV by productivity), `GET /v1/surplus-value/rate?surplus_labour=…&necessary_labour=…&total_capital=…[&surplus_value=…]` (returns both rates plus a `mill_critique_holds` boolean).
+- **api-gateway.** Reverse-proxies `/v1/surplus-value/absolute`, `/v1/surplus-value/relative`, and `/v1/surplus-value/rate` to simulation-engine.
+- **React UI.** "Ch. 16 — Absolute and Relative Surplus-Value" panel with: a working-day configurator (Total + NecessaryLabour numeric inputs) driving a side-by-side calculator that runs both the absolute (extension) and relative (productivity) paths simultaneously; a Mill-critique sub-panel that lets the user enter `(s, v, c+v)` and surfaces the two rates plus a "Mill critique holds?" indicator.
