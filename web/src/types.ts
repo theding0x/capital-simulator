@@ -886,6 +886,23 @@ export interface SurplusValueRateResult {
   mill_critique_holds: boolean;
 }
 
+// Ch. 17 — Changes of magnitude in price of labour-power and surplus-value
+export interface LabourScenarioInput {
+  working_day_minutes: number;
+  necessary_labour_minutes: number;
+  intensity_factor: number;
+  productivity_factor: number;
+}
+
+export interface LabourScenarioResult {
+  daily_value_minutes: number;
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+  labour_power_value_minutes: number;
+  rate_of_surplus_value: number;
+  law_constant_daily_value: boolean;
+}
+
 // Part IV bridge — Ch.13/14/15 productivity → Ch.12 relative surplus-value.
 export type ProductivitySource = "cooperation" | "manufacture" | "factory";
 

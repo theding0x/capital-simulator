@@ -99,6 +99,10 @@ func main() {
 	srv.Handle("/v1/manufactures", agentProxy)
 	srv.Handle("/v1/manufactures/{rest...}", agentProxy)
 
+	// Ch. 17 — labour-scenario routes proxy to agent-service
+	srv.Handle("/v1/labour-scenarios", agentProxy)
+	srv.Handle("/v1/labour-scenarios/{rest...}", agentProxy)
+
 	// Reverse-proxy routes to simulation-engine.
 	simURL := getenv("SIM_ENGINE_URL", "http://simulation-engine:8084")
 	simProxy, err := proxy.New(simURL, logger)

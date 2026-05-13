@@ -88,6 +88,8 @@ import type {
   FactoryTick,
   AbsoluteSurplusValueInput,
   AbsoluteSurplusValueResult,
+  LabourScenarioInput,
+  LabourScenarioResult,
   RelativeSurplusValueInput,
   RelativeSurplusValueResult,
   SurplusValueRateResult,
@@ -599,4 +601,12 @@ export const api = {
     if (params.surplus_value !== undefined) qs.set("surplus_value", String(params.surplus_value));
     return http<SurplusValueRateResult>(`/v1/surplus-value/rate?${qs.toString()}`);
   },
+
+  // --- agent-service (Ch. 17: Changes of Magnitude in the Price of Labour-Power and in Surplus-Value) ---
+
+  computeLabourScenario: (input: LabourScenarioInput) =>
+    http<LabourScenarioResult>("/v1/labour-scenarios", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

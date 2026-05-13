@@ -30,7 +30,7 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "ch15", number: 15, title: "Machinery and Modern Industry",                         part: "Part IV — The Production of Relative Surplus-Value",   status: "done"    },
   // Part V — Absolute and Relative Surplus-Value
   { id: "ch16", number: 16, title: "Absolute and Relative Surplus-Value",                   part: "Part V — Absolute and Relative Surplus-Value",         status: "done"    },
-  { id: "ch17", number: 17, title: "Changes of Magnitude in the Price of Labour-Power",     part: "Part V — Absolute and Relative Surplus-Value",         status: "pending" },
+  { id: "ch17", number: 17, title: "Changes of Magnitude in the Price of Labour-Power",     part: "Part V — Absolute and Relative Surplus-Value",         status: "done"    },
   { id: "ch18", number: 18, title: "Different Formulae for the Rate of Surplus-Value",      part: "Part V — Absolute and Relative Surplus-Value",         status: "pending" },
   // Part VI — Wages
   { id: "ch19", number: 19, title: "The Transformation of the Value of Labour-Power into Wages", part: "Part VI — Wages",                                status: "pending" },
