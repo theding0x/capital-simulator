@@ -53,18 +53,31 @@ func TestMemory_AdvanceTick_AccumulatesWear(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateFactory: %v", err)
 	}
-	advanced, result, err := st.AdvanceTick(ctx, f.ID)
+	advanced, tick, err := st.AdvanceTick(ctx, f.ID)
 	if err != nil {
 		t.Fatalf("AdvanceTick: %v", err)
 	}
 	if advanced.TickCount != 1 {
 		t.Fatalf("TickCount = %d, want 1", advanced.TickCount)
 	}
-	if result.ValueTransferred != machinery.LabourMinutes(600) {
-		t.Fatalf("ValueTransferred = %d, want 600", result.ValueTransferred)
+	if tick.ValueTransferred != 600 {
+		t.Fatalf("ValueTransferred = %d, want 600", tick.ValueTransferred)
 	}
-	if result.UnitsProduced != 145_000 {
-		t.Fatalf("UnitsProduced = %d, want 145000", result.UnitsProduced)
+	if tick.UnitsProduced != 145_000 {
+		t.Fatalf("UnitsProduced = %d, want 145000", tick.UnitsProduced)
+	}
+	if tick.Sequence != 1 {
+		t.Fatalf("Sequence = %d, want 1", tick.Sequence)
+	}
+	hist, err := st.ListTicks(ctx, f.ID, 10)
+	if err != nil {
+		t.Fatalf("ListTicks: %v", err)
+	}
+	if len(hist) != 1 {
+		t.Fatalf("ListTicks len = %d, want 1", len(hist))
+	}
+	if hist[0].Sequence != 1 {
+		t.Fatalf("ListTicks[0].Sequence = %d, want 1", hist[0].Sequence)
 	}
 	updated, err := st.GetMachine(ctx, mc.ID)
 	if err != nil {

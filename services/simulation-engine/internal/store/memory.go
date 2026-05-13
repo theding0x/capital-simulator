@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 )
 
@@ -14,6 +15,7 @@ type Memory struct {
 	mu        sync.RWMutex
 	machines  map[machinery.MachineID]machinery.Machine
 	factories map[machinery.FactoryID]machinery.Factory
+	ticks     map[machinery.FactoryID][]engine.Tick
 	now       func() time.Time
 }
 
@@ -21,6 +23,7 @@ func NewMemory() *Memory {
 	return &Memory{
 		machines:  make(map[machinery.MachineID]machinery.Machine),
 		factories: make(map[machinery.FactoryID]machinery.Factory),
+		ticks:     make(map[machinery.FactoryID][]engine.Tick),
 		now:       time.Now,
 	}
 }
@@ -152,12 +155,12 @@ func (m *Memory) ListFactories(_ context.Context) ([]machinery.Factory, error) {
 	return out, nil
 }
 
-func (m *Memory) AdvanceTick(ctx context.Context, id machinery.FactoryID) (machinery.Factory, machinery.TickResult, error) {
+func (m *Memory) AdvanceTick(_ context.Context, id machinery.FactoryID) (machinery.Factory, engine.Tick, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	f, ok := m.factories[id]
 	if !ok {
-		return machinery.Factory{}, machinery.TickResult{}, ErrNotFound
+		return machinery.Factory{}, engine.Tick{}, ErrNotFound
 	}
 	// Refresh embedded machines.
 	live := make([]machinery.Machine, 0, len(f.Machines))
@@ -179,5 +182,28 @@ func (m *Memory) AdvanceTick(ctx context.Context, id machinery.FactoryID) (machi
 	}
 	f.TickCount++
 	m.factories[id] = f
-	return f, result, nil
+	tick := engine.Tick{
+		FactoryID:        string(id),
+		Sequence:         f.TickCount,
+		ValueTransferred: int64(result.ValueTransferred),
+		UnitsProduced:    result.UnitsProduced,
+		HandLabourSaved:  int64(result.HandLabourSaved),
+		OccurredAt:       m.now().UTC(),
+	}
+	m.ticks[id] = append(m.ticks[id], tick)
+	return f, tick, nil
+}
+
+func (m *Memory) ListTicks(_ context.Context, id machinery.FactoryID, limit int) ([]engine.Tick, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	all := m.ticks[id]
+	if limit <= 0 || limit > len(all) {
+		limit = len(all)
+	}
+	// Return the latest `limit` ticks in ascending-sequence order.
+	start := len(all) - limit
+	out := make([]engine.Tick, limit)
+	copy(out, all[start:])
+	return out, nil
 }

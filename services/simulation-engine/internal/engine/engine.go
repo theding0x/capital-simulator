@@ -17,31 +17,14 @@ type ProductionRun struct {
 
 // Tick is one simulation time-step. Introduced in Ch. 15 to drive the
 // machinery / factory loop: each Tick advances wear, value transfer, and
-// output by one working day.
+// output by one working day. FactoryID names the factory that produced
+// the period; Sequence is monotonically increasing within that factory;
+// OccurredAt is server clock at the moment the tick was committed.
 type Tick struct {
-	ID        string    `json:"id"`
-	Sequence  int64     `json:"sequence"`
-	OccurredAt time.Time `json:"occurred_at"`
-}
-
-// CyclePhase is the industrial-cycle enum from Ch. 15, §7: "the life of
-// modern industry becomes a series of periods of moderate activity,
-// prosperity, over-production, crisis and stagnation."
-type CyclePhase string
-
-const (
-	CyclePhaseProsperity     CyclePhase = "prosperity"
-	CyclePhaseOverproduction CyclePhase = "overproduction"
-	CyclePhaseCrisis         CyclePhase = "crisis"
-	CyclePhaseStagnation     CyclePhase = "stagnation"
-)
-
-// IsValid reports whether the phase value is one of the four canonical
-// cycle phases.
-func (p CyclePhase) IsValid() bool {
-	switch p {
-	case CyclePhaseProsperity, CyclePhaseOverproduction, CyclePhaseCrisis, CyclePhaseStagnation:
-		return true
-	}
-	return false
+	FactoryID        string    `json:"factory_id"`
+	Sequence         int64     `json:"sequence"`
+	ValueTransferred int64     `json:"value_transferred"`
+	UnitsProduced    int64     `json:"units_produced"`
+	HandLabourSaved  int64     `json:"hand_labour_saved"`
+	OccurredAt       time.Time `json:"occurred_at"`
 }

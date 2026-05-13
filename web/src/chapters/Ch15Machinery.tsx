@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
+import { RelativeSurplusBridge } from "../components/RelativeSurplusBridge";
+import { fmtCompact as compactNumber, fmtLabourMinutes as poundsFromLabourMinutes } from "../format";
 import type {
   CreateFactoryInput,
   Factory,
+  FactoryTick,
   FactoryTickResult,
   Machine,
   MachineEntryInput,
@@ -15,18 +18,6 @@ interface Ch15Props {
 }
 
 const PRIME_MOVERS: PrimeMoverKind[] = ["steam", "water", "electric", "animal"];
-
-function compactNumber(n: number): string {
-  if (!Number.isFinite(n)) return "—";
-  return n.toLocaleString("en-GB");
-}
-
-function poundsFromLabourMinutes(m: number): string {
-  // Labour-minutes here are a value magnitude; we display the raw count plus
-  // an hours equivalent for orientation. Marx writes wear-and-tear in
-  // shillings, which would need a money-commodity conversion at runtime.
-  return `${compactNumber(m)} lab-min (${(m / 60).toFixed(1)} h)`;
-}
 
 export function Ch15Machinery({ onSharedChanged: _ }: Ch15Props) {
   const [machines, setMachines] = useState<Machine[]>([]);
@@ -251,6 +242,7 @@ function AssembleFactoryPanel({
   const [name, setName] = useState("Needle Works");
   const [primeMover, setPrimeMover] = useState<PrimeMoverKind>("steam");
   const [horsepower, setHorsepower] = useState(30);
+  const [intensityFactor, setIntensityFactor] = useState(1.0);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [err, setErr] = useState<string | null>(null);
 
@@ -275,6 +267,7 @@ function AssembleFactoryPanel({
       name: name.trim() || "factory",
       prime_mover: { kind: primeMover, horsepower },
       machines: entries,
+      intensity_factor: intensityFactor,
     };
     try {
       await api.createFactory(input);
@@ -308,6 +301,16 @@ function AssembleFactoryPanel({
         <label>
           <span>Horsepower</span>
           <input type="number" min={1} value={horsepower} onChange={(e) => setHorsepower(Number(e.target.value))} />
+        </label>
+        <label>
+          <span>Intensity factor (§3C, ≥ 1.0)</span>
+          <input
+            type="number"
+            min={1}
+            step={0.1}
+            value={intensityFactor}
+            onChange={(e) => setIntensityFactor(Number(e.target.value))}
+          />
         </label>
         <fieldset style={{ gridColumn: "1 / -1" }}>
           <legend>Machines</legend>
@@ -395,7 +398,72 @@ function FactoryFloorPanel({
         </tbody>
       </table>
       {lastTick && <LastTickCard r={lastTick} />}
+      {factories.map((f) => (
+        <TickHistoryStrip key={f.id} factoryId={f.id} factoryName={f.name} tickCount={f.tick_count} />
+      ))}
+      {factories.length > 0 && (
+        <RelativeSurplusBridge
+          source="factory"
+          sourceId={factories[0].id}
+          factor={factories[0].productivity_factor ?? 1.0}
+          sourceLabel={`Factory ${factories[0].name || factories[0].id.slice(0, 8)}`}
+        />
+      )}
     </section>
+  );
+}
+
+function TickHistoryStrip({
+  factoryId,
+  factoryName,
+  tickCount,
+}: {
+  factoryId: string;
+  factoryName: string;
+  tickCount: number;
+}) {
+  const [ticks, setTicks] = useState<FactoryTick[]>([]);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await api.listFactoryTicks(factoryId, 10);
+        setTicks(list);
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : String(e));
+      }
+    })();
+  }, [factoryId, tickCount]);
+
+  if (ticks.length === 0 && !err) return null;
+  return (
+    <div className="small" style={{ marginTop: "0.75rem" }}>
+      <strong>{factoryName}</strong> — last {ticks.length} tick{ticks.length === 1 ? "" : "s"}
+      {err && <span className="error" style={{ marginLeft: "0.5rem" }}>{err}</span>}
+      {ticks.length > 0 && (
+        <table className="data-table" style={{ marginTop: "0.25rem" }}>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Units</th>
+              <th>Value transferred</th>
+              <th>Hand labour saved</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ticks.map((t) => (
+              <tr key={t.sequence}>
+                <td>{t.sequence}</td>
+                <td>{compactNumber(t.units_produced)}</td>
+                <td>{poundsFromLabourMinutes(t.value_transferred)}</td>
+                <td>{compactNumber(t.hand_labour_saved)} lab-min</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }
 
