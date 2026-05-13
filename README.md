@@ -1,6 +1,6 @@
 # Capital Simulator
 
-A simulation of an economy modeled chapter by chapter on Karl Marx's *Capital, Volume I*. Each chapter is implemented as its own branch + pull request, accompanied by an HTML chapter summary and generated spec sheet that live in `chapters/volume-1/`.
+A simulation of an economy modeled chapter by chapter on Karl Marx's *Capital, Volume I*. Each chapter is implemented as its own branch + pull request. The chapter source text and code-facing specs live separately in the maintainer's `red-vault` Obsidian vault — they are read into Claude Code via the `obsidian` MCP server when implementing a chapter.
 
 ## Stack
 
@@ -16,8 +16,6 @@ A simulation of an economy modeled chapter by chapter on Karl Marx's *Capital, V
 
 ```
 capital-simulator/
-├── chapters/
-│   └── volume-1/       HTML summaries, one per Capital Vol. I chapter
 ├── docs/               Architecture and design notes
 ├── deploy/
 │   ├── docker/         Service Dockerfiles (also live next to each service)
@@ -36,9 +34,9 @@ capital-simulator/
 
 We progress one chapter of *Capital* at a time:
 
-1. Cut a branch named `chapter-NN-short-slug` off `main`.
-2. Implement the economic concepts introduced in that chapter across the relevant services.
-3. Drop an HTML summary of the chapter into `chapters/volume-1/` (e.g. `chapters/volume-1/01-the-commodity.html`).
+1. Cut a branch named `volume-X/chapter-Y` off `main`.
+2. Pull the chapter spec from the `red-vault` Obsidian vault and use it as the implementation plan.
+3. Implement the economic concepts introduced in that chapter across the relevant services.
 4. Open a pull request whose description summarizes the chapter and the simulation changes it produced.
 5. Merge into `main` once reviewed.
 

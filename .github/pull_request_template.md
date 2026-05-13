@@ -18,10 +18,6 @@
 - [ ] deploy/k8s
 - [ ] docker-compose.yml
 
-## Chapter HTML
-
-<!-- Path to the chapter's HTML summary, e.g. chapters/01-the-commodity.html -->
-
 ## How I tested
 
 - [ ] `make vet`
