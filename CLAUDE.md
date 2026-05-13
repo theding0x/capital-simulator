@@ -68,7 +68,7 @@ cd web && npm run build     # vite production build
 4. Drop `chapters/volume-1/NN-<slug>.html` (user supplies; treat as canonical reference text, not source for parsing — it's 100KB+).
 5. Update `docs/architecture.md` chapter table.
 6. Commit signed (`commit.gpgsign=true` is set per-repo). Use a multi-line conventional commit; the PR template fills from it.
-7. Push; open PR against `main`.
+7. Push the branch and open the PR against `main` via the `chapter-pr` skill — it runs the precheck (`scripts/check.sh`), then calls `gh pr create` with title/body filled from `.github/pull_request_template.md` (Chapter, Summary, Services touched, Chapter HTML, How I tested, Notes for review). This is the final step of every chapter implementation.
 
 ## Sandbox limits (Cowork)
 
