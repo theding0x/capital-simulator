@@ -85,7 +85,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 17    | ✅ Done     | Changes of magnitude in price of labour-power and surplus-value; WorkingDay × NecessaryLabour × LabourIntensity × LabourProductivity → LabourScenario / ScenarioOutcome; §1 inverse-relation law, §2 intensity-scales-value, §3 length-of-day shifts | agent-service |
 | Ch. 18    | ✅ Done     | Various formulae for the rate of surplus-value; FormulaI (s/v), FormulaII (s/(s+v)), FormulaIII (unpaid/paid) | simulation-engine |
 | Ch. 19    | ✅ Done     | Transformation of value of labour-power into wages; WageFormID, LabourPowerValue, Wage, WageAppearance, LabourDecomposition, WageForm; HourlyWage, Decompose (paid/unpaid split), Appearance (ideological inversion); POST /v1/wage-forms, GET /v1/wage-forms/{agentID} | agent-service |
-| Ch. 20-22 | Pending     | Wages (time-wage, piece-wage, national differences) | agent-service |
+| Ch. 20    | ✅ Done     | Time-wages; WorkingSessionID, DailyLabourPowerValue, HourlyPriceOfLabour (exact fraction + AsFloat), WorkingDayHours, OvertimeHours, OvertimeRatePence, WagePeriod, NominalWage, WorkingSession; ComputeHourlyPrice (exact rational fraction), ComputeSessionWage (integer arithmetic); POST /v1/time-wages/hourly-price, POST /v1/time-wages/sessions, GET /v1/time-wages/sessions/{id} | agent-service |
+| Ch. 21-22 | Pending     | Wages (piece-wage, national differences) | agent-service |
 | Ch. 23+   | Pending     | Accumulation of capital | all |
 
 ### Ch. 1 — what was built
@@ -281,3 +282,15 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoint (stateless).** `POST /v1/surplus-value/rates` — accepts `{necessary_labour_minutes, surplus_labour_minutes}`, returns `{formula_i, formula_ii, formula_iii, working_day_minutes, ...}`.
 - **api-gateway.** Reverse-proxies `/v1/surplus-value/rates` to simulation-engine.
 - **React UI.** "Ch. 18 — Different Formulae for the Rate of Surplus-Value" panel with: two numeric inputs (necessary / surplus labour in minutes); three preset buttons (§ Formula I 100%, § Formula II bounded, § agricultural labourer 300%); side-by-side result cards for each formula with a note on its key property.
+
+### Ch. 20 — what was built
+
+`agent-service` adds the `time_wage.go` domain file implementing Marx's Ch. 20 analysis of the time-wage form.
+
+- **Domain types.** `DailyLabourPowerValue{Pence int64}`, `HourlyPriceOfLabour{Numerator, Denominator int64}` with `AsFloat() float64`, `WorkingDayHours{Hours int64}`, `OvertimeHours{Hours int64}`, `OvertimeRatePence{Pence int64}`, `WagePeriod` ("daily" | "weekly"), `NominalWage{Pence int64}`, `WorkingSession` (persisted composite).
+- **ComputeHourlyPrice(v, h).** Returns the exact rational fraction — no rounding. Encodes the invariant that lengthening the working day lowers the hourly price even when the daily value is unchanged.
+- **ComputeSessionWage(s).** Integer arithmetic: `(daily_pence / hours) * hours + overtime_hours * overtime_rate`. The floor-and-multiply captures Marx's observation that the capitalist computes time-wages in whole integers.
+- **Store.** `TimeWageStore` interface; `Memory` and `MySQL` implementations. Migration `00016_ch20_time_wage_sessions.sql`; seed `00017_ch20_seed.sql` with two Thomas Hobson sessions (12h standard, 15h + 3 OT at 4d).
+- **HTTP endpoints.** `POST /v1/time-wages/hourly-price` (stateless probe), `POST /v1/time-wages/sessions` (create session, returns 201 + Location), `GET /v1/time-wages/sessions/{id}` (retrieve with derived hourly price and nominal wage).
+- **api-gateway.** Reverse-proxies `/v1/time-wages` and `/v1/time-wages/{rest...}` to agent-service.
+- **React UI.** "Ch. 20 — Time-Wages" panel: inputs for daily value, normal hours, overtime hours, overtime rate, wage period; live hourly price preview; result cards showing the exact fraction + decimal hourly price and the nominal wage breakdown (normal pay + overtime).
