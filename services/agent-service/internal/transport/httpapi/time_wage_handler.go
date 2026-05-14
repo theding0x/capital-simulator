@@ -7,8 +7,8 @@ import (
 )
 
 type computeHourlyPriceRequest struct {
-	DailyPence      int64 `json:"daily_pence"`
-	WorkingDayHours int64 `json:"working_day_hours"`
+	DailyPence        int64 `json:"daily_pence"`
+	WorkingDayMinutes int64 `json:"working_day_minutes"`
 }
 
 type hourlyPriceResponse struct {
@@ -20,7 +20,7 @@ type hourlyPriceResponse struct {
 type createWorkingSessionRequest struct {
 	AgentID               string `json:"agent_id"`
 	DailyLabourPowerValue int64  `json:"daily_labour_power_value"`
-	WorkingDayHours       int64  `json:"working_day_hours"`
+	WorkingDayMinutes     int64  `json:"working_day_minutes"`
 	OvertimeHours         int64  `json:"overtime_hours"`
 	OvertimeRatePence     int64  `json:"overtime_rate_pence"`
 	WagePeriod            string `json:"wage_period"`
@@ -33,7 +33,7 @@ type workingSessionResponse struct {
 }
 
 func buildWorkingSessionResponse(s agent.WorkingSession) workingSessionResponse {
-	hp := agent.ComputeHourlyPrice(s.DailyLabourPowerValue, s.WorkingDayHours)
+	hp := agent.ComputeHourlyPrice(s.DailyLabourPowerValue, s.WorkingDayMinutes)
 	return workingSessionResponse{
 		WorkingSession: s,
 		HourlyPrice: hourlyPriceResponse{
@@ -56,13 +56,13 @@ func (h *Handler) ComputeHourlyPrice(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "daily_pence must be positive")
 		return
 	}
-	if req.WorkingDayHours <= 0 {
-		writeError(w, http.StatusBadRequest, "working_day_hours must be positive")
+	if req.WorkingDayMinutes <= 0 {
+		writeError(w, http.StatusBadRequest, "working_day_minutes must be positive")
 		return
 	}
 	hp := agent.ComputeHourlyPrice(
 		agent.DailyLabourPowerValue{Pence: req.DailyPence},
-		agent.WorkingDayHours{Hours: req.WorkingDayHours},
+		agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(req.WorkingDayMinutes)},
 	)
 	writeJSON(w, http.StatusOK, hourlyPriceResponse{
 		Numerator:   hp.Numerator,
@@ -81,7 +81,7 @@ func (h *Handler) CreateWorkingSession(w http.ResponseWriter, r *http.Request) {
 	s := agent.WorkingSession{
 		AgentID:               agent.AgentID(req.AgentID),
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: req.DailyLabourPowerValue},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: req.WorkingDayHours},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(req.WorkingDayMinutes)},
 		OvertimeHours:         agent.OvertimeHours{Hours: req.OvertimeHours},
 		OvertimeRatePence:     agent.OvertimeRatePence{Pence: req.OvertimeRatePence},
 		WagePeriod:            agent.WagePeriod(req.WagePeriod),
