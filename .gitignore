@@ -61,4 +61,15 @@ logs/
 # Superpowers brainstorm artefacts
 .superpowers/
 
+# RuFlo / RuVector runtime databases (binary, not tracked)
+ruvector.db
+ruvector.db-shm
+ruvector.db-wal
+web/ruvector.db
+web/ruvector.db-shm
+web/ruvector.db-wal
+.swarm/*.db
+.swarm/*.db-shm
+.swarm/*.db-wal
+
 **/__pycache__/
