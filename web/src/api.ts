@@ -93,6 +93,8 @@ import type {
   RelativeSurplusValueInput,
   RelativeSurplusValueResult,
   SurplusValueRateResult,
+  RatesOfSurplusValueInput,
+  RatesOfSurplusValueResult,
 } from "./types";
 
 const BASE = "/api";
@@ -606,6 +608,14 @@ export const api = {
 
   computeLabourScenario: (input: LabourScenarioInput) =>
     http<LabourScenarioResult>("/v1/labour-scenarios", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  // --- simulation-engine (Ch. 18: Various Formula for the Rate of Surplus-Value) ---
+
+  computeRatesOfSurplusValue: (input: RatesOfSurplusValueInput) =>
+    http<RatesOfSurplusValueResult>("/v1/surplus-value/rates", {
       method: "POST",
       body: JSON.stringify(input),
     }),

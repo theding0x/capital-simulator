@@ -903,6 +903,21 @@ export interface LabourScenarioResult {
   law_constant_daily_value: boolean;
 }
 
+// Ch. 18 — Various Formula for the Rate of Surplus-Value
+export interface RatesOfSurplusValueInput {
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+}
+
+export interface RatesOfSurplusValueResult {
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+  working_day_minutes: number;
+  formula_i: number;
+  formula_ii: number;
+  formula_iii: number;
+}
+
 // Part IV bridge — Ch.13/14/15 productivity → Ch.12 relative surplus-value.
 export type ProductivitySource = "cooperation" | "manufacture" | "factory";
 
