@@ -86,7 +86,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 18    | ✅ Done     | Various formulae for the rate of surplus-value; FormulaI (s/v), FormulaII (s/(s+v)), FormulaIII (unpaid/paid) | simulation-engine |
 | Ch. 19    | ✅ Done     | Transformation of value of labour-power into wages; WageFormID, LabourPowerValue, Wage, WageAppearance, LabourDecomposition, WageForm; HourlyWage, Decompose (paid/unpaid split), Appearance (ideological inversion); POST /v1/wage-forms, GET /v1/wage-forms/{agentID} | agent-service |
 | Ch. 20    | ✅ Done     | Time-wages; WorkingSessionID, DailyLabourPowerValue, HourlyPriceOfLabour (exact fraction + AsFloat), WorkingDayHours, OvertimeHours, OvertimeRatePence, WagePeriod, NominalWage, WorkingSession; ComputeHourlyPrice (exact rational fraction), ComputeSessionWage (integer arithmetic); POST /v1/time-wages/hourly-price, POST /v1/time-wages/sessions, GET /v1/time-wages/sessions/{id} | agent-service |
-| Ch. 21-22 | Pending     | Wages (piece-wage, national differences) | agent-service |
+| Ch. 21    | ✅ Done     | Piece-wages; PieceWageID, PieceWage, PieceSession, QualityOutcome, SubContractID, SubContract; ComputePiecePrice (farthings integer arithmetic), ComputePieceValue, ComputePieceEarnings, SubContractSpread; POST/GET /v1/agents/{id}/piece-wages, POST /v1/piece-price, POST/GET /v1/sub-contracts[/{id}] | agent-service |
+| Ch. 22    | Pending     | National differences in wages | agent-service |
 | Ch. 23+   | Pending     | Accumulation of capital | all |
 
 ### Ch. 1 — what was built
@@ -282,6 +283,19 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoint (stateless).** `POST /v1/surplus-value/rates` — accepts `{necessary_labour_minutes, surplus_labour_minutes}`, returns `{formula_i, formula_ii, formula_iii, working_day_minutes, ...}`.
 - **api-gateway.** Reverse-proxies `/v1/surplus-value/rates` to simulation-engine.
 - **React UI.** "Ch. 18 — Different Formulae for the Rate of Surplus-Value" panel with: two numeric inputs (necessary / surplus labour in minutes); three preset buttons (§ Formula I 100%, § Formula II bounded, § agricultural labourer 300%); side-by-side result cards for each formula with a note on its key property.
+
+### Ch. 21 — what was built
+
+`agent-service` adds the `piece_wage.go` domain file implementing Marx's Ch. 21 analysis of the piece-wage form.
+
+- **Domain types.** `PieceWageID`, `PieceWage{AgentID, PricePence, NormalOutput int64}` (persisted wage contract); `QualityOutcome` ("accepted" | "rejected"); `PieceSession{PiecesProduced, QualityOutcome}` (transient session input); `SubContractID`, `SubContract{HeadLabourerID, AssistantIDs []AgentID, PieceRatePence, AssistantRatePence int64}` (sweating system).
+- **ComputePiecePrice(dailyWage, normalOutput).** Integer division in farthings (¼d.): `ComputePiecePrice(144, 24) == 6`, `ComputePiecePrice(144, 48) == 3`. Invariant: `price × normalOutput == dailyWage`.
+- **ComputePieceValue(dayValueProduct, normalOutput).** Analogous to piece price but over the day's full value product; always exceeds piece price because `dayValueProduct > dailyWage`.
+- **ComputePieceEarnings(s, pw).** Returns `piecesProduced × pricePence` if accepted, 0 if rejected. Quality control is enforced by the wage form itself.
+- **SubContractSpread(sc).** Returns `PieceRatePence - AssistantRatePence` — the per-piece gain the middleman retains.
+- **Store.** `PieceWageStore` interface (one contract per agent, `ErrAlreadyExists` on duplicate); `Memory` and `MySQL` implementations. Migration `00018_ch21_piece_wages.sql`; seed `00019_ch21_seed.sql` with Thomas Hobson fixture (6 farthings/piece, 24 pieces/day) and sweating sub-contract.
+- **HTTP endpoints.** `POST/GET /v1/agents/{id}/piece-wages` (register/retrieve contract); `POST /v1/piece-price` (stateless probe returning piece price, piece value, actual earnings); `POST/GET /v1/sub-contracts[/{id}]` (create/retrieve sub-contract with spread).
+- **React UI.** "Ch. 21 — Piece-Wages" panel: inputs for daily wage and day value product (in farthings), normal output, pieces produced, and quality outcome; live piece price/value preview; result cards showing the price vs. value gap (the surplus made visible) and actual session earnings.
 
 ### Ch. 20 — what was built
 

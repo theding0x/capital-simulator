@@ -26,6 +26,8 @@ type Memory struct {
 	manufactures      map[agent.ManufactureID]agent.Manufacture
 	wageForms         map[agent.AgentID]agent.WageForm
 	workingSessions   map[agent.WorkingSessionID]agent.WorkingSession
+	pieceWages        map[agent.AgentID]agent.PieceWage
+	subContracts      map[agent.SubContractID]agent.SubContract
 	now               func() time.Time
 }
 
@@ -44,6 +46,8 @@ func NewMemory() *Memory {
 		manufactures:      make(map[agent.ManufactureID]agent.Manufacture),
 		wageForms:         make(map[agent.AgentID]agent.WageForm),
 		workingSessions:   make(map[agent.WorkingSessionID]agent.WorkingSession),
+		pieceWages:        make(map[agent.AgentID]agent.PieceWage),
+		subContracts:      make(map[agent.SubContractID]agent.SubContract),
 		now:               time.Now,
 	}
 }
@@ -602,4 +606,55 @@ func (m *Memory) GetWorkingSession(_ context.Context, id agent.WorkingSessionID)
 		return agent.WorkingSession{}, ErrNotFound
 	}
 	return s, nil
+}
+
+func (m *Memory) CreatePieceWage(_ context.Context, pw agent.PieceWage) (agent.PieceWage, error) {
+	if err := pw.Validate(); err != nil {
+		return agent.PieceWage{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, exists := m.pieceWages[pw.AgentID]; exists {
+		return agent.PieceWage{}, ErrAlreadyExists
+	}
+	if pw.ID.IsZero() {
+		pw.ID = agent.NewPieceWageID()
+	}
+	pw.CreatedAt = m.now()
+	m.pieceWages[pw.AgentID] = pw
+	return pw, nil
+}
+
+func (m *Memory) GetPieceWage(_ context.Context, agentID agent.AgentID) (agent.PieceWage, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	pw, ok := m.pieceWages[agentID]
+	if !ok {
+		return agent.PieceWage{}, ErrNotFound
+	}
+	return pw, nil
+}
+
+func (m *Memory) CreateSubContract(_ context.Context, sc agent.SubContract) (agent.SubContract, error) {
+	if err := sc.Validate(); err != nil {
+		return agent.SubContract{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if sc.ID.IsZero() {
+		sc.ID = agent.NewSubContractID()
+	}
+	sc.CreatedAt = m.now()
+	m.subContracts[sc.ID] = sc
+	return sc, nil
+}
+
+func (m *Memory) GetSubContract(_ context.Context, id agent.SubContractID) (agent.SubContract, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	sc, ok := m.subContracts[id]
+	if !ok {
+		return agent.SubContract{}, ErrNotFound
+	}
+	return sc, nil
 }
