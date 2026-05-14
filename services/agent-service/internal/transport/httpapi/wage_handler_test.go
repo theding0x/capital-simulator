@@ -13,7 +13,7 @@ import (
 )
 
 // § core fixture from Ch. 19:
-// daily_pence=36 (3s), working_day_hours=12, lpv_daily_pence=36, necessary_minutes=360
+// daily_pence=36 (3s), working_day_minutes=720, lpv_daily_pence=36, necessary_minutes=360
 // → hourly_wage=3, appearance={paid:12,unpaid:0}, decomposition={paid:360,unpaid:360}
 
 func TestCreateWageForm(t *testing.T) {
@@ -24,7 +24,7 @@ func TestCreateWageForm(t *testing.T) {
 	body := map[string]any{
 		"agent_id":          "abc123",
 		"daily_pence":       36,
-		"working_day_hours": 12,
+		"working_day_minutes": 720,
 		"lpv_daily_pence":   36,
 		"necessary_minutes": 360,
 	}
@@ -68,7 +68,7 @@ func TestGetWageForm(t *testing.T) {
 	// seed
 	wf := agent.WageForm{
 		AgentID: "xyz789",
-		Wage:    agent.Wage{DailyPence: 24, WorkingDayHours: 12},
+		Wage:    agent.Wage{DailyPence: 24, WorkingDayMinutes: 720},
 		LabourPowerValue: agent.WageLabourValue{
 			DailyPence:       24,
 			NecessaryMinutes: 360,
@@ -121,7 +121,7 @@ func TestCreateWageForm_InvalidRequest(t *testing.T) {
 		t.Parallel()
 		body := map[string]any{
 			"daily_pence":       36,
-			"working_day_hours": 12,
+			"working_day_minutes": 720,
 			"lpv_daily_pence":   36,
 			"necessary_minutes": 360,
 		}
@@ -140,7 +140,7 @@ func TestCreateWageForm_InvalidRequest(t *testing.T) {
 		body := map[string]any{
 			"agent_id":          "abc",
 			"daily_pence":       0,
-			"working_day_hours": 12,
+			"working_day_minutes": 720,
 			"lpv_daily_pence":   36,
 			"necessary_minutes": 360,
 		}

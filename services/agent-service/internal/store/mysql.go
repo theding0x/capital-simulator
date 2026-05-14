@@ -1007,18 +1007,18 @@ func (m *MySQL) CreateWageForm(ctx context.Context, wf agent.WageForm) (agent.Wa
 	}
 	wf.CreatedAt = m.now().UTC()
 	const q = `INSERT INTO wage_forms
-		(id, agent_id, daily_pence, working_day_hours, lpv_daily_pence, necessary_minutes, created_at)
+		(id, agent_id, daily_pence, working_day_minutes, lpv_daily_pence, necessary_minutes, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 			id = VALUES(id),
 			daily_pence = VALUES(daily_pence),
-			working_day_hours = VALUES(working_day_hours),
+			working_day_minutes = VALUES(working_day_minutes),
 			lpv_daily_pence = VALUES(lpv_daily_pence),
 			necessary_minutes = VALUES(necessary_minutes),
 			created_at = VALUES(created_at)`
 	_, err := m.db.ExecContext(ctx, q,
 		string(wf.ID), string(wf.AgentID),
-		int64(wf.Wage.DailyPence), wf.Wage.WorkingDayHours,
+		int64(wf.Wage.DailyPence), int64(wf.Wage.WorkingDayMinutes),
 		int64(wf.LabourPowerValue.DailyPence), int64(wf.LabourPowerValue.NecessaryMinutes),
 		wf.CreatedAt,
 	)
@@ -1029,7 +1029,7 @@ func (m *MySQL) CreateWageForm(ctx context.Context, wf agent.WageForm) (agent.Wa
 }
 
 func (m *MySQL) GetWageForm(ctx context.Context, agentID agent.AgentID) (agent.WageForm, error) {
-	const q = `SELECT id, agent_id, daily_pence, working_day_hours, lpv_daily_pence, necessary_minutes, created_at
+	const q = `SELECT id, agent_id, daily_pence, working_day_minutes, lpv_daily_pence, necessary_minutes, created_at
 		FROM wage_forms WHERE agent_id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(agentID))
 	var wf agent.WageForm
@@ -1044,7 +1044,7 @@ func (m *MySQL) GetWageForm(ctx context.Context, agentID agent.AgentID) (agent.W
 	}
 	wf.ID = agent.WageFormID(id)
 	wf.AgentID = agent.AgentID(aid)
-	wf.Wage = agent.Wage{DailyPence: agent.Pence(dp), WorkingDayHours: wdh}
+	wf.Wage = agent.Wage{DailyPence: agent.Pence(dp), WorkingDayMinutes: agent.LabourMinutes(wdh)}
 	wf.LabourPowerValue = agent.WageLabourValue{
 		DailyPence:       agent.Pence(lpvDp),
 		NecessaryMinutes: agent.LabourMinutes(nm),
@@ -1061,13 +1061,13 @@ func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession
 	}
 	s.CreatedAt = m.now().UTC()
 	const q = `INSERT INTO time_wage_sessions
-		(id, agent_id, daily_labour_power_value, working_day_hours,
+		(id, agent_id, daily_labour_power_value, working_day_minutes,
 		 overtime_hours, overtime_rate_pence, wage_period, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := m.db.ExecContext(ctx, q,
 		string(s.ID), string(s.AgentID),
 		s.DailyLabourPowerValue.Pence,
-		s.WorkingDayHours.Hours,
+		int64(s.WorkingDayMinutes.Minutes),
 		s.OvertimeHours.Hours,
 		s.OvertimeRatePence.Pence,
 		string(s.WagePeriod),
@@ -1080,14 +1080,14 @@ func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession
 }
 
 func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID) (agent.WorkingSession, error) {
-	const q = `SELECT id, agent_id, daily_labour_power_value, working_day_hours,
+	const q = `SELECT id, agent_id, daily_labour_power_value, working_day_minutes,
 		overtime_hours, overtime_rate_pence, wage_period, created_at
 		FROM time_wage_sessions WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	var s agent.WorkingSession
 	var sid, aid, period string
-	var dlpv, wdh, oth, orp int64
-	err := row.Scan(&sid, &aid, &dlpv, &wdh, &oth, &orp, &period, &s.CreatedAt)
+	var dlpv, wdm, oth, orp int64
+	err := row.Scan(&sid, &aid, &dlpv, &wdm, &oth, &orp, &period, &s.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.WorkingSession{}, ErrNotFound
 	}
@@ -1097,7 +1097,7 @@ func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID
 	s.ID = agent.WorkingSessionID(sid)
 	s.AgentID = agent.AgentID(aid)
 	s.DailyLabourPowerValue = agent.DailyLabourPowerValue{Pence: dlpv}
-	s.WorkingDayHours = agent.WorkingDayHours{Hours: wdh}
+	s.WorkingDayMinutes = agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(wdm)}
 	s.OvertimeHours = agent.OvertimeHours{Hours: oth}
 	s.OvertimeRatePence = agent.OvertimeRatePence{Pence: orp}
 	s.WagePeriod = agent.WagePeriod(period)

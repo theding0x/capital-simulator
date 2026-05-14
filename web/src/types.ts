@@ -958,7 +958,7 @@ export interface WageLabourValue {
 
 export interface Wage {
   daily_pence: number;
-  working_day_hours: number;
+  working_day_minutes: number;
 }
 
 export interface WageAppearance {
@@ -985,7 +985,7 @@ export interface WageForm {
 export interface CreateWageFormInput {
   agent_id: string;
   daily_pence: number;
-  working_day_hours: number;
+  working_day_minutes: number;
   lpv_daily_pence: number;
   necessary_minutes: number;
 }
@@ -1006,7 +1006,7 @@ export interface WorkingSession {
   id: string;
   agent_id: string;
   daily_labour_power_value: { pence: number };
-  working_day_hours: { hours: number };
+  working_day_minutes: { minutes: number };
   overtime_hours: { hours: number };
   overtime_rate_pence: { pence: number };
   wage_period: "daily" | "weekly";
@@ -1018,7 +1018,7 @@ export interface WorkingSession {
 export interface CreateWorkingSessionInput {
   agent_id: string;
   daily_labour_power_value: number;
-  working_day_hours: number;
+  working_day_minutes: number;
   overtime_hours: number;
   overtime_rate_pence: number;
   wage_period: "daily" | "weekly";
@@ -1026,7 +1026,7 @@ export interface CreateWorkingSessionInput {
 
 export interface ComputeHourlyPriceInput {
   daily_pence: number;
-  working_day_hours: number;
+  working_day_minutes: number;
 }
 
 // --- Ch. 21: Piece-Wages ---

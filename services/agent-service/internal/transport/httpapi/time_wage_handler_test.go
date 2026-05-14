@@ -12,12 +12,12 @@ import (
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/transport/httpapi"
 )
 
-// § unit measure: daily 36p, 12h → numerator=36, denominator=12, as_float=3.0
+// § unit measure: daily 36p, 720 min → numerator=36, denominator=12, as_float=3.0
 func TestComputeHourlyPrice_OK(t *testing.T) {
 	t.Parallel()
 
 	h := httpapi.New(store.NewMemory(), nil)
-	body := map[string]any{"daily_pence": 36, "working_day_hours": 12}
+	body := map[string]any{"daily_pence": 36, "working_day_minutes": 720}
 	b, _ := json.Marshal(body)
 	req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/hourly-price", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
@@ -61,7 +61,7 @@ func TestComputeHourlyPrice_InvalidRequest(t *testing.T) {
 
 	t.Run("zero daily_pence", func(t *testing.T) {
 		t.Parallel()
-		body := map[string]any{"daily_pence": 0, "working_day_hours": 12}
+		body := map[string]any{"daily_pence": 0, "working_day_minutes": 720}
 		b, _ := json.Marshal(body)
 		req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/hourly-price", bytes.NewReader(b))
 		req.Header.Set("Content-Type", "application/json")
@@ -81,7 +81,7 @@ func TestCreateWorkingSession_OK(t *testing.T) {
 	body := map[string]any{
 		"agent_id":                 "worker-abc",
 		"daily_labour_power_value": 36,
-		"working_day_hours":        12,
+		"working_day_minutes":      720,
 		"overtime_hours":           0,
 		"overtime_rate_pence":      0,
 		"wage_period":              "daily",
@@ -132,7 +132,7 @@ func TestCreateWorkingSession_WithOvertime(t *testing.T) {
 	body := map[string]any{
 		"agent_id":                 "worker-abc",
 		"daily_labour_power_value": 36,
-		"working_day_hours":        12,
+		"working_day_minutes":      720,
 		"overtime_hours":           2,
 		"overtime_rate_pence":      4,
 		"wage_period":              "daily",
@@ -179,7 +179,7 @@ func TestCreateWorkingSession_BadRequest(t *testing.T) {
 		t.Parallel()
 		body := map[string]any{
 			"daily_labour_power_value": 36,
-			"working_day_hours":        12,
+			"working_day_minutes":      720,
 			"wage_period":              "daily",
 		}
 		b, _ := json.Marshal(body)
@@ -197,7 +197,7 @@ func TestCreateWorkingSession_BadRequest(t *testing.T) {
 		body := map[string]any{
 			"agent_id":                 "w1",
 			"daily_labour_power_value": 36,
-			"working_day_hours":        12,
+			"working_day_minutes":      720,
 			"wage_period":              "monthly",
 		}
 		b, _ := json.Marshal(body)
@@ -220,7 +220,7 @@ func TestGetWorkingSession_OK(t *testing.T) {
 	seed := agent.WorkingSession{
 		AgentID:               "worker-xyz",
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: 12},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
 		OvertimeHours:         agent.OvertimeHours{Hours: 0},
 		OvertimeRatePence:     agent.OvertimeRatePence{Pence: 0},
 		WagePeriod:            agent.WagePeriodDaily,

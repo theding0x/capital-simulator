@@ -6,13 +6,13 @@ import (
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/agent"
 )
 
-// § unit measure: daily value 3s. (36p), 12-hour day → price of 1 hour = 36/12 = 3d.
+// § unit measure: daily value 3s. (36p), 12-hour day (720 min) → price of 1 hour = 36/12 = 3d.
 func TestComputeHourlyPrice_12Hour(t *testing.T) {
 	t.Parallel()
 
 	hp := agent.ComputeHourlyPrice(
 		agent.DailyLabourPowerValue{Pence: 36},
-		agent.WorkingDayHours{Hours: 12},
+		agent.WorkingDayMinutes{Minutes: 720},
 	)
 	if hp.Numerator != 36 {
 		t.Errorf("numerator = %d, want 36", hp.Numerator)
@@ -25,13 +25,13 @@ func TestComputeHourlyPrice_12Hour(t *testing.T) {
 	}
 }
 
-// § 10-hour day: daily value 3s. (36p), 10 hours → price = 36/10 = 3.6d (stored exact).
+// § 10-hour day: daily value 3s. (36p), 10 hours (600 min) → price = 36/10 = 3.6d (stored exact).
 func TestComputeHourlyPrice_10Hour(t *testing.T) {
 	t.Parallel()
 
 	hp := agent.ComputeHourlyPrice(
 		agent.DailyLabourPowerValue{Pence: 36},
-		agent.WorkingDayHours{Hours: 10},
+		agent.WorkingDayMinutes{Minutes: 600},
 	)
 	if hp.Numerator != 36 || hp.Denominator != 10 {
 		t.Errorf("fraction = %d/%d, want 36/10", hp.Numerator, hp.Denominator)
@@ -42,13 +42,13 @@ func TestComputeHourlyPrice_10Hour(t *testing.T) {
 	}
 }
 
-// § 15-hour day: daily value 3s. (36p), 15 hours → price = 36/15 = 2.4d.
+// § 15-hour day: daily value 3s. (36p), 15 hours (900 min) → price = 36/15 = 2.4d.
 func TestComputeHourlyPrice_15Hour(t *testing.T) {
 	t.Parallel()
 
 	hp := agent.ComputeHourlyPrice(
 		agent.DailyLabourPowerValue{Pence: 36},
-		agent.WorkingDayHours{Hours: 15},
+		agent.WorkingDayMinutes{Minutes: 900},
 	)
 	if hp.Numerator != 36 || hp.Denominator != 15 {
 		t.Errorf("fraction = %d/%d, want 36/15", hp.Numerator, hp.Denominator)
@@ -64,8 +64,8 @@ func TestComputeHourlyPrice_LongerDayLowersPrice(t *testing.T) {
 	t.Parallel()
 
 	v := agent.DailyLabourPowerValue{Pence: 36}
-	short := agent.ComputeHourlyPrice(v, agent.WorkingDayHours{Hours: 10})
-	long := agent.ComputeHourlyPrice(v, agent.WorkingDayHours{Hours: 12})
+	short := agent.ComputeHourlyPrice(v, agent.WorkingDayMinutes{Minutes: 600})
+	long := agent.ComputeHourlyPrice(v, agent.WorkingDayMinutes{Minutes: 720})
 
 	if short.AsFloat() <= long.AsFloat() {
 		t.Errorf("10h price (%f) should exceed 12h price (%f)", short.AsFloat(), long.AsFloat())
@@ -77,14 +77,14 @@ func TestComputeHourlyPrice_FractionIsExact(t *testing.T) {
 	t.Parallel()
 
 	v := agent.DailyLabourPowerValue{Pence: 36}
-	h := agent.WorkingDayHours{Hours: 12}
-	hp := agent.ComputeHourlyPrice(v, h)
+	m := agent.WorkingDayMinutes{Minutes: 720}
+	hp := agent.ComputeHourlyPrice(v, m)
 
 	if hp.Numerator != v.Pence {
 		t.Errorf("numerator = %d, want %d", hp.Numerator, v.Pence)
 	}
-	if hp.Denominator != h.Hours {
-		t.Errorf("denominator = %d, want %d", hp.Denominator, h.Hours)
+	if hp.Denominator != int64(m.Minutes)/60 {
+		t.Errorf("denominator = %d, want %d", hp.Denominator, int64(m.Minutes)/60)
 	}
 }
 
@@ -95,7 +95,7 @@ func TestComputeSessionWage_NoOvertime(t *testing.T) {
 	s := agent.WorkingSession{
 		AgentID:               "worker1",
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: 12},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
 		OvertimeHours:         agent.OvertimeHours{Hours: 0},
 		OvertimeRatePence:     agent.OvertimeRatePence{Pence: 0},
 		WagePeriod:            agent.WagePeriodDaily,
@@ -113,7 +113,7 @@ func TestComputeSessionWage_WithOvertime(t *testing.T) {
 	s := agent.WorkingSession{
 		AgentID:               "worker1",
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: 12},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
 		OvertimeHours:         agent.OvertimeHours{Hours: 2},
 		OvertimeRatePence:     agent.OvertimeRatePence{Pence: 4},
 		WagePeriod:            agent.WagePeriodDaily,
@@ -131,12 +131,13 @@ func TestComputeSessionWage_IntegerArithmetic(t *testing.T) {
 	s := agent.WorkingSession{
 		AgentID:               "worker1",
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: 12},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
 		OvertimeHours:         agent.OvertimeHours{Hours: 3},
 		OvertimeRatePence:     agent.OvertimeRatePence{Pence: 4},
 		WagePeriod:            agent.WagePeriodDaily,
 	}
-	want := (s.DailyLabourPowerValue.Pence/s.WorkingDayHours.Hours)*s.WorkingDayHours.Hours +
+	hours := int64(s.WorkingDayMinutes.Minutes) / 60
+	want := (s.DailyLabourPowerValue.Pence/hours)*hours +
 		s.OvertimeHours.Hours*s.OvertimeRatePence.Pence
 	got := agent.ComputeSessionWage(s).Pence
 	if got != want {
@@ -150,7 +151,7 @@ func TestWorkingSession_Validate_MissingAgentID(t *testing.T) {
 
 	s := agent.WorkingSession{
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: 12},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
 		WagePeriod:            agent.WagePeriodDaily,
 	}
 	if err := s.Validate(); err == nil {
@@ -165,7 +166,7 @@ func TestWorkingSession_Validate_InvalidPeriod(t *testing.T) {
 	s := agent.WorkingSession{
 		AgentID:               "worker1",
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: 12},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
 		WagePeriod:            agent.WagePeriod("monthly"),
 	}
 	if err := s.Validate(); err == nil {
@@ -180,7 +181,7 @@ func TestWorkingSession_Validate_WeeklyPeriod(t *testing.T) {
 	s := agent.WorkingSession{
 		AgentID:               "worker1",
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: 12},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
 		OvertimeHours:         agent.OvertimeHours{Hours: 0},
 		OvertimeRatePence:     agent.OvertimeRatePence{Pence: 0},
 		WagePeriod:            agent.WagePeriodWeekly,

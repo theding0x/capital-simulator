@@ -28,7 +28,7 @@ type DailyLabourPowerValue struct {
 }
 
 // HourlyPriceOfLabour is the price of one hour of labour expressed as an exact
-// rational fraction (DailyLabourPowerValue / WorkingDayHours). Stored without
+// rational fraction (DailyLabourPowerValue / WorkingDayMinutes÷60). Stored without
 // rounding so the inverse relationship between day length and hourly price is exact.
 type HourlyPriceOfLabour struct {
 	Numerator   int64 `json:"numerator"`
@@ -43,9 +43,9 @@ func (h HourlyPriceOfLabour) AsFloat() float64 {
 	return float64(h.Numerator) / float64(h.Denominator)
 }
 
-// WorkingDayHours is the total number of hours in a time-wage working session.
-type WorkingDayHours struct {
-	Hours int64 `json:"hours"`
+// WorkingDayMinutes is the total duration of a time-wage working session in minutes.
+type WorkingDayMinutes struct {
+	Minutes LabourMinutes `json:"minutes"`
 }
 
 // OvertimeHours is the number of hours worked beyond the normal working day.
@@ -80,7 +80,7 @@ type WorkingSession struct {
 	ID                    WorkingSessionID      `json:"id"`
 	AgentID               AgentID               `json:"agent_id"`
 	DailyLabourPowerValue DailyLabourPowerValue `json:"daily_labour_power_value"`
-	WorkingDayHours       WorkingDayHours       `json:"working_day_hours"`
+	WorkingDayMinutes     WorkingDayMinutes     `json:"working_day_minutes"`
 	OvertimeHours         OvertimeHours         `json:"overtime_hours"`
 	OvertimeRatePence     OvertimeRatePence     `json:"overtime_rate_pence"`
 	WagePeriod            WagePeriod            `json:"wage_period"`
@@ -97,8 +97,8 @@ func (s WorkingSession) Validate() error {
 	if s.DailyLabourPowerValue.Pence <= 0 {
 		return errors.New("time_wage: daily_labour_power_value.pence must be positive")
 	}
-	if s.WorkingDayHours.Hours <= 0 {
-		return errors.New("time_wage: working_day_hours.hours must be positive")
+	if s.WorkingDayMinutes.Minutes <= 0 {
+		return errors.New("time_wage: working_day_minutes.minutes must be positive")
 	}
 	if s.OvertimeHours.Hours < 0 {
 		return errors.New("time_wage: overtime_hours.hours cannot be negative")
@@ -116,16 +116,17 @@ func (s WorkingSession) Validate() error {
 // fraction: Numerator = daily value in pence, Denominator = working-day hours.
 // Never rounds — the fraction is the invariant form Marx uses to show that
 // lengthening the day lowers the hourly price even when nominal pay is unchanged.
-func ComputeHourlyPrice(v DailyLabourPowerValue, h WorkingDayHours) HourlyPriceOfLabour {
-	return HourlyPriceOfLabour{Numerator: v.Pence, Denominator: h.Hours}
+func ComputeHourlyPrice(v DailyLabourPowerValue, m WorkingDayMinutes) HourlyPriceOfLabour {
+	return HourlyPriceOfLabour{Numerator: v.Pence, Denominator: int64(m.Minutes) / 60}
 }
 
 // ComputeSessionWage returns the total nominal money paid for the session:
 // (floor hourly rate × normal hours) + (overtime hours × overtime rate).
 // Uses integer arithmetic throughout — no rounding at this layer.
 func ComputeSessionWage(s WorkingSession) NominalWage {
-	hourlyRate := s.DailyLabourPowerValue.Pence / s.WorkingDayHours.Hours
-	normalPay := hourlyRate * s.WorkingDayHours.Hours
+	hours := int64(s.WorkingDayMinutes.Minutes) / 60
+	hourlyRate := s.DailyLabourPowerValue.Pence / hours
+	normalPay := hourlyRate * hours
 	overtimePay := s.OvertimeHours.Hours * s.OvertimeRatePence.Pence
 	return NominalWage{Pence: normalPay + overtimePay}
 }

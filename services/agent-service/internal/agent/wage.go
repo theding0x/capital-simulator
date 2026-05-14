@@ -31,8 +31,8 @@ type WageLabourValue struct {
 // Wage is the money form paid per working day — the price of labour as it
 // appears to workers, capitalists, and economists.
 type Wage struct {
-	DailyPence      Pence `json:"daily_pence"`
-	WorkingDayHours int64 `json:"working_day_hours"`
+	DailyPence        Pence         `json:"daily_pence"`
+	WorkingDayMinutes LabourMinutes `json:"working_day_minutes"`
 }
 
 // WageAppearance models the ideological inversion Ch. 19 critiques: wages
@@ -62,17 +62,17 @@ type WageForm struct {
 // HourlyWage returns the apparent price of one hour of labour — the form in
 // which workers and economists reason about the cost of labour.
 func HourlyWage(w Wage) Pence {
-	if w.WorkingDayHours == 0 {
+	if w.WorkingDayMinutes == 0 {
 		return 0
 	}
-	return Pence(int64(w.DailyPence) / w.WorkingDayHours)
+	return Pence(int64(w.DailyPence) * 60 / int64(w.WorkingDayMinutes))
 }
 
 // Decompose reveals the true paid/unpaid split beneath the wage form.
 // PaidMinutes equals the necessary labour reproducing labour-power value;
 // UnpaidMinutes is the surplus extracted by capital.
 func Decompose(w Wage, lpv WageLabourValue) LabourDecomposition {
-	total := LabourMinutes(w.WorkingDayHours * 60)
+	total := w.WorkingDayMinutes
 	return LabourDecomposition{
 		PaidMinutes:   lpv.NecessaryMinutes,
 		UnpaidMinutes: total - lpv.NecessaryMinutes,
@@ -83,7 +83,7 @@ func Decompose(w Wage, lpv WageLabourValue) LabourDecomposition {
 // hours as paid, making surplus labour invisible.
 func Appearance(w Wage) WageAppearance {
 	return WageAppearance{
-		PaidHours:   w.WorkingDayHours,
+		PaidHours:   int64(w.WorkingDayMinutes) / 60,
 		UnpaidHours: 0,
 	}
 }
@@ -95,8 +95,8 @@ func (wf WageForm) Validate() error {
 	if wf.Wage.DailyPence <= 0 {
 		return errors.New("wage_form: daily_pence must be positive")
 	}
-	if wf.Wage.WorkingDayHours <= 0 {
-		return errors.New("wage_form: working_day_hours must be positive")
+	if wf.Wage.WorkingDayMinutes <= 0 {
+		return errors.New("wage_form: working_day_minutes must be positive")
 	}
 	if wf.LabourPowerValue.DailyPence <= 0 {
 		return errors.New("wage_form: labour_power_value daily_pence must be positive")

@@ -7,11 +7,11 @@ import (
 )
 
 type createWageFormRequest struct {
-	AgentID          string `json:"agent_id"`
-	DailyPence       int64  `json:"daily_pence"`
-	WorkingDayHours  int64  `json:"working_day_hours"`
-	LPVDailyPence    int64  `json:"lpv_daily_pence"`
-	NecessaryMinutes int64  `json:"necessary_minutes"`
+	AgentID           string `json:"agent_id"`
+	DailyPence        int64  `json:"daily_pence"`
+	WorkingDayMinutes int64  `json:"working_day_minutes"`
+	LPVDailyPence     int64  `json:"lpv_daily_pence"`
+	NecessaryMinutes  int64  `json:"necessary_minutes"`
 }
 
 type wageFormResponse struct {
@@ -39,8 +39,8 @@ func (h *Handler) CreateWageForm(w http.ResponseWriter, r *http.Request) {
 	wf := agent.WageForm{
 		AgentID: agent.AgentID(req.AgentID),
 		Wage: agent.Wage{
-			DailyPence:      agent.Pence(req.DailyPence),
-			WorkingDayHours: req.WorkingDayHours,
+			DailyPence:        agent.Pence(req.DailyPence),
+			WorkingDayMinutes: agent.LabourMinutes(req.WorkingDayMinutes),
 		},
 		LabourPowerValue: agent.WageLabourValue{
 			DailyPence:       agent.Pence(req.LPVDailyPence),

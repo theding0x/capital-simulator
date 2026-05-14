@@ -10,14 +10,14 @@ import (
 // "daily value of labour-power is 3s., the value of the product of 6
 // working-hours; working-day is 12 hours"
 // → DailyPence = 36 (3 shillings), NecessaryMinutes = 360 (6 h),
-//   WorkingDayHours = 12.
+//   WorkingDayMinutes = 720.
 
 func TestHourlyWage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("standard fixture 3s/12h = 3p per hour", func(t *testing.T) {
 		t.Parallel()
-		w := agent.Wage{DailyPence: 36, WorkingDayHours: 12}
+		w := agent.Wage{DailyPence: 36, WorkingDayMinutes: 720}
 		if got := agent.HourlyWage(w); got != 3 {
 			t.Fatalf("HourlyWage = %d, want 3", got)
 		}
@@ -26,7 +26,7 @@ func TestHourlyWage(t *testing.T) {
 	t.Run("price falls: 2s/12h = 2p per hour", func(t *testing.T) {
 		t.Parallel()
 		// "value of labour-power may vary from 3 to 2 shillings"
-		w := agent.Wage{DailyPence: 24, WorkingDayHours: 12}
+		w := agent.Wage{DailyPence: 24, WorkingDayMinutes: 720}
 		if got := agent.HourlyWage(w); got != 2 {
 			t.Fatalf("HourlyWage = %d, want 2", got)
 		}
@@ -34,7 +34,7 @@ func TestHourlyWage(t *testing.T) {
 
 	t.Run("zero working hours returns 0", func(t *testing.T) {
 		t.Parallel()
-		w := agent.Wage{DailyPence: 36, WorkingDayHours: 0}
+		w := agent.Wage{DailyPence: 36, WorkingDayMinutes: 0}
 		if got := agent.HourlyWage(w); got != 0 {
 			t.Fatalf("HourlyWage = %d, want 0", got)
 		}
@@ -45,7 +45,7 @@ func TestDecompose(t *testing.T) {
 	t.Parallel()
 
 	lpv := agent.WageLabourValue{DailyPence: 36, NecessaryMinutes: 360}
-	w := agent.Wage{DailyPence: 36, WorkingDayHours: 12}
+	w := agent.Wage{DailyPence: 36, WorkingDayMinutes: 720}
 
 	t.Run("paid minutes equal necessary labour", func(t *testing.T) {
 		t.Parallel()
@@ -58,7 +58,7 @@ func TestDecompose(t *testing.T) {
 	t.Run("decomposition covers full working day", func(t *testing.T) {
 		t.Parallel()
 		d := agent.Decompose(w, lpv)
-		total := agent.LabourMinutes(w.WorkingDayHours * 60)
+		total := w.WorkingDayMinutes
 		if d.PaidMinutes+d.UnpaidMinutes != total {
 			t.Fatalf("PaidMinutes(%d) + UnpaidMinutes(%d) = %d, want %d",
 				d.PaidMinutes, d.UnpaidMinutes, d.PaidMinutes+d.UnpaidMinutes, total)
@@ -75,7 +75,7 @@ func TestDecompose(t *testing.T) {
 
 	t.Run("wage rises lpv unchanged decomposition unchanged", func(t *testing.T) {
 		t.Parallel()
-		wRise := agent.Wage{DailyPence: 48, WorkingDayHours: 12}
+		wRise := agent.Wage{DailyPence: 48, WorkingDayMinutes: 720}
 		d := agent.Decompose(wRise, lpv)
 		if d.PaidMinutes != 360 {
 			t.Fatalf("PaidMinutes = %d, want 360", d.PaidMinutes)
@@ -86,13 +86,13 @@ func TestDecompose(t *testing.T) {
 func TestAppearance(t *testing.T) {
 	t.Parallel()
 
-	w := agent.Wage{DailyPence: 36, WorkingDayHours: 12}
+	w := agent.Wage{DailyPence: 36, WorkingDayMinutes: 720}
 
 	t.Run("all hours appear paid zero unpaid", func(t *testing.T) {
 		t.Parallel()
 		a := agent.Appearance(w)
-		if a.PaidHours != w.WorkingDayHours || a.UnpaidHours != 0 {
-			t.Fatalf("Appearance = {%d, %d}, want {%d, 0}", a.PaidHours, a.UnpaidHours, w.WorkingDayHours)
+		if a.PaidHours != 12 || a.UnpaidHours != 0 {
+			t.Fatalf("Appearance = {%d, %d}, want {12, 0}", a.PaidHours, a.UnpaidHours)
 		}
 	})
 }
@@ -102,7 +102,7 @@ func TestWageForm_Validate(t *testing.T) {
 
 	valid := agent.WageForm{
 		AgentID:          agent.AgentID("abc123"),
-		Wage:             agent.Wage{DailyPence: 36, WorkingDayHours: 12},
+		Wage:             agent.Wage{DailyPence: 36, WorkingDayMinutes: 720},
 		LabourPowerValue: agent.WageLabourValue{DailyPence: 36, NecessaryMinutes: 360},
 	}
 
@@ -131,12 +131,12 @@ func TestWageForm_Validate(t *testing.T) {
 		}
 	})
 
-	t.Run("zero working_day_hours", func(t *testing.T) {
+	t.Run("zero working_day_minutes", func(t *testing.T) {
 		t.Parallel()
 		wf := valid
-		wf.Wage.WorkingDayHours = 0
+		wf.Wage.WorkingDayMinutes = 0
 		if err := wf.Validate(); err == nil {
-			t.Fatal("expected error for zero working_day_hours")
+			t.Fatal("expected error for zero working_day_minutes")
 		}
 	})
 
