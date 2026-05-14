@@ -101,6 +101,12 @@ import type {
   HourlyPriceOfLabour,
   CreateWorkingSessionInput,
   WorkingSession,
+  ComputePiecePriceInput,
+  ComputePiecePriceResult,
+  CreatePieceWageInput,
+  PieceWage,
+  CreateSubContractInput,
+  SubContract,
 } from "./types";
 
 const BASE = "/api";
@@ -653,4 +659,30 @@ export const api = {
 
   getWorkingSession: (id: string) =>
     http<WorkingSession>(`/v1/time-wages/sessions/${id}`),
+
+  // --- agent-service (Ch. 21: Piece-Wages) ---
+
+  computePiecePrice: (input: ComputePiecePriceInput) =>
+    http<ComputePiecePriceResult>("/v1/piece-price", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createPieceWage: (agentID: string, input: CreatePieceWageInput) =>
+    http<PieceWage>(`/v1/agents/${agentID}/piece-wages`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getPieceWage: (agentID: string) =>
+    http<PieceWage>(`/v1/agents/${agentID}/piece-wages`),
+
+  createSubContract: (input: CreateSubContractInput) =>
+    http<SubContract>("/v1/sub-contracts", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getSubContract: (id: string) =>
+    http<SubContract>(`/v1/sub-contracts/${id}`),
 };

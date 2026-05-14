@@ -111,6 +111,11 @@ func main() {
 	srv.Handle("/v1/time-wages", agentProxy)
 	srv.Handle("/v1/time-wages/{rest...}", agentProxy)
 
+	// Ch. 21 — piece-wage routes proxy to agent-service
+	srv.Handle("/v1/piece-price", agentProxy)
+	srv.Handle("/v1/sub-contracts", agentProxy)
+	srv.Handle("/v1/sub-contracts/{rest...}", agentProxy)
+
 	// Reverse-proxy routes to simulation-engine.
 	simURL := getenv("SIM_ENGINE_URL", "http://simulation-engine:8084")
 	simProxy, err := proxy.New(simURL, logger)

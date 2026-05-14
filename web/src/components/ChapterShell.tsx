@@ -21,6 +21,7 @@ import { Ch17MagnitudeChanges } from "../chapters/Ch17MagnitudeChanges";
 import { Ch18RatesOfSurplusValue } from "../chapters/Ch18RatesOfSurplusValue";
 import { Ch19WageForm } from "../chapters/Ch19WageForm";
 import { Ch20TimeWages } from "../chapters/Ch20TimeWages";
+import { Ch21PieceWages } from "../chapters/Ch21PieceWages";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -60,6 +61,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch18: Ch18RatesOfSurplusValue as AnyPanel,
   ch19: Ch19WageForm as AnyPanel,
   ch20: Ch20TimeWages as AnyPanel,
+  ch21: Ch21PieceWages as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {

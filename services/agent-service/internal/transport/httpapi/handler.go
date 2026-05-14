@@ -14,7 +14,7 @@ import (
 // AgentStore is the composite store interface every agent-service handler
 // reaches into. Combining the per-chapter stores into one composite lets
 // New take a single argument and the test harness pass `store.NewMemory()`
-// once instead of eight times.
+// once instead of nine times.
 type AgentStore interface {
 	store.Store
 	store.CircuitStore
@@ -25,6 +25,7 @@ type AgentStore interface {
 	store.ManufactureStore
 	store.WageFormStore
 	store.TimeWageStore
+	store.PieceWageStore
 }
 
 type Handler struct {
@@ -37,6 +38,7 @@ type Handler struct {
 	ManufactureStore   store.ManufactureStore
 	WageFormStore      store.WageFormStore
 	TimeWageStore      store.TimeWageStore
+	PieceWageStore     store.PieceWageStore
 	Logger             *slog.Logger
 }
 
@@ -56,6 +58,7 @@ func New(s AgentStore, logger *slog.Logger) *Handler {
 		ManufactureStore:   s,
 		WageFormStore:      s,
 		TimeWageStore:      s,
+		PieceWageStore:     s,
 		Logger:             logger,
 	}
 }
@@ -387,7 +390,11 @@ func writeAppError(w http.ResponseWriter, err error) {
 		errors.Is(err, agent.ErrManufactureOutputRate),
 		errors.Is(err, agent.ErrManufactureHeadCount),
 		errors.Is(err, agent.ErrBottleneck),
-		errors.Is(err, agent.ErrInvalidMultiplier):
+		errors.Is(err, agent.ErrInvalidMultiplier),
+		errors.Is(err, agent.ErrPieceWageNormalOutput),
+		errors.Is(err, agent.ErrPieceWagePricePence),
+		errors.Is(err, agent.ErrSubContractNoHead),
+		errors.Is(err, agent.ErrSubContractSpread):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, err.Error())

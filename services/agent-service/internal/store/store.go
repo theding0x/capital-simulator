@@ -118,3 +118,11 @@ type TimeWageStore interface {
 	CreateWorkingSession(ctx context.Context, s agent.WorkingSession) (agent.WorkingSession, error)
 	GetWorkingSession(ctx context.Context, id agent.WorkingSessionID) (agent.WorkingSession, error)
 }
+
+// PieceWageStore is the persistence contract for Ch. 21 piece-wage records.
+type PieceWageStore interface {
+	CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.PieceWage, error)
+	GetPieceWage(ctx context.Context, agentID agent.AgentID) (agent.PieceWage, error)
+	CreateSubContract(ctx context.Context, sc agent.SubContract) (agent.SubContract, error)
+	GetSubContract(ctx context.Context, id agent.SubContractID) (agent.SubContract, error)
+}

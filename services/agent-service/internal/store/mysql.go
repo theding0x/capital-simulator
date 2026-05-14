@@ -1103,3 +1103,96 @@ func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID
 	s.WagePeriod = agent.WagePeriod(period)
 	return s, nil
 }
+
+func (m *MySQL) CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.PieceWage, error) {
+	if err := pw.Validate(); err != nil {
+		return agent.PieceWage{}, err
+	}
+	if pw.ID.IsZero() {
+		pw.ID = agent.NewPieceWageID()
+	}
+	pw.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO piece_wages (id, agent_id, price_pence, normal_output, created_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(pw.ID), string(pw.AgentID),
+		pw.PricePence, pw.NormalOutput, pw.CreatedAt,
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "Duplicate entry") {
+			return agent.PieceWage{}, ErrAlreadyExists
+		}
+		return agent.PieceWage{}, err
+	}
+	return pw, nil
+}
+
+func (m *MySQL) GetPieceWage(ctx context.Context, agentID agent.AgentID) (agent.PieceWage, error) {
+	const q = `SELECT id, agent_id, price_pence, normal_output, created_at
+		FROM piece_wages WHERE agent_id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(agentID))
+	var pw agent.PieceWage
+	var id, aid string
+	err := row.Scan(&id, &aid, &pw.PricePence, &pw.NormalOutput, &pw.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.PieceWage{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.PieceWage{}, err
+	}
+	pw.ID = agent.PieceWageID(id)
+	pw.AgentID = agent.AgentID(aid)
+	return pw, nil
+}
+
+func (m *MySQL) CreateSubContract(ctx context.Context, sc agent.SubContract) (agent.SubContract, error) {
+	if err := sc.Validate(); err != nil {
+		return agent.SubContract{}, err
+	}
+	if sc.ID.IsZero() {
+		sc.ID = agent.NewSubContractID()
+	}
+	sc.CreatedAt = m.now().UTC()
+	assistantJSON, err := json.Marshal(sc.AssistantIDs)
+	if err != nil {
+		return agent.SubContract{}, err
+	}
+	const q = `INSERT INTO sub_contracts
+		(id, head_labourer_id, assistant_ids, piece_rate_pence, assistant_rate_pence, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(sc.ID), string(sc.HeadLabourerID),
+		string(assistantJSON),
+		sc.PieceRatePence, sc.AssistantRatePence, sc.CreatedAt,
+	)
+	if err != nil {
+		return agent.SubContract{}, err
+	}
+	return sc, nil
+}
+
+func (m *MySQL) GetSubContract(ctx context.Context, id agent.SubContractID) (agent.SubContract, error) {
+	const q = `SELECT id, head_labourer_id, assistant_ids, piece_rate_pence, assistant_rate_pence, created_at
+		FROM sub_contracts WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	var sc agent.SubContract
+	var scID, headID, assistJSON string
+	err := row.Scan(&scID, &headID, &assistJSON, &sc.PieceRatePence, &sc.AssistantRatePence, &sc.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.SubContract{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.SubContract{}, err
+	}
+	sc.ID = agent.SubContractID(scID)
+	sc.HeadLabourerID = agent.AgentID(headID)
+	var rawIDs []string
+	if err := json.Unmarshal([]byte(assistJSON), &rawIDs); err != nil {
+		return agent.SubContract{}, err
+	}
+	sc.AssistantIDs = make([]agent.AgentID, len(rawIDs))
+	for i, r := range rawIDs {
+		sc.AssistantIDs[i] = agent.AgentID(r)
+	}
+	return sc, nil
+}
