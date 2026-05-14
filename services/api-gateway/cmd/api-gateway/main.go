@@ -115,6 +115,12 @@ func main() {
 	srv.Handle("/v1/piece-price", agentProxy)
 	srv.Handle("/v1/sub-contracts", agentProxy)
 	srv.Handle("/v1/sub-contracts/{rest...}", agentProxy)
+	// Ch. 22 — National Differences in Wages
+	srv.Handle("/v1/intensities", agentProxy)
+	srv.Handle("/v1/intensities/{rest...}", agentProxy)
+	srv.Handle("/v1/wages", agentProxy)
+	srv.Handle("/v1/wages/{rest...}", agentProxy)
+	srv.Handle("/v1/comparisons", agentProxy)
 
 	// Reverse-proxy routes to simulation-engine.
 	simURL := getenv("SIM_ENGINE_URL", "http://simulation-engine:8084")

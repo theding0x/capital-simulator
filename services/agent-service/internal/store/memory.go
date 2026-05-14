@@ -26,9 +26,12 @@ type Memory struct {
 	manufactures      map[agent.ManufactureID]agent.Manufacture
 	wageForms         map[agent.AgentID]agent.WageForm
 	workingSessions   map[agent.WorkingSessionID]agent.WorkingSession
-	pieceWages        map[agent.AgentID]agent.PieceWage
-	subContracts      map[agent.SubContractID]agent.SubContract
-	now               func() time.Time
+	pieceWages          map[agent.AgentID]agent.PieceWage
+	subContracts        map[agent.SubContractID]agent.SubContract
+	nationalIntensities map[agent.CountryCode]agent.NationalIntensity
+	dayWages            map[agent.CountryCode]agent.DayWage
+	spindleRatios       map[agent.CountryCode]agent.SpindleRatio
+	now                 func() time.Time
 }
 
 func NewMemory() *Memory {
@@ -46,9 +49,12 @@ func NewMemory() *Memory {
 		manufactures:      make(map[agent.ManufactureID]agent.Manufacture),
 		wageForms:         make(map[agent.AgentID]agent.WageForm),
 		workingSessions:   make(map[agent.WorkingSessionID]agent.WorkingSession),
-		pieceWages:        make(map[agent.AgentID]agent.PieceWage),
-		subContracts:      make(map[agent.SubContractID]agent.SubContract),
-		now:               time.Now,
+		pieceWages:          make(map[agent.AgentID]agent.PieceWage),
+		subContracts:        make(map[agent.SubContractID]agent.SubContract),
+		nationalIntensities: make(map[agent.CountryCode]agent.NationalIntensity),
+		dayWages:            make(map[agent.CountryCode]agent.DayWage),
+		spindleRatios:       make(map[agent.CountryCode]agent.SpindleRatio),
+		now:                 time.Now,
 	}
 }
 
@@ -657,4 +663,70 @@ func (m *Memory) GetSubContract(_ context.Context, id agent.SubContractID) (agen
 		return agent.SubContract{}, ErrNotFound
 	}
 	return sc, nil
+}
+
+func (m *Memory) UpsertIntensity(_ context.Context, ni agent.NationalIntensity) (agent.NationalIntensity, error) {
+	if err := ni.Validate(); err != nil {
+		return agent.NationalIntensity{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.nationalIntensities[ni.CountryCode] = ni
+	return ni, nil
+}
+
+func (m *Memory) ListIntensities(_ context.Context) ([]agent.NationalIntensity, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.NationalIntensity, 0, len(m.nationalIntensities))
+	for _, ni := range m.nationalIntensities {
+		out = append(out, ni)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].CountryCode < out[j].CountryCode })
+	return out, nil
+}
+
+func (m *Memory) CreateDayWage(_ context.Context, w agent.DayWage) (agent.DayWage, error) {
+	if err := w.Validate(); err != nil {
+		return agent.DayWage{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, exists := m.dayWages[w.CountryCode]; exists {
+		return agent.DayWage{}, ErrAlreadyExists
+	}
+	m.dayWages[w.CountryCode] = w
+	return w, nil
+}
+
+func (m *Memory) GetDayWage(_ context.Context, country agent.CountryCode) (agent.DayWage, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	w, ok := m.dayWages[country]
+	if !ok {
+		return agent.DayWage{}, ErrNotFound
+	}
+	return w, nil
+}
+
+func (m *Memory) ListDayWages(_ context.Context) ([]agent.DayWage, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.DayWage, 0, len(m.dayWages))
+	for _, w := range m.dayWages {
+		out = append(out, w)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].CountryCode < out[j].CountryCode })
+	return out, nil
+}
+
+func (m *Memory) ListSpindleRatios(_ context.Context) ([]agent.SpindleRatio, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.SpindleRatio, 0, len(m.spindleRatios))
+	for _, sr := range m.spindleRatios {
+		out = append(out, sr)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].CountryCode < out[j].CountryCode })
+	return out, nil
 }
