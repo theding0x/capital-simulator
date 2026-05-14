@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"strings"
 	"time"
 
+	mysql "github.com/go-sql-driver/mysql"
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/market"
 )
@@ -406,9 +406,6 @@ func (m *MySQL) ListPrices(ctx context.Context) ([]market.Price, error) {
 
 // isDuplicate reports whether err is a MySQL duplicate-key error (1062).
 func isDuplicate(err error) bool {
-	if err == nil {
-		return false
-	}
-	s := err.Error()
-	return strings.Contains(s, "1062") || strings.Contains(s, "Duplicate entry")
+	var me *mysql.MySQLError
+	return errors.As(err, &me) && me.Number == 1062
 }
