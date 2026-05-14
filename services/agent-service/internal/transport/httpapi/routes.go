@@ -59,4 +59,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/time-wages/hourly-price", h.ComputeHourlyPrice)
 	s.HandleFunc("POST /v1/time-wages/sessions", h.CreateWorkingSession)
 	s.HandleFunc("GET /v1/time-wages/sessions/{id}", h.GetWorkingSession)
+	// Ch. 21 — Piece-Wages
+	s.HandleFunc("POST /v1/agents/{id}/piece-wages", h.CreatePieceWage)
+	s.HandleFunc("GET /v1/agents/{id}/piece-wages", h.GetPieceWage)
+	s.HandleFunc("POST /v1/piece-price", h.ComputePiecePrice)
+	s.HandleFunc("POST /v1/sub-contracts", h.CreateSubContract)
+	s.HandleFunc("GET /v1/sub-contracts/{id}", h.GetSubContract)
 }

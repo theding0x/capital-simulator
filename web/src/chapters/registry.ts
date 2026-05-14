@@ -35,7 +35,7 @@ export const CHAPTERS: ChapterDef[] = [
   // Part VI — Wages
   { id: "ch19", number: 19, title: "The Transformation of the Value of Labour-Power into Wages", part: "Part VI — Wages",                                status: "done"    },
   { id: "ch20", number: 20, title: "Time-Wages",                                            part: "Part VI — Wages",                                      status: "done"    },
-  { id: "ch21", number: 21, title: "Piece-Wages",                                           part: "Part VI — Wages",                                      status: "pending" },
+  { id: "ch21", number: 21, title: "Piece-Wages",                                           part: "Part VI — Wages",                                      status: "done"    },
   { id: "ch22", number: 22, title: "National Differences in Wages",                         part: "Part VI — Wages",                                      status: "pending" },
   // Part VII — The Accumulation of Capital
   { id: "ch23", number: 23, title: "Simple Reproduction",                                   part: "Part VII — The Accumulation of Capital",               status: "pending" },
