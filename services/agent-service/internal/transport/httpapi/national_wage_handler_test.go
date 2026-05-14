@@ -30,8 +30,8 @@ func TestRegisterIntensity(t *testing.T) {
 	w := httptest.NewRecorder()
 	h.RegisterIntensity(w, req)
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("status: got %d, want 200", w.Code)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("status: got %d, want 201", w.Code)
 	}
 	var got agent.NationalIntensity
 	json.NewDecoder(w.Body).Decode(&got)

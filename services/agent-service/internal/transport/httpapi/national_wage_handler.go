@@ -40,7 +40,7 @@ func (h *Handler) RegisterIntensity(w http.ResponseWriter, r *http.Request) {
 		writeAppError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, saved)
+	writeJSON(w, http.StatusCreated, saved)
 }
 
 // ListIntensities handles GET /v1/intensities.
