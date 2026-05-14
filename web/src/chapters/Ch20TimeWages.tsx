@@ -149,13 +149,7 @@ export function Ch20TimeWages() {
               <p className="ch20-card-subtitle">Total money received</p>
               <dl>
                 <dt>Normal pay</dt>
-                <dd>
-                  {Math.floor(
-                    result.daily_labour_power_value.pence /
-                      result.working_day_hours.hours
-                  ) * result.working_day_hours.hours}
-                  p
-                </dd>
+                <dd>{result.daily_labour_power_value.pence}p</dd>
                 {result.overtime_hours.hours > 0 && (
                   <>
                     <dt>Overtime ({result.overtime_hours.hours}h × {result.overtime_rate_pence.pence}d)</dt>
