@@ -1028,3 +1028,49 @@ export interface ComputeHourlyPriceInput {
   daily_pence: number;
   working_day_hours: number;
 }
+
+// --- Ch. 21: Piece-Wages ---
+
+export interface PieceWage {
+  id: string;
+  agent_id: string;
+  price_pence: number;
+  normal_output: number;
+  created_at: string;
+}
+
+export interface CreatePieceWageInput {
+  price_pence: number;
+  normal_output: number;
+}
+
+export interface SubContract {
+  id: string;
+  head_labourer_id: string;
+  assistant_ids: string[];
+  piece_rate_pence: number;
+  assistant_rate_pence: number;
+  created_at: string;
+  spread: number;
+}
+
+export interface CreateSubContractInput {
+  head_labourer_id: string;
+  assistant_ids: string[];
+  piece_rate_pence: number;
+  assistant_rate_pence: number;
+}
+
+export interface ComputePiecePriceInput {
+  daily_wage_farthings: number;
+  day_value_product_farthings: number;
+  normal_output: number;
+  pieces_produced?: number;
+  quality_outcome?: "accepted" | "rejected";
+}
+
+export interface ComputePiecePriceResult {
+  piece_price: number;
+  piece_value: number;
+  actual_earnings: number;
+}

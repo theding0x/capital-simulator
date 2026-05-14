@@ -1,0 +1,144 @@
+.ch21-piece-wage {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.ch21-section {
+  background: var(--surface, #1e1e1e);
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.ch21-explainer {
+  color: var(--text-muted, #999);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.ch21-live-hint {
+  background: var(--surface-alt, #252525);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted, #aaa);
+  margin-bottom: 1.25rem;
+}
+
+.ch21-live-hint strong {
+  color: var(--text, #eee);
+}
+
+.ch21-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.ch21-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-muted, #aaa);
+}
+
+.ch21-form input,
+.ch21-form select {
+  background: var(--input-bg, #2a2a2a);
+  border: 1px solid var(--border, #444);
+  border-radius: 4px;
+  color: var(--text, #eee);
+  font-size: 0.95rem;
+  padding: 0.45rem 0.75rem;
+}
+
+.ch21-form button {
+  align-self: flex-start;
+  background: var(--accent, #4a9eff);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.55rem 1.25rem;
+}
+
+.ch21-form button:hover {
+  opacity: 0.85;
+}
+
+.ch21-error {
+  color: var(--error, #e05555);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.ch21-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.ch21-card {
+  background: var(--surface-alt, #252525);
+  border: 1px solid var(--border, #333);
+  border-radius: 6px;
+  padding: 1.25rem;
+}
+
+.ch21-card-earnings {
+  border-color: var(--accent-dim, #2d5c99);
+}
+
+.ch21-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--text, #eee);
+}
+
+.ch21-card-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  margin: 0 0 1rem;
+}
+
+.ch21-card dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0 0 1rem;
+}
+
+.ch21-card dt {
+  color: var(--text-muted, #888);
+  font-size: 0.85rem;
+}
+
+.ch21-card dd {
+  color: var(--text, #eee);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.ch21-surplus {
+  color: var(--accent, #4a9eff);
+}
+
+.ch21-total {
+  color: var(--accent, #4a9eff);
+  font-size: 1rem !important;
+}
+
+.ch21-note {
+  font-size: 0.8rem;
+  color: var(--text-muted, #777);
+  line-height: 1.5;
+  margin: 0;
+  border-top: 1px solid var(--border, #333);
+  padding-top: 0.75rem;
+}
