@@ -107,6 +107,12 @@ import type {
   PieceWage,
   CreateSubContractInput,
   SubContract,
+  NationalIntensity,
+  DayWage,
+  StandardisedWage,
+  WageComparison,
+  RegisterIntensityInput,
+  RegisterDayWageInput,
 } from "./types";
 
 const BASE = "/api";
@@ -685,4 +691,27 @@ export const api = {
 
   getSubContract: (id: string) =>
     http<SubContract>(`/v1/sub-contracts/${id}`),
+
+  // --- agent-service (Ch. 22: National Differences of Wages) ---
+
+  registerIntensity: (input: RegisterIntensityInput) =>
+    http<NationalIntensity>("/v1/intensities", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listIntensities: () =>
+    http<{ items: NationalIntensity[] }>("/v1/intensities"),
+
+  registerDayWage: (input: RegisterDayWageInput) =>
+    http<DayWage>("/v1/wages", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getStandardisedWage: (country: string, referenceDayMinutes = 600) =>
+    http<StandardisedWage>(`/v1/wages/${country}/standardised?reference_day_minutes=${referenceDayMinutes}`),
+
+  getWageComparison: (referenceDayMinutes = 600) =>
+    http<WageComparison>(`/v1/comparisons?reference_day_minutes=${referenceDayMinutes}`),
 };

@@ -26,6 +26,7 @@ type AgentStore interface {
 	store.WageFormStore
 	store.TimeWageStore
 	store.PieceWageStore
+	store.NationalWageStore
 }
 
 type Handler struct {
@@ -39,6 +40,7 @@ type Handler struct {
 	WageFormStore      store.WageFormStore
 	TimeWageStore      store.TimeWageStore
 	PieceWageStore     store.PieceWageStore
+	NationalWageStore  store.NationalWageStore
 	Logger             *slog.Logger
 }
 
@@ -59,6 +61,7 @@ func New(s AgentStore, logger *slog.Logger) *Handler {
 		WageFormStore:      s,
 		TimeWageStore:      s,
 		PieceWageStore:     s,
+		NationalWageStore:  s,
 		Logger:             logger,
 	}
 }
@@ -394,7 +397,11 @@ func writeAppError(w http.ResponseWriter, err error) {
 		errors.Is(err, agent.ErrPieceWageNormalOutput),
 		errors.Is(err, agent.ErrPieceWagePricePence),
 		errors.Is(err, agent.ErrSubContractNoHead),
-		errors.Is(err, agent.ErrSubContractSpread):
+		errors.Is(err, agent.ErrSubContractSpread),
+		errors.Is(err, agent.ErrNationalIntensityFactor),
+		errors.Is(err, agent.ErrDayWageNominalPence),
+		errors.Is(err, agent.ErrDayWageWorkingDayMinutes),
+		errors.Is(err, agent.ErrSpindleRatioSpindlesPerWorker):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, err.Error())
