@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import { CHAPTERS } from "../chapters/registry";
 import type { Commodity, Owner } from "../types";
 import { Ch01Commodity } from "../chapters/Ch01Commodity";
@@ -25,6 +26,37 @@ interface ChapterShellProps {
   owners: Owner[];
   onSharedChanged: () => void;
 }
+
+/** All props that any chapter panel could receive. Panels ignore what they don't need. */
+interface PanelProps {
+  commodities: Commodity[];
+  owners: Owner[];
+  onSharedChanged: () => void;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyPanel = ComponentType<any>;
+
+const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
+  ch01: Ch01Commodity as AnyPanel,
+  ch02: Ch02Exchange as AnyPanel,
+  ch03: Ch03Money as AnyPanel,
+  ch04: Ch04Capital as AnyPanel,
+  ch05: Ch05Contradictions as AnyPanel,
+  ch06: Ch06LabourPower as AnyPanel,
+  ch07: Ch07LabourProcess as AnyPanel,
+  ch08: Ch08ConstantVariableCapital as AnyPanel,
+  ch09: Ch09RateOfSurplusValue as AnyPanel,
+  ch10: Ch10WorkingDay as AnyPanel,
+  ch11: Ch11RateAndMassOfSurplusValue as AnyPanel,
+  ch12: Ch12RelativeSurplusValue as AnyPanel,
+  ch13: Ch13Cooperation as AnyPanel,
+  ch14: Ch14Manufacture as AnyPanel,
+  ch15: Ch15Machinery as AnyPanel,
+  ch16: Ch16AbsoluteAndRelative as AnyPanel,
+  ch17: Ch17MagnitudeChanges as AnyPanel,
+  ch18: Ch18RatesOfSurplusValue as AnyPanel,
+};
 
 const QUOTES: Partial<Record<string, string>> = {
   ch01: "The wealth of societies in which the capitalist mode of production prevails appears as an immense collection of commodities.",
@@ -58,6 +90,9 @@ export function ChapterShell({
 
   const quote = QUOTES[activeChapterId];
 
+  const sharedProps: PanelProps = { commodities, owners, onSharedChanged };
+  const Panel = CHAPTER_PANELS[activeChapterId];
+
   return (
     <main className="chapter-main">
       <header className="chapter-header">
@@ -74,46 +109,8 @@ export function ChapterShell({
             <p>Not yet implemented</p>
             <p className="small muted">Coming in a future chapter branch</p>
           </div>
-        ) : activeChapterId === "ch01" ? (
-          <Ch01Commodity commodities={commodities} onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch02" ? (
-          <Ch02Exchange
-            commodities={commodities}
-            owners={owners}
-            onSharedChanged={onSharedChanged}
-          />
-        ) : activeChapterId === "ch03" ? (
-          <Ch03Money owners={owners} onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch04" ? (
-          <Ch04Capital onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch05" ? (
-          <Ch05Contradictions onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch06" ? (
-          <Ch06LabourPower onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch07" ? (
-          <Ch07LabourProcess onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch08" ? (
-          <Ch08ConstantVariableCapital onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch09" ? (
-          <Ch09RateOfSurplusValue onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch10" ? (
-          <Ch10WorkingDay onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch11" ? (
-          <Ch11RateAndMassOfSurplusValue onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch12" ? (
-          <Ch12RelativeSurplusValue onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch13" ? (
-          <Ch13Cooperation onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch14" ? (
-          <Ch14Manufacture onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch15" ? (
-          <Ch15Machinery onSharedChanged={onSharedChanged} />
-        ) : activeChapterId === "ch16" ? (
-          <Ch16AbsoluteAndRelative />
-        ) : activeChapterId === "ch17" ? (
-          <Ch17MagnitudeChanges />
-        ) : activeChapterId === "ch18" ? (
-          <Ch18RatesOfSurplusValue />
+        ) : Panel ? (
+          <Panel {...sharedProps} />
         ) : null}
       </div>
     </main>
