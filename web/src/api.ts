@@ -95,6 +95,8 @@ import type {
   SurplusValueRateResult,
   RatesOfSurplusValueInput,
   RatesOfSurplusValueResult,
+  CreateWageFormInput,
+  WageForm,
 } from "./types";
 
 const BASE = "/api";
@@ -619,4 +621,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // --- agent-service (Ch. 19: The Transformation of the Value of Labour-Power into Wages) ---
+
+  createWageForm: (input: CreateWageFormInput) =>
+    http<WageForm>("/v1/wage-forms", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getWageForm: (agentID: string) =>
+    http<WageForm>(`/v1/wage-forms/${agentID}`),
 };

@@ -24,6 +24,7 @@ type Memory struct {
 	relaySchedules    map[agent.RelayScheduleID]agent.RelaySchedule
 	cooperations      map[agent.CooperationID]agent.Cooperation
 	manufactures      map[agent.ManufactureID]agent.Manufacture
+	wageForms         map[agent.AgentID]agent.WageForm
 	now               func() time.Time
 }
 
@@ -40,6 +41,7 @@ func NewMemory() *Memory {
 		relaySchedules:    make(map[agent.RelayScheduleID]agent.RelaySchedule),
 		cooperations:      make(map[agent.CooperationID]agent.Cooperation),
 		manufactures:      make(map[agent.ManufactureID]agent.Manufacture),
+		wageForms:         make(map[agent.AgentID]agent.WageForm),
 		now:               time.Now,
 	}
 }
@@ -550,4 +552,28 @@ func (m *Memory) ListManufacturesByForm(_ context.Context, form agent.Manufactur
 		return out[i].CreatedAt.Before(out[j].CreatedAt)
 	})
 	return out, nil
+}
+
+func (m *Memory) CreateWageForm(_ context.Context, wf agent.WageForm) (agent.WageForm, error) {
+	if err := wf.Validate(); err != nil {
+		return agent.WageForm{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if wf.ID.IsZero() {
+		wf.ID = agent.NewWageFormID()
+	}
+	wf.CreatedAt = m.now()
+	m.wageForms[wf.AgentID] = wf
+	return wf, nil
+}
+
+func (m *Memory) GetWageForm(_ context.Context, agentID agent.AgentID) (agent.WageForm, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	wf, ok := m.wageForms[agentID]
+	if !ok {
+		return agent.WageForm{}, ErrNotFound
+	}
+	return wf, nil
 }

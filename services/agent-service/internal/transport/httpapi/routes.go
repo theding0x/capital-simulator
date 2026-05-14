@@ -52,4 +52,7 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/manufactures/{id}/minimum-capital", h.GetManufactureMinimumCapital)
 	// Ch. 17 — Changes of Magnitude in the Price of Labour-Power and in Surplus-Value
 	s.HandleFunc("POST /v1/labour-scenarios", h.ComputeLabourScenario)
+	// Ch. 19 — The Transformation of the Value of Labour-Power into Wages
+	s.HandleFunc("POST /v1/wage-forms", h.CreateWageForm)
+	s.HandleFunc("GET /v1/wage-forms/{agentID}", h.GetWageForm)
 }
