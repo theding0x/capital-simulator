@@ -1074,3 +1074,50 @@ export interface ComputePiecePriceResult {
   piece_value: number;
   actual_earnings: number;
 }
+
+// --- agent-service types (Ch. 22: National Differences of Wages) ---
+
+export interface NationalIntensity {
+  country_code: string;
+  factor: number;
+}
+
+export interface DayWage {
+  country_code: string;
+  nominal_pence: number;
+  working_day_minutes: number;
+}
+
+export interface StandardisedWage {
+  country_code: string;
+  amount: number;
+}
+
+export interface RelativeLabourPrice {
+  country_code: string;
+  ratio: number;
+}
+
+export interface SpindleRatio {
+  country_code: string;
+  spindles_per_worker: number;
+}
+
+export interface WageComparison {
+  countries: string[];
+  day_wages: DayWage[];
+  standardised_wages: StandardisedWage[];
+  relative_prices: RelativeLabourPrice[];
+  spindle_ratios: SpindleRatio[];
+}
+
+export interface RegisterIntensityInput {
+  country_code: string;
+  factor: number;
+}
+
+export interface RegisterDayWageInput {
+  country_code: string;
+  nominal_pence: number;
+  working_day_minutes: number;
+}

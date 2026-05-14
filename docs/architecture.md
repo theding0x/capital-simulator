@@ -87,7 +87,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 19    | ✅ Done     | Transformation of value of labour-power into wages; WageFormID, LabourPowerValue, Wage, WageAppearance, LabourDecomposition, WageForm; HourlyWage, Decompose (paid/unpaid split), Appearance (ideological inversion); POST /v1/wage-forms, GET /v1/wage-forms/{agentID} | agent-service |
 | Ch. 20    | ✅ Done     | Time-wages; WorkingSessionID, DailyLabourPowerValue, HourlyPriceOfLabour (exact fraction + AsFloat), WorkingDayHours, OvertimeHours, OvertimeRatePence, WagePeriod, NominalWage, WorkingSession; ComputeHourlyPrice (exact rational fraction), ComputeSessionWage (integer arithmetic); POST /v1/time-wages/hourly-price, POST /v1/time-wages/sessions, GET /v1/time-wages/sessions/{id} | agent-service |
 | Ch. 21    | ✅ Done     | Piece-wages; PieceWageID, PieceWage, PieceSession, QualityOutcome, SubContractID, SubContract; ComputePiecePrice (farthings integer arithmetic), ComputePieceValue, ComputePieceEarnings, SubContractSpread; POST/GET /v1/agents/{id}/piece-wages, POST /v1/piece-price, POST/GET /v1/sub-contracts[/{id}] | agent-service |
-| Ch. 22    | Pending     | National differences in wages | agent-service |
+| Ch. 22    | ✅ Done     | National differences in wages; NationalIntensity, DayWage, StandardisedWage, RelativeLabourPrice, SpindleRatio; StandardiseWage, ComputeRelativePrice; POST/GET /v1/intensities, POST /v1/wages, GET /v1/wages/{country}/standardised, GET /v1/comparisons | agent-service |
 | Ch. 23+   | Pending     | Accumulation of capital | all |
 
 ### Ch. 1 — what was built
@@ -296,6 +296,18 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **Store.** `PieceWageStore` interface (one contract per agent, `ErrAlreadyExists` on duplicate); `Memory` and `MySQL` implementations. Migration `00018_ch21_piece_wages.sql`; seed `00019_ch21_seed.sql` with Thomas Hobson fixture (6 farthings/piece, 24 pieces/day) and sweating sub-contract.
 - **HTTP endpoints.** `POST/GET /v1/agents/{id}/piece-wages` (register/retrieve contract); `POST /v1/piece-price` (stateless probe returning piece price, piece value, actual earnings); `POST/GET /v1/sub-contracts[/{id}]` (create/retrieve sub-contract with spread).
 - **React UI.** "Ch. 21 — Piece-Wages" panel: inputs for daily wage and day value product (in farthings), normal output, pieces produced, and quality outcome; live piece price/value preview; result cards showing the price vs. value gap (the surplus made visible) and actual session earnings.
+
+### Ch. 22 — what was built
+
+`agent-service` adds the national wage domain from Capital Vol. I, Ch. 22:
+
+- **Domain types.** `CountryCode` (ISO 3166-1 alpha-2 string), `NationalIntensity{CountryCode, Factor float64}` (intensity relative to international average), `DayWage{CountryCode, NominalPence, WorkingDayMinutes int64}` (domestic wage), `StandardisedWage{CountryCode, Amount int64}` (wage reduced to uniform working day), `RelativeLabourPrice{CountryCode, Ratio float64}` (wage as fraction of value produced), `SpindleRatio{CountryCode, SpindlesPerWorker int64}` (Redgrave's 1866 productivity proxy), `WageComparison` (aggregate output).
+- **Pure functions.** `StandardiseWage(w, referenceDayMinutes)` — integer arithmetic, `Amount = NominalPence * ref / WorkingDayMinutes`. `ComputeRelativePrice(w, ni)` — `Ratio = 1.0 / Factor`, encoding Marx's inversion: England's higher nominal wage paradoxically implies a lower relative labour price to the capitalist because of higher intensity (Cowell 1833; Redgrave 1866).
+- **Store.** `NationalWageStore` interface; `Memory` and `MySQL` implementations. `national_intensities` uses `UPSERT` (country records are updated, not duplicated). `day_wages` is one-per-country (`ErrAlreadyExists` on duplicate). `spindle_ratios` is seed-only read via `ListSpindleRatios`.
+- **Migration.** `00020_ch22_national_wages.sql` adds `national_intensities`, `day_wages`, and `spindle_ratios` tables with `country_code CHAR(2)` PKs. `00021_ch22_seed.sql` inserts GB/FR/DE/RU/AT/BE/CH intensity records, GB/FR/DE day wages, and all seven Redgrave spindle entries. Down deletes only the seeded rows.
+- **HTTP endpoints.** `POST /v1/intensities` (upsert; idempotent), `GET /v1/intensities` (list), `POST /v1/wages` (register; 201 + body), `GET /v1/wages/{country}/standardised?reference_day_minutes=600` (standardised wage for one country), `GET /v1/comparisons[?reference_day_minutes=600]` (full `WageComparison` with standardised wages and relative prices computed on the fly).
+- **api-gateway.** Reverse-proxies `/v1/intensities`, `/v1/wages`, `/v1/comparisons` (and `/{rest...}` forms) to agent-service.
+- **React UI.** "Ch. 22 — National Wages" panel: table of countries with nominal wage, standardised wage (600-min ref), relative price, and spindle count; GB paradox highlighted (highest nominal, lowest relative price); register-intensity and register-day-wage forms.
 
 ### Ch. 20 — what was built
 

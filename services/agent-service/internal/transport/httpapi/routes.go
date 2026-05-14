@@ -65,4 +65,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/piece-price", h.ComputePiecePrice)
 	s.HandleFunc("POST /v1/sub-contracts", h.CreateSubContract)
 	s.HandleFunc("GET /v1/sub-contracts/{id}", h.GetSubContract)
+	// Ch. 22 — National Differences in Wages
+	s.HandleFunc("POST /v1/intensities", h.RegisterIntensity)
+	s.HandleFunc("GET /v1/intensities", h.ListIntensities)
+	s.HandleFunc("POST /v1/wages", h.RegisterDayWage)
+	s.HandleFunc("GET /v1/wages/{country}/standardised", h.GetStandardisedWage)
+	s.HandleFunc("GET /v1/comparisons", h.GetWageComparison)
 }

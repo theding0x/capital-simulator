@@ -1196,3 +1196,114 @@ func (m *MySQL) GetSubContract(ctx context.Context, id agent.SubContractID) (age
 	}
 	return sc, nil
 }
+
+func (m *MySQL) UpsertIntensity(ctx context.Context, ni agent.NationalIntensity) (agent.NationalIntensity, error) {
+	if err := ni.Validate(); err != nil {
+		return agent.NationalIntensity{}, err
+	}
+	const q = `INSERT INTO national_intensities (country_code, factor) VALUES (?, ?)
+		ON DUPLICATE KEY UPDATE factor = VALUES(factor)`
+	_, err := m.db.ExecContext(ctx, q, string(ni.CountryCode), ni.Factor)
+	if err != nil {
+		return agent.NationalIntensity{}, err
+	}
+	return ni, nil
+}
+
+func (m *MySQL) ListIntensities(ctx context.Context) ([]agent.NationalIntensity, error) {
+	const q = `SELECT country_code, factor FROM national_intensities ORDER BY country_code`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.NationalIntensity
+	for rows.Next() {
+		var ni agent.NationalIntensity
+		var cc string
+		if err := rows.Scan(&cc, &ni.Factor); err != nil {
+			return nil, err
+		}
+		ni.CountryCode = agent.CountryCode(cc)
+		out = append(out, ni)
+	}
+	if out == nil {
+		out = []agent.NationalIntensity{}
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) CreateDayWage(ctx context.Context, w agent.DayWage) (agent.DayWage, error) {
+	if err := w.Validate(); err != nil {
+		return agent.DayWage{}, err
+	}
+	const q = `INSERT INTO day_wages (country_code, nominal_pence, working_day_minutes) VALUES (?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q, string(w.CountryCode), w.NominalPence, w.WorkingDayMinutes)
+	if err != nil {
+		if strings.Contains(err.Error(), "Duplicate entry") {
+			return agent.DayWage{}, ErrAlreadyExists
+		}
+		return agent.DayWage{}, err
+	}
+	return w, nil
+}
+
+func (m *MySQL) GetDayWage(ctx context.Context, country agent.CountryCode) (agent.DayWage, error) {
+	const q = `SELECT country_code, nominal_pence, working_day_minutes FROM day_wages WHERE country_code = ?`
+	row := m.db.QueryRowContext(ctx, q, string(country))
+	var w agent.DayWage
+	var cc string
+	if err := row.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes); errors.Is(err, sql.ErrNoRows) {
+		return agent.DayWage{}, ErrNotFound
+	} else if err != nil {
+		return agent.DayWage{}, err
+	}
+	w.CountryCode = agent.CountryCode(cc)
+	return w, nil
+}
+
+func (m *MySQL) ListDayWages(ctx context.Context) ([]agent.DayWage, error) {
+	const q = `SELECT country_code, nominal_pence, working_day_minutes FROM day_wages ORDER BY country_code`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.DayWage
+	for rows.Next() {
+		var w agent.DayWage
+		var cc string
+		if err := rows.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes); err != nil {
+			return nil, err
+		}
+		w.CountryCode = agent.CountryCode(cc)
+		out = append(out, w)
+	}
+	if out == nil {
+		out = []agent.DayWage{}
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) ListSpindleRatios(ctx context.Context) ([]agent.SpindleRatio, error) {
+	const q = `SELECT country_code, spindles_per_worker FROM spindle_ratios ORDER BY spindles_per_worker DESC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.SpindleRatio
+	for rows.Next() {
+		var sr agent.SpindleRatio
+		var cc string
+		if err := rows.Scan(&cc, &sr.SpindlesPerWorker); err != nil {
+			return nil, err
+		}
+		sr.CountryCode = agent.CountryCode(cc)
+		out = append(out, sr)
+	}
+	if out == nil {
+		out = []agent.SpindleRatio{}
+	}
+	return out, rows.Err()
+}
