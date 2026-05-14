@@ -19,7 +19,6 @@ func TestLabourProductivity_Validate(t *testing.T) {
 		{"negative rejected", LabourProductivity{Factor: -1}, ErrProductivityFactorNonPositive},
 	}
 	for _, c := range cases {
-		c := c
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			got := c.lp.Validate()
