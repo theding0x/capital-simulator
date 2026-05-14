@@ -97,6 +97,10 @@ import type {
   RatesOfSurplusValueResult,
   CreateWageFormInput,
   WageForm,
+  ComputeHourlyPriceInput,
+  HourlyPriceOfLabour,
+  CreateWorkingSessionInput,
+  WorkingSession,
 } from "./types";
 
 const BASE = "/api";
@@ -632,4 +636,21 @@ export const api = {
 
   getWageForm: (agentID: string) =>
     http<WageForm>(`/v1/wage-forms/${agentID}`),
+
+  // --- agent-service (Ch. 20: Time-Wages) ---
+
+  computeHourlyPrice: (input: ComputeHourlyPriceInput) =>
+    http<HourlyPriceOfLabour>("/v1/time-wages/hourly-price", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createWorkingSession: (input: CreateWorkingSessionInput) =>
+    http<WorkingSession>("/v1/time-wages/sessions", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getWorkingSession: (id: string) =>
+    http<WorkingSession>(`/v1/time-wages/sessions/${id}`),
 };
