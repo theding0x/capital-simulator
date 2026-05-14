@@ -93,12 +93,13 @@ func StandardiseWage(w DayWage, referenceDayMinutes int64) StandardisedWage {
 }
 
 // ComputeRelativePrice returns the price of labour relative to the value it
-// produces. Ratio = 1 / intensity_factor — higher intensity → lower ratio.
-// Encodes Marx's observation: "wages are virtually lower to the capitalist,
+// produces: nominal wage per unit of intensity (NominalPence / Factor).
+// Higher intensity reduces the ratio even when nominal wages are higher —
+// encoding Marx's observation that "wages are virtually lower to the capitalist,
 // though higher to the operative" in high-intensity nations (Cowell, 1833).
 func ComputeRelativePrice(w DayWage, ni NationalIntensity) RelativeLabourPrice {
 	return RelativeLabourPrice{
 		CountryCode: w.CountryCode,
-		Ratio:       1.0 / ni.Factor,
+		Ratio:       float64(w.NominalPence) / ni.Factor,
 	}
 }
