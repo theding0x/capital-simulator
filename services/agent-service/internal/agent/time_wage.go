@@ -79,6 +79,7 @@ type NominalWage struct {
 type WorkingSession struct {
 	ID                    WorkingSessionID      `json:"id"`
 	AgentID               AgentID               `json:"agent_id"`
+	WageFormID            WageFormID            `json:"wage_form_id,omitempty"`
 	DailyLabourPowerValue DailyLabourPowerValue `json:"daily_labour_power_value"`
 	WorkingDayMinutes     WorkingDayMinutes     `json:"working_day_minutes"`
 	OvertimeHours         OvertimeHours         `json:"overtime_hours"`
@@ -94,8 +95,8 @@ func (s WorkingSession) Validate() error {
 	if s.AgentID.IsZero() {
 		return errors.New("time_wage: agent_id is required")
 	}
-	if s.DailyLabourPowerValue.Pence <= 0 {
-		return errors.New("time_wage: daily_labour_power_value.pence must be positive")
+	if s.WageFormID.IsZero() && s.DailyLabourPowerValue.Pence <= 0 {
+		return errors.New("time_wage: daily_labour_power_value.pence must be positive when wage_form_id is absent")
 	}
 	if s.WorkingDayMinutes.Minutes <= 0 {
 		return errors.New("time_wage: working_day_minutes.minutes must be positive")

@@ -19,7 +19,8 @@ type hourlyPriceResponse struct {
 
 type createWorkingSessionRequest struct {
 	AgentID               string `json:"agent_id"`
-	DailyLabourPowerValue int64  `json:"daily_labour_power_value"`
+	WageFormID            string `json:"wage_form_id,omitempty"`
+	DailyLabourPowerValue int64  `json:"daily_labour_power_value,omitempty"`
 	WorkingDayMinutes     int64  `json:"working_day_minutes"`
 	OvertimeHours         int64  `json:"overtime_hours"`
 	OvertimeRatePence     int64  `json:"overtime_rate_pence"`
@@ -80,11 +81,20 @@ func (h *Handler) CreateWorkingSession(w http.ResponseWriter, r *http.Request) {
 	}
 	s := agent.WorkingSession{
 		AgentID:               agent.AgentID(req.AgentID),
+		WageFormID:            agent.WageFormID(req.WageFormID),
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: req.DailyLabourPowerValue},
 		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(req.WorkingDayMinutes)},
 		OvertimeHours:         agent.OvertimeHours{Hours: req.OvertimeHours},
 		OvertimeRatePence:     agent.OvertimeRatePence{Pence: req.OvertimeRatePence},
 		WagePeriod:            agent.WagePeriod(req.WagePeriod),
+	}
+	if !s.WageFormID.IsZero() {
+		wf, err := h.WageFormStore.GetWageForm(r.Context(), s.AgentID)
+		if err != nil {
+			writeAppError(w, err)
+			return
+		}
+		s.DailyLabourPowerValue = agent.DailyLabourPowerValue{Pence: int64(wf.LabourPowerValue.DailyPence)}
 	}
 	if err := s.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())

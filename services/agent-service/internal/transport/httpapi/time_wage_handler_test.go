@@ -264,3 +264,54 @@ func TestGetWorkingSession_NotFound(t *testing.T) {
 		t.Fatalf("status = %d, want 404", rr.Code)
 	}
 }
+
+// § wage_form_id derivation: providing a wage_form_id causes daily_labour_power_value
+// to be read from the stored WageForm rather than the request body.
+func TestCreateWorkingSession_DerivedFromWageForm(t *testing.T) {
+	t.Parallel()
+
+	mem := store.NewMemory()
+	h := httpapi.New(mem, nil)
+
+	wf := agent.WageForm{
+		AgentID: "worker-wf",
+		Wage:    agent.Wage{DailyPence: 36, WorkingDayMinutes: 720},
+		LabourPowerValue: agent.WageLabourValue{
+			DailyPence:       36,
+			NecessaryMinutes: 360,
+		},
+	}
+	saved, err := mem.CreateWageForm(t.Context(), wf)
+	if err != nil {
+		t.Fatalf("seed wage form: %v", err)
+	}
+
+	body := map[string]any{
+		"agent_id":            "worker-wf",
+		"wage_form_id":        string(saved.ID),
+		"working_day_minutes": 720,
+		"overtime_hours":      0,
+		"overtime_rate_pence": 0,
+		"wage_period":         "daily",
+	}
+	b, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/sessions", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	h.CreateWorkingSession(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201; body: %s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		NominalWage struct {
+			Pence int64 `json:"pence"`
+		} `json:"nominal_wage"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.NominalWage.Pence != 36 {
+		t.Errorf("nominal_wage = %d, want 36 (derived from wage form lpv)", resp.NominalWage.Pence)
+	}
+}
