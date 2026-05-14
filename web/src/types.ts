@@ -948,3 +948,44 @@ export interface RelativeSurplusResult {
   relative_surplus_value: number;
   source?: { source: ProductivitySource; id: string };
 }
+
+// Ch. 19 — The Transformation of the Value of Labour-Power into Wages
+
+export interface WageLabourValue {
+  daily_pence: number;
+  necessary_minutes: number;
+}
+
+export interface Wage {
+  daily_pence: number;
+  working_day_hours: number;
+}
+
+export interface WageAppearance {
+  paid_hours: number;
+  unpaid_hours: number;
+}
+
+export interface LabourDecomposition {
+  paid_minutes: number;
+  unpaid_minutes: number;
+}
+
+export interface WageForm {
+  id: string;
+  agent_id: string;
+  wage: Wage;
+  labour_power_value: WageLabourValue;
+  created_at: string;
+  hourly_wage: number;
+  appearance: WageAppearance;
+  decomposition: LabourDecomposition;
+}
+
+export interface CreateWageFormInput {
+  agent_id: string;
+  daily_pence: number;
+  working_day_hours: number;
+  lpv_daily_pence: number;
+  necessary_minutes: number;
+}

@@ -103,6 +103,10 @@ func main() {
 	srv.Handle("/v1/labour-scenarios", agentProxy)
 	srv.Handle("/v1/labour-scenarios/{rest...}", agentProxy)
 
+	// Ch. 19 — wage-form routes proxy to agent-service
+	srv.Handle("/v1/wage-forms", agentProxy)
+	srv.Handle("/v1/wage-forms/{rest...}", agentProxy)
+
 	// Reverse-proxy routes to simulation-engine.
 	simURL := getenv("SIM_ENGINE_URL", "http://simulation-engine:8084")
 	simProxy, err := proxy.New(simURL, logger)
@@ -150,15 +154,15 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-18-various-formula-for-the-rate-of-surplus-value",
-		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation routes to agent-service; machine/factory/surplus-value routes to simulation-engine.",
+		"status":      "ch-19-transformation-of-value-of-labour-power-into-wages",
+		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation/wage-form routes to agent-service; machine/factory/surplus-value routes to simulation-engine.",
 		"downstream": []string{
 			"commodity-service",
 			"agent-service",
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 18 — Various Formulae for the Rate of Surplus-Value",
+		"chapter": "Capital Vol. I, Ch. 19 — The Transformation of the Value of Labour-Power into Wages",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)

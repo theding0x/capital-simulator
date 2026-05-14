@@ -84,7 +84,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 16    | ✅ Done     | Absolute and relative surplus-value; SurplusValue (Origin tag), AbsoluteSurplusValue, RelativeSurplusValue, ProlongWorkingDay, ReduceNecessaryLabour, RateSurplusValue, RateOfProfit, formal vs. real subjection, Mill critique | simulation-engine |
 | Ch. 17    | ✅ Done     | Changes of magnitude in price of labour-power and surplus-value; WorkingDay × NecessaryLabour × LabourIntensity × LabourProductivity → LabourScenario / ScenarioOutcome; §1 inverse-relation law, §2 intensity-scales-value, §3 length-of-day shifts | agent-service |
 | Ch. 18    | ✅ Done     | Various formulae for the rate of surplus-value; FormulaI (s/v), FormulaII (s/(s+v)), FormulaIII (unpaid/paid) | simulation-engine |
-| Ch. 19-22 | Pending     | Wages (transformation, time-wage, piece-wage, national differences) | agent-service |
+| Ch. 19    | ✅ Done     | Transformation of value of labour-power into wages; WageFormID, LabourPowerValue, Wage, WageAppearance, LabourDecomposition, WageForm; HourlyWage, Decompose (paid/unpaid split), Appearance (ideological inversion); POST /v1/wage-forms, GET /v1/wage-forms/{agentID} | agent-service |
+| Ch. 20-22 | Pending     | Wages (time-wage, piece-wage, national differences) | agent-service |
 | Ch. 23+   | Pending     | Accumulation of capital | all |
 
 ### Ch. 1 — what was built
