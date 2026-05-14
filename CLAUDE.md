@@ -18,7 +18,7 @@ Go 1.25 monorepo · React 18 + Vite + TS · MySQL 8 · Redis · Docker · k8s
 ## Layout
 
 ```
-pkg/{log,httpx,mysql,redis}/    shared Go libs
+pkg/{log,httpx,mysql}/          shared Go libs
 services/<svc>/cmd/<svc>/       main.go (one per service)
 services/<svc>/internal/        domain, store, transport
 services/<svc>/Dockerfile       multi-stage, distroless, build context = repo root
@@ -77,6 +77,194 @@ cd web && npm run build     # vite production build
 8. If all checks pass, mark the PR ready for review and notify the user that the PR is ready to merge into `main`.
 
 > **Note:** If the user says "implement the next pending chapter", look up the next `Pending` row in `docs/architecture.md` (Roadmap table) — that's the authoritative source for chapter ordering and primary services.
+
+## Chapter workflow (swarm) — replaces steps 3–7 above when running under RuFlo
+
+Use this section instead of manually executing steps 3–7 when a RuFlo swarm is available. Steps 1–2 (branch + draft PR) and step 8 (mark ready) remain manual.
+
+### 0. Initialise the swarm (one-off per chapter)
+
+```bash
+npx @claude-flow/cli@latest swarm init \
+  --topology hierarchical \
+  --max-agents 8 \
+  --strategy specialized
+```
+
+Then spawn the five agents below as background tasks via the Claude Code Task tool. Each agent description is its complete brief — paste it verbatim as the task prompt.
+
+### Agent 1 — architect
+
+**Role:** Read the chapter spec and existing code, then publish a design contract that all other agents consume. Runs first; no other agent starts until it stores its output.
+
+**Steps:**
+
+1. Fetch the chapter spec from the red-vault Obsidian vault:
+   `marx-engels/1867/capital-volume-i/specs/NN-<slug>.spec.md`
+   using `mcp__obsidian__obsidian_get_file_contents`. Also fetch the corresponding source text at
+   `marx-engels/1867/capital-volume-i/texts/NN-<slug>.md` for fixture names.
+2. Identify the primary service(s) listed in `docs/architecture.md` for this chapter.
+3. For each new domain concept in the spec, decide:
+   - Which package it belongs to (e.g. `services/agent-service/internal/agent/`).
+   - Whether it is a pure function, a persistent entity, or both.
+   - The Go type name, field names (concrete types only — no `interface{}` or `any`), and `snake_case` JSON tags.
+   - The canonical `LabourMinutes int64` unit for any value-magnitude field.
+   - The ID constructor name (e.g. `NewCooperationID()`) and pattern (96-bit hex via `crypto/rand`).
+4. List every new HTTP endpoint: method, path (`/v1/...`), request/response shape, and which service handles it.
+5. List every new migration file needed: `NNNNN_chNN_<slug>.sql` and `NNNNN_chNN_seed.sql`, with the seed ID prefix `5eed00000000000000<CC><XX>` where `CC` = two-digit chapter number.
+6. Identify any new api-gateway proxy rules (`services/api-gateway/internal/routes/routes.go`).
+7. Identify new React types needed in `web/src/types.ts` and new API functions in `web/src/api.ts`.
+8. Store the full design contract:
+   ```bash
+   npx @claude-flow/cli@latest memory store \
+     --key "design-chNN" \
+     --value "<JSON contract>" \
+     --namespace tasks
+   ```
+9. Post completion:
+   ```bash
+   npx @claude-flow/cli@latest hooks post-task --task-id "architect-chNN" --success true
+   ```
+
+### Agent 2 — coder
+
+**Role:** Implement all Go and React files specified in the architect's design contract. Does not write tests — the tester agent owns test files.
+
+**Steps:**
+
+1. Retrieve the design contract:
+   ```bash
+   npx @claude-flow/cli@latest memory search --query "design-chNN" --namespace tasks
+   ```
+2. For each new domain concept, create `services/<svc>/internal/<pkg>/<concept>.go` containing:
+   - Exported struct, ID type, `New<Concept>ID()`, `Validate()` if the spec defines invariants.
+   - Pure domain functions (no DB calls, no HTTP).
+   - No `interface{}` or `any`. No inline SQL or DDL.
+   - Go import groups: stdlib / blank line / third-party / blank line / local.
+3. Extend `services/<svc>/internal/store/store.go` with new Store interface methods.
+4. Add implementations to `services/<svc>/internal/store/memory.go` (in-memory, for tests) and `services/<svc>/internal/store/mysql.go` (production). Use `database/sql` directly — no ORM.
+5. Create migration files in `services/<svc>/internal/store/migrations/`:
+   - Schema DDL: `NNNNN_chNN_<slug>.sql` — all DDL belongs here, never inline in Go.
+   - Seed: `NNNNN_chNN_seed.sql` — Marx-faithful exemplars with seed IDs `5eed00000000000000<CC><XX>`. Include `-- +goose Down` that DELETEs every seeded row by ID.
+6. Create `services/<svc>/internal/transport/httpapi/<concept>_handler.go` with handler functions. Wire into `services/<svc>/internal/transport/httpapi/routes.go` using Go 1.22+ mux syntax (`mux.HandleFunc("POST /v1/...", h.handleX)`). Register the handler in `handler.go`'s `New` function.
+7. Add reverse-proxy rules to `services/api-gateway/internal/routes/routes.go` for every new path prefix.
+8. Update `web/src/types.ts` with TypeScript mirror types (snake_case field names to match JSON tags).
+9. Add API functions to `web/src/api.ts` for each new endpoint.
+10. Create `web/src/chapters/ChNN<Title>.tsx` (and `.css` if needed) for the chapter panel. Register it in `web/src/chapters/registry.ts` with `status: "done"`. Import it in `web/src/App.tsx`.
+11. Update the `docs/architecture.md` roadmap row to `Done` and add a `### Ch. NN — what was built` section.
+12. Post completion:
+    ```bash
+    npx @claude-flow/cli@latest hooks post-task --task-id "coder-chNN" --success true
+    ```
+
+### Agent 3 — tester
+
+**Role:** Write all `_test.go` files and verify that every invariant from the spec has test coverage. Runs after the coder finishes (depends on domain files existing).
+
+**Steps:**
+
+1. Retrieve the design contract from memory (same key as coder).
+2. For each new domain file `<concept>.go`, create `<concept>_test.go` in the same package. Every test function must call `t.Parallel()` as its first statement.
+3. Use Marx's textual examples as fixtures — names and magnitudes drawn from the chapter source text, not invented. Canonical examples: "20 yards linen = 1 coat", "Burke's five-man platoon", "Caslon type-foundry 4/2/1", "Spinning Mill 1871", etc. Read the chapter text from the vault if in doubt.
+4. For each pure function, verify:
+   - Happy-path: known Marx fixture produces the documented output.
+   - Boundary: zero-value, minimum, and at-capacity inputs.
+   - Invariants: e.g., partition equations hold (`Total == NecessaryLabour + SurplusLabour`), value conservation, `SurplusValue >= 0`.
+5. For the store, test `Memory` only (MySQL is integration-tested via CI). Verify:
+   - `ErrNotFound` returned for a missing ID.
+   - `ErrAlreadyExists` returned on duplicate creation where applicable.
+   - Round-trip: create → get returns identical struct.
+6. For each seed migration, verify that seed IDs follow the pattern `5eed00000000000000<CC>*` and are unique within the file.
+7. For the HTTP handler, write a handler test in `services/<svc>/internal/transport/httpapi/<concept>_handler_test.go`. Use `httptest.NewRecorder` and the in-memory store. Verify:
+   - `201` on successful creation with correct `Location` header where applicable.
+   - `404` from `errors.Is(err, store.ErrNotFound)` mapping.
+   - `400` on malformed JSON body.
+   - `200` list endpoint returns a non-nil (possibly empty) slice, never `null`.
+8. Post completion:
+   ```bash
+   npx @claude-flow/cli@latest hooks post-task --task-id "tester-chNN" --success true
+   ```
+
+### Agent 4 — reviewer
+
+**Role:** Read all files produced by the coder and tester and flag any violation of the project conventions in CLAUDE.md. Does not fix — reports findings as a structured list stored in memory.
+
+**Steps:**
+
+1. Read every new and modified file in the chapter branch diff.
+2. Check Go conventions:
+   - Import groups: stdlib / blank line / third-party / blank line / local. No merged groups.
+   - JSON tags: all `snake_case`. No `camelCase` tags.
+   - HTTP routes: Go 1.22+ mux syntax (`"METHOD /v1/path"`). No `http.HandleFunc("/path", ...)` without method prefix.
+   - IDs: `<Concept>NewID()` using `crypto/rand`. No `google/uuid`, no `math/rand`.
+   - `LabourMinutes int64` for all value-magnitude fields — not `float64`, not `int`.
+   - Errors: store sentinel `ErrNotFound` / `ErrAlreadyExists` defined in `store.go`. HTTP handler maps via `errors.Is`.
+3. Check persistence conventions:
+   - Store interface defined in `store.go`. Memory and MySQL implementations in `memory.go` and `mysql.go`.
+   - No new `go.mod` files. Single module root.
+   - No edited existing migration files — only new numbered files added.
+   - No DDL in Go source — all DDL in `.sql` files under `migrations/`.
+4. Check React conventions:
+   - `web/src/types.ts` updated with a mirror type for every new Go response struct.
+   - `web/src/api.ts` updated with a function for every new endpoint.
+   - Chapter component registered in `web/src/chapters/registry.ts` with correct `status: "done"`.
+   - `App.tsx` imports and renders the new chapter component.
+   - No `react-router` import anywhere.
+5. Check `docs/architecture.md`:
+   - Roadmap row status changed to `Done`.
+   - `### Ch. NN — what was built` section present and accurate.
+6. Store findings:
+   ```bash
+   npx @claude-flow/cli@latest memory store \
+     --key "review-chNN" \
+     --value "<findings JSON>" \
+     --namespace tasks
+   ```
+7. Post completion:
+   ```bash
+   npx @claude-flow/cli@latest hooks post-task --task-id "reviewer-chNN" --success true
+   ```
+
+### Agent 5 — security-auditor
+
+**Role:** Run a focused security and correctness audit against the anti-patterns listed in CLAUDE.md. Reports findings separately from the reviewer; does not overlap with convention checks.
+
+**Steps:**
+
+1. Read every new and modified `.go` file in the chapter diff.
+2. Check for forbidden patterns:
+   - `interface{}` or `any` in any domain struct field or function signature inside `internal/<pkg>/`.
+   - Inline DDL: `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE` in any `.go` file.
+   - HTTPS termination: `tls.Listen`, `ListenAndServeTLS`, or TLS config in any service's `cmd/` or `internal/` package.
+   - `google/uuid` import. All IDs must use `crypto/rand` hex strings.
+   - `math/rand` for IDs or tokens (acceptable only for simulation tick randomness where non-cryptographic is documented).
+   - `go.mod` or `go.work` files added outside the repo root.
+   - Migrations referenced by number in Go code rather than via `//go:embed` in the store package.
+3. Check MySQL store transactions:
+   - Any operation that modifies two tables or reads-then-writes a balance must use `db.BeginTx` / `tx.Commit` / `tx.Rollback`. No multi-step updates outside a transaction.
+   - `SELECT ... FOR UPDATE` must precede any balance mutation inside a transaction.
+4. Check seed security:
+   - Seed IDs must not collide with `NewID()` output space. Verify seed IDs start with `5eed00000000000000`.
+   - `-- +goose Down` must DELETE only by known seed IDs, not `DELETE FROM <table>` (which would wipe user data on rollback).
+5. Store findings:
+   ```bash
+   npx @claude-flow/cli@latest memory store \
+     --key "security-chNN" \
+     --value "<findings JSON>" \
+     --namespace tasks
+   ```
+6. Post completion:
+   ```bash
+   npx @claude-flow/cli@latest hooks post-task --task-id "security-auditor-chNN" --success true
+   ```
+
+### Swarm coordination rules
+
+- Agents 2, 3, 4, and 5 must not start until the architect (Agent 1) has posted its task completion and the design contract key `design-chNN` is present in memory.
+- Agents 4 and 5 must not start until Agent 2 (coder) and Agent 3 (tester) have both posted completion.
+- If the reviewer or security-auditor reports any finding with severity `error`, the coder re-opens and fixes; then the reviewer/auditor re-runs only the affected checks.
+- The main session (not a swarm agent) handles: `git commit -S`, pushing the branch, and updating the draft PR description (step 5 of the manual workflow).
+- After all five agents post success with no open `error`-severity findings, hand off to the manual workflow at step 5 (update PR description) and then step 6 (wait for CI).
 
 ## Sandbox limits (Cowork)
 
