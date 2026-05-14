@@ -23,26 +23,6 @@ type WorkingDay struct {
 	TotalMinutes labour.LabourMinutes `json:"total_minutes"`
 }
 
-// VariableCapital is the money equivalent of necessary labour — the
-// wage advanced by capital. Expressed in pence as a proxy for the
-// labour-time ratio; absolute pricing belongs to Ch. 2-3.
-type VariableCapital struct {
-	Pence int64 `json:"pence"`
-}
-
-// SurplusValue is the money equivalent of surplus labour appropriated
-// by capital. Expressed in pence as a proxy for the labour-time ratio.
-type SurplusValue struct {
-	Pence int64 `json:"pence"`
-}
-
-// ValueOfProduct is the newly created value in one working day:
-// variable capital plus surplus-value (v + s). Constant capital is
-// excluded — it merely reappears in the product unchanged.
-type ValueOfProduct struct {
-	Pence int64 `json:"pence"`
-}
-
 // RateScenario is the input to all three rate formulae: the two
 // labour-time partitions of a working day.
 type RateScenario struct {

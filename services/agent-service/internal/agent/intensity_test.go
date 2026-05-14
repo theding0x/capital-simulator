@@ -30,7 +30,6 @@ func TestLabourIntensity_Validate(t *testing.T) {
 		{"negative rejected", LabourIntensity{Factor: -0.5}, ErrIntensityFactorNonPositive},
 	}
 	for _, c := range cases {
-		c := c
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
 			got := c.li.Validate()
