@@ -1051,3 +1051,55 @@ func (m *MySQL) GetWageForm(ctx context.Context, agentID agent.AgentID) (agent.W
 	}
 	return wf, nil
 }
+
+func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession) (agent.WorkingSession, error) {
+	if err := s.Validate(); err != nil {
+		return agent.WorkingSession{}, err
+	}
+	if s.ID.IsZero() {
+		s.ID = agent.NewWorkingSessionID()
+	}
+	s.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO time_wage_sessions
+		(id, agent_id, daily_labour_power_value, working_day_hours,
+		 overtime_hours, overtime_rate_pence, wage_period, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID), string(s.AgentID),
+		s.DailyLabourPowerValue.Pence,
+		s.WorkingDayHours.Hours,
+		s.OvertimeHours.Hours,
+		s.OvertimeRatePence.Pence,
+		string(s.WagePeriod),
+		s.CreatedAt,
+	)
+	if err != nil {
+		return agent.WorkingSession{}, err
+	}
+	return s, nil
+}
+
+func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID) (agent.WorkingSession, error) {
+	const q = `SELECT id, agent_id, daily_labour_power_value, working_day_hours,
+		overtime_hours, overtime_rate_pence, wage_period, created_at
+		FROM time_wage_sessions WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	var s agent.WorkingSession
+	var sid, aid, period string
+	var dlpv, wdh, oth, orp int64
+	err := row.Scan(&sid, &aid, &dlpv, &wdh, &oth, &orp, &period, &s.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return agent.WorkingSession{}, ErrNotFound
+	}
+	if err != nil {
+		return agent.WorkingSession{}, err
+	}
+	s.ID = agent.WorkingSessionID(sid)
+	s.AgentID = agent.AgentID(aid)
+	s.DailyLabourPowerValue = agent.DailyLabourPowerValue{Pence: dlpv}
+	s.WorkingDayHours = agent.WorkingDayHours{Hours: wdh}
+	s.OvertimeHours = agent.OvertimeHours{Hours: oth}
+	s.OvertimeRatePence = agent.OvertimeRatePence{Pence: orp}
+	s.WagePeriod = agent.WagePeriod(period)
+	return s, nil
+}

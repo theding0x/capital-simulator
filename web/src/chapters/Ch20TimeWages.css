@@ -1,0 +1,142 @@
+.ch20-time-wage {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.ch20-section {
+  background: var(--panel-bg, #1a1a2e);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.ch20-explainer {
+  color: var(--muted, #888);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.ch20-live-hint {
+  background: var(--hint-bg, #0f3460);
+  border-left: 3px solid var(--accent, #e94560);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+  color: var(--text, #ccc);
+}
+
+.ch20-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.ch20-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  color: var(--label, #aaa);
+}
+
+.ch20-form input,
+.ch20-form select {
+  background: var(--input-bg, #0d0d1a);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 4px;
+  color: var(--text, #eee);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.95rem;
+}
+
+.ch20-form button {
+  grid-column: 1 / -1;
+  background: var(--accent, #e94560);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.ch20-form button:hover {
+  opacity: 0.85;
+}
+
+.ch20-error {
+  color: #e94560;
+  margin-top: 0.75rem;
+}
+
+.ch20-results h2 {
+  margin-bottom: 1rem;
+}
+
+.ch20-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.ch20-card {
+  background: var(--card-bg, #0d0d1a);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 6px;
+  padding: 1.25rem;
+}
+
+.ch20-card-wage {
+  border-color: var(--accent, #e94560);
+}
+
+.ch20-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.ch20-card-subtitle {
+  color: var(--muted, #888);
+  font-size: 0.8rem;
+  margin: 0 0 0.75rem;
+}
+
+.ch20-card dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.ch20-card dt {
+  color: var(--muted, #888);
+  font-size: 0.85rem;
+}
+
+.ch20-card dd {
+  font-family: monospace;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.ch20-total {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--accent, #e94560);
+}
+
+.ch20-note {
+  color: var(--muted, #888);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .ch20-form,
+  .ch20-cards {
+    grid-template-columns: 1fr;
+  }
+}

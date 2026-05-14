@@ -55,4 +55,8 @@ func Register(s *httpx.Server, h *Handler) {
 	// Ch. 19 — The Transformation of the Value of Labour-Power into Wages
 	s.HandleFunc("POST /v1/wage-forms", h.CreateWageForm)
 	s.HandleFunc("GET /v1/wage-forms/{agentID}", h.GetWageForm)
+	// Ch. 20 — Time-Wages
+	s.HandleFunc("POST /v1/time-wages/hourly-price", h.ComputeHourlyPrice)
+	s.HandleFunc("POST /v1/time-wages/sessions", h.CreateWorkingSession)
+	s.HandleFunc("GET /v1/time-wages/sessions/{id}", h.GetWorkingSession)
 }

@@ -989,3 +989,42 @@ export interface CreateWageFormInput {
   lpv_daily_pence: number;
   necessary_minutes: number;
 }
+
+// Ch. 20 — Time-Wages
+
+export interface HourlyPriceOfLabour {
+  numerator: number;
+  denominator: number;
+  as_float: number;
+}
+
+export interface NominalWage {
+  pence: number;
+}
+
+export interface WorkingSession {
+  id: string;
+  agent_id: string;
+  daily_labour_power_value: { pence: number };
+  working_day_hours: { hours: number };
+  overtime_hours: { hours: number };
+  overtime_rate_pence: { pence: number };
+  wage_period: "daily" | "weekly";
+  created_at: string;
+  hourly_price: HourlyPriceOfLabour;
+  nominal_wage: NominalWage;
+}
+
+export interface CreateWorkingSessionInput {
+  agent_id: string;
+  daily_labour_power_value: number;
+  working_day_hours: number;
+  overtime_hours: number;
+  overtime_rate_pence: number;
+  wage_period: "daily" | "weekly";
+}
+
+export interface ComputeHourlyPriceInput {
+  daily_pence: number;
+  working_day_hours: number;
+}

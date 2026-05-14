@@ -112,3 +112,9 @@ type WageFormStore interface {
 	CreateWageForm(ctx context.Context, wf agent.WageForm) (agent.WageForm, error)
 	GetWageForm(ctx context.Context, agentID agent.AgentID) (agent.WageForm, error)
 }
+
+// TimeWageStore is the persistence contract for Ch. 20 time-wage session records.
+type TimeWageStore interface {
+	CreateWorkingSession(ctx context.Context, s agent.WorkingSession) (agent.WorkingSession, error)
+	GetWorkingSession(ctx context.Context, id agent.WorkingSessionID) (agent.WorkingSession, error)
+}
