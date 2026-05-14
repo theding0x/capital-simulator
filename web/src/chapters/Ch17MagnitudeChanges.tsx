@@ -1,12 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import { fmtHoursLong } from "../format";
 import type { LabourScenarioResult } from "../types";
-
-interface Ch17Props {
-  onSharedChanged: () => void;
-}
 
 // Ch. 17 partitions a single working day under three independent
 // magnitudes — duration, intensity, productivity — and reads the rate
@@ -72,12 +68,8 @@ const PRESETS: Preset[] = [
   },
 ];
 
-export function Ch17MagnitudeChanges({ onSharedChanged: _unused }: Ch17Props) {
-  return (
-    <>
-      <MagnitudeCalculator />
-    </>
-  );
+export function Ch17MagnitudeChanges() {
+  return <MagnitudeCalculator />;
 }
 
 function MagnitudeCalculator() {
@@ -89,7 +81,7 @@ function MagnitudeCalculator() {
   const [result, setResult] = useState<LabourScenarioResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function recompute() {
+  const recompute = useCallback(async () => {
     setErr(null);
     try {
       const r = await api.computeLabourScenario({
@@ -103,12 +95,11 @@ function MagnitudeCalculator() {
       setErr(e instanceof Error ? e.message : String(e));
       setResult(null);
     }
-  }
+  }, [workingDay, necessary, intensity, productivity]);
 
   useEffect(() => {
     void recompute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workingDay, necessary, intensity, productivity]);
+  }, [recompute]);
 
   function applyPreset(p: Preset) {
     setActivePreset(p.id);

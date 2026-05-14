@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import { fmtHoursLong } from "../format";
@@ -8,14 +8,10 @@ import type {
   SurplusValueRateResult,
 } from "../types";
 
-interface Ch16Props {
-  onSharedChanged: () => void;
-}
-
 // Ch.16 is the synthesis chapter: the same working-day partition drives
 // both branches. The panel keeps one set of inputs (working day +
 // necessary labour) and computes both surplus-value forms side-by-side.
-export function Ch16AbsoluteAndRelative({ onSharedChanged: _unused }: Ch16Props) {
+export function Ch16AbsoluteAndRelative() {
   return (
     <>
       <SurplusValueCalculator />
@@ -33,7 +29,7 @@ function SurplusValueCalculator() {
   const [rel, setRel] = useState<RelativeSurplusValueResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function recompute() {
+  const recompute = useCallback(async () => {
     setErr(null);
     try {
       const [a, r] = await Promise.all([
@@ -53,13 +49,11 @@ function SurplusValueCalculator() {
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     }
-  }
+  }, [workingDay, necessary, extension, productivity]);
 
-  // Recompute when any input changes — both calls are cheap pure functions.
   useEffect(() => {
     void recompute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workingDay, necessary, extension, productivity]);
+  }, [recompute]);
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -209,7 +203,7 @@ function MillCritiquePanel() {
   const [result, setResult] = useState<SurplusValueRateResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function recompute() {
+  const recompute = useCallback(async () => {
     setErr(null);
     try {
       const r = await api.getSurplusValueRate({
@@ -221,12 +215,11 @@ function MillCritiquePanel() {
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     }
-  }
+  }, [surplusLabour, necessaryLabour, totalCapital]);
 
   useEffect(() => {
     void recompute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [surplusLabour, necessaryLabour, totalCapital]);
+  }, [recompute]);
 
   return (
     <section className="card">

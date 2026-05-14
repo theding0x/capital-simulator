@@ -313,7 +313,6 @@ func TestManufacture_Validate_Errors(t *testing.T) {
 		{"role zero head", agent.Manufacture{CapitalistID: capID, Form: agent.SerialManufacture, Origin: agent.OriginSplitting, IndividualWorkingDayMinutes: 720, Roles: []agent.DetailRole{{Name: "x", SkillLevel: agent.SkilledLevel, OutputRatePerHour: 1, HeadCount: 0}}}, agent.ErrManufactureHeadCount},
 	}
 	for _, tc := range cases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			if err := tc.m.Validate(); !errors.Is(err, tc.err) {

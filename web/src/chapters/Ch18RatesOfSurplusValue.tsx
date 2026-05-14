@@ -3,10 +3,6 @@ import type { FormEvent } from "react";
 import { api } from "../api";
 import type { RatesOfSurplusValueResult } from "../types";
 
-interface Ch18Props {
-  onSharedChanged: () => void;
-}
-
 type Preset = {
   id: string;
   label: string;
@@ -46,7 +42,7 @@ function pct(r: number) {
   return (r * 100).toFixed(2) + "%";
 }
 
-export function Ch18RatesOfSurplusValue(_props: Ch18Props) {
+export function Ch18RatesOfSurplusValue() {
   const [necessary, setNecessary] = useState(360);
   const [surplus, setSurplus] = useState(360);
   const [result, setResult] = useState<RatesOfSurplusValueResult | null>(null);

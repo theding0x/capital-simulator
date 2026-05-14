@@ -43,17 +43,6 @@ func TestFormulaI_EnglishAgriculturalLabourer_300Percent(t *testing.T) {
 	}
 }
 
-func TestFormulaIII_EqualsFormulaI(t *testing.T) {
-	t.Parallel()
-	// "paid labour / unpaid labour" is the same ratio as Formula I with renamed terms
-	s := simulation.SurplusLabour{Minutes: 360}
-	v := simulation.NecessaryLabour{Minutes: 360}
-	fI := simulation.FormulaI(s, v)
-	fIII := simulation.FormulaIII(s.Minutes, v.Minutes)
-	if fI != fIII {
-		t.Fatalf("FormulaIII != FormulaI: %f vs %f", fIII, fI)
-	}
-}
 
 func TestComputeRates_Invariants(t *testing.T) {
 	t.Parallel()

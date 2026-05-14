@@ -109,11 +109,11 @@ export function ChapterShell({
         ) : activeChapterId === "ch15" ? (
           <Ch15Machinery onSharedChanged={onSharedChanged} />
         ) : activeChapterId === "ch16" ? (
-          <Ch16AbsoluteAndRelative onSharedChanged={onSharedChanged} />
+          <Ch16AbsoluteAndRelative />
         ) : activeChapterId === "ch17" ? (
-          <Ch17MagnitudeChanges onSharedChanged={onSharedChanged} />
+          <Ch17MagnitudeChanges />
         ) : activeChapterId === "ch18" ? (
-          <Ch18RatesOfSurplusValue onSharedChanged={onSharedChanged} />
+          <Ch18RatesOfSurplusValue />
         ) : null}
       </div>
     </main>
