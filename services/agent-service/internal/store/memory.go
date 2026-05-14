@@ -25,6 +25,7 @@ type Memory struct {
 	cooperations      map[agent.CooperationID]agent.Cooperation
 	manufactures      map[agent.ManufactureID]agent.Manufacture
 	wageForms         map[agent.AgentID]agent.WageForm
+	workingSessions   map[agent.WorkingSessionID]agent.WorkingSession
 	now               func() time.Time
 }
 
@@ -42,6 +43,7 @@ func NewMemory() *Memory {
 		cooperations:      make(map[agent.CooperationID]agent.Cooperation),
 		manufactures:      make(map[agent.ManufactureID]agent.Manufacture),
 		wageForms:         make(map[agent.AgentID]agent.WageForm),
+		workingSessions:   make(map[agent.WorkingSessionID]agent.WorkingSession),
 		now:               time.Now,
 	}
 }
@@ -576,4 +578,28 @@ func (m *Memory) GetWageForm(_ context.Context, agentID agent.AgentID) (agent.Wa
 		return agent.WageForm{}, ErrNotFound
 	}
 	return wf, nil
+}
+
+func (m *Memory) CreateWorkingSession(_ context.Context, s agent.WorkingSession) (agent.WorkingSession, error) {
+	if err := s.Validate(); err != nil {
+		return agent.WorkingSession{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if s.ID.IsZero() {
+		s.ID = agent.NewWorkingSessionID()
+	}
+	s.CreatedAt = m.now()
+	m.workingSessions[s.ID] = s
+	return s, nil
+}
+
+func (m *Memory) GetWorkingSession(_ context.Context, id agent.WorkingSessionID) (agent.WorkingSession, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	s, ok := m.workingSessions[id]
+	if !ok {
+		return agent.WorkingSession{}, ErrNotFound
+	}
+	return s, nil
 }

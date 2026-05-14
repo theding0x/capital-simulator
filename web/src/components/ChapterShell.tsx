@@ -20,6 +20,7 @@ import { Ch16AbsoluteAndRelative } from "../chapters/Ch16AbsoluteAndRelative";
 import { Ch17MagnitudeChanges } from "../chapters/Ch17MagnitudeChanges";
 import { Ch18RatesOfSurplusValue } from "../chapters/Ch18RatesOfSurplusValue";
 import { Ch19WageForm } from "../chapters/Ch19WageForm";
+import { Ch20TimeWages } from "../chapters/Ch20TimeWages";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -58,6 +59,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch17: Ch17MagnitudeChanges as AnyPanel,
   ch18: Ch18RatesOfSurplusValue as AnyPanel,
   ch19: Ch19WageForm as AnyPanel,
+  ch20: Ch20TimeWages as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -80,6 +82,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch17: "The value of labour-power, and the surplus-value, vary in opposite directions. The value of labour-power cannot fall, and therefore surplus-value cannot rise, without a rise in the productiveness of labour.",
   ch18: "These three formulae amount to the same thing, yet they correspond to three essentially different conceptions of the rate of surplus-value.",
   ch19: "The wage-form thus extinguishes every trace of the division of the working-day into necessary labour and surplus-labour, into paid and unpaid labour.",
+  ch20: "The time-wage is only a converted form of the value, or the price, of labour-power.",
 };
 
 export function ChapterShell({
