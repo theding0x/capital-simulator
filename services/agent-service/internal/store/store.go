@@ -126,3 +126,13 @@ type PieceWageStore interface {
 	CreateSubContract(ctx context.Context, sc agent.SubContract) (agent.SubContract, error)
 	GetSubContract(ctx context.Context, id agent.SubContractID) (agent.SubContract, error)
 }
+
+// NationalWageStore is the persistence contract for Ch. 22 national wage records.
+type NationalWageStore interface {
+	UpsertIntensity(ctx context.Context, ni agent.NationalIntensity) (agent.NationalIntensity, error)
+	ListIntensities(ctx context.Context) ([]agent.NationalIntensity, error)
+	CreateDayWage(ctx context.Context, w agent.DayWage) (agent.DayWage, error)
+	GetDayWage(ctx context.Context, country agent.CountryCode) (agent.DayWage, error)
+	ListDayWages(ctx context.Context) ([]agent.DayWage, error)
+	ListSpindleRatios(ctx context.Context) ([]agent.SpindleRatio, error)
+}

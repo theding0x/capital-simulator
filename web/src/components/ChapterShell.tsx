@@ -22,6 +22,7 @@ import { Ch18RatesOfSurplusValue } from "../chapters/Ch18RatesOfSurplusValue";
 import { Ch19WageForm } from "../chapters/Ch19WageForm";
 import { Ch20TimeWages } from "../chapters/Ch20TimeWages";
 import { Ch21PieceWages } from "../chapters/Ch21PieceWages";
+import { Ch22NationalWages } from "../chapters/Ch22NationalWages";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -62,6 +63,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch19: Ch19WageForm as AnyPanel,
   ch20: Ch20TimeWages as AnyPanel,
   ch21: Ch21PieceWages as AnyPanel,
+  ch22: Ch22NationalWages as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -85,6 +87,8 @@ const QUOTES: Partial<Record<string, string>> = {
   ch18: "These three formulae amount to the same thing, yet they correspond to three essentially different conceptions of the rate of surplus-value.",
   ch19: "The wage-form thus extinguishes every trace of the division of the working-day into necessary labour and surplus-labour, into paid and unpaid labour.",
   ch20: "The time-wage is only a converted form of the value, or the price, of labour-power.",
+  ch21: "The piece-wage is the converted form of the time-wage, just as time-wage is the converted form of the value, or price, of labour-power.",
+  ch22: "In England wages are virtually lower to the capitalist, though higher to the operative than on the Continent of Europe.",
 };
 
 export function ChapterShell({
