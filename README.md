@@ -1,67 +1,76 @@
-# Capital Simulator
+# Ch. 13 Co-operation — design patch
 
-A simulation of an economy modeled chapter by chapter on Karl Marx's *Capital, Volume I*. Each chapter is implemented as its own branch + pull request. The chapter source text and code-facing specs live separately in the maintainer's `red-vault` Obsidian vault — they are read into Claude Code via the `obsidian` MCP server when implementing a chapter.
+Drop-in redesign of the Co-operation page for `theding0x/capital-simulator`.
+Fixes the clunky 3-column checkbox roster (whose bottom-border inputs ran
+across gutters and whose "sup" toggle read as a label, not a control) and
+foregrounds the live composite working day — the central claim of Ch. 13 §3.
 
-## Stack
-
-- **Architecture:** Microservices (Go), single Go module monorepo
-- **UI:** React + TypeScript (Vite)
-- **Database:** MongoDB
-- **Caching:** Redis
-- **Platform:** Docker / Kubernetes
-- **Repository host:** GitHub
-- **Cloud Platform:** Google Cloud Platform
-
-## Repository layout
+## What's here
 
 ```
-capital-simulator/
-├── docs/               Architecture and design notes
-├── deploy/
-│   ├── docker/         Service Dockerfiles (also live next to each service)
-│   └── k8s/            Kubernetes manifests
-├── pkg/                Shared Go packages (log, httpx, mongo, redis)
-├── services/
-│   ├── api-gateway/        External entrypoint, fans out to domain services
-│   ├── commodity-service/  Use-value, exchange-value, value (Ch. 1)
-│   ├── agent-service/      Workers, capitalists, and other economic agents
-│   ├── market-service/     Exchange, prices, circulation
-│   └── simulation-engine/  Time-step orchestrator that drives the world
-└── web/                Vite + React + TypeScript dashboard
+web/src/chapters/Ch13Cooperation.tsx   ← replaces existing file
+web/src/chapters/Ch13Cooperation.css   ← new file, imported by the .tsx
 ```
 
-## Workflow
+## What changed (vs. the existing Ch13Cooperation.tsx)
 
-We progress one chapter of *Capital* at a time:
+- **`MinimumCapitalPanel`** — unchanged behavior, copy-paste preserved.
+- **`CooperationLedgerPanel`** — same data wiring (lists capitalists, workers,
+  cooperations; refresh tick on create); presentation rewritten.
+- **`CreateCooperationPanel`** — the substantive redesign:
+  - Command row (name / capitalist / day per worker) uses a 1.4fr 1fr 0.8fr
+    grid with single-line labels and `align-items: end`, so the three
+    inputs share a baseline regardless of label length. (Original labels
+    like "Capitalist (single command)" wrapped and dropped the Name input
+    out of alignment.)
+  - The 3-column checkbox+"sup" worker grid is replaced by a `.data-table`
+    roster. Each row: selection dot, name (Playfair), role label, and an
+    OVERSEER chip that appears only on selected rows — so "supervisory"
+    is now a state, not a stray label.
+  - "Select all" / "Clear" affordances.
+  - A live **CompositeSummary** between the form and the roster shows
+    labourers × per-worker day = composite labour-day, with the §3
+    productive-power gloss when ≥ 2 workers are selected. This was
+    previously buried in the post-assembly `Compute` step.
+  - "Assemble" is disabled until ≥ 2 workers and a capitalist are picked,
+    with a sentence-form explanation in the submit row.
+- **`CooperationsList`** — table column set is the same; rows are now
+  click-to-expand and the computed result renders inline as a
+  `.reveal-panel` (matching Ch. 02's pattern), with `RelativeSurplusBridge`
+  preserved inside the expanded row.
 
-1. Cut a branch named `volume-X/chapter-Y` off `main`.
-2. Pull the chapter spec from the `red-vault` Obsidian vault and use it as the implementation plan.
-3. Implement the economic concepts introduced in that chapter across the relevant services.
-4. Open a pull request whose description summarizes the chapter and the simulation changes it produced.
-5. Merge into `main` once reviewed.
+## How to apply
 
-## Local development
+Copy both files over the equivalents in your repo:
 
-Prerequisites: Go 1.22+, Node 20+, Docker, kubectl (for k8s deploys).
-
-```bash
-# Run everything locally (mongo + redis + all Go services)
-docker compose up --build
-
-# Build all Go binaries
-make build
-
-# Run the API gateway only
-make run-api-gateway
-
-# Run the React UI
-cd web && npm install && npm run dev
+```sh
+# from repo root
+cp /path/to/Ch13Cooperation.tsx web/src/chapters/Ch13Cooperation.tsx
+cp /path/to/Ch13Cooperation.css web/src/chapters/Ch13Cooperation.css
 ```
 
-## Deploying to Kubernetes
+No other files need to change. The CSS imports as a side-effect from the
+.tsx (`import "./Ch13Cooperation.css";`) — make sure your bundler is set
+up for CSS-in-JS imports (Vite is, by default).
 
-```bash
-kubectl apply -k deploy/k8s
-```
+## Behavior preserved
 
-See `docs/architecture.md` for the high-level service topology.
+- All API calls go through the same `api.*` methods.
+- `members[]` are still constructed as
+  `{ worker_id, supervisory, working_day_minutes }` per the
+  `CreateCooperationInput` contract.
+- `RelativeSurplusBridge` is still invoked with `source: "cooperation"`,
+  `sourceId`, and the factor from `computeCollectiveWorkingDay`.
+
+## Lifted markup
+
+The redesign relies on these existing classes from `web/src/index.css`,
+unchanged:
+
+- `.card`, `.card > h2`, `.card > .description`
+- `.form-grid`, `.form-grid label > span`, `.form-actions`, `.span2`
+- `.data-table` and its descendants
+- `.reveal-panel`, `.reveal-note`, `.labour-statement`
+- `.empty-state`, `.muted`, `.small`, `.error`
+
+All new selectors are scoped `.ch13-*`.
