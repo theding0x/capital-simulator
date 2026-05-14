@@ -1005,6 +1005,7 @@ export interface NominalWage {
 export interface WorkingSession {
   id: string;
   agent_id: string;
+  wage_form_id?: string;
   daily_labour_power_value: { pence: number };
   working_day_minutes: { minutes: number };
   overtime_hours: { hours: number };
@@ -1017,7 +1018,8 @@ export interface WorkingSession {
 
 export interface CreateWorkingSessionInput {
   agent_id: string;
-  daily_labour_power_value: number;
+  wage_form_id?: string;
+  daily_labour_power_value?: number;
   working_day_minutes: number;
   overtime_hours: number;
   overtime_rate_pence: number;

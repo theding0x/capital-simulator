@@ -1060,12 +1060,16 @@ func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession
 		s.ID = agent.NewWorkingSessionID()
 	}
 	s.CreatedAt = m.now().UTC()
+	var wfID sql.NullString
+	if !s.WageFormID.IsZero() {
+		wfID = sql.NullString{String: string(s.WageFormID), Valid: true}
+	}
 	const q = `INSERT INTO time_wage_sessions
-		(id, agent_id, daily_labour_power_value, working_day_minutes,
+		(id, agent_id, wage_form_id, daily_labour_power_value, working_day_minutes,
 		 overtime_hours, overtime_rate_pence, wage_period, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := m.db.ExecContext(ctx, q,
-		string(s.ID), string(s.AgentID),
+		string(s.ID), string(s.AgentID), wfID,
 		s.DailyLabourPowerValue.Pence,
 		int64(s.WorkingDayMinutes.Minutes),
 		s.OvertimeHours.Hours,
@@ -1080,14 +1084,15 @@ func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession
 }
 
 func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID) (agent.WorkingSession, error) {
-	const q = `SELECT id, agent_id, daily_labour_power_value, working_day_minutes,
+	const q = `SELECT id, agent_id, wage_form_id, daily_labour_power_value, working_day_minutes,
 		overtime_hours, overtime_rate_pence, wage_period, created_at
 		FROM time_wage_sessions WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	var s agent.WorkingSession
 	var sid, aid, period string
+	var wfID sql.NullString
 	var dlpv, wdm, oth, orp int64
-	err := row.Scan(&sid, &aid, &dlpv, &wdm, &oth, &orp, &period, &s.CreatedAt)
+	err := row.Scan(&sid, &aid, &wfID, &dlpv, &wdm, &oth, &orp, &period, &s.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.WorkingSession{}, ErrNotFound
 	}
@@ -1096,6 +1101,9 @@ func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID
 	}
 	s.ID = agent.WorkingSessionID(sid)
 	s.AgentID = agent.AgentID(aid)
+	if wfID.Valid {
+		s.WageFormID = agent.WageFormID(wfID.String)
+	}
 	s.DailyLabourPowerValue = agent.DailyLabourPowerValue{Pence: dlpv}
 	s.WorkingDayMinutes = agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(wdm)}
 	s.OvertimeHours = agent.OvertimeHours{Hours: oth}
