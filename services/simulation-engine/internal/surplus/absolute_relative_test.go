@@ -176,16 +176,3 @@ func TestReduceNecessaryLabour_GuardsAgainstZero(t *testing.T) {
 	}
 }
 
-// SubjectionKind enum: formal vs real subjection (§1).
-func TestSubjectionKind_FormalAndRealValid(t *testing.T) {
-	t.Parallel()
-	if !surplus.SubjectionFormal.IsValid() {
-		t.Fatal("SubjectionFormal must be valid")
-	}
-	if !surplus.SubjectionReal.IsValid() {
-		t.Fatal("SubjectionReal must be valid")
-	}
-	if surplus.SubjectionKind("hybrid").IsValid() {
-		t.Fatal("non-canonical kind must be invalid")
-	}
-}

@@ -131,39 +131,3 @@ func RateOfProfit(surplusValue, totalCapitalAdvanced labour.LabourMinutes) float
 	return float64(surplusValue) / float64(totalCapitalAdvanced)
 }
 
-// ProductiveLabour records whether a given labourer counts as productive
-// in the capitalist sense — i.e. produces surplus-value for capital, not
-// merely useful effects. The distinction belongs to the social form of
-// labour, not its concrete content.
-type ProductiveLabour struct {
-	AgentID              string `json:"agent_id"`
-	ProducesSurplusValue bool   `json:"produces_surplus_value"`
-}
-
-// CollectiveLabourer is the §13-era grouping of agents whose combined
-// activity constitutes capitalist production. Used here only as a labelled
-// placeholder; the cooperative computation belongs to Ch. 13.
-type CollectiveLabourer struct {
-	MemberIDs []string `json:"member_ids"`
-}
-
-// SubjectionKind records the depth of labour's subsumption to capital
-// (§1, fn. on formal vs. real subjection). Formal: capital seizes an
-// existing labour-process unchanged. Real: capital revolutionises the
-// technical labour-process — the precondition for relative surplus-value
-// as a general method.
-type SubjectionKind string
-
-const (
-	SubjectionFormal SubjectionKind = "formal"
-	SubjectionReal   SubjectionKind = "real"
-)
-
-// IsValid reports whether the value is one of the two canonical kinds.
-func (k SubjectionKind) IsValid() bool {
-	switch k {
-	case SubjectionFormal, SubjectionReal:
-		return true
-	}
-	return false
-}

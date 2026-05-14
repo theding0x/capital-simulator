@@ -158,7 +158,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 16 - Absolute and Relative Surplus-Value",
+		"chapter": "Capital Vol. I, Ch. 18 — Various Formulae for the Rate of Surplus-Value",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
