@@ -160,9 +160,6 @@ func TestSurplusValue_OriginTagDistinguishes(t *testing.T) {
 	if asv.Origin == rsv.Origin {
 		t.Fatalf("Origins must differ — got %q on both", asv.Origin)
 	}
-	// LabourMinutes is the same underlying type on both sides.
-	var _ surplus.LabourMinutes = asv.LabourMinutes
-	var _ surplus.LabourMinutes = rsv.LabourMinutes
 }
 
 // Invariant: NecessaryLabour > 0. ReduceNecessaryLabour must not drive it

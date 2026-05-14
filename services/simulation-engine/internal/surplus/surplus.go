@@ -4,12 +4,8 @@ package surplus
 
 import "github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 
-// LabourMinutes re-exported for legacy callers; the canonical type lives in
-// the labour package as of the Part IV cohesion refactor.
-type LabourMinutes = labour.LabourMinutes
-
 // AbsoluteWorkdayLimit is the physical ceiling of any working day: 24 h × 60 min.
-const AbsoluteWorkdayLimit LabourMinutes = 24 * 60
+const AbsoluteWorkdayLimit labour.LabourMinutes = 24 * 60
 
 // SurplusValueMass is the total surplus-value extracted from all simultaneously
 // employed workers. Expressed in the same abstract unit as VariableCapital (§1).
