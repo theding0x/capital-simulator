@@ -17,6 +17,7 @@ import { Ch14Manufacture } from "../chapters/Ch14Manufacture";
 import { Ch15Machinery } from "../chapters/Ch15Machinery";
 import { Ch16AbsoluteAndRelative } from "../chapters/Ch16AbsoluteAndRelative";
 import { Ch17MagnitudeChanges } from "../chapters/Ch17MagnitudeChanges";
+import { Ch18RatesOfSurplusValue } from "../chapters/Ch18RatesOfSurplusValue";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -43,6 +44,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch15: "The machine ... enters into the value-begetting process only by bits. It never adds more value than it loses, on an average, by wear and tear.",
   ch16: "From one standpoint, any distinction between absolute and relative surplus-value appears illusory. Relative surplus-value is absolute, since it compels the absolute prolongation of the working-day beyond the labour-time necessary to the existence of the labourer himself.",
   ch17: "The value of labour-power, and the surplus-value, vary in opposite directions. The value of labour-power cannot fall, and therefore surplus-value cannot rise, without a rise in the productiveness of labour.",
+  ch18: "These three formulae amount to the same thing, yet they correspond to three essentially different conceptions of the rate of surplus-value.",
 };
 
 export function ChapterShell({
@@ -110,6 +112,8 @@ export function ChapterShell({
           <Ch16AbsoluteAndRelative onSharedChanged={onSharedChanged} />
         ) : activeChapterId === "ch17" ? (
           <Ch17MagnitudeChanges onSharedChanged={onSharedChanged} />
+        ) : activeChapterId === "ch18" ? (
+          <Ch18RatesOfSurplusValue onSharedChanged={onSharedChanged} />
         ) : null}
       </div>
     </main>

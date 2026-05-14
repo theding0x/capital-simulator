@@ -32,4 +32,7 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/surplus-value/absolute", h.ComputeAbsoluteSurplusValue)
 	s.HandleFunc("POST /v1/surplus-value/relative", h.ComputeRelativeSurplusValue)
 	s.HandleFunc("GET /v1/surplus-value/rate", h.GetSurplusValueRate)
+
+	// Ch. 18 — Various Formula for the Rate of Surplus-Value
+	s.HandleFunc("POST /v1/surplus-value/rates", h.ComputeRatesOfSurplusValue)
 }
