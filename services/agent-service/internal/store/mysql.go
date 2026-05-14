@@ -1207,11 +1207,18 @@ func (m *MySQL) UpsertIntensity(ctx context.Context, ni agent.NationalIntensity)
 	if err != nil {
 		return agent.NationalIntensity{}, err
 	}
+	const sel = `SELECT country_code, factor, created_at FROM national_intensities WHERE country_code = ?`
+	row := m.db.QueryRowContext(ctx, sel, string(ni.CountryCode))
+	var cc string
+	if err := row.Scan(&cc, &ni.Factor, &ni.CreatedAt); err != nil {
+		return agent.NationalIntensity{}, err
+	}
+	ni.CountryCode = agent.CountryCode(cc)
 	return ni, nil
 }
 
 func (m *MySQL) ListIntensities(ctx context.Context) ([]agent.NationalIntensity, error) {
-	const q = `SELECT country_code, factor FROM national_intensities ORDER BY country_code`
+	const q = `SELECT country_code, factor, created_at FROM national_intensities ORDER BY country_code`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
 		return nil, err
@@ -1221,7 +1228,7 @@ func (m *MySQL) ListIntensities(ctx context.Context) ([]agent.NationalIntensity,
 	for rows.Next() {
 		var ni agent.NationalIntensity
 		var cc string
-		if err := rows.Scan(&cc, &ni.Factor); err != nil {
+		if err := rows.Scan(&cc, &ni.Factor, &ni.CreatedAt); err != nil {
 			return nil, err
 		}
 		ni.CountryCode = agent.CountryCode(cc)
@@ -1237,8 +1244,9 @@ func (m *MySQL) CreateDayWage(ctx context.Context, w agent.DayWage) (agent.DayWa
 	if err := w.Validate(); err != nil {
 		return agent.DayWage{}, err
 	}
-	const q = `INSERT INTO day_wages (country_code, nominal_pence, working_day_minutes) VALUES (?, ?, ?)`
-	_, err := m.db.ExecContext(ctx, q, string(w.CountryCode), w.NominalPence, w.WorkingDayMinutes)
+	w.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO day_wages (country_code, nominal_pence, working_day_minutes, created_at) VALUES (?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q, string(w.CountryCode), w.NominalPence, w.WorkingDayMinutes, w.CreatedAt)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") {
 			return agent.DayWage{}, ErrAlreadyExists
@@ -1249,11 +1257,11 @@ func (m *MySQL) CreateDayWage(ctx context.Context, w agent.DayWage) (agent.DayWa
 }
 
 func (m *MySQL) GetDayWage(ctx context.Context, country agent.CountryCode) (agent.DayWage, error) {
-	const q = `SELECT country_code, nominal_pence, working_day_minutes FROM day_wages WHERE country_code = ?`
+	const q = `SELECT country_code, nominal_pence, working_day_minutes, created_at FROM day_wages WHERE country_code = ?`
 	row := m.db.QueryRowContext(ctx, q, string(country))
 	var w agent.DayWage
 	var cc string
-	if err := row.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes); errors.Is(err, sql.ErrNoRows) {
+	if err := row.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes, &w.CreatedAt); errors.Is(err, sql.ErrNoRows) {
 		return agent.DayWage{}, ErrNotFound
 	} else if err != nil {
 		return agent.DayWage{}, err
@@ -1263,7 +1271,7 @@ func (m *MySQL) GetDayWage(ctx context.Context, country agent.CountryCode) (agen
 }
 
 func (m *MySQL) ListDayWages(ctx context.Context) ([]agent.DayWage, error) {
-	const q = `SELECT country_code, nominal_pence, working_day_minutes FROM day_wages ORDER BY country_code`
+	const q = `SELECT country_code, nominal_pence, working_day_minutes, created_at FROM day_wages ORDER BY country_code`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
 		return nil, err
@@ -1273,7 +1281,7 @@ func (m *MySQL) ListDayWages(ctx context.Context) ([]agent.DayWage, error) {
 	for rows.Next() {
 		var w agent.DayWage
 		var cc string
-		if err := rows.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes); err != nil {
+		if err := rows.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes, &w.CreatedAt); err != nil {
 			return nil, err
 		}
 		w.CountryCode = agent.CountryCode(cc)
