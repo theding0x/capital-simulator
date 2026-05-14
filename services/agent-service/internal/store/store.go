@@ -106,3 +106,9 @@ type ManufactureStore interface {
 	ListManufacturesByCapitalist(ctx context.Context, capitalistID agent.AgentID) ([]agent.Manufacture, error)
 	ListManufacturesByForm(ctx context.Context, form agent.ManufactureForm) ([]agent.Manufacture, error)
 }
+
+// WageFormStore is the persistence contract for Ch. 19 wage-form records.
+type WageFormStore interface {
+	CreateWageForm(ctx context.Context, wf agent.WageForm) (agent.WageForm, error)
+	GetWageForm(ctx context.Context, agentID agent.AgentID) (agent.WageForm, error)
+}

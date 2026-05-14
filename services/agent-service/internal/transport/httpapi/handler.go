@@ -14,7 +14,7 @@ import (
 // AgentStore is the composite store interface every agent-service handler
 // reaches into. Combining the per-chapter stores into one composite lets
 // New take a single argument and the test harness pass `store.NewMemory()`
-// once instead of seven times.
+// once instead of eight times.
 type AgentStore interface {
 	store.Store
 	store.CircuitStore
@@ -23,6 +23,7 @@ type AgentStore interface {
 	store.WorkingDayStore
 	store.CooperationStore
 	store.ManufactureStore
+	store.WageFormStore
 }
 
 type Handler struct {
@@ -33,6 +34,7 @@ type Handler struct {
 	WorkingDayStore    store.WorkingDayStore
 	CooperationStore   store.CooperationStore
 	ManufactureStore   store.ManufactureStore
+	WageFormStore      store.WageFormStore
 	Logger             *slog.Logger
 }
 
@@ -50,6 +52,7 @@ func New(s AgentStore, logger *slog.Logger) *Handler {
 		WorkingDayStore:    s,
 		CooperationStore:   s,
 		ManufactureStore:   s,
+		WageFormStore:      s,
 		Logger:             logger,
 	}
 }

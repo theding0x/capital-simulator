@@ -33,7 +33,7 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "ch17", number: 17, title: "Changes of Magnitude in the Price of Labour-Power",     part: "Part V — Absolute and Relative Surplus-Value",         status: "done"    },
   { id: "ch18", number: 18, title: "Different Formulae for the Rate of Surplus-Value",      part: "Part V — Absolute and Relative Surplus-Value",         status: "done"    },
   // Part VI — Wages
-  { id: "ch19", number: 19, title: "The Transformation of the Value of Labour-Power into Wages", part: "Part VI — Wages",                                status: "pending" },
+  { id: "ch19", number: 19, title: "The Transformation of the Value of Labour-Power into Wages", part: "Part VI — Wages",                                status: "done"    },
   { id: "ch20", number: 20, title: "Time-Wages",                                            part: "Part VI — Wages",                                      status: "pending" },
   { id: "ch21", number: 21, title: "Piece-Wages",                                           part: "Part VI — Wages",                                      status: "pending" },
   { id: "ch22", number: 22, title: "National Differences in Wages",                         part: "Part VI — Wages",                                      status: "pending" },
