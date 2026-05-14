@@ -3,6 +3,7 @@ package surplus_test
 import (
 	"testing"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
 
@@ -119,7 +120,7 @@ func TestInvariant_IndividualScaled(t *testing.T) {
 func TestInvariant_WorkingDayBelowAbsoluteLimit(t *testing.T) {
 	t.Parallel()
 	rate := surplus.SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 6}
-	total := surplus.LabourMinutes(rate.NecessaryLabour + rate.SurplusLabour)
+	total := labour.LabourMinutes(rate.NecessaryLabour + rate.SurplusLabour)
 	if total >= surplus.AbsoluteWorkdayLimit {
 		t.Fatalf("working day %d must be < %d", total, surplus.AbsoluteWorkdayLimit)
 	}
