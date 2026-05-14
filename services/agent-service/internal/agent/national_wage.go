@@ -1,6 +1,9 @@
 package agent
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 // CountryCode is an ISO 3166-1 alpha-2 country identifier.
 type CountryCode string
@@ -11,6 +14,7 @@ type CountryCode string
 type NationalIntensity struct {
 	CountryCode CountryCode `json:"country_code"`
 	Factor      float64     `json:"factor"`
+	CreatedAt   time.Time   `json:"created_at"`
 }
 
 // DayWage is the nominal day wage as paid in the domestic market.
@@ -18,6 +22,7 @@ type DayWage struct {
 	CountryCode       CountryCode `json:"country_code"`
 	NominalPence      int64       `json:"nominal_pence"`
 	WorkingDayMinutes int64       `json:"working_day_minutes"`
+	CreatedAt         time.Time   `json:"created_at"`
 }
 
 // StandardisedWage is a day wage reduced to a common working-day length for

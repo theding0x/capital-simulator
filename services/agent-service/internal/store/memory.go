@@ -671,6 +671,11 @@ func (m *Memory) UpsertIntensity(_ context.Context, ni agent.NationalIntensity) 
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if existing, ok := m.nationalIntensities[ni.CountryCode]; ok {
+		ni.CreatedAt = existing.CreatedAt
+	} else {
+		ni.CreatedAt = m.now()
+	}
 	m.nationalIntensities[ni.CountryCode] = ni
 	return ni, nil
 }
@@ -695,6 +700,7 @@ func (m *Memory) CreateDayWage(_ context.Context, w agent.DayWage) (agent.DayWag
 	if _, exists := m.dayWages[w.CountryCode]; exists {
 		return agent.DayWage{}, ErrAlreadyExists
 	}
+	w.CreatedAt = m.now()
 	m.dayWages[w.CountryCode] = w
 	return w, nil
 }
