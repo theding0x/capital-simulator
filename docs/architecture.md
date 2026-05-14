@@ -83,7 +83,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 15    | ✅ Done     | Machinery and modern industry; Machine (motor / transmission / tool), MachineValue, LifespanDays, DailyWearAndTear, ValueTransferredPerUnit, MaterialWear, MoralDepreciation, ProductivePower, Factory + PrimeMover, Tick loop, LabourDisplaced, IntensityFactor, capital-composition (V/C) conservation, CyclePhase enum | simulation-engine |
 | Ch. 16    | ✅ Done     | Absolute and relative surplus-value; SurplusValue (Origin tag), AbsoluteSurplusValue, RelativeSurplusValue, ProlongWorkingDay, ReduceNecessaryLabour, RateSurplusValue, RateOfProfit, formal vs. real subjection, Mill critique | simulation-engine |
 | Ch. 17    | ✅ Done     | Changes of magnitude in price of labour-power and surplus-value; WorkingDay × NecessaryLabour × LabourIntensity × LabourProductivity → LabourScenario / ScenarioOutcome; §1 inverse-relation law, §2 intensity-scales-value, §3 length-of-day shifts | agent-service |
-| Ch. 18-22 | Pending     | Various formulae for rate of surplus-value; wages (transformation, time-wage, piece-wage, national differences) | agent-service |
+| Ch. 18    | ✅ Done     | Various formulae for the rate of surplus-value; FormulaI (s/v), FormulaII (s/(s+v)), FormulaIII (unpaid/paid) | simulation-engine |
+| Ch. 19-22 | Pending     | Wages (transformation, time-wage, piece-wage, national differences) | agent-service |
 | Ch. 23+   | Pending     | Accumulation of capital | all |
 
 ### Ch. 1 — what was built
@@ -264,3 +265,18 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints (stateless).** `POST /v1/surplus-value/absolute` (compute ASV by prolongation), `POST /v1/surplus-value/relative` (compute RSV by productivity), `GET /v1/surplus-value/rate?surplus_labour=…&necessary_labour=…&total_capital=…[&surplus_value=…]` (returns both rates plus a `mill_critique_holds` boolean).
 - **api-gateway.** Reverse-proxies `/v1/surplus-value/absolute`, `/v1/surplus-value/relative`, and `/v1/surplus-value/rate` to simulation-engine.
 - **React UI.** "Ch. 16 — Absolute and Relative Surplus-Value" panel with: a working-day configurator (Total + NecessaryLabour numeric inputs) driving a side-by-side calculator that runs both the absolute (extension) and relative (productivity) paths simultaneously; a Mill-critique sub-panel that lets the user enter `(s, v, c+v)` and surfaces the two rates plus a "Mill critique holds?" indicator.
+
+### Ch. 18 — what was built
+
+`simulation-engine` adds a new `simulation` package implementing Marx's three equivalent formulae for the rate of surplus-value from Capital Vol. I, Ch. 18:
+
+- **NecessaryLabour / SurplusLabour / WorkingDay.** `NecessaryLabour{Minutes}`, `SurplusLabour{Minutes}`, and `WorkingDay{TotalMinutes}` — typed wrappers over `labour.LabourMinutes` that make the ch.18 partition explicit. `WorkingDay.TotalMinutes` is always derived as `NecessaryLabour.Minutes + SurplusLabour.Minutes` by `ComputeRates`, enforcing the partition invariant.
+- **VariableCapital / SurplusValue / ValueOfProduct.** Money-pence proxies for the same labour-time ratios; defined per spec but deferred from active use — absolute pricing belongs to Chs. 2-3.
+- **RateScenario / RateResult.** `RateScenario{NecessaryLabour, SurplusLabour}` is the input; `RateResult{FormulaI, FormulaII, FormulaIII float64}` is the output.
+- **FormulaI(s, v) float64.** s/v — the rate of exploitation. Unbounded above 1.0 (English agricultural labourer: 540 min / 180 min = 3.0 = 300%).
+- **FormulaII(s, wd) float64.** s/(s+v) — surplus labour as a fraction of the working day. Always strictly less than 1.0, because surplus-labour is always less than the full working day.
+- **FormulaIII(unpaid, paid LabourMinutes) float64.** Unpaid / paid — identical in magnitude to Formula I; only the labels differ.
+- **ComputeRates(RateScenario) RateResult.** Pure function; applies all three formulae in one call.
+- **HTTP endpoint (stateless).** `POST /v1/surplus-value/rates` — accepts `{necessary_labour_minutes, surplus_labour_minutes}`, returns `{formula_i, formula_ii, formula_iii, working_day_minutes, ...}`.
+- **api-gateway.** Reverse-proxies `/v1/surplus-value/rates` to simulation-engine.
+- **React UI.** "Ch. 18 — Different Formulae for the Rate of Surplus-Value" panel with: two numeric inputs (necessary / surplus labour in minutes); three preset buttons (§ Formula I 100%, § Formula II bounded, § agricultural labourer 300%); side-by-side result cards for each formula with a note on its key property.

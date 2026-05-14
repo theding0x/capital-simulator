@@ -33,7 +33,10 @@
       "Bash(go build *)",
       "Bash(go version *)",
       "Bash(grep -v \"^[+-]\\\\s*$\")",
-      "Bash(make vet *)"
+      "Bash(make vet *)",
+      "Bash(gh pr *)",
+      "mcp__obsidian__obsidian_list_files_in_dir",
+      "mcp__obsidian__obsidian_get_file_contents"
     ]
   }
 }
