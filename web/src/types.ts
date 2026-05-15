@@ -1165,3 +1165,49 @@ export interface RepaymentPeriodResult {
   annual_revenue: number;
   repayment_period: number;
 }
+
+// --- simulation-engine types (Ch. 24: The Transformation of Surplus-Value into Capital) ---
+
+export interface AccumulationPeriod {
+  period: number;
+  constant_capital: number;
+  variable_capital: number;
+  surplus_produced: number;
+  new_constant: number;
+  new_variable: number;
+  revenue: number;
+}
+
+export interface ExtendedReproductionInput {
+  constant_capital: number;
+  variable_capital: number;
+  surplus_rate: number;
+  accum_rate: number;
+  composition_ratio: number;
+  periods: number;
+}
+
+export interface ExtendedReproductionResult {
+  constant_capital: number;
+  variable_capital: number;
+  surplus_rate: number;
+  accum_rate: number;
+  composition_ratio: number;
+  periods: number;
+  cycles: AccumulationPeriod[];
+}
+
+export interface SplitSurplusInput {
+  surplus: number;
+  accum_rate: number;
+  composition_ratio: number;
+}
+
+export interface SplitSurplusResult {
+  surplus: number;
+  accum_rate: number;
+  composition_ratio: number;
+  new_constant: number;
+  new_variable: number;
+  revenue: number;
+}
