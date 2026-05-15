@@ -1039,6 +1039,7 @@ export interface PieceWage {
   wage_form_id?: string;
   price_pence: number;
   normal_output: number;
+  implied_daily_wage: number;
   created_at: string;
 }
 

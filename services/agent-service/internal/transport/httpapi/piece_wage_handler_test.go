@@ -113,14 +113,18 @@ func TestCreateAndGetPieceWage(t *testing.T) {
 		t.Fatalf("get status = %d, want 200; body: %s", rr2.Code, rr2.Body.String())
 	}
 	var pw struct {
-		PricePence   int64 `json:"price_pence"`
-		NormalOutput int64 `json:"normal_output"`
+		PricePence       int64 `json:"price_pence"`
+		NormalOutput     int64 `json:"normal_output"`
+		ImpliedDailyWage int64 `json:"implied_daily_wage"`
 	}
 	if err := json.NewDecoder(rr2.Body).Decode(&pw); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
 	if pw.PricePence != 6 || pw.NormalOutput != 24 {
 		t.Errorf("round-trip: got price=%d output=%d, want 6/24", pw.PricePence, pw.NormalOutput)
+	}
+	if pw.ImpliedDailyWage != 144 {
+		t.Errorf("implied_daily_wage = %d, want 144 (6×24)", pw.ImpliedDailyWage)
 	}
 }
 

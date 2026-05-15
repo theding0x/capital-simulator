@@ -14,6 +14,14 @@ type createPieceWageRequest struct {
 
 type pieceWageResponse struct {
 	agent.PieceWage
+	ImpliedDailyWage int64 `json:"implied_daily_wage"`
+}
+
+func buildPieceWageResponse(pw agent.PieceWage) pieceWageResponse {
+	return pieceWageResponse{
+		PieceWage:        pw,
+		ImpliedDailyWage: pw.PricePence * pw.NormalOutput,
+	}
 }
 
 type computePiecePriceRequest struct {
@@ -81,7 +89,7 @@ func (h *Handler) CreatePieceWage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Location", "/v1/agents/"+string(agentID)+"/piece-wages")
-	writeJSON(w, http.StatusCreated, pieceWageResponse{saved})
+	writeJSON(w, http.StatusCreated, buildPieceWageResponse(saved))
 }
 
 // GetPieceWage handles GET /v1/agents/{id}/piece-wages.
@@ -92,7 +100,7 @@ func (h *Handler) GetPieceWage(w http.ResponseWriter, r *http.Request) {
 		writeAppError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, pieceWageResponse{pw})
+	writeJSON(w, http.StatusOK, buildPieceWageResponse(pw))
 }
 
 // ComputePiecePrice handles POST /v1/piece-price — stateless computation.

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../api";
-import type { ComputePiecePriceResult } from "../types";
+import type { ComputePiecePriceResult, PieceWage } from "../types";
 import "./Ch21PieceWages.css";
 
 export function Ch21PieceWages() {
@@ -11,6 +11,12 @@ export function Ch21PieceWages() {
   const [quality, setQuality] = useState<"accepted" | "rejected">("accepted");
   const [result, setResult] = useState<ComputePiecePriceResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [contractAgentID, setContractAgentID] = useState("");
+  const [contractPrice, setContractPrice] = useState(6);
+  const [contractOutput, setContractOutput] = useState(24);
+  const [contract, setContract] = useState<PieceWage | null>(null);
+  const [contractError, setContractError] = useState<string | null>(null);
 
   async function handleCompute(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +32,20 @@ export function Ch21PieceWages() {
       setResult(res);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function handleCreateContract(e: React.FormEvent) {
+    e.preventDefault();
+    setContractError(null);
+    try {
+      const res = await api.createPieceWage(contractAgentID, {
+        price_pence: contractPrice,
+        normal_output: contractOutput,
+      });
+      setContract(res);
+    } catch (err) {
+      setContractError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -163,6 +183,58 @@ export function Ch21PieceWages() {
           </div>
         </section>
       )}
+      <section className="ch21-section">
+        <h2>Piece-Wage Contract</h2>
+        <p className="ch21-explainer">
+          Register a piece-wage contract for a worker. The implied daily wage
+          shows what the worker earns when producing the normal output — the
+          connection between piece-rate and time-wage made explicit.
+        </p>
+        <form onSubmit={handleCreateContract} className="ch21-form">
+          <label>
+            Agent ID
+            <input
+              type="text"
+              value={contractAgentID}
+              onChange={(e) => setContractAgentID(e.target.value)}
+              placeholder="e.g. worker-001"
+              required
+            />
+          </label>
+          <label>
+            Price per piece (pence)
+            <input
+              type="number"
+              min={1}
+              value={contractPrice}
+              onChange={(e) => setContractPrice(Number(e.target.value))}
+              required
+            />
+          </label>
+          <label>
+            Normal output (pieces per day)
+            <input
+              type="number"
+              min={1}
+              value={contractOutput}
+              onChange={(e) => setContractOutput(Number(e.target.value))}
+              required
+            />
+          </label>
+          <button type="submit">Create Contract</button>
+        </form>
+        {contractError && <p className="ch21-error">{contractError}</p>}
+        {contract && (
+          <dl className="ch21-contract-result">
+            <dt>Piece price</dt>
+            <dd>{contract.price_pence}d.</dd>
+            <dt>Normal output</dt>
+            <dd>{contract.normal_output} pieces</dd>
+            <dt>Implied daily wage</dt>
+            <dd className="ch21-total">{contract.implied_daily_wage}d.</dd>
+          </dl>
+        )}
+      </section>
     </div>
   );
 }
