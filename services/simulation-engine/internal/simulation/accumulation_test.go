@@ -1,6 +1,7 @@
 package simulation_test
 
 import (
+	"math"
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
@@ -58,14 +59,17 @@ func TestSplitSurplus_ConstantInvariant(t *testing.T) {
 	}
 }
 
-// Invariant: Variable == int64(float64(surplus) * rate * (1-ratio)).
+// Invariant: Variable is the exact complement of Constant within the accumulated amount.
+// Using math.Round on the accumulated total avoids float64 truncation (e.g. 2000*0.2=399.999...).
 func TestSplitSurplus_VariableInvariant(t *testing.T) {
 	t.Parallel()
 	surplus := simulation.Pence(2000)
 	rate := 0.5
 	ratio := 0.8
 	got := simulation.SplitSurplus(surplus, rate, ratio)
-	want := simulation.Pence(int64(float64(surplus) * rate * (1 - ratio)))
+	accumulated := int64(math.Round(float64(surplus) * rate))
+	wantConstant := int64(math.Round(float64(accumulated) * ratio))
+	want := simulation.Pence(accumulated - wantConstant)
 	if got.Variable != want {
 		t.Errorf("variable = %d, want %d", got.Variable, want)
 	}

@@ -32,9 +32,12 @@ type Accumulation struct {
 // SplitSurplus divides surplus-value into new constant capital, new variable
 // capital, and revenue consumed by the capitalist, according to the
 // accumulation rate and organic composition ratio.
+// accumulated is rounded first; variable is the exact complement of constant
+// so that constant + variable == accumulated in all cases.
 func SplitSurplus(surplus Pence, accumRate float64, compositionRatio float64) AdditionalCapital {
-	constant := Pence(int64(float64(surplus) * accumRate * compositionRatio))
-	variable := Pence(int64(float64(surplus) * accumRate * (1 - compositionRatio)))
+	accumulated := int64(math.Round(float64(surplus) * accumRate))
+	constant := Pence(int64(math.Round(float64(accumulated) * compositionRatio)))
+	variable := Pence(accumulated - int64(constant))
 	return AdditionalCapital{Constant: constant, Variable: variable}
 }
 
