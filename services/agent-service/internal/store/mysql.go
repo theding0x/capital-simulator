@@ -1052,6 +1052,37 @@ func (m *MySQL) GetWageForm(ctx context.Context, agentID agent.AgentID) (agent.W
 	return wf, nil
 }
 
+func (m *MySQL) ListWageForms(ctx context.Context) ([]agent.WageForm, error) {
+	const q = `SELECT id, agent_id, daily_pence, working_day_minutes, lpv_daily_pence, necessary_minutes, created_at
+		FROM wage_forms ORDER BY created_at`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.WageForm
+	for rows.Next() {
+		var wf agent.WageForm
+		var id, aid string
+		var dp, wdh, lpvDp, nm int64
+		if err := rows.Scan(&id, &aid, &dp, &wdh, &lpvDp, &nm, &wf.CreatedAt); err != nil {
+			return nil, err
+		}
+		wf.ID = agent.WageFormID(id)
+		wf.AgentID = agent.AgentID(aid)
+		wf.Wage = agent.Wage{DailyPence: agent.Pence(dp), WorkingDayMinutes: agent.LabourMinutes(wdh)}
+		wf.LabourPowerValue = agent.WageLabourValue{
+			DailyPence:       agent.Pence(lpvDp),
+			NecessaryMinutes: agent.LabourMinutes(nm),
+		}
+		out = append(out, wf)
+	}
+	if out == nil {
+		out = []agent.WageForm{}
+	}
+	return out, rows.Err()
+}
+
 func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession) (agent.WorkingSession, error) {
 	if err := s.Validate(); err != nil {
 		return agent.WorkingSession{}, err
@@ -1110,6 +1141,42 @@ func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID
 	s.OvertimeRatePence = agent.OvertimeRatePence{Pence: orp}
 	s.WagePeriod = agent.WagePeriod(period)
 	return s, nil
+}
+
+func (m *MySQL) ListWorkingSessions(ctx context.Context, agentID agent.AgentID) ([]agent.WorkingSession, error) {
+	const q = `SELECT id, agent_id, wage_form_id, daily_labour_power_value, working_day_minutes,
+		overtime_hours, overtime_rate_pence, wage_period, created_at
+		FROM time_wage_sessions WHERE agent_id = ? ORDER BY created_at`
+	rows, err := m.db.QueryContext(ctx, q, string(agentID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.WorkingSession
+	for rows.Next() {
+		var s agent.WorkingSession
+		var sid, aid, period string
+		var wfID sql.NullString
+		var dlpv, wdm, oth, orp int64
+		if err := rows.Scan(&sid, &aid, &wfID, &dlpv, &wdm, &oth, &orp, &period, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		s.ID = agent.WorkingSessionID(sid)
+		s.AgentID = agent.AgentID(aid)
+		if wfID.Valid {
+			s.WageFormID = agent.WageFormID(wfID.String)
+		}
+		s.DailyLabourPowerValue = agent.DailyLabourPowerValue{Pence: dlpv}
+		s.WorkingDayMinutes = agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(wdm)}
+		s.OvertimeHours = agent.OvertimeHours{Hours: oth}
+		s.OvertimeRatePence = agent.OvertimeRatePence{Pence: orp}
+		s.WagePeriod = agent.WagePeriod(period)
+		out = append(out, s)
+	}
+	if out == nil {
+		out = []agent.WorkingSession{}
+	}
+	return out, rows.Err()
 }
 
 func (m *MySQL) CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.PieceWage, error) {

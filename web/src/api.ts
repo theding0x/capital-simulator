@@ -649,6 +649,9 @@ export const api = {
   getWageForm: (agentID: string) =>
     http<WageForm>(`/v1/wage-forms/${agentID}`),
 
+  listWageForms: () =>
+    http<WageForm[]>("/v1/wage-forms"),
+
   // --- agent-service (Ch. 20: Time-Wages) ---
 
   computeHourlyPrice: (input: ComputeHourlyPriceInput) =>
@@ -665,6 +668,9 @@ export const api = {
 
   getWorkingSession: (id: string) =>
     http<WorkingSession>(`/v1/time-wages/sessions/${id}`),
+
+  listWorkingSessions: (agentID: string) =>
+    http<WorkingSession[]>(`/v1/agents/${agentID}/time-wages/sessions`),
 
   // --- agent-service (Ch. 21: Piece-Wages) ---
 

@@ -68,3 +68,17 @@ func (h *Handler) GetWageForm(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, buildWageFormResponse(wf))
 }
+
+// ListWageForms handles GET /v1/wage-forms.
+func (h *Handler) ListWageForms(w http.ResponseWriter, r *http.Request) {
+	wfs, err := h.WageFormStore.ListWageForms(r.Context())
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	out := make([]wageFormResponse, len(wfs))
+	for i, wf := range wfs {
+		out[i] = buildWageFormResponse(wf)
+	}
+	writeJSON(w, http.StatusOK, out)
+}
