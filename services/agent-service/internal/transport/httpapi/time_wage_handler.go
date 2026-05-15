@@ -119,3 +119,18 @@ func (h *Handler) GetWorkingSession(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, buildWorkingSessionResponse(s))
 }
+
+// ListWorkingSessions handles GET /v1/agents/{id}/time-wages/sessions.
+func (h *Handler) ListWorkingSessions(w http.ResponseWriter, r *http.Request) {
+	agentID := agent.AgentID(r.PathValue("id"))
+	sessions, err := h.TimeWageStore.ListWorkingSessions(r.Context(), agentID)
+	if err != nil {
+		writeAppError(w, err)
+		return
+	}
+	out := make([]workingSessionResponse, len(sessions))
+	for i, s := range sessions {
+		out[i] = buildWorkingSessionResponse(s)
+	}
+	writeJSON(w, http.StatusOK, out)
+}

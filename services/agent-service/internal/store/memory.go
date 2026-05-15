@@ -590,6 +590,16 @@ func (m *Memory) GetWageForm(_ context.Context, agentID agent.AgentID) (agent.Wa
 	return wf, nil
 }
 
+func (m *Memory) ListWageForms(_ context.Context) ([]agent.WageForm, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.WageForm, 0, len(m.wageForms))
+	for _, wf := range m.wageForms {
+		out = append(out, wf)
+	}
+	return out, nil
+}
+
 func (m *Memory) CreateWorkingSession(_ context.Context, s agent.WorkingSession) (agent.WorkingSession, error) {
 	if err := s.Validate(); err != nil {
 		return agent.WorkingSession{}, err
@@ -612,6 +622,21 @@ func (m *Memory) GetWorkingSession(_ context.Context, id agent.WorkingSessionID)
 		return agent.WorkingSession{}, ErrNotFound
 	}
 	return s, nil
+}
+
+func (m *Memory) ListWorkingSessions(_ context.Context, agentID agent.AgentID) ([]agent.WorkingSession, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []agent.WorkingSession
+	for _, s := range m.workingSessions {
+		if s.AgentID == agentID {
+			out = append(out, s)
+		}
+	}
+	if out == nil {
+		out = []agent.WorkingSession{}
+	}
+	return out, nil
 }
 
 func (m *Memory) CreatePieceWage(_ context.Context, pw agent.PieceWage) (agent.PieceWage, error) {

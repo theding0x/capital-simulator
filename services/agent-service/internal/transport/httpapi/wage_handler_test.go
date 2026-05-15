@@ -112,6 +112,62 @@ func TestGetWageForm_NotFound(t *testing.T) {
 	}
 }
 
+func TestListWageForms(t *testing.T) {
+	t.Parallel()
+
+	mem := store.NewMemory()
+	h := httpapi.New(mem, nil)
+
+	for _, aid := range []string{"worker-a", "worker-b"} {
+		wf := agent.WageForm{
+			AgentID: agent.AgentID(aid),
+			Wage:    agent.Wage{DailyPence: 36, WorkingDayMinutes: 720},
+			LabourPowerValue: agent.WageLabourValue{
+				DailyPence:       36,
+				NecessaryMinutes: 360,
+			},
+		}
+		if _, err := mem.CreateWageForm(t.Context(), wf); err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/wage-forms", nil)
+	rr := httptest.NewRecorder()
+	h.ListWageForms(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body: %s", rr.Code, rr.Body.String())
+	}
+	var resp []json.RawMessage
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(resp) != 2 {
+		t.Errorf("len = %d, want 2", len(resp))
+	}
+}
+
+func TestListWageForms_Empty(t *testing.T) {
+	t.Parallel()
+
+	h := httpapi.New(store.NewMemory(), nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/wage-forms", nil)
+	rr := httptest.NewRecorder()
+	h.ListWageForms(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rr.Code)
+	}
+	var resp []json.RawMessage
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp == nil {
+		t.Error("body must be [] not null")
+	}
+}
+
 func TestCreateWageForm_InvalidRequest(t *testing.T) {
 	t.Parallel()
 

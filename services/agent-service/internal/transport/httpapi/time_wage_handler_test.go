@@ -265,6 +265,64 @@ func TestGetWorkingSession_NotFound(t *testing.T) {
 	}
 }
 
+// § ListWorkingSessions returns all sessions for a given agent, empty slice when none.
+func TestListWorkingSessions(t *testing.T) {
+	t.Parallel()
+
+	mem := store.NewMemory()
+	h := httpapi.New(mem, nil)
+	agentID := "worker-list-001"
+
+	for i := 0; i < 3; i++ {
+		s := agent.WorkingSession{
+			AgentID:               agent.AgentID(agentID),
+			DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
+			WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
+			WagePeriod:            agent.WagePeriodDaily,
+		}
+		if _, err := mem.CreateWorkingSession(t.Context(), s); err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/agents/"+agentID+"/time-wages/sessions", nil)
+	req.SetPathValue("id", agentID)
+	rr := httptest.NewRecorder()
+	h.ListWorkingSessions(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body: %s", rr.Code, rr.Body.String())
+	}
+	var resp []json.RawMessage
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(resp) != 3 {
+		t.Errorf("len = %d, want 3", len(resp))
+	}
+}
+
+func TestListWorkingSessions_Empty(t *testing.T) {
+	t.Parallel()
+
+	h := httpapi.New(store.NewMemory(), nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/agents/nobody/time-wages/sessions", nil)
+	req.SetPathValue("id", "nobody")
+	rr := httptest.NewRecorder()
+	h.ListWorkingSessions(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rr.Code)
+	}
+	var resp []json.RawMessage
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp == nil {
+		t.Error("body must be [] not null")
+	}
+}
+
 // § wage_form_id derivation: providing a wage_form_id causes daily_labour_power_value
 // to be read from the stored WageForm rather than the request body.
 func TestCreateWorkingSession_DerivedFromWageForm(t *testing.T) {
