@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { api } from "../api";
 import type { WorkingSession } from "../types";
+import { useCurrency, usePounds } from "../CurrencyContext";
 import "./Ch20TimeWages.css";
 
 export function Ch20TimeWages() {
+  const { modern } = useCurrency();
+  const fmt = usePounds();
   const [agentID, setAgentID] = useState("");
   const [dailyPence, setDailyPence] = useState(36);
   const [workingDayHours, setWorkingDayHours] = useState(12);
@@ -125,16 +128,30 @@ export function Ch20TimeWages() {
           <div className="ch20-cards">
             <div className="ch20-card">
               <h3>Hourly Price of Labour</h3>
-              <p className="ch20-card-subtitle">Exact rational fraction</p>
+              {!modern && (
+                <p className="ch20-card-subtitle">Exact rational fraction</p>
+              )}
               <dl>
-                <dt>Fraction</dt>
-                <dd>
-                  {result.hourly_price.numerator}/{result.hourly_price.denominator}
-                </dd>
+                {!modern && (
+                  <>
+                    <dt>Fraction</dt>
+                    <dd>
+                      {result.hourly_price.numerator}/{result.hourly_price.denominator}
+                    </dd>
+                  </>
+                )}
                 <dt>Decimal</dt>
-                <dd>{result.hourly_price.as_float.toFixed(4)}d.</dd>
+                <dd>
+                  {modern
+                    ? fmt(result.hourly_price.as_float)
+                    : `${result.hourly_price.as_float.toFixed(4)}d.`}
+                </dd>
                 <dt>Daily value</dt>
-                <dd>{result.daily_labour_power_value.pence}p</dd>
+                <dd>
+                  {modern
+                    ? fmt(result.daily_labour_power_value.pence)
+                    : `${result.daily_labour_power_value.pence}p`}
+                </dd>
                 <dt>Normal hours</dt>
                 <dd>{result.working_day_minutes.minutes / 60}h</dd>
               </dl>
@@ -149,19 +166,32 @@ export function Ch20TimeWages() {
               <p className="ch20-card-subtitle">Total money received</p>
               <dl>
                 <dt>Normal pay</dt>
-                <dd>{result.daily_labour_power_value.pence}p</dd>
+                <dd>
+                  {modern
+                    ? fmt(result.daily_labour_power_value.pence)
+                    : `${result.daily_labour_power_value.pence}p`}
+                </dd>
                 {result.overtime_hours.hours > 0 && (
                   <>
-                    <dt>Overtime ({result.overtime_hours.hours}h × {result.overtime_rate_pence.pence}d)</dt>
+                    <dt>
+                      Overtime ({result.overtime_hours.hours}h &times;{" "}
+                      {modern
+                        ? fmt(result.overtime_rate_pence.pence)
+                        : `${result.overtime_rate_pence.pence}d`})
+                    </dt>
                     <dd>
-                      {result.overtime_hours.hours *
-                        result.overtime_rate_pence.pence}
-                      p
+                      {modern
+                        ? fmt(result.overtime_hours.hours * result.overtime_rate_pence.pence)
+                        : `${result.overtime_hours.hours * result.overtime_rate_pence.pence}p`}
                     </dd>
                   </>
                 )}
                 <dt>Total nominal wage</dt>
-                <dd className="ch20-total">{result.nominal_wage.pence}p</dd>
+                <dd className="ch20-total">
+                  {modern
+                    ? fmt(result.nominal_wage.pence)
+                    : `${result.nominal_wage.pence}p`}
+                </dd>
               </dl>
               <p className="ch20-note">
                 Overtime earns more gross but the capitalist still extracts

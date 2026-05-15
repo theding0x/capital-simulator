@@ -4,6 +4,7 @@ import type { Commodity, Owner } from "./types";
 import { CHAPTERS } from "./chapters/registry";
 import { Sidebar } from "./components/Sidebar";
 import { ChapterShell } from "./components/ChapterShell";
+import { CurrencyProvider, CurrencyToggle } from "./CurrencyContext";
 
 const defaultChapterId =
   CHAPTERS.filter((c) => c.status === "done").at(-1)?.id ?? "ch01";
@@ -31,23 +32,26 @@ export default function App() {
   const activeChapter = CHAPTERS.find((c) => c.id === activeChapterId);
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <span className="topbar-logo">Capital Simulator</span>
-        {activeChapter && (
-          <span className="topbar-chapter">
-            Vol. I &middot; Ch.{String(activeChapter.number).padStart(2, "0")} &mdash;{" "}
-            {activeChapter.title}
-          </span>
-        )}
-      </header>
-      <Sidebar activeChapterId={activeChapterId} onSelect={setActiveChapterId} />
-      <ChapterShell
-        activeChapterId={activeChapterId}
-        commodities={commodities}
-        owners={owners}
-        onSharedChanged={refreshShared}
-      />
-    </div>
+    <CurrencyProvider>
+      <div className="app-shell">
+        <header className="topbar">
+          <span className="topbar-logo">Capital Simulator</span>
+          {activeChapter && (
+            <span className="topbar-chapter">
+              Vol. I &middot; Ch.{String(activeChapter.number).padStart(2, "0")} &mdash;{" "}
+              {activeChapter.title}
+            </span>
+          )}
+          <CurrencyToggle />
+        </header>
+        <Sidebar activeChapterId={activeChapterId} onSelect={setActiveChapterId} />
+        <ChapterShell
+          activeChapterId={activeChapterId}
+          commodities={commodities}
+          owners={owners}
+          onSharedChanged={refreshShared}
+        />
+      </div>
+    </CurrencyProvider>
   );
 }

@@ -673,6 +673,32 @@ td.reveal {
   text-transform: uppercase;
 }
 
+.currency-toggle {
+  margin-left: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.currency-toggle:hover:not(:disabled) {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--border-subtle);
+}
+
+.currency-toggle--active {
+  color: var(--gold-bright);
+  border-color: var(--gold-border);
+}
+
 /* ─── Sidebar ───────────────────────────────────────────────────────────────── */
 .sidebar {
   grid-column: 1;

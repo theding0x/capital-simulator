@@ -24,7 +24,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import { RelativeSurplusBridge } from "../components/RelativeSurplusBridge";
-import { fmtHoursLong, fmtPounds } from "../format";
+import { fmtHoursLong } from "../format";
+import { usePounds } from "../CurrencyContext";
 import type {
   Agent,
   CollectiveWorkingDayResult,
@@ -597,6 +598,7 @@ function FragmentRow({
 // ── Minimum capital panel (unchanged from previous version) ──────────────────
 
 function MinimumCapitalPanel() {
+  const fmt = usePounds();
   const [workerCount, setWorkerCount] = useState(300);
   const [wagePence, setWagePence] = useState(72);
   const [result, setResult] = useState<MinimumCapitalResult | null>(null);
@@ -655,9 +657,9 @@ function MinimumCapitalPanel() {
       </form>
       {result && (
         <p className="ch13-min-capital-result">
-          Minimum capital: <strong>{fmtPounds(result.minimum_capital_pence)}</strong>{" "}
+          Minimum capital: <strong>{fmt(result.minimum_capital_pence)}</strong>{" "}
           ({result.minimum_capital_pence} pence) for {result.worker_count} workers at{" "}
-          {fmtPounds(result.daily_wage_pence)}/day.
+          {fmt(result.daily_wage_pence)}/day.
         </p>
       )}
     </section>

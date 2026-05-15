@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import { RelativeSurplusBridge } from "../components/RelativeSurplusBridge";
-import { fmtHoursLong as minutesToHours, fmtPounds as poundsFromPence } from "../format";
+import { fmtHoursLong as minutesToHours } from "../format";
+import { usePounds } from "../CurrencyContext";
 import type {
   Agent,
   DetailRole,
@@ -477,6 +478,7 @@ function ScalePanel({ m, onScaled }: { m: Manufacture; onScaled: () => void }) {
 }
 
 function MinimumCapitalPanel({ m }: { m: Manufacture }) {
+  const fmt = usePounds();
   const [factor, setFactor] = useState(0.1);
   const [result, setResult] = useState<ManufactureMinimumCapitalResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -521,9 +523,9 @@ function MinimumCapitalPanel({ m }: { m: Manufacture }) {
       {err && <p className="error">{err}</p>}
       {result && (
         <p className="small" style={{ marginTop: "0.5rem" }}>
-          Manufacture minimum: <strong>{poundsFromPence(result.minimum_capital_pence)}</strong>{" "}
+          Manufacture minimum: <strong>{fmt(result.minimum_capital_pence)}</strong>{" "}
           ({result.minimum_capital_pence.toLocaleString()} pence). Simple-cooperation baseline:{" "}
-          {poundsFromPence(result.cooperation_baseline_pence)}.
+          {fmt(result.cooperation_baseline_pence)}.
         </p>
       )}
     </div>
