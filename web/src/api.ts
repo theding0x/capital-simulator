@@ -1,8 +1,12 @@
 import type {
+  ExtendedReproductionInput,
+  ExtendedReproductionResult,
   RepaymentPeriodInput,
   RepaymentPeriodResult,
   SimpleReproductionInput,
   SimpleReproductionResult,
+  SplitSurplusInput,
+  SplitSurplusResult,
   Agent,
   CapitalCircuit,
   CapitalCompositionResult,
@@ -735,6 +739,20 @@ export const api = {
 
   computeRepaymentPeriod: (input: RepaymentPeriodInput) =>
     http<RepaymentPeriodResult>("/v1/reproductions/repayment-period", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  // --- simulation-engine (Ch. 24: The Transformation of Surplus-Value into Capital) ---
+
+  runExtendedReproduction: (input: ExtendedReproductionInput) =>
+    http<ExtendedReproductionResult>("/v1/reproductions/extended", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  splitSurplus: (input: SplitSurplusInput) =>
+    http<SplitSurplusResult>("/v1/reproductions/split-surplus", {
       method: "POST",
       body: JSON.stringify(input),
     }),

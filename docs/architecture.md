@@ -89,7 +89,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 21    | ✅ Done     | Piece-wages; PieceWageID, PieceWage, PieceSession, QualityOutcome, SubContractID, SubContract; ComputePiecePrice (farthings integer arithmetic), ComputePieceValue, ComputePieceEarnings, SubContractSpread; POST/GET /v1/agents/{id}/piece-wages, POST /v1/piece-price, POST/GET /v1/sub-contracts[/{id}] | agent-service |
 | Ch. 22    | ✅ Done     | National differences in wages; NationalIntensity, DayWage, StandardisedWage, RelativeLabourPrice, SpindleRatio; StandardiseWage, ComputeRelativePrice; POST/GET /v1/intensities, POST /v1/wages, GET /v1/wages/{country}/standardised, GET /v1/comparisons | agent-service |
 | Ch. 23    | ✅ Done     | Simple reproduction; CapitalStock, SurplusValueFund, ReproductionCycle, RepaymentPeriod | simulation-engine |
-| Ch. 24+   | Pending     | Accumulation of capital | all |
+| Ch. 24    | ✅ Done     | Accumulation of capital; AdditionalCapital, Accumulation, SplitSurplus, RunExtendedReproduction | simulation-engine |
+| Ch. 25+   | Pending     | General law of capitalist accumulation | all |
 
 ### Ch. 1 — what was built
 
@@ -324,6 +325,20 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints (stateless).** `POST /v1/reproductions/simple` — runs the simulation, returns the cycle array and pre-computed repayment period. `POST /v1/reproductions/repayment-period` — stateless ceiling-division probe.
 - **api-gateway.** Reverse-proxies `/v1/reproductions/simple` and `/v1/reproductions/repayment-period` to simulation-engine.
 - **React UI.** "Ch. 23 — Simple Reproduction" panel: inputs for c, v, s′, period slider (1–20); preset button for Marx's £1,000/£200 example; result cards (original capital, annual surplus-value, repayment period); cycle table with running total of consumed surplus-value vs. original capital; rows highlighting green once the repayment period is reached.
+
+### Ch. 24 — what was built
+
+`simulation-engine` adds the extended-reproduction and accumulation domain from Capital Vol. I, Ch. 24:
+
+- **AdditionalCapital.** `AdditionalCapital{Constant, Variable Pence}` — the portion of surplus-value converted into new means of production and new labour-power.
+- **Accumulation.** `Accumulation{Period int64; CapitalStock CapitalStock; SurplusProduced Pence; NewConstant, NewVariable, Revenue Pence}` — one period's record of the extended-reproduction genealogy.
+- **AccumulationRate / CompositionRatio.** Named `float64` types for the fraction of surplus-value reinvested (0.0 = simple reproduction; 1.0 = full accumulation) and the fraction of new capital that is constant capital (the organic composition).
+- **SplitSurplus(surplus Pence, accumRate, compositionRatio float64) AdditionalCapital.** Pure function. Divides surplus-value per the accumulation rate and organic composition: `SplitSurplus(2000, 1.0, 0.8) == {1600, 400}`; `SplitSurplus(2000, 0.5, 0.8) == {800, 200}` with Revenue=1000.
+- **RunExtendedReproduction(initial CapitalStock, surplusRate, accumRate, compositionRatio float64, periods int64) []Accumulation.** Traces the genealogy of accumulated capital. Each period's CapitalStock is the AdditionalCapital from the prior step — the "Abraham begat Isaac" sequence: `RunExtendedReproduction({8000,2000}, 1.0, 1.0, 0.8, 3)` produces surpluses of £2,000 → £400 → £80.
+- **Migration.** `00006_ch24_accumulation_scenarios.sql` adds the `accumulation_scenarios` table. `00007_ch24_seed.sql` inserts Marx's spinner §1 (full accumulation, £8,000c + £2,000v) and §3 (partial accumulation, rate=0.5) as named scenarios with seed IDs `5eed000000000000002401`/`5eed000000000000002402`.
+- **HTTP endpoints (stateless).** `POST /v1/reproductions/extended` — runs the genealogy simulation, returns the cycle array. `POST /v1/reproductions/split-surplus` — stateless; divides a single surplus-value into new constant capital, new variable capital, and revenue.
+- **api-gateway.** Reverse-proxies `/v1/reproductions/extended` and `/v1/reproductions/split-surplus` to simulation-engine.
+- **React UI.** "Ch. 24 — Accumulation of Capital" panel: extended-reproduction form (c, v, s′, accumulation rate, composition ratio, period slider); preset buttons for spinner §1 and partial-accumulation §3; cycle table showing the genealogy across periods; stateless split-surplus calculator with result cards for new constant capital, new variable capital, and capitalist revenue.
 
 ### Ch. 20 — what was built
 

@@ -39,4 +39,8 @@ func Register(s *httpx.Server, h *Handler) {
 	// Ch. 23 — Simple Reproduction
 	s.HandleFunc("POST /v1/reproductions/simple", h.RunSimpleReproduction)
 	s.HandleFunc("POST /v1/reproductions/repayment-period", h.ComputeRepaymentPeriod)
+
+	// Ch. 24 — The Transformation of Surplus-Value into Capital
+	s.HandleFunc("POST /v1/reproductions/extended", h.RunExtendedReproduction)
+	s.HandleFunc("POST /v1/reproductions/split-surplus", h.SplitSurplusValue)
 }
