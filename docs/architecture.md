@@ -88,7 +88,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 20    | ✅ Done     | Time-wages; WorkingSessionID, DailyLabourPowerValue, HourlyPriceOfLabour (exact fraction + AsFloat), WorkingDayHours, OvertimeHours, OvertimeRatePence, WagePeriod, NominalWage, WorkingSession; ComputeHourlyPrice (exact rational fraction), ComputeSessionWage (integer arithmetic); POST /v1/time-wages/hourly-price, POST /v1/time-wages/sessions, GET /v1/time-wages/sessions/{id} | agent-service |
 | Ch. 21    | ✅ Done     | Piece-wages; PieceWageID, PieceWage, PieceSession, QualityOutcome, SubContractID, SubContract; ComputePiecePrice (farthings integer arithmetic), ComputePieceValue, ComputePieceEarnings, SubContractSpread; POST/GET /v1/agents/{id}/piece-wages, POST /v1/piece-price, POST/GET /v1/sub-contracts[/{id}] | agent-service |
 | Ch. 22    | ✅ Done     | National differences in wages; NationalIntensity, DayWage, StandardisedWage, RelativeLabourPrice, SpindleRatio; StandardiseWage, ComputeRelativePrice; POST/GET /v1/intensities, POST /v1/wages, GET /v1/wages/{country}/standardised, GET /v1/comparisons | agent-service |
-| Ch. 23+   | Pending     | Accumulation of capital | all |
+| Ch. 23    | ✅ Done     | Simple reproduction; CapitalStock, SurplusValueFund, ReproductionCycle, RepaymentPeriod | simulation-engine |
+| Ch. 24+   | Pending     | Accumulation of capital | all |
 
 ### Ch. 1 — what was built
 
@@ -308,6 +309,21 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints.** `POST /v1/intensities` (upsert; idempotent), `GET /v1/intensities` (list), `POST /v1/wages` (register; 201 + body), `GET /v1/wages/{country}/standardised?reference_day_minutes=600` (standardised wage for one country), `GET /v1/comparisons[?reference_day_minutes=600]` (full `WageComparison` with standardised wages and relative prices computed on the fly).
 - **api-gateway.** Reverse-proxies `/v1/intensities`, `/v1/wages`, `/v1/comparisons` (and `/{rest...}` forms) to agent-service.
 - **React UI.** "Ch. 22 — National Wages" panel: table of countries with nominal wage, standardised wage (600-min ref), relative price, and spindle count; GB paradox highlighted (highest nominal, lowest relative price); register-intensity and register-day-wage forms.
+
+### Ch. 23 — what was built
+
+`simulation-engine` adds the simple-reproduction domain from Capital Vol. I, Ch. 23:
+
+- **CapitalStock.** `CapitalStock{ConstantCapital, VariableCapital Pence}` — value composition of capital at a point in time.
+- **SurplusValueFund.** `SurplusValueFund{Total, Revenue, Accumulated Pence}` — the split of surplus-value produced in one cycle. Under simple reproduction `Revenue == Total` and `Accumulated == 0` every period.
+- **ReproductionCycle.** `ReproductionCycle{Period int64; Capital CapitalStock; SurplusRate float64; Fund SurplusValueFund}` — one circuit of production. Capital stock does not grow across cycles.
+- **OriginalCapital, IndividualConsumption, ProductiveConsumption.** `Pence`-typed wrappers distinguishing the historically given advance, personal capitalist expenditure, and productive consumption of means of production and labour-power.
+- **RunSimpleReproduction(initial CapitalStock, surplusRate float64, periods int64) []ReproductionCycle.** Pure function producing a cycle-by-cycle snapshot. Each cycle's surplus-value is `math.Round(v × s′)`; under simple reproduction the fund has `Accumulated == 0` in every period.
+- **RepaymentPeriod(capital, annualRevenue Pence) int64.** Integer ceiling division: the number of periods before the total consumed surplus-value equals or exceeds the original capital advanced. Encodes Marx's §repayment law: `RepaymentPeriod(1000, 200) == 5`; `RepaymentPeriod(1000, 100) == 10`.
+- **Migration.** `00004_ch23_reproduction_cycles.sql` adds the `reproduction_cycles` table. `00005_ch23_seed.sql` inserts Marx's core §example (£800c + £200v, s′=100%, 5 periods; seed ID `5eed000000000000002301`) so the dashboard comes up populated.
+- **HTTP endpoints (stateless).** `POST /v1/reproductions/simple` — runs the simulation, returns the cycle array and pre-computed repayment period. `POST /v1/reproductions/repayment-period` — stateless ceiling-division probe.
+- **api-gateway.** Reverse-proxies `/v1/reproductions/simple` and `/v1/reproductions/repayment-period` to simulation-engine.
+- **React UI.** "Ch. 23 — Simple Reproduction" panel: inputs for c, v, s′, period slider (1–20); preset button for Marx's £1,000/£200 example; result cards (original capital, annual surplus-value, repayment period); cycle table with running total of consumed surplus-value vs. original capital; rows highlighting green once the repayment period is reached.
 
 ### Ch. 20 — what was built
 

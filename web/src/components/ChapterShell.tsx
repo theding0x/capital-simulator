@@ -23,6 +23,7 @@ import { Ch19WageForm } from "../chapters/Ch19WageForm";
 import { Ch20TimeWages } from "../chapters/Ch20TimeWages";
 import { Ch21PieceWages } from "../chapters/Ch21PieceWages";
 import { Ch22NationalWages } from "../chapters/Ch22NationalWages";
+import { Ch23SimpleReproduction } from "../chapters/Ch23SimpleReproduction";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -64,6 +65,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch20: Ch20TimeWages as AnyPanel,
   ch21: Ch21PieceWages as AnyPanel,
   ch22: Ch22NationalWages as AnyPanel,
+  ch23: Ch23SimpleReproduction as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -89,6 +91,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch20: "The time-wage is only a converted form of the value, or the price, of labour-power.",
   ch21: "The piece-wage is the converted form of the time-wage, just as time-wage is the converted form of the value, or price, of labour-power.",
   ch22: "In England wages are virtually lower to the capitalist, though higher to the operative than on the Continent of Europe.",
+  ch23: "Whatever the form of the process of production in a society, it must be a continuous process, must continue to go periodically through the same phases.",
 };
 
 export function ChapterShell({
