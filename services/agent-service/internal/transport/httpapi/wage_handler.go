@@ -1,9 +1,12 @@
 package httpapi
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/agent"
+	"github.com/theding0x/capital-simulator/services/agent-service/internal/store"
 )
 
 type createWageFormRequest struct {
@@ -49,6 +52,20 @@ func (h *Handler) CreateWageForm(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := wf.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	// If this agent has a Ch.6 LabourWorker record, NecessaryMinutes must
+	// equal labour_power_value_minutes — both express the same reproduction cost.
+	worker, err := h.LabourPowerStore.GetWorker(r.Context(), wf.AgentID)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		writeAppError(w, err)
+		return
+	}
+	if err == nil && worker.LabourPowerValueMinutes != wf.LabourPowerValue.NecessaryMinutes {
+		writeError(w, http.StatusUnprocessableEntity, fmt.Sprintf(
+			"necessary_minutes %d does not match worker labour_power_value_minutes %d",
+			wf.LabourPowerValue.NecessaryMinutes, worker.LabourPowerValueMinutes,
+		))
 		return
 	}
 	saved, err := h.WageFormStore.CreateWageForm(r.Context(), wf)
