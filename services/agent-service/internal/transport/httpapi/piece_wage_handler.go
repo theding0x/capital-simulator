@@ -7,8 +7,9 @@ import (
 )
 
 type createPieceWageRequest struct {
-	PricePence   int64 `json:"price_pence"`
-	NormalOutput int64 `json:"normal_output"`
+	WageFormID   string `json:"wage_form_id,omitempty"`
+	PricePence   int64  `json:"price_pence,omitempty"`
+	NormalOutput int64  `json:"normal_output"`
 }
 
 type pieceWageResponse struct {
@@ -58,8 +59,17 @@ func (h *Handler) CreatePieceWage(w http.ResponseWriter, r *http.Request) {
 	}
 	pw := agent.PieceWage{
 		AgentID:      agentID,
+		WageFormID:   agent.WageFormID(req.WageFormID),
 		PricePence:   req.PricePence,
 		NormalOutput: req.NormalOutput,
+	}
+	if !pw.WageFormID.IsZero() {
+		wf, err := h.WageFormStore.GetWageForm(r.Context(), agentID)
+		if err != nil {
+			writeAppError(w, err)
+			return
+		}
+		pw.PricePence = int64(wf.Wage.DailyPence) / req.NormalOutput
 	}
 	if err := pw.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())

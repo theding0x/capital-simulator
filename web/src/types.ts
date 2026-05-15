@@ -1036,13 +1036,15 @@ export interface ComputeHourlyPriceInput {
 export interface PieceWage {
   id: string;
   agent_id: string;
+  wage_form_id?: string;
   price_pence: number;
   normal_output: number;
   created_at: string;
 }
 
 export interface CreatePieceWageInput {
-  price_pence: number;
+  wage_form_id?: string;
+  price_pence?: number;
   normal_output: number;
 }
 
