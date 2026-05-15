@@ -19,7 +19,7 @@ export function Ch19WageForm() {
       const wf = await api.createWageForm({
         agent_id: agentID,
         daily_pence: dailyPence,
-        working_day_hours: workingDayHours,
+        working_day_minutes: workingDayHours * 60,
         lpv_daily_pence: lpvDailyPence,
         necessary_minutes: necessaryMinutes,
       });

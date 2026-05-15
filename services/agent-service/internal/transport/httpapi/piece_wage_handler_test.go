@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/theding0x/capital-simulator/services/agent-service/internal/agent"
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/store"
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/transport/httpapi"
 )
@@ -112,14 +113,18 @@ func TestCreateAndGetPieceWage(t *testing.T) {
 		t.Fatalf("get status = %d, want 200; body: %s", rr2.Code, rr2.Body.String())
 	}
 	var pw struct {
-		PricePence   int64 `json:"price_pence"`
-		NormalOutput int64 `json:"normal_output"`
+		PricePence       int64 `json:"price_pence"`
+		NormalOutput     int64 `json:"normal_output"`
+		ImpliedDailyWage int64 `json:"implied_daily_wage"`
 	}
 	if err := json.NewDecoder(rr2.Body).Decode(&pw); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
 	if pw.PricePence != 6 || pw.NormalOutput != 24 {
 		t.Errorf("round-trip: got price=%d output=%d, want 6/24", pw.PricePence, pw.NormalOutput)
+	}
+	if pw.ImpliedDailyWage != 144 {
+		t.Errorf("implied_daily_wage = %d, want 144 (6×24)", pw.ImpliedDailyWage)
 	}
 }
 
@@ -177,6 +182,53 @@ func TestCreateAndGetSubContract(t *testing.T) {
 
 	if rr2.Code != http.StatusOK {
 		t.Fatalf("get status = %d, want 200; body: %s", rr2.Code, rr2.Body.String())
+	}
+}
+
+// § wage_form_id derivation: price_pence derived as wf.Wage.DailyPence / normal_output.
+// Fixture: daily_pence=144, normal_output=24 → price_pence=6.
+func TestCreatePieceWage_DerivedFromWageForm(t *testing.T) {
+	t.Parallel()
+
+	mem := store.NewMemory()
+	h := httpapi.New(mem, nil)
+	agentID := "worker-pw-wf"
+
+	wf := agent.WageForm{
+		AgentID: agent.AgentID(agentID),
+		Wage:    agent.Wage{DailyPence: 144, WorkingDayMinutes: 720},
+		LabourPowerValue: agent.WageLabourValue{
+			DailyPence:       144,
+			NecessaryMinutes: 360,
+		},
+	}
+	saved, err := mem.CreateWageForm(t.Context(), wf)
+	if err != nil {
+		t.Fatalf("seed wage form: %v", err)
+	}
+
+	body := map[string]any{
+		"wage_form_id":  string(saved.ID),
+		"normal_output": 24,
+	}
+	b, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/agents/"+agentID+"/piece-wages", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", agentID)
+	rr := httptest.NewRecorder()
+	h.CreatePieceWage(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201; body: %s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		PricePence int64 `json:"price_pence"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.PricePence != 6 {
+		t.Errorf("price_pence = %d, want 6 (144/24, derived from wage form)", resp.PricePence)
 	}
 }
 

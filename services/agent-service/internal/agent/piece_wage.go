@@ -47,6 +47,7 @@ const (
 type PieceWage struct {
 	ID           PieceWageID `json:"id"`
 	AgentID      AgentID     `json:"agent_id"`
+	WageFormID   WageFormID  `json:"wage_form_id,omitempty"`
 	PricePence   int64       `json:"price_pence"`
 	NormalOutput int64       `json:"normal_output"`
 	CreatedAt    time.Time   `json:"created_at"`
@@ -81,7 +82,7 @@ func (pw PieceWage) Validate() error {
 	if pw.AgentID.IsZero() {
 		return errors.New("piece_wage: agent_id is required")
 	}
-	if pw.PricePence <= 0 {
+	if pw.WageFormID.IsZero() && pw.PricePence <= 0 {
 		return ErrPieceWagePricePence
 	}
 	if pw.NormalOutput <= 0 {

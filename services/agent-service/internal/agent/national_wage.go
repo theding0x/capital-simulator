@@ -1,6 +1,9 @@
 package agent
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 // CountryCode is an ISO 3166-1 alpha-2 country identifier.
 type CountryCode string
@@ -11,6 +14,7 @@ type CountryCode string
 type NationalIntensity struct {
 	CountryCode CountryCode `json:"country_code"`
 	Factor      float64     `json:"factor"`
+	CreatedAt   time.Time   `json:"created_at"`
 }
 
 // DayWage is the nominal day wage as paid in the domestic market.
@@ -18,6 +22,7 @@ type DayWage struct {
 	CountryCode       CountryCode `json:"country_code"`
 	NominalPence      int64       `json:"nominal_pence"`
 	WorkingDayMinutes int64       `json:"working_day_minutes"`
+	CreatedAt         time.Time   `json:"created_at"`
 }
 
 // StandardisedWage is a day wage reduced to a common working-day length for
@@ -93,12 +98,13 @@ func StandardiseWage(w DayWage, referenceDayMinutes int64) StandardisedWage {
 }
 
 // ComputeRelativePrice returns the price of labour relative to the value it
-// produces. Ratio = 1 / intensity_factor — higher intensity → lower ratio.
-// Encodes Marx's observation: "wages are virtually lower to the capitalist,
+// produces: nominal wage per unit of intensity (NominalPence / Factor).
+// Higher intensity reduces the ratio even when nominal wages are higher —
+// encoding Marx's observation that "wages are virtually lower to the capitalist,
 // though higher to the operative" in high-intensity nations (Cowell, 1833).
 func ComputeRelativePrice(w DayWage, ni NationalIntensity) RelativeLabourPrice {
 	return RelativeLabourPrice{
 		CountryCode: w.CountryCode,
-		Ratio:       1.0 / ni.Factor,
+		Ratio:       float64(w.NominalPence) / ni.Factor,
 	}
 }

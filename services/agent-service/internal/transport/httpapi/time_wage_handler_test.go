@@ -12,12 +12,12 @@ import (
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/transport/httpapi"
 )
 
-// § unit measure: daily 36p, 12h → numerator=36, denominator=12, as_float=3.0
+// § unit measure: daily 36p, 720 min → numerator=36, denominator=12, as_float=3.0
 func TestComputeHourlyPrice_OK(t *testing.T) {
 	t.Parallel()
 
 	h := httpapi.New(store.NewMemory(), nil)
-	body := map[string]any{"daily_pence": 36, "working_day_hours": 12}
+	body := map[string]any{"daily_pence": 36, "working_day_minutes": 720}
 	b, _ := json.Marshal(body)
 	req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/hourly-price", bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
@@ -61,7 +61,7 @@ func TestComputeHourlyPrice_InvalidRequest(t *testing.T) {
 
 	t.Run("zero daily_pence", func(t *testing.T) {
 		t.Parallel()
-		body := map[string]any{"daily_pence": 0, "working_day_hours": 12}
+		body := map[string]any{"daily_pence": 0, "working_day_minutes": 720}
 		b, _ := json.Marshal(body)
 		req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/hourly-price", bytes.NewReader(b))
 		req.Header.Set("Content-Type", "application/json")
@@ -81,7 +81,7 @@ func TestCreateWorkingSession_OK(t *testing.T) {
 	body := map[string]any{
 		"agent_id":                 "worker-abc",
 		"daily_labour_power_value": 36,
-		"working_day_hours":        12,
+		"working_day_minutes":      720,
 		"overtime_hours":           0,
 		"overtime_rate_pence":      0,
 		"wage_period":              "daily",
@@ -132,7 +132,7 @@ func TestCreateWorkingSession_WithOvertime(t *testing.T) {
 	body := map[string]any{
 		"agent_id":                 "worker-abc",
 		"daily_labour_power_value": 36,
-		"working_day_hours":        12,
+		"working_day_minutes":      720,
 		"overtime_hours":           2,
 		"overtime_rate_pence":      4,
 		"wage_period":              "daily",
@@ -179,7 +179,7 @@ func TestCreateWorkingSession_BadRequest(t *testing.T) {
 		t.Parallel()
 		body := map[string]any{
 			"daily_labour_power_value": 36,
-			"working_day_hours":        12,
+			"working_day_minutes":      720,
 			"wage_period":              "daily",
 		}
 		b, _ := json.Marshal(body)
@@ -197,7 +197,7 @@ func TestCreateWorkingSession_BadRequest(t *testing.T) {
 		body := map[string]any{
 			"agent_id":                 "w1",
 			"daily_labour_power_value": 36,
-			"working_day_hours":        12,
+			"working_day_minutes":      720,
 			"wage_period":              "monthly",
 		}
 		b, _ := json.Marshal(body)
@@ -220,7 +220,7 @@ func TestGetWorkingSession_OK(t *testing.T) {
 	seed := agent.WorkingSession{
 		AgentID:               "worker-xyz",
 		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
-		WorkingDayHours:       agent.WorkingDayHours{Hours: 12},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
 		OvertimeHours:         agent.OvertimeHours{Hours: 0},
 		OvertimeRatePence:     agent.OvertimeRatePence{Pence: 0},
 		WagePeriod:            agent.WagePeriodDaily,
@@ -262,5 +262,114 @@ func TestGetWorkingSession_NotFound(t *testing.T) {
 
 	if rr.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want 404", rr.Code)
+	}
+}
+
+// § ListWorkingSessions returns all sessions for a given agent, empty slice when none.
+func TestListWorkingSessions(t *testing.T) {
+	t.Parallel()
+
+	mem := store.NewMemory()
+	h := httpapi.New(mem, nil)
+	agentID := "worker-list-001"
+
+	for i := 0; i < 3; i++ {
+		s := agent.WorkingSession{
+			AgentID:               agent.AgentID(agentID),
+			DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: 36},
+			WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: 720},
+			WagePeriod:            agent.WagePeriodDaily,
+		}
+		if _, err := mem.CreateWorkingSession(t.Context(), s); err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/agents/"+agentID+"/time-wages/sessions", nil)
+	req.SetPathValue("id", agentID)
+	rr := httptest.NewRecorder()
+	h.ListWorkingSessions(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body: %s", rr.Code, rr.Body.String())
+	}
+	var resp []json.RawMessage
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(resp) != 3 {
+		t.Errorf("len = %d, want 3", len(resp))
+	}
+}
+
+func TestListWorkingSessions_Empty(t *testing.T) {
+	t.Parallel()
+
+	h := httpapi.New(store.NewMemory(), nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/agents/nobody/time-wages/sessions", nil)
+	req.SetPathValue("id", "nobody")
+	rr := httptest.NewRecorder()
+	h.ListWorkingSessions(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rr.Code)
+	}
+	var resp []json.RawMessage
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp == nil {
+		t.Error("body must be [] not null")
+	}
+}
+
+// § wage_form_id derivation: providing a wage_form_id causes daily_labour_power_value
+// to be read from the stored WageForm rather than the request body.
+func TestCreateWorkingSession_DerivedFromWageForm(t *testing.T) {
+	t.Parallel()
+
+	mem := store.NewMemory()
+	h := httpapi.New(mem, nil)
+
+	wf := agent.WageForm{
+		AgentID: "worker-wf",
+		Wage:    agent.Wage{DailyPence: 36, WorkingDayMinutes: 720},
+		LabourPowerValue: agent.WageLabourValue{
+			DailyPence:       36,
+			NecessaryMinutes: 360,
+		},
+	}
+	saved, err := mem.CreateWageForm(t.Context(), wf)
+	if err != nil {
+		t.Fatalf("seed wage form: %v", err)
+	}
+
+	body := map[string]any{
+		"agent_id":            "worker-wf",
+		"wage_form_id":        string(saved.ID),
+		"working_day_minutes": 720,
+		"overtime_hours":      0,
+		"overtime_rate_pence": 0,
+		"wage_period":         "daily",
+	}
+	b, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/sessions", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	h.CreateWorkingSession(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201; body: %s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		NominalWage struct {
+			Pence int64 `json:"pence"`
+		} `json:"nominal_wage"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.NominalWage.Pence != 36 {
+		t.Errorf("nominal_wage = %d, want 36 (derived from wage form lpv)", resp.NominalWage.Pence)
 	}
 }

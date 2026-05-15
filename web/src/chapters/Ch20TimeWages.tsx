@@ -20,7 +20,7 @@ export function Ch20TimeWages() {
       const session = await api.createWorkingSession({
         agent_id: agentID,
         daily_labour_power_value: dailyPence,
-        working_day_hours: workingDayHours,
+        working_day_minutes: workingDayHours * 60,
         overtime_hours: overtimeHours,
         overtime_rate_pence: overtimeRate,
         wage_period: wagePeriod,
@@ -136,7 +136,7 @@ export function Ch20TimeWages() {
                 <dt>Daily value</dt>
                 <dd>{result.daily_labour_power_value.pence}p</dd>
                 <dt>Normal hours</dt>
-                <dd>{result.working_day_hours.hours}h</dd>
+                <dd>{result.working_day_minutes.minutes / 60}h</dd>
               </dl>
               <p className="ch20-note">
                 A longer day lowers the hourly price even when total daily pay is
@@ -149,13 +149,7 @@ export function Ch20TimeWages() {
               <p className="ch20-card-subtitle">Total money received</p>
               <dl>
                 <dt>Normal pay</dt>
-                <dd>
-                  {Math.floor(
-                    result.daily_labour_power_value.pence /
-                      result.working_day_hours.hours
-                  ) * result.working_day_hours.hours}
-                  p
-                </dd>
+                <dd>{result.daily_labour_power_value.pence}p</dd>
                 {result.overtime_hours.hours > 0 && (
                   <>
                     <dt>Overtime ({result.overtime_hours.hours}h × {result.overtime_rate_pence.pence}d)</dt>

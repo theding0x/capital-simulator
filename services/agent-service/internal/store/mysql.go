@@ -1007,18 +1007,18 @@ func (m *MySQL) CreateWageForm(ctx context.Context, wf agent.WageForm) (agent.Wa
 	}
 	wf.CreatedAt = m.now().UTC()
 	const q = `INSERT INTO wage_forms
-		(id, agent_id, daily_pence, working_day_hours, lpv_daily_pence, necessary_minutes, created_at)
+		(id, agent_id, daily_pence, working_day_minutes, lpv_daily_pence, necessary_minutes, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 			id = VALUES(id),
 			daily_pence = VALUES(daily_pence),
-			working_day_hours = VALUES(working_day_hours),
+			working_day_minutes = VALUES(working_day_minutes),
 			lpv_daily_pence = VALUES(lpv_daily_pence),
 			necessary_minutes = VALUES(necessary_minutes),
 			created_at = VALUES(created_at)`
 	_, err := m.db.ExecContext(ctx, q,
 		string(wf.ID), string(wf.AgentID),
-		int64(wf.Wage.DailyPence), wf.Wage.WorkingDayHours,
+		int64(wf.Wage.DailyPence), int64(wf.Wage.WorkingDayMinutes),
 		int64(wf.LabourPowerValue.DailyPence), int64(wf.LabourPowerValue.NecessaryMinutes),
 		wf.CreatedAt,
 	)
@@ -1029,7 +1029,7 @@ func (m *MySQL) CreateWageForm(ctx context.Context, wf agent.WageForm) (agent.Wa
 }
 
 func (m *MySQL) GetWageForm(ctx context.Context, agentID agent.AgentID) (agent.WageForm, error) {
-	const q = `SELECT id, agent_id, daily_pence, working_day_hours, lpv_daily_pence, necessary_minutes, created_at
+	const q = `SELECT id, agent_id, daily_pence, working_day_minutes, lpv_daily_pence, necessary_minutes, created_at
 		FROM wage_forms WHERE agent_id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(agentID))
 	var wf agent.WageForm
@@ -1044,12 +1044,43 @@ func (m *MySQL) GetWageForm(ctx context.Context, agentID agent.AgentID) (agent.W
 	}
 	wf.ID = agent.WageFormID(id)
 	wf.AgentID = agent.AgentID(aid)
-	wf.Wage = agent.Wage{DailyPence: agent.Pence(dp), WorkingDayHours: wdh}
+	wf.Wage = agent.Wage{DailyPence: agent.Pence(dp), WorkingDayMinutes: agent.LabourMinutes(wdh)}
 	wf.LabourPowerValue = agent.WageLabourValue{
 		DailyPence:       agent.Pence(lpvDp),
 		NecessaryMinutes: agent.LabourMinutes(nm),
 	}
 	return wf, nil
+}
+
+func (m *MySQL) ListWageForms(ctx context.Context) ([]agent.WageForm, error) {
+	const q = `SELECT id, agent_id, daily_pence, working_day_minutes, lpv_daily_pence, necessary_minutes, created_at
+		FROM wage_forms ORDER BY created_at`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.WageForm
+	for rows.Next() {
+		var wf agent.WageForm
+		var id, aid string
+		var dp, wdh, lpvDp, nm int64
+		if err := rows.Scan(&id, &aid, &dp, &wdh, &lpvDp, &nm, &wf.CreatedAt); err != nil {
+			return nil, err
+		}
+		wf.ID = agent.WageFormID(id)
+		wf.AgentID = agent.AgentID(aid)
+		wf.Wage = agent.Wage{DailyPence: agent.Pence(dp), WorkingDayMinutes: agent.LabourMinutes(wdh)}
+		wf.LabourPowerValue = agent.WageLabourValue{
+			DailyPence:       agent.Pence(lpvDp),
+			NecessaryMinutes: agent.LabourMinutes(nm),
+		}
+		out = append(out, wf)
+	}
+	if out == nil {
+		out = []agent.WageForm{}
+	}
+	return out, rows.Err()
 }
 
 func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession) (agent.WorkingSession, error) {
@@ -1060,14 +1091,18 @@ func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession
 		s.ID = agent.NewWorkingSessionID()
 	}
 	s.CreatedAt = m.now().UTC()
+	var wfID sql.NullString
+	if !s.WageFormID.IsZero() {
+		wfID = sql.NullString{String: string(s.WageFormID), Valid: true}
+	}
 	const q = `INSERT INTO time_wage_sessions
-		(id, agent_id, daily_labour_power_value, working_day_hours,
+		(id, agent_id, wage_form_id, daily_labour_power_value, working_day_minutes,
 		 overtime_hours, overtime_rate_pence, wage_period, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := m.db.ExecContext(ctx, q,
-		string(s.ID), string(s.AgentID),
+		string(s.ID), string(s.AgentID), wfID,
 		s.DailyLabourPowerValue.Pence,
-		s.WorkingDayHours.Hours,
+		int64(s.WorkingDayMinutes.Minutes),
 		s.OvertimeHours.Hours,
 		s.OvertimeRatePence.Pence,
 		string(s.WagePeriod),
@@ -1080,14 +1115,15 @@ func (m *MySQL) CreateWorkingSession(ctx context.Context, s agent.WorkingSession
 }
 
 func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID) (agent.WorkingSession, error) {
-	const q = `SELECT id, agent_id, daily_labour_power_value, working_day_hours,
+	const q = `SELECT id, agent_id, wage_form_id, daily_labour_power_value, working_day_minutes,
 		overtime_hours, overtime_rate_pence, wage_period, created_at
 		FROM time_wage_sessions WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	var s agent.WorkingSession
 	var sid, aid, period string
-	var dlpv, wdh, oth, orp int64
-	err := row.Scan(&sid, &aid, &dlpv, &wdh, &oth, &orp, &period, &s.CreatedAt)
+	var wfID sql.NullString
+	var dlpv, wdm, oth, orp int64
+	err := row.Scan(&sid, &aid, &wfID, &dlpv, &wdm, &oth, &orp, &period, &s.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.WorkingSession{}, ErrNotFound
 	}
@@ -1096,12 +1132,51 @@ func (m *MySQL) GetWorkingSession(ctx context.Context, id agent.WorkingSessionID
 	}
 	s.ID = agent.WorkingSessionID(sid)
 	s.AgentID = agent.AgentID(aid)
+	if wfID.Valid {
+		s.WageFormID = agent.WageFormID(wfID.String)
+	}
 	s.DailyLabourPowerValue = agent.DailyLabourPowerValue{Pence: dlpv}
-	s.WorkingDayHours = agent.WorkingDayHours{Hours: wdh}
+	s.WorkingDayMinutes = agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(wdm)}
 	s.OvertimeHours = agent.OvertimeHours{Hours: oth}
 	s.OvertimeRatePence = agent.OvertimeRatePence{Pence: orp}
 	s.WagePeriod = agent.WagePeriod(period)
 	return s, nil
+}
+
+func (m *MySQL) ListWorkingSessions(ctx context.Context, agentID agent.AgentID) ([]agent.WorkingSession, error) {
+	const q = `SELECT id, agent_id, wage_form_id, daily_labour_power_value, working_day_minutes,
+		overtime_hours, overtime_rate_pence, wage_period, created_at
+		FROM time_wage_sessions WHERE agent_id = ? ORDER BY created_at`
+	rows, err := m.db.QueryContext(ctx, q, string(agentID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.WorkingSession
+	for rows.Next() {
+		var s agent.WorkingSession
+		var sid, aid, period string
+		var wfID sql.NullString
+		var dlpv, wdm, oth, orp int64
+		if err := rows.Scan(&sid, &aid, &wfID, &dlpv, &wdm, &oth, &orp, &period, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		s.ID = agent.WorkingSessionID(sid)
+		s.AgentID = agent.AgentID(aid)
+		if wfID.Valid {
+			s.WageFormID = agent.WageFormID(wfID.String)
+		}
+		s.DailyLabourPowerValue = agent.DailyLabourPowerValue{Pence: dlpv}
+		s.WorkingDayMinutes = agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(wdm)}
+		s.OvertimeHours = agent.OvertimeHours{Hours: oth}
+		s.OvertimeRatePence = agent.OvertimeRatePence{Pence: orp}
+		s.WagePeriod = agent.WagePeriod(period)
+		out = append(out, s)
+	}
+	if out == nil {
+		out = []agent.WorkingSession{}
+	}
+	return out, rows.Err()
 }
 
 func (m *MySQL) CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.PieceWage, error) {
@@ -1112,10 +1187,14 @@ func (m *MySQL) CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.
 		pw.ID = agent.NewPieceWageID()
 	}
 	pw.CreatedAt = m.now().UTC()
-	const q = `INSERT INTO piece_wages (id, agent_id, price_pence, normal_output, created_at)
-		VALUES (?, ?, ?, ?, ?)`
+	var wfID sql.NullString
+	if !pw.WageFormID.IsZero() {
+		wfID = sql.NullString{String: string(pw.WageFormID), Valid: true}
+	}
+	const q = `INSERT INTO piece_wages (id, agent_id, wage_form_id, price_pence, normal_output, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
 	_, err := m.db.ExecContext(ctx, q,
-		string(pw.ID), string(pw.AgentID),
+		string(pw.ID), string(pw.AgentID), wfID,
 		pw.PricePence, pw.NormalOutput, pw.CreatedAt,
 	)
 	if err != nil {
@@ -1128,12 +1207,13 @@ func (m *MySQL) CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.
 }
 
 func (m *MySQL) GetPieceWage(ctx context.Context, agentID agent.AgentID) (agent.PieceWage, error) {
-	const q = `SELECT id, agent_id, price_pence, normal_output, created_at
+	const q = `SELECT id, agent_id, wage_form_id, price_pence, normal_output, created_at
 		FROM piece_wages WHERE agent_id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(agentID))
 	var pw agent.PieceWage
 	var id, aid string
-	err := row.Scan(&id, &aid, &pw.PricePence, &pw.NormalOutput, &pw.CreatedAt)
+	var wfID sql.NullString
+	err := row.Scan(&id, &aid, &wfID, &pw.PricePence, &pw.NormalOutput, &pw.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.PieceWage{}, ErrNotFound
 	}
@@ -1142,6 +1222,9 @@ func (m *MySQL) GetPieceWage(ctx context.Context, agentID agent.AgentID) (agent.
 	}
 	pw.ID = agent.PieceWageID(id)
 	pw.AgentID = agent.AgentID(aid)
+	if wfID.Valid {
+		pw.WageFormID = agent.WageFormID(wfID.String)
+	}
 	return pw, nil
 }
 
@@ -1207,11 +1290,18 @@ func (m *MySQL) UpsertIntensity(ctx context.Context, ni agent.NationalIntensity)
 	if err != nil {
 		return agent.NationalIntensity{}, err
 	}
+	const sel = `SELECT country_code, factor, created_at FROM national_intensities WHERE country_code = ?`
+	row := m.db.QueryRowContext(ctx, sel, string(ni.CountryCode))
+	var cc string
+	if err := row.Scan(&cc, &ni.Factor, &ni.CreatedAt); err != nil {
+		return agent.NationalIntensity{}, err
+	}
+	ni.CountryCode = agent.CountryCode(cc)
 	return ni, nil
 }
 
 func (m *MySQL) ListIntensities(ctx context.Context) ([]agent.NationalIntensity, error) {
-	const q = `SELECT country_code, factor FROM national_intensities ORDER BY country_code`
+	const q = `SELECT country_code, factor, created_at FROM national_intensities ORDER BY country_code`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
 		return nil, err
@@ -1221,7 +1311,7 @@ func (m *MySQL) ListIntensities(ctx context.Context) ([]agent.NationalIntensity,
 	for rows.Next() {
 		var ni agent.NationalIntensity
 		var cc string
-		if err := rows.Scan(&cc, &ni.Factor); err != nil {
+		if err := rows.Scan(&cc, &ni.Factor, &ni.CreatedAt); err != nil {
 			return nil, err
 		}
 		ni.CountryCode = agent.CountryCode(cc)
@@ -1237,8 +1327,9 @@ func (m *MySQL) CreateDayWage(ctx context.Context, w agent.DayWage) (agent.DayWa
 	if err := w.Validate(); err != nil {
 		return agent.DayWage{}, err
 	}
-	const q = `INSERT INTO day_wages (country_code, nominal_pence, working_day_minutes) VALUES (?, ?, ?)`
-	_, err := m.db.ExecContext(ctx, q, string(w.CountryCode), w.NominalPence, w.WorkingDayMinutes)
+	w.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO day_wages (country_code, nominal_pence, working_day_minutes, created_at) VALUES (?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q, string(w.CountryCode), w.NominalPence, w.WorkingDayMinutes, w.CreatedAt)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") {
 			return agent.DayWage{}, ErrAlreadyExists
@@ -1249,11 +1340,11 @@ func (m *MySQL) CreateDayWage(ctx context.Context, w agent.DayWage) (agent.DayWa
 }
 
 func (m *MySQL) GetDayWage(ctx context.Context, country agent.CountryCode) (agent.DayWage, error) {
-	const q = `SELECT country_code, nominal_pence, working_day_minutes FROM day_wages WHERE country_code = ?`
+	const q = `SELECT country_code, nominal_pence, working_day_minutes, created_at FROM day_wages WHERE country_code = ?`
 	row := m.db.QueryRowContext(ctx, q, string(country))
 	var w agent.DayWage
 	var cc string
-	if err := row.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes); errors.Is(err, sql.ErrNoRows) {
+	if err := row.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes, &w.CreatedAt); errors.Is(err, sql.ErrNoRows) {
 		return agent.DayWage{}, ErrNotFound
 	} else if err != nil {
 		return agent.DayWage{}, err
@@ -1263,7 +1354,7 @@ func (m *MySQL) GetDayWage(ctx context.Context, country agent.CountryCode) (agen
 }
 
 func (m *MySQL) ListDayWages(ctx context.Context) ([]agent.DayWage, error) {
-	const q = `SELECT country_code, nominal_pence, working_day_minutes FROM day_wages ORDER BY country_code`
+	const q = `SELECT country_code, nominal_pence, working_day_minutes, created_at FROM day_wages ORDER BY country_code`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
 		return nil, err
@@ -1273,7 +1364,7 @@ func (m *MySQL) ListDayWages(ctx context.Context) ([]agent.DayWage, error) {
 	for rows.Next() {
 		var w agent.DayWage
 		var cc string
-		if err := rows.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes); err != nil {
+		if err := rows.Scan(&cc, &w.NominalPence, &w.WorkingDayMinutes, &w.CreatedAt); err != nil {
 			return nil, err
 		}
 		w.CountryCode = agent.CountryCode(cc)

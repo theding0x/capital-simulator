@@ -7,12 +7,21 @@ import (
 )
 
 type createPieceWageRequest struct {
-	PricePence   int64 `json:"price_pence"`
-	NormalOutput int64 `json:"normal_output"`
+	WageFormID   string `json:"wage_form_id,omitempty"`
+	PricePence   int64  `json:"price_pence,omitempty"`
+	NormalOutput int64  `json:"normal_output"`
 }
 
 type pieceWageResponse struct {
 	agent.PieceWage
+	ImpliedDailyWage int64 `json:"implied_daily_wage"`
+}
+
+func buildPieceWageResponse(pw agent.PieceWage) pieceWageResponse {
+	return pieceWageResponse{
+		PieceWage:        pw,
+		ImpliedDailyWage: pw.PricePence * pw.NormalOutput,
+	}
 }
 
 type computePiecePriceRequest struct {
@@ -58,8 +67,17 @@ func (h *Handler) CreatePieceWage(w http.ResponseWriter, r *http.Request) {
 	}
 	pw := agent.PieceWage{
 		AgentID:      agentID,
+		WageFormID:   agent.WageFormID(req.WageFormID),
 		PricePence:   req.PricePence,
 		NormalOutput: req.NormalOutput,
+	}
+	if !pw.WageFormID.IsZero() {
+		wf, err := h.WageFormStore.GetWageForm(r.Context(), agentID)
+		if err != nil {
+			writeAppError(w, err)
+			return
+		}
+		pw.PricePence = int64(wf.Wage.DailyPence) / req.NormalOutput
 	}
 	if err := pw.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -71,7 +89,7 @@ func (h *Handler) CreatePieceWage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Location", "/v1/agents/"+string(agentID)+"/piece-wages")
-	writeJSON(w, http.StatusCreated, pieceWageResponse{saved})
+	writeJSON(w, http.StatusCreated, buildPieceWageResponse(saved))
 }
 
 // GetPieceWage handles GET /v1/agents/{id}/piece-wages.
@@ -82,7 +100,7 @@ func (h *Handler) GetPieceWage(w http.ResponseWriter, r *http.Request) {
 		writeAppError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, pieceWageResponse{pw})
+	writeJSON(w, http.StatusOK, buildPieceWageResponse(pw))
 }
 
 // ComputePiecePrice handles POST /v1/piece-price — stateless computation.
