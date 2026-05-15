@@ -112,6 +112,75 @@ func TestGetWageForm_NotFound(t *testing.T) {
 	}
 }
 
+// § Ch.6/Ch.19 bridge: NecessaryMinutes must equal worker.LabourPowerValueMinutes
+// when a LabourWorker record exists for the agent.
+func TestCreateWageForm_NecessaryMinutesMismatch(t *testing.T) {
+	t.Parallel()
+
+	mem := store.NewMemory()
+	h := httpapi.New(mem, nil)
+
+	// Seed a Ch.6 worker with 360 minutes reproduction cost.
+	w := agent.Worker{
+		LabourAgent:             agent.LabourAgent{ID: "worker-ch6"},
+		LabourPower:             agent.LabourPower{CapacityMinutesPerDay: 720},
+		LabourPowerValueMinutes: 360,
+	}
+	if _, err := mem.CreateWorker(t.Context(), w); err != nil {
+		t.Fatalf("seed worker: %v", err)
+	}
+
+	body := map[string]any{
+		"agent_id":            "worker-ch6",
+		"daily_pence":         36,
+		"working_day_minutes": 720,
+		"lpv_daily_pence":     36,
+		"necessary_minutes":   480, // contradicts worker's 360
+	}
+	b, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/wage-forms", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	h.CreateWageForm(rr, req)
+
+	if rr.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422; body: %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestCreateWageForm_NecessaryMinutesMatch(t *testing.T) {
+	t.Parallel()
+
+	mem := store.NewMemory()
+	h := httpapi.New(mem, nil)
+
+	w := agent.Worker{
+		LabourAgent:             agent.LabourAgent{ID: "worker-ch6-ok"},
+		LabourPower:             agent.LabourPower{CapacityMinutesPerDay: 720},
+		LabourPowerValueMinutes: 360,
+	}
+	if _, err := mem.CreateWorker(t.Context(), w); err != nil {
+		t.Fatalf("seed worker: %v", err)
+	}
+
+	body := map[string]any{
+		"agent_id":            "worker-ch6-ok",
+		"daily_pence":         36,
+		"working_day_minutes": 720,
+		"lpv_daily_pence":     36,
+		"necessary_minutes":   360, // matches worker exactly
+	}
+	b, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/wage-forms", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	h.CreateWageForm(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201; body: %s", rr.Code, rr.Body.String())
+	}
+}
+
 func TestListWageForms(t *testing.T) {
 	t.Parallel()
 
