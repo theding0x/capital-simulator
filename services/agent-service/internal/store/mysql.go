@@ -1120,10 +1120,14 @@ func (m *MySQL) CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.
 		pw.ID = agent.NewPieceWageID()
 	}
 	pw.CreatedAt = m.now().UTC()
-	const q = `INSERT INTO piece_wages (id, agent_id, price_pence, normal_output, created_at)
-		VALUES (?, ?, ?, ?, ?)`
+	var wfID sql.NullString
+	if !pw.WageFormID.IsZero() {
+		wfID = sql.NullString{String: string(pw.WageFormID), Valid: true}
+	}
+	const q = `INSERT INTO piece_wages (id, agent_id, wage_form_id, price_pence, normal_output, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
 	_, err := m.db.ExecContext(ctx, q,
-		string(pw.ID), string(pw.AgentID),
+		string(pw.ID), string(pw.AgentID), wfID,
 		pw.PricePence, pw.NormalOutput, pw.CreatedAt,
 	)
 	if err != nil {
@@ -1136,12 +1140,13 @@ func (m *MySQL) CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.
 }
 
 func (m *MySQL) GetPieceWage(ctx context.Context, agentID agent.AgentID) (agent.PieceWage, error) {
-	const q = `SELECT id, agent_id, price_pence, normal_output, created_at
+	const q = `SELECT id, agent_id, wage_form_id, price_pence, normal_output, created_at
 		FROM piece_wages WHERE agent_id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(agentID))
 	var pw agent.PieceWage
 	var id, aid string
-	err := row.Scan(&id, &aid, &pw.PricePence, &pw.NormalOutput, &pw.CreatedAt)
+	var wfID sql.NullString
+	err := row.Scan(&id, &aid, &wfID, &pw.PricePence, &pw.NormalOutput, &pw.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.PieceWage{}, ErrNotFound
 	}
@@ -1150,6 +1155,9 @@ func (m *MySQL) GetPieceWage(ctx context.Context, agentID agent.AgentID) (agent.
 	}
 	pw.ID = agent.PieceWageID(id)
 	pw.AgentID = agent.AgentID(aid)
+	if wfID.Valid {
+		pw.WageFormID = agent.WageFormID(wfID.String)
+	}
 	return pw, nil
 }
 
