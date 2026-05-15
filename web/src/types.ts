@@ -1126,3 +1126,42 @@ export interface RegisterDayWageInput {
   nominal_pence: number;
   working_day_minutes: number;
 }
+
+// --- simulation-engine types (Ch. 23: Simple Reproduction) -------------------
+
+export interface SimpleReproductionInput {
+  constant_capital: number;
+  variable_capital: number;
+  surplus_rate: number;
+  periods: number;
+}
+
+export interface ReproductionCycleItem {
+  period: number;
+  constant_capital: number;
+  variable_capital: number;
+  surplus_rate: number;
+  surplus_total: number;
+  revenue: number;
+  accumulated: number;
+}
+
+export interface SimpleReproductionResult {
+  constant_capital: number;
+  variable_capital: number;
+  surplus_rate: number;
+  periods: number;
+  cycles: ReproductionCycleItem[];
+  repayment_period: number;
+}
+
+export interface RepaymentPeriodInput {
+  capital: number;
+  annual_revenue: number;
+}
+
+export interface RepaymentPeriodResult {
+  capital: number;
+  annual_revenue: number;
+  repayment_period: number;
+}

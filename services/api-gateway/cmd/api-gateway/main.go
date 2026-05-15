@@ -158,6 +158,10 @@ func main() {
 	// Ch. 18 — Various Formula for the Rate of Surplus-Value → simulation-engine
 	srv.Handle("/v1/surplus-value/rates", simProxy)
 
+	// Ch. 23 — Simple Reproduction → simulation-engine
+	srv.Handle("/v1/reproductions/simple", simProxy)
+	srv.Handle("/v1/reproductions/repayment-period", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -169,15 +173,15 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-19-transformation-of-value-of-labour-power-into-wages",
-		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation/wage-form routes to agent-service; machine/factory/surplus-value routes to simulation-engine.",
+		"status":      "ch-23-simple-reproduction",
+		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation/wage-form routes to agent-service; machine/factory/surplus-value/reproduction routes to simulation-engine.",
 		"downstream": []string{
 			"commodity-service",
 			"agent-service",
 			"market-service",
 			"simulation-engine",
 		},
-		"chapter": "Capital Vol. I, Ch. 19 — The Transformation of the Value of Labour-Power into Wages",
+		"chapter": "Capital Vol. I, Ch. 23 — Simple Reproduction",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)

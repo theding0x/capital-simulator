@@ -1,4 +1,8 @@
 import type {
+  RepaymentPeriodInput,
+  RepaymentPeriodResult,
+  SimpleReproductionInput,
+  SimpleReproductionResult,
   Agent,
   CapitalCircuit,
   CapitalCompositionResult,
@@ -720,4 +724,18 @@ export const api = {
 
   getWageComparison: (referenceDayMinutes = 600) =>
     http<WageComparison>(`/v1/comparisons?reference_day_minutes=${referenceDayMinutes}`),
+
+  // --- simulation-engine (Ch. 23: Simple Reproduction) ---
+
+  runSimpleReproduction: (input: SimpleReproductionInput) =>
+    http<SimpleReproductionResult>("/v1/reproductions/simple", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  computeRepaymentPeriod: (input: RepaymentPeriodInput) =>
+    http<RepaymentPeriodResult>("/v1/reproductions/repayment-period", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

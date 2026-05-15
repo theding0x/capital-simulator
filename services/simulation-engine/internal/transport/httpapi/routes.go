@@ -35,4 +35,8 @@ func Register(s *httpx.Server, h *Handler) {
 
 	// Ch. 18 — Various Formula for the Rate of Surplus-Value
 	s.HandleFunc("POST /v1/surplus-value/rates", h.ComputeRatesOfSurplusValue)
+
+	// Ch. 23 — Simple Reproduction
+	s.HandleFunc("POST /v1/reproductions/simple", h.RunSimpleReproduction)
+	s.HandleFunc("POST /v1/reproductions/repayment-period", h.ComputeRepaymentPeriod)
 }

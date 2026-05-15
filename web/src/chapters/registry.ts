@@ -38,7 +38,7 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "ch21", number: 21, title: "Piece-Wages",                                           part: "Part VI — Wages",                                      status: "done"    },
   { id: "ch22", number: 22, title: "National Differences in Wages",                         part: "Part VI — Wages",                                      status: "done" },
   // Part VII — The Accumulation of Capital
-  { id: "ch23", number: 23, title: "Simple Reproduction",                                   part: "Part VII — The Accumulation of Capital",               status: "pending" },
+  { id: "ch23", number: 23, title: "Simple Reproduction",                                   part: "Part VII — The Accumulation of Capital",               status: "done" },
   { id: "ch24", number: 24, title: "The Transformation of Surplus-Value into Capital",      part: "Part VII — The Accumulation of Capital",               status: "pending" },
   { id: "ch25", number: 25, title: "The General Law of Capitalist Accumulation",            part: "Part VII — The Accumulation of Capital",               status: "pending" },
   // Part VIII — So-Called Primitive Accumulation
