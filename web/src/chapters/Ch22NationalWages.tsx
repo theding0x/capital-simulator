@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import type { WageComparison } from "../types";
+import { useCurrency, usePounds } from "../CurrencyContext";
 import "./Ch22NationalWages.css";
 
 export function Ch22NationalWages() {
+  const { modern } = useCurrency();
+  const fmt = usePounds();
   const [comparison, setComparison] = useState<WageComparison | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -81,7 +84,7 @@ export function Ch22NationalWages() {
               <thead>
                 <tr>
                   <th>Country</th>
-                  <th>Nominal Wage (d.)</th>
+                  <th>{modern ? "Nominal Wage (2025 £)" : "Nominal Wage (d.)"}</th>
                   <th>Std. Wage (600 min)</th>
                   <th>Relative Price</th>
                   <th>Spindles/Worker</th>
@@ -99,8 +102,8 @@ export function Ch22NationalWages() {
                         {dw.country_code}
                         {isGB && <span className="ch22-paradox-tag"> &#9733; paradox</span>}
                       </td>
-                      <td>{dw.nominal_pence}d.</td>
-                      <td>{std !== undefined ? `${std}d.` : "—"}</td>
+                      <td>{modern ? fmt(dw.nominal_pence) : `${dw.nominal_pence}d.`}</td>
+                      <td>{std !== undefined ? (modern ? fmt(std) : `${std}d.`) : "—"}</td>
                       <td>{rel !== undefined ? rel.toFixed(3) : "—"}</td>
                       <td>{spindles !== undefined ? spindles : "—"}</td>
                     </tr>

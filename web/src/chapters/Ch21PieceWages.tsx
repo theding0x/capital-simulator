@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { api } from "../api";
 import type { ComputePiecePriceResult, PieceWage } from "../types";
+import { usePounds } from "../CurrencyContext";
 import "./Ch21PieceWages.css";
 
 export function Ch21PieceWages() {
+  const fmt = usePounds();
   const [dailyWage, setDailyWage] = useState(144);
   const [dayValueProduct, setDayValueProduct] = useState(288);
   const [normalOutput, setNormalOutput] = useState(24);
@@ -227,11 +229,11 @@ export function Ch21PieceWages() {
         {contract && (
           <dl className="ch21-contract-result">
             <dt>Piece price</dt>
-            <dd>{contract.price_pence}d.</dd>
+            <dd>{fmt(contract.price_pence)}</dd>
             <dt>Normal output</dt>
             <dd>{contract.normal_output} pieces</dd>
             <dt>Implied daily wage</dt>
-            <dd className="ch21-total">{contract.implied_daily_wage}d.</dd>
+            <dd className="ch21-total">{fmt(contract.implied_daily_wage)}</dd>
           </dl>
         )}
       </section>

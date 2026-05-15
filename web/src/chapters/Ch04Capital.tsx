@@ -2,13 +2,10 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import type { Agent, CapitalCircuit } from "../types";
+import { usePounds } from "../CurrencyContext";
 
 interface Ch04Props {
   onSharedChanged: () => void;
-}
-
-function penceToGBP(pence: number): string {
-  return `£${(pence / 100).toFixed(2)}`;
 }
 
 export function Ch04Capital({ onSharedChanged: _onSharedChanged }: Ch04Props) {
@@ -121,6 +118,7 @@ function AgentClassSection({
 }
 
 function AgentCard({ agent: a, onChanged }: { agent: Agent; onChanged: () => void }) {
+  const fmt = usePounds();
   const [circuits, setCircuits] = useState<CapitalCircuit[]>([]);
   const [showCircuits, setShowCircuits] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -149,7 +147,7 @@ function AgentCard({ agent: a, onChanged }: { agent: Agent; onChanged: () => voi
     <div className="item-card">
       <div className="item-header">
         <span className="item-name">{a.name}</span>
-        <span className="item-meta">{penceToGBP(a.money_balance)}</span>
+        <span className="item-meta">{fmt(a.money_balance)}</span>
         {a.hoarding && <span className="item-tag">hoarding</span>}
       </div>
       <div className="item-actions">
@@ -183,6 +181,7 @@ function AgentCard({ agent: a, onChanged }: { agent: Agent; onChanged: () => voi
 }
 
 function CircuitTable({ circuits }: { circuits: CapitalCircuit[] }) {
+  const fmt = usePounds();
   if (circuits.length === 0) return <p className="muted small">No circuits yet.</p>;
   return (
     <table className="data-table">
@@ -199,16 +198,16 @@ function CircuitTable({ circuits }: { circuits: CapitalCircuit[] }) {
         {circuits.map((c) => (
           <tr key={c.id}>
             <td>{c.circuit_type}</td>
-            <td>{penceToGBP(c.m_advanced)}</td>
+            <td>{fmt(c.m_advanced)}</td>
             <td className="monospace small">{c.commodity_id.slice(0, 8)}&hellip;</td>
-            <td>{penceToGBP(c.m_returned)}</td>
+            <td>{fmt(c.m_returned)}</td>
             <td
               className={
                 c.surplus_value > 0 ? "positive" : c.surplus_value < 0 ? "negative" : ""
               }
             >
               {c.surplus_value > 0 ? "+" : ""}
-              {penceToGBP(c.surplus_value)}
+              {fmt(c.surplus_value)}
             </td>
           </tr>
         ))}

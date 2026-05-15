@@ -29,6 +29,9 @@ go.work.sum
 !.env.example
 *.local
 
+# Claude Code local config (contains machine-specific permissions)
+.claude/settings.local.json
+
 # Node / web
 web/node_modules/
 web/dist/

@@ -2,13 +2,10 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import type { CircuitProof, ExchangeSimulation } from "../types";
+import { usePounds } from "../CurrencyContext";
 
 interface Ch05Props {
   onSharedChanged: () => void;
-}
-
-function penceToGBP(pence: number): string {
-  return `£${(pence / 100).toFixed(2)}`;
 }
 
 export function Ch05Contradictions({ onSharedChanged: _onSharedChanged }: Ch05Props) {
@@ -21,6 +18,7 @@ export function Ch05Contradictions({ onSharedChanged: _onSharedChanged }: Ch05Pr
 }
 
 function CircuitProbePanel() {
+  const fmt = usePounds();
   const [m, setM] = useState(10000);
   const [commodityId, setCommodityId] = useState("cotton");
   const [mPrime, setMPrime] = useState(10000);
@@ -82,9 +80,9 @@ function CircuitProbePanel() {
         <div className="item-card">
           <div className="item-header">
             <span className="item-name">
-              {penceToGBP(result.m)}
+              {fmt(result.m)}
               {result.commodity_id ? ` → C (${result.commodity_id.slice(0, 8)}…) →` : " →"}
-              {" "}{penceToGBP(result.m_prime)}
+              {" "}{fmt(result.m_prime)}
             </span>
             <span className={`item-tag${result.origin === "redistribution" ? " negative" : ""}`}>
               {result.origin}
@@ -92,7 +90,7 @@ function CircuitProbePanel() {
           </div>
           <p className="small muted">
             ∆M = {result.surplus_value >= 0 ? "+" : ""}
-            {penceToGBP(result.surplus_value)}.{" "}
+            {fmt(result.surplus_value)}.{" "}
             {result.origin === "redistribution"
               ? "Value was redistributed between parties, not created."
               : "Exchange at value: no surplus arose from circulation."}
@@ -104,6 +102,7 @@ function CircuitProbePanel() {
 }
 
 function ExchangeSimulationPanel() {
+  const fmt = usePounds();
   const [aValue, setAValue] = useState(5000);
   const [bValue, setBValue] = useState(5000);
   const [result, setResult] = useState<ExchangeSimulation | null>(null);
@@ -168,8 +167,8 @@ function ExchangeSimulationPanel() {
             <tbody>
               <tr>
                 <td>A</td>
-                <td>{penceToGBP(result.a_before)}</td>
-                <td>{penceToGBP(result.a_after)}</td>
+                <td>{fmt(result.a_before)}</td>
+                <td>{fmt(result.a_after)}</td>
                 <td
                   className={
                     result.a_after > result.a_before
@@ -180,13 +179,13 @@ function ExchangeSimulationPanel() {
                   }
                 >
                   {result.a_after >= result.a_before ? "+" : ""}
-                  {penceToGBP(result.a_after - result.a_before)}
+                  {fmt(result.a_after - result.a_before)}
                 </td>
               </tr>
               <tr>
                 <td>B</td>
-                <td>{penceToGBP(result.b_before)}</td>
-                <td>{penceToGBP(result.b_after)}</td>
+                <td>{fmt(result.b_before)}</td>
+                <td>{fmt(result.b_after)}</td>
                 <td
                   className={
                     result.b_after > result.b_before
@@ -197,16 +196,16 @@ function ExchangeSimulationPanel() {
                   }
                 >
                   {result.b_after >= result.b_before ? "+" : ""}
-                  {penceToGBP(result.b_after - result.b_before)}
+                  {fmt(result.b_after - result.b_before)}
                 </td>
               </tr>
               <tr>
                 <td>
                   <strong>Total</strong>
                 </td>
-                <td>{penceToGBP(totalBefore)}</td>
-                <td>{penceToGBP(totalAfter)}</td>
-                <td>{penceToGBP(totalAfter - totalBefore)}</td>
+                <td>{fmt(totalBefore)}</td>
+                <td>{fmt(totalAfter)}</td>
+                <td>{fmt(totalAfter - totalBefore)}</td>
               </tr>
             </tbody>
           </table>

@@ -32,6 +32,19 @@ export function fmtPounds(p: number): string {
   return `${sign}£${pounds}.${pence.toString().padStart(2, "0")}`;
 }
 
+// MODERN_MULTIPLIER converts 1860s pence to 2025 GBP equivalents.
+// Source: Bank of England CPI calculator — £100 (1860s) = £15,782.99 (2025).
+export const MODERN_MULTIPLIER = 157.8299;
+
+// fmtPoundsModern renders a pence integer as its 2025 purchasing-power
+// equivalent: £15,782.99 for 10000 pence (= £100 in 1860s).
+export function fmtPoundsModern(p: number): string {
+  if (!Number.isFinite(p)) return "—";
+  const sign = p < 0 ? "-" : "";
+  const modernPounds = Math.abs(p) * MODERN_MULTIPLIER / 100;
+  return `${sign}£${modernPounds.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 // fmtCompact renders a number with locale grouping. Used in the
 // machinery panel for counts of units / labour-minutes.
 export function fmtCompact(n: number): string {
