@@ -19,7 +19,7 @@ CREATE TABLE primitive_accumulations (
         FOREIGN KEY (stage_id) REFERENCES historical_stages(id)
         ON DELETE CASCADE,
     KEY idx_primitive_accumulations_stage (stage_id, ordinal)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- +goose Down
 DROP TABLE IF EXISTS primitive_accumulations;

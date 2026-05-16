@@ -9,11 +9,20 @@ import (
 	"sort"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
+
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
+
+// isDuplicateKey reports whether err is a MySQL duplicate-key error (1062),
+// which the handler layer maps to a 409 Conflict via ErrAlreadyExists.
+func isDuplicateKey(err error) bool {
+	var me *mysql.MySQLError
+	return errors.As(err, &me) && me.Number == 1062
+}
 
 //go:embed migrations
 var migrationsFS embed.FS
@@ -434,6 +443,9 @@ func (m *MySQL) CreateHistoricalStage(ctx context.Context, h simulation.Historic
 	if _, err := tx.ExecContext(ctx, insertStage,
 		string(h.ID), h.Name, h.Description, h.CreatedAt,
 	); err != nil {
+		if isDuplicateKey(err) {
+			return simulation.HistoricalStage{}, ErrAlreadyExists
+		}
 		return simulation.HistoricalStage{}, err
 	}
 	const insertEpisode = `INSERT INTO primitive_accumulations
