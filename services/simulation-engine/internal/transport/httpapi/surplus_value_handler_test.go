@@ -10,7 +10,7 @@ import (
 
 func newSurplusValueTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
-	h := New(nil, nil, nil, nil)
+	h := New(nil, nil, nil, nil, nil)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/surplus-value/absolute", h.ComputeAbsoluteSurplusValue)
 	mux.HandleFunc("POST /v1/surplus-value/relative", h.ComputeRelativeSurplusValue)
