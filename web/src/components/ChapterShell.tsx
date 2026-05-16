@@ -26,6 +26,7 @@ import { Ch22NationalWages } from "../chapters/Ch22NationalWages";
 import { Ch23SimpleReproduction } from "../chapters/Ch23SimpleReproduction";
 import { Ch24AccumulationOfCapital } from "../chapters/Ch24AccumulationOfCapital";
 import { Ch25GeneralLaw } from "../chapters/Ch25GeneralLaw";
+import { Ch26PrimitiveAccumulation } from "../chapters/Ch26PrimitiveAccumulation";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -70,6 +71,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch23: Ch23SimpleReproduction as AnyPanel,
   ch24: Ch24AccumulationOfCapital as AnyPanel,
   ch25: Ch25GeneralLaw as AnyPanel,
+  ch26: Ch26PrimitiveAccumulation as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -98,6 +100,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch23: "Whatever the form of the process of production in a society, it must be a continuous process, must continue to go periodically through the same phases.",
   ch24: "Accumulation of capital is, therefore, increase of the proletariat.",
   ch25: "Accumulation of wealth at one pole is, therefore, at the same time accumulation of misery, agony of toil, slavery, ignorance, brutality, mental degradation, at the opposite pole.",
+  ch26: "Capital is not a thing, but a social relation between persons, established by the instrumentality of things.",
 };
 
 export function ChapterShell({

@@ -13,7 +13,7 @@ import (
 func newMachineryTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	st := store.NewMemory()
-	h := New(nil, st, st, nil, nil)
+	h := New(nil, st, st, nil, nil, nil)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/machines", h.CreateMachine)
 	mux.HandleFunc("GET /v1/machines", h.ListMachines)

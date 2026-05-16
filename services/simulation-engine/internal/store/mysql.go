@@ -9,11 +9,20 @@ import (
 	"sort"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
+
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
+
+// isDuplicateKey reports whether err is a MySQL duplicate-key error (1062),
+// which the handler layer maps to a 409 Conflict via ErrAlreadyExists.
+func isDuplicateKey(err error) bool {
+	var me *mysql.MySQLError
+	return errors.As(err, &me) && me.Number == 1062
+}
 
 //go:embed migrations
 var migrationsFS embed.FS
@@ -413,6 +422,126 @@ func (m *MySQL) GetGeneralLawScenario(ctx context.Context, id simulation.General
 		FROM general_law_scenarios WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	return scanGeneralLawScenario(row.Scan)
+}
+
+func (m *MySQL) CreateHistoricalStage(ctx context.Context, h simulation.HistoricalStage) (simulation.HistoricalStage, error) {
+	if err := h.Validate(); err != nil {
+		return simulation.HistoricalStage{}, err
+	}
+	if h.ID.IsZero() {
+		h.ID = simulation.NewHistoricalStageID()
+	}
+	h.CreatedAt = m.now().UTC()
+
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return simulation.HistoricalStage{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const insertStage = `INSERT INTO historical_stages (id, name, description, created_at) VALUES (?, ?, ?, ?)`
+	if _, err := tx.ExecContext(ctx, insertStage,
+		string(h.ID), h.Name, h.Description, h.CreatedAt,
+	); err != nil {
+		if isDuplicateKey(err) {
+			return simulation.HistoricalStage{}, ErrAlreadyExists
+		}
+		return simulation.HistoricalStage{}, err
+	}
+	const insertEpisode = `INSERT INTO primitive_accumulations
+		(id, stage_id, ordinal, period, method, labourers_expropriated, capital_formed)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	for i, p := range h.PrimitiveAccumulations {
+		episodeID := simulation.NewHistoricalStageID()
+		if _, err := tx.ExecContext(ctx, insertEpisode,
+			string(episodeID), string(h.ID), i,
+			p.Period, p.Method, p.LabourersExpropriated, int64(p.CapitalFormed),
+		); err != nil {
+			return simulation.HistoricalStage{}, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return simulation.HistoricalStage{}, err
+	}
+	return h, nil
+}
+
+func (m *MySQL) GetHistoricalStage(ctx context.Context, id simulation.HistoricalStageID) (simulation.HistoricalStage, error) {
+	const q = `SELECT id, name, description, created_at FROM historical_stages WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	h, err := scanHistoricalStage(row.Scan)
+	if err != nil {
+		return simulation.HistoricalStage{}, err
+	}
+	episodes, err := m.episodesForStage(ctx, id)
+	if err != nil {
+		return simulation.HistoricalStage{}, err
+	}
+	h.PrimitiveAccumulations = episodes
+	return h, nil
+}
+
+func (m *MySQL) ListHistoricalStages(ctx context.Context) ([]simulation.HistoricalStage, error) {
+	const q = `SELECT id, name, description, created_at FROM historical_stages ORDER BY name ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []simulation.HistoricalStage
+	for rows.Next() {
+		h, err := scanHistoricalStage(rows.Scan)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, h)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	for i := range out {
+		episodes, err := m.episodesForStage(ctx, out[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		out[i].PrimitiveAccumulations = episodes
+	}
+	return out, nil
+}
+
+func (m *MySQL) episodesForStage(ctx context.Context, id simulation.HistoricalStageID) ([]simulation.PrimitiveAccumulation, error) {
+	const q = `SELECT period, method, labourers_expropriated, capital_formed
+		FROM primitive_accumulations WHERE stage_id = ? ORDER BY ordinal ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(id))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []simulation.PrimitiveAccumulation
+	for rows.Next() {
+		var p simulation.PrimitiveAccumulation
+		var capital int64
+		if err := rows.Scan(&p.Period, &p.Method, &p.LabourersExpropriated, &capital); err != nil {
+			return nil, err
+		}
+		p.CapitalFormed = simulation.Pence(capital)
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
+func scanHistoricalStage(scan scanFn) (simulation.HistoricalStage, error) {
+	var h simulation.HistoricalStage
+	var id string
+	err := scan(&id, &h.Name, &h.Description, &h.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return simulation.HistoricalStage{}, ErrNotFound
+	}
+	if err != nil {
+		return simulation.HistoricalStage{}, err
+	}
+	h.ID = simulation.HistoricalStageID(id)
+	return h, nil
 }
 
 func scanGeneralLawScenario(scan scanFn) (simulation.GeneralLawScenario, error) {

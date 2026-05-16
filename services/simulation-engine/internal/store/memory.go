@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,24 +12,28 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
 
-// Memory is the in-memory implementation of MachineStore, FactoryStore, and
-// GeneralLawStore.
+// Memory is the in-memory implementation of MachineStore, FactoryStore,
+// GeneralLawStore, and HistoricalStageStore.
 type Memory struct {
-	mu          sync.RWMutex
-	machines    map[machinery.MachineID]machinery.Machine
-	factories   map[machinery.FactoryID]machinery.Factory
-	ticks       map[machinery.FactoryID][]engine.Tick
-	generalLaw  map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario
-	now         func() time.Time
+	mu               sync.RWMutex
+	machines         map[machinery.MachineID]machinery.Machine
+	factories        map[machinery.FactoryID]machinery.Factory
+	ticks            map[machinery.FactoryID][]engine.Tick
+	generalLaw       map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario
+	historicalStages map[simulation.HistoricalStageID]simulation.HistoricalStage
+	stageNames       map[string]simulation.HistoricalStageID
+	now              func() time.Time
 }
 
 func NewMemory() *Memory {
 	return &Memory{
-		machines:   make(map[machinery.MachineID]machinery.Machine),
-		factories:  make(map[machinery.FactoryID]machinery.Factory),
-		ticks:      make(map[machinery.FactoryID][]engine.Tick),
-		generalLaw: make(map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario),
-		now:        time.Now,
+		machines:         make(map[machinery.MachineID]machinery.Machine),
+		factories:        make(map[machinery.FactoryID]machinery.Factory),
+		ticks:            make(map[machinery.FactoryID][]engine.Tick),
+		generalLaw:       make(map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario),
+		historicalStages: make(map[simulation.HistoricalStageID]simulation.HistoricalStage),
+		stageNames:       make(map[string]simulation.HistoricalStageID),
+		now:              time.Now,
 	}
 }
 
@@ -220,6 +225,59 @@ func (m *Memory) GetGeneralLawScenario(_ context.Context, id simulation.GeneralL
 		return simulation.GeneralLawScenario{}, ErrNotFound
 	}
 	return s, nil
+}
+
+func (m *Memory) CreateHistoricalStage(_ context.Context, h simulation.HistoricalStage) (simulation.HistoricalStage, error) {
+	if err := h.Validate(); err != nil {
+		return simulation.HistoricalStage{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.stageNames[strings.ToLower(h.Name)]; ok {
+		return simulation.HistoricalStage{}, ErrAlreadyExists
+	}
+	if h.ID.IsZero() {
+		h.ID = simulation.NewHistoricalStageID()
+	}
+	if _, ok := m.historicalStages[h.ID]; ok {
+		return simulation.HistoricalStage{}, ErrAlreadyExists
+	}
+	h.CreatedAt = m.now().UTC()
+	stored := simulation.HistoricalStage{
+		ID:                     h.ID,
+		Name:                   h.Name,
+		Description:            h.Description,
+		PrimitiveAccumulations: append([]simulation.PrimitiveAccumulation(nil), h.PrimitiveAccumulations...),
+		CreatedAt:              h.CreatedAt,
+	}
+	m.historicalStages[h.ID] = stored
+	m.stageNames[strings.ToLower(h.Name)] = h.ID
+	return stored, nil
+}
+
+func (m *Memory) GetHistoricalStage(_ context.Context, id simulation.HistoricalStageID) (simulation.HistoricalStage, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	h, ok := m.historicalStages[id]
+	if !ok {
+		return simulation.HistoricalStage{}, ErrNotFound
+	}
+	cp := h
+	cp.PrimitiveAccumulations = append([]simulation.PrimitiveAccumulation(nil), h.PrimitiveAccumulations...)
+	return cp, nil
+}
+
+func (m *Memory) ListHistoricalStages(_ context.Context) ([]simulation.HistoricalStage, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.HistoricalStage, 0, len(m.historicalStages))
+	for _, h := range m.historicalStages {
+		cp := h
+		cp.PrimitiveAccumulations = append([]simulation.PrimitiveAccumulation(nil), h.PrimitiveAccumulations...)
+		out = append(out, cp)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out, nil
 }
 
 func (m *Memory) ListTicks(_ context.Context, id machinery.FactoryID, limit int) ([]engine.Tick, error) {

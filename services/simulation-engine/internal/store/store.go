@@ -55,3 +55,11 @@ type GeneralLawStore interface {
 	CreateGeneralLawScenario(ctx context.Context, s simulation.GeneralLawScenario) (simulation.GeneralLawScenario, error)
 	GetGeneralLawScenario(ctx context.Context, id simulation.GeneralLawScenarioID) (simulation.GeneralLawScenario, error)
 }
+
+// HistoricalStageStore is the persistence contract for Ch. 26 historical
+// stages and their primitive-accumulation episodes.
+type HistoricalStageStore interface {
+	CreateHistoricalStage(ctx context.Context, h simulation.HistoricalStage) (simulation.HistoricalStage, error)
+	GetHistoricalStage(ctx context.Context, id simulation.HistoricalStageID) (simulation.HistoricalStage, error)
+	ListHistoricalStages(ctx context.Context) ([]simulation.HistoricalStage, error)
+}
