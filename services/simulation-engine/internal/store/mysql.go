@@ -605,3 +605,44 @@ func scanFactory(scan scanFn) (machinery.Factory, error) {
 	f.IntensityFactor = machinery.IntensityFactor(intensity)
 	return f, nil
 }
+
+func (m *MySQL) CreateEnclosureEvent(ctx context.Context, e simulation.EnclosureEvent) (simulation.EnclosureEvent, error) {
+	if err := e.Validate(); err != nil {
+		return simulation.EnclosureEvent{}, err
+	}
+	if e.ID.IsZero() {
+		e.ID = simulation.NewEnclosureEventID()
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = m.now()
+	}
+	const q = `INSERT INTO enclosure_events (id, period, acres_enclosed, population_displaced, beneficiary, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q, string(e.ID), e.Period, e.AcresEnclosed, e.PopulationDisplaced, e.Beneficiary, e.CreatedAt)
+	if err != nil {
+		return simulation.EnclosureEvent{}, err
+	}
+	return e, nil
+}
+
+func (m *MySQL) ListEnclosureEvents(ctx context.Context) ([]simulation.EnclosureEvent, error) {
+	const q = `SELECT id, period, acres_enclosed, population_displaced, beneficiary, created_at FROM enclosure_events ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []simulation.EnclosureEvent
+	for rows.Next() {
+		var e simulation.EnclosureEvent
+		var id string
+		if err := rows.Scan(&id, &e.Period, &e.AcresEnclosed, &e.PopulationDisplaced, &e.Beneficiary, &e.CreatedAt); err != nil {
+			return nil, err
+		}
+		e.ID = simulation.EnclosureEventID(id)
+		out = append(out, e)
+	}
+	if out == nil {
+		out = []simulation.EnclosureEvent{}
+	}
+	return out, rows.Err()
+}

@@ -174,6 +174,10 @@ func main() {
 	srv.Handle("/v1/historical-stages", simProxy)
 	srv.Handle("/v1/historical-stages/{rest...}", simProxy)
 
+	// Ch. 27 — Expropriation of the Agricultural Population → simulation-engine
+	srv.Handle("/v1/enclosure-events", simProxy)
+	srv.Handle("/v1/enclosure-events/{rest...}", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {

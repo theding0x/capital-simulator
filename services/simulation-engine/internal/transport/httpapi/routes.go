@@ -55,4 +55,8 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/historical-stages", h.CreateHistoricalStage)
 	s.HandleFunc("GET /v1/historical-stages", h.ListHistoricalStages)
 	s.HandleFunc("POST /v1/historical-stages/{id}/seed-scenario", h.SeedScenarioFromStage)
+
+	// Ch. 27 — Expropriation of the Agricultural Population
+	s.HandleFunc("POST /v1/enclosure-events", h.CreateEnclosureEvent)
+	s.HandleFunc("GET /v1/enclosure-events", h.ListEnclosureEvents)
 }
