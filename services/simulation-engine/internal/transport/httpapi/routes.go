@@ -59,4 +59,10 @@ func Register(s *httpx.Server, h *Handler) {
 	// Ch. 27 — Expropriation of the Agricultural Population
 	s.HandleFunc("POST /v1/enclosure-events", h.CreateEnclosureEvent)
 	s.HandleFunc("GET /v1/enclosure-events", h.ListEnclosureEvents)
+
+	// Ch. 28 — Bloody Legislation Against the Expropriated
+	s.HandleFunc("POST /v1/historical-stages/{id}/wage-statutes", h.CreateWageStatute)
+	s.HandleFunc("POST /v1/historical-stages/{id}/vagrancy-laws", h.CreateVagrancyLaw)
+	s.HandleFunc("GET /v1/historical-stages/{id}/labour-discipline", h.GetLabourDiscipline)
+	s.HandleFunc("POST /v1/statutory-wages/compare", h.CompareStatutoryWage)
 }

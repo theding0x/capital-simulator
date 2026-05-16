@@ -44,7 +44,7 @@ export const CHAPTERS: ChapterDef[] = [
   // Part VIII — So-Called Primitive Accumulation
   { id: "ch26", number: 26, title: "The Secret of Primitive Accumulation",                  part: "Part VIII — So-Called Primitive Accumulation",         status: "done"    },
   { id: "ch27", number: 27, title: "Expropriation of the Agricultural Population",          part: "Part VIII — So-Called Primitive Accumulation",         status: "done"    },
-  { id: "ch28", number: 28, title: "Bloody Legislation against the Expropriated",           part: "Part VIII — So-Called Primitive Accumulation",         status: "pending" },
+  { id: "ch28", number: 28, title: "Bloody Legislation against the Expropriated",           part: "Part VIII — So-Called Primitive Accumulation",         status: "done"    },
   { id: "ch29", number: 29, title: "Genesis of the Capitalist Farmer",                      part: "Part VIII — So-Called Primitive Accumulation",         status: "pending" },
   { id: "ch30", number: 30, title: "Reaction of the Agricultural Revolution on Industry",   part: "Part VIII — So-Called Primitive Accumulation",         status: "pending" },
   { id: "ch31", number: 31, title: "Genesis of the Industrial Capitalist",                  part: "Part VIII — So-Called Primitive Accumulation",         status: "pending" },

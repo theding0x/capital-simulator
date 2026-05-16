@@ -95,6 +95,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 25    | ✅ Done     | General law of capitalist accumulation; ValueComposition, OrganicComposition, LabourDemand, IndustrialReserveArmy, GeneralLawScenario, RunGeneralLaw | simulation-engine |
 | Ch. 26    | ✅ Done     | Secret of primitive accumulation; HistoricalStage, PrimitiveAccumulation, ProducerSeparation, SeparationFromStage, SeedCapitalStock | simulation-engine |
 | Ch. 27    | ✅ Done     | Expropriation of agricultural population; EnclosureEvent, displacement timeline, key English enclosure waves | simulation-engine |
+| Ch. 28    | ✅ Done     | Bloody legislation; WageStatute, VagrancyLaw, StatutoryWage, LabourDisciplineRegime, statutory-vs-market wage comparison | simulation-engine |
 
 ### Ch. 1 — what was built
 
@@ -370,6 +371,19 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints.** `POST /v1/historical-stages` (create stage + episodes in a single transaction, returns 201 + Location; 409 on duplicate name); `GET /v1/historical-stages` (list); `POST /v1/historical-stages/{id}/seed-scenario` (derive starting `CapitalStock` and `ProducerSeparation`, run `RunSimpleReproduction` over them, return cycles inline).
 - **api-gateway.** Reverse-proxies `/v1/historical-stages` and `/v1/historical-stages/{rest...}` to simulation-engine.
 - **React UI.** "Ch. 26 — Primitive Accumulation" panel: stages table with totals; create-stage form with editable episode rows and an England 15th–18th c. preset; seed-scenario form (pre-capitalist workers, organic composition, surplus rate, periods) that derives the starting capital, projects the separation, and runs a simple-reproduction series. The panel makes explicit the chapter's thesis: *capital is not a thing but a social relation — these numbers are the record of expropriation*.
+
+### Ch. 28 — what was built
+
+`simulation-engine` adds the state-coercion domain from Capital Vol. I, Ch. 28 — the extra-economic force bridging expropriation and the mature wage-labour relation.
+
+- **WageStatute.** `WageStatute{ID, HistoricalStageID, Period, Jurisdiction, MaxWagePence, MinWagePence, EnforcementPenalty, CreatedAt}` — a legal ceiling or floor on wages. `Validate()` enforces `MaxWagePence ≥ MinWagePence ≥ 0`, non-empty `Period`, `Jurisdiction`, and `EnforcementPenalty`.
+- **VagrancyLaw.** `VagrancyLaw{ID, HistoricalStageID, Period, Jurisdiction, Punishment, TargetPopulation, CreatedAt}` — a statute converting the dispossessed into compulsory wage-labourers.
+- **StatutoryWage.** Pure struct; `ComputeStatutoryWage(acted, market int64)` computes `Deviation = (acted − market) / market`. Negative deviation = statutory cap suppresses wages below market.
+- **LabourDisciplineRegime.** Computed aggregate; `AssembleRegime(stagePeriod, wageStatutes, vagrancyLaws)` deduplicates enforcement mechanisms across all records. Empty regime = post-1825 market compulsion.
+- **Migration.** `00014_ch28_wage_statutes.sql` adds `wage_statutes` and `vagrancy_laws` tables. `00015_ch28_seed.sql` seeds the Statute of Labourers 1349, George II tailors statute 1740s, Henry VIII vagrancy act 1530, and 39 Elizabeth 1597 — all linked to the seeded England 15th–18th c. historical stage.
+- **HTTP endpoints.** `POST /v1/historical-stages/{id}/wage-statutes`; `POST /v1/historical-stages/{id}/vagrancy-laws`; `GET /v1/historical-stages/{id}/labour-discipline` (returns assembled regime); `POST /v1/statutory-wages/compare` (stateless).
+- **api-gateway.** Adds `/v1/statutory-wages` and `/v1/statutory-wages/{rest...}` proxy rules (historical-stages sub-paths already covered).
+- **React UI.** Ch. 28 panel: stage selector; add-wage-statute form with 1349/1740s presets; add-vagrancy-law form with 1530/1597 presets; labour discipline regime table; statutory-vs-market deviation calculator.
 
 ### Ch. 27 — what was built
 

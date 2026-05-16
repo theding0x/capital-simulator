@@ -69,3 +69,15 @@ type EnclosureEventStore interface {
 	CreateEnclosureEvent(ctx context.Context, e simulation.EnclosureEvent) (simulation.EnclosureEvent, error)
 	ListEnclosureEvents(ctx context.Context) ([]simulation.EnclosureEvent, error)
 }
+
+// WageStatuteStore is the persistence contract for Ch. 28 wage statutes.
+type WageStatuteStore interface {
+	CreateWageStatute(ctx context.Context, w simulation.WageStatute) (simulation.WageStatute, error)
+	ListWageStatutesByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.WageStatute, error)
+}
+
+// VagrancyLawStore is the persistence contract for Ch. 28 vagrancy laws.
+type VagrancyLawStore interface {
+	CreateVagrancyLaw(ctx context.Context, v simulation.VagrancyLaw) (simulation.VagrancyLaw, error)
+	ListVagrancyLawsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.VagrancyLaw, error)
+}

@@ -135,6 +135,12 @@ import type {
   SeedScenarioResult,
   EnclosureEvent,
   EnclosureEventInput,
+  WageStatute,
+  WageStatuteInput,
+  VagrancyLaw,
+  VagrancyLawInput,
+  StatutoryWage,
+  LabourDisciplineRegime,
 } from "./types";
 
 const BASE = "/api";
@@ -827,4 +833,27 @@ export const api = {
 
   listEnclosureEvents: () =>
     http<EnclosureEvent[]>("/v1/enclosure-events"),
+
+  // --- simulation-engine (Ch. 28: Bloody Legislation Against the Expropriated) ---
+
+  createWageStatute: (stageId: string, input: WageStatuteInput) =>
+    http<WageStatute>(`/v1/historical-stages/${stageId}/wage-statutes`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createVagrancyLaw: (stageId: string, input: VagrancyLawInput) =>
+    http<VagrancyLaw>(`/v1/historical-stages/${stageId}/vagrancy-laws`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getLabourDiscipline: (stageId: string) =>
+    http<LabourDisciplineRegime>(`/v1/historical-stages/${stageId}/labour-discipline`),
+
+  compareStatutoryWage: (acted: number, market: number) =>
+    http<StatutoryWage>("/v1/statutory-wages/compare", {
+      method: "POST",
+      body: JSON.stringify({ acted_wage_pence: acted, market_wage_pence: market }),
+    }),
 };

@@ -646,3 +646,91 @@ func (m *MySQL) ListEnclosureEvents(ctx context.Context) ([]simulation.Enclosure
 	}
 	return out, rows.Err()
 }
+
+func (m *MySQL) CreateWageStatute(ctx context.Context, w simulation.WageStatute) (simulation.WageStatute, error) {
+	if err := w.Validate(); err != nil {
+		return simulation.WageStatute{}, err
+	}
+	if w.ID.IsZero() {
+		w.ID = simulation.NewWageStatuteID()
+	}
+	if w.CreatedAt.IsZero() {
+		w.CreatedAt = m.now()
+	}
+	const q = `INSERT INTO wage_statutes
+		(id, historical_stage_id, period, jurisdiction, max_wage_pence, min_wage_pence, enforcement_penalty, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(w.ID), string(w.HistoricalStageID),
+		w.Period, w.Jurisdiction, w.MaxWagePence, w.MinWagePence, w.EnforcementPenalty, w.CreatedAt)
+	if err != nil {
+		return simulation.WageStatute{}, err
+	}
+	return w, nil
+}
+
+func (m *MySQL) ListWageStatutesByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.WageStatute, error) {
+	const q = `SELECT id, historical_stage_id, period, jurisdiction, max_wage_pence, min_wage_pence, enforcement_penalty, created_at
+		FROM wage_statutes WHERE historical_stage_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(stageID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.WageStatute, 0)
+	for rows.Next() {
+		var w simulation.WageStatute
+		var id, sid string
+		if err := rows.Scan(&id, &sid, &w.Period, &w.Jurisdiction, &w.MaxWagePence, &w.MinWagePence, &w.EnforcementPenalty, &w.CreatedAt); err != nil {
+			return nil, err
+		}
+		w.ID = simulation.WageStatuteID(id)
+		w.HistoricalStageID = simulation.HistoricalStageID(sid)
+		out = append(out, w)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) CreateVagrancyLaw(ctx context.Context, v simulation.VagrancyLaw) (simulation.VagrancyLaw, error) {
+	if err := v.Validate(); err != nil {
+		return simulation.VagrancyLaw{}, err
+	}
+	if v.ID.IsZero() {
+		v.ID = simulation.NewVagrancyLawID()
+	}
+	if v.CreatedAt.IsZero() {
+		v.CreatedAt = m.now()
+	}
+	const q = `INSERT INTO vagrancy_laws
+		(id, historical_stage_id, period, jurisdiction, punishment, target_population, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(v.ID), string(v.HistoricalStageID),
+		v.Period, v.Jurisdiction, v.Punishment, v.TargetPopulation, v.CreatedAt)
+	if err != nil {
+		return simulation.VagrancyLaw{}, err
+	}
+	return v, nil
+}
+
+func (m *MySQL) ListVagrancyLawsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.VagrancyLaw, error) {
+	const q = `SELECT id, historical_stage_id, period, jurisdiction, punishment, target_population, created_at
+		FROM vagrancy_laws WHERE historical_stage_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(stageID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.VagrancyLaw, 0)
+	for rows.Next() {
+		var v simulation.VagrancyLaw
+		var id, sid string
+		if err := rows.Scan(&id, &sid, &v.Period, &v.Jurisdiction, &v.Punishment, &v.TargetPopulation, &v.CreatedAt); err != nil {
+			return nil, err
+		}
+		v.ID = simulation.VagrancyLawID(id)
+		v.HistoricalStageID = simulation.HistoricalStageID(sid)
+		out = append(out, v)
+	}
+	return out, rows.Err()
+}

@@ -1368,3 +1368,54 @@ export interface EnclosureEvent {
   beneficiary: string;
   created_at: string;
 }
+
+// Ch. 28 — Bloody Legislation Against the Expropriated
+
+export interface WageStatuteInput {
+  period: string;
+  jurisdiction: string;
+  max_wage_pence: number;
+  min_wage_pence: number;
+  enforcement_penalty: string;
+}
+
+export interface WageStatute {
+  id: string;
+  historical_stage_id: string;
+  period: string;
+  jurisdiction: string;
+  max_wage_pence: number;
+  min_wage_pence: number;
+  enforcement_penalty: string;
+  created_at: string;
+}
+
+export interface VagrancyLawInput {
+  period: string;
+  jurisdiction: string;
+  punishment: string;
+  target_population: string;
+}
+
+export interface VagrancyLaw {
+  id: string;
+  historical_stage_id: string;
+  period: string;
+  jurisdiction: string;
+  punishment: string;
+  target_population: string;
+  created_at: string;
+}
+
+export interface StatutoryWage {
+  acted_wage_pence: number;
+  market_wage_pence: number;
+  deviation: number;
+}
+
+export interface LabourDisciplineRegime {
+  period: string;
+  mechanisms: string[];
+  wage_statutes: WageStatute[];
+  vagrancy_laws: VagrancyLaw[];
+}
