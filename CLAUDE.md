@@ -73,19 +73,22 @@ cd web && npm run build     # vite production build
 1. Create a new branch off `main` named `volume-X/chapter-Y` (X = volume number, Y = chapter number — no slug suffix).
 2. Open a **draft** PR against `main` populated from `.github/pull_request_template.md`, with the *planned* changes drawn from the chapter spec at `marx-engels/1867/capital-volume-i/specs/NN-<slug>.spec.md` in the red-vault Obsidian vault, fetched via the `obsidian` MCP server (Chapter, Summary, Services touched, planned tests, Notes for review).
 3. Implement the planned chapter changes (domain types in the relevant service(s), tests using Marx's examples, seed migration `NNNNN_chNN_seed.sql` for every new domain type, `docs/architecture.md` roadmap row flipped to Done).
-4. Commit signed (`commit.gpgsign=true` is set per-repo). Use a multi-line conventional commit; the PR description fills from it.
-5. Compare the committed changes against the draft PR and update the PR description so it reflects what actually landed.
-6. Wait for GitHub Actions to finish running checks on the PR.
-7. If checks fail, fetch the output (`gh run view --log-failed`), fix the failure, and commit again. Loop to step 5.
-8. If all checks pass, mark the PR ready for review and notify the user that the PR is ready to merge into `main`.
+4. Run `make vet test build`.
+5. Run `cd web && npm run lint && npm run build`.
+6. Check any new pages/panels with playwright.
+7. Commit signed (`commit.gpgsign=true` is set per-repo). Use a multi-line conventional commit; the PR description fills from it.
+8. Compare the committed changes against the draft PR and update the PR description so it reflects what actually landed.
+9. Wait for GitHub Actions to finish running checks on the PR.
+10. If checks fail, fetch the output (`gh run view --log-failed`), fix the failure, and commit again. Loop to step 5.
+11. If all checks pass, mark the PR ready for review and notify the user that the PR is ready to merge into `main`.
 
 > **Note:** If the user says "implement the next pending chapter", look up the next `Pending` row in `docs/architecture.md` (Roadmap table) — that's the authoritative source for chapter ordering and primary services.
 
-## Chapter workflow (swarm) — replaces steps 3–7 above when running under RuFlo
+## Chapter workflow (swarm) — replaces steps 3–11 above when running under RuFlo
 
-Use this section instead of manually executing steps 3–7 when a RuFlo swarm is available. Steps 1–2 (branch + draft PR) and step 8 (mark ready) remain manual.
+Use this section instead of manually executing steps 3–11 when a RuFlo swarm is available. Steps 1–2 (branch + draft PR) and step 8 (mark ready) remain manual.
 
-### 0. Initialise the swarm (one-off per chapter)
+### 0. Initialize the swarm (one-off per chapter)
 
 ```bash
 npx @claude-flow/cli@latest swarm init \
@@ -213,17 +216,21 @@ Then spawn the five agents below as background tasks via the Claude Code Task to
    - Chapter component registered in `web/src/chapters/registry.ts` with correct `status: "done"`.
    - `App.tsx` imports and renders the new chapter component.
    - No `react-router` import anywhere.
-5. Check `docs/architecture.md`:
+5. Check that tests pass
+   - Run `make vet test build`.
+   - Run `cd web && npm run lint && npm run build`.
+   - Check any new pages/panels with playwright. 
+6. Check `docs/architecture.md`:
    - Roadmap row status changed to `Done`.
    - `### Ch. NN — what was built` section present and accurate.
-6. Store findings:
+7. Store findings:
    ```bash
    npx @claude-flow/cli@latest memory store \
      --key "review-chNN" \
      --value "<findings JSON>" \
      --namespace tasks
    ```
-7. Post completion:
+8. Post completion:
    ```bash
    npx @claude-flow/cli@latest hooks post-task --task-id "reviewer-chNN" --success true
    ```
@@ -271,9 +278,7 @@ Then spawn the five agents below as background tasks via the Claude Code Task to
 
 ## Sandbox limits (Cowork)
 
-- No Go toolchain installable. Cannot run `go build`/`go test`. Always ask the user to run `make vet test build` after material Go changes.
 - `.git/*.lock` files cannot be `unlink`ed from the sandbox; use `mv` to rename them out of the way before each git op. `git commit -S` will fail (no GPG key here) — leave commits to the user.
-- Web build cannot be verified here either.
 
 ## Output style (Claude → user)
 
