@@ -50,4 +50,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/accumulation/reserve-army", h.ComputeReserveArmyEndpoint)
 	s.HandleFunc("POST /v1/accumulation/scenarios", h.CreateGeneralLawScenario)
 	s.HandleFunc("GET /v1/accumulation/scenarios/{id}", h.GetGeneralLawScenario)
+
+	// Ch. 26 — The Secret of Primitive Accumulation
+	s.HandleFunc("POST /v1/historical-stages", h.CreateHistoricalStage)
+	s.HandleFunc("GET /v1/historical-stages", h.ListHistoricalStages)
+	s.HandleFunc("POST /v1/historical-stages/{id}/seed-scenario", h.SeedScenarioFromStage)
 }

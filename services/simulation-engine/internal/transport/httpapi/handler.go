@@ -15,18 +15,19 @@ import (
 // and the productivity fetcher (added in the Part IV bridge refactor).
 // Pre-Ch.15 surplus and production endpoints remain stateless.
 type Handler struct {
-	Logger       *slog.Logger
-	Machines     store.MachineStore
-	Factories    store.FactoryStore
-	Productivity ProductivityFetcher
-	GeneralLaw   store.GeneralLawStore
+	Logger           *slog.Logger
+	Machines         store.MachineStore
+	Factories        store.FactoryStore
+	Productivity     ProductivityFetcher
+	GeneralLaw       store.GeneralLawStore
+	HistoricalStages store.HistoricalStageStore
 }
 
-func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore) *Handler {
+func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore, hs store.HistoricalStageStore) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl}
+	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl, HistoricalStages: hs}
 }
 
 // massRequest accepts either {rate, variable_capital} or

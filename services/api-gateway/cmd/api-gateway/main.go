@@ -170,6 +170,10 @@ func main() {
 	srv.Handle("/v1/accumulation", simProxy)
 	srv.Handle("/v1/accumulation/{rest...}", simProxy)
 
+	// Ch. 26 — The Secret of Primitive Accumulation → simulation-engine
+	srv.Handle("/v1/historical-stages", simProxy)
+	srv.Handle("/v1/historical-stages/{rest...}", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {

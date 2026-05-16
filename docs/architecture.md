@@ -93,6 +93,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 23    | ✅ Done     | Simple reproduction; CapitalStock, SurplusValueFund, ReproductionCycle, RepaymentPeriod | simulation-engine |
 | Ch. 24    | ✅ Done     | Accumulation of capital; AdditionalCapital, Accumulation, SplitSurplus, RunExtendedReproduction | simulation-engine |
 | Ch. 25    | ✅ Done     | General law of capitalist accumulation; ValueComposition, OrganicComposition, LabourDemand, IndustrialReserveArmy, GeneralLawScenario, RunGeneralLaw | simulation-engine |
+| Ch. 26    | ✅ Done     | Secret of primitive accumulation; HistoricalStage, PrimitiveAccumulation, ProducerSeparation, SeparationFromStage, SeedCapitalStock | simulation-engine |
 
 ### Ch. 1 — what was built
 
@@ -354,6 +355,20 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints.** `POST /v1/accumulation/organic-composition` (stateless OC calculation); `POST /v1/accumulation/labour-demand` (stateless workers absorbed); `POST /v1/accumulation/reserve-army` (stateless reserve army); `POST /v1/accumulation/scenarios` (persist scenario + run, returns 201 + Location); `GET /v1/accumulation/scenarios/{id}` (retrieve with series).
 - **api-gateway.** Reverse-proxies `/v1/accumulation` and `/v1/accumulation/{rest...}` to simulation-engine.
 - **React UI.** "Ch. 25 — General Law" panel: organic composition calculator; labour demand probe; reserve army calculator; multi-period scenario simulator with §1/§2 preset buttons; series table showing C, V, OC, workers, reserve army and relative proportion across periods.
+
+### Ch. 26 — what was built
+
+`simulation-engine` adds the historical-genesis layer from Capital Vol. I, Ch. 26 — the layer the rest of Part VII has been treating as given.
+
+- **PrimitiveAccumulation.** `PrimitiveAccumulation{Period, Method string; LabourersExpropriated int64; CapitalFormed Pence}` — one historical episode. `Validate()` enforces `CapitalFormed > 0` (primitive accumulation always results in positive capital).
+- **ProducerSeparation.** `ProducerSeparation{PreCapitalistWorkers, DisplacedWorkers, FreeProletarians int64}` — the conservation invariant `FreeProletarians == DisplacedWorkers` enforced by `Validate()`. Every dispossessed producer reappears on the labour market as a free wage-labourer.
+- **HistoricalStage.** `HistoricalStage{ID, Name, Description, PrimitiveAccumulations, CreatedAt}` — a named epoch (canonically "England 15th–18th c.") grouping episodes. Helpers: `TotalCapitalFormed()`, `TotalLabourersExpropriated()`.
+- **SeparationFromStage(h, preCapitalistWorkers) ProducerSeparation.** Projects a stage onto a separation, clamping `DisplacedWorkers` to the population and setting `FreeProletarians` equal to it.
+- **SeedCapitalStock(h, compositionRatio) CapitalStock.** Splits the stage's aggregate `CapitalFormed` into constant and variable capital so that `c + v == total` — the bridge into the Ch. 23/24 reproduction loop.
+- **Migration.** `00010_ch26_historical_stages.sql` adds `historical_stages` (case-insensitive unique name) and `primitive_accumulations` (FK CASCADE on stage_id). `00011_ch26_seed.sql` inserts the canonical England 15th–18th c. fixture: enclosure of common lands (£80k), expropriation of church property (£30k), colonial plunder (£90k). Seed IDs `5eed00000000000000260[1-4]`.
+- **HTTP endpoints.** `POST /v1/historical-stages` (create stage + episodes in a single transaction, returns 201 + Location; 409 on duplicate name); `GET /v1/historical-stages` (list); `POST /v1/historical-stages/{id}/seed-scenario` (derive starting `CapitalStock` and `ProducerSeparation`, run `RunSimpleReproduction` over them, return cycles inline).
+- **api-gateway.** Reverse-proxies `/v1/historical-stages` and `/v1/historical-stages/{rest...}` to simulation-engine.
+- **React UI.** "Ch. 26 — Primitive Accumulation" panel: stages table with totals; create-stage form with editable episode rows and an England 15th–18th c. preset; seed-scenario form (pre-capitalist workers, organic composition, surplus rate, periods) that derives the starting capital, projects the separation, and runs a simple-reproduction series. The panel makes explicit the chapter's thesis: *capital is not a thing but a social relation — these numbers are the record of expropriation*.
 
 ### Ch. 20 — what was built
 

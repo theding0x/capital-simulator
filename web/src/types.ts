@@ -1286,3 +1286,67 @@ export interface GeneralLawScenarioResult {
   created_at: string;
   series: GeneralLawSnapshot[];
 }
+
+// --- simulation-engine (Ch. 26: The Secret of Primitive Accumulation) -------
+
+export interface PrimitiveAccumulation {
+  period: string;
+  method: string;
+  labourers_expropriated: number;
+  capital_formed: number;
+}
+
+export interface HistoricalStageInput {
+  name: string;
+  description: string;
+  primitive_accumulations: PrimitiveAccumulation[];
+}
+
+export interface HistoricalStage {
+  id: string;
+  name: string;
+  description: string;
+  primitive_accumulations: PrimitiveAccumulation[];
+  total_capital_formed: number;
+  total_labourers_expropriated: number;
+  created_at: string;
+}
+
+export interface SeedScenarioInput {
+  pre_capitalist_workers: number;
+  composition_ratio: number;
+  surplus_rate: number;
+  periods: number;
+}
+
+export interface SeededCapitalStock {
+  constant_capital: number;
+  variable_capital: number;
+}
+
+export interface ProducerSeparation {
+  pre_capitalist_workers: number;
+  displaced_workers: number;
+  free_proletarians: number;
+}
+
+export interface SeededReproductionCycle {
+  period: number;
+  capital: SeededCapitalStock;
+  surplus_rate: number;
+  fund: {
+    total: number;
+    revenue: number;
+    accumulated: number;
+  };
+}
+
+export interface SeedScenarioResult {
+  stage_id: string;
+  stage_name: string;
+  seeded_capital: SeededCapitalStock;
+  separation: ProducerSeparation;
+  surplus_rate: number;
+  periods: number;
+  cycles: SeededReproductionCycle[];
+}

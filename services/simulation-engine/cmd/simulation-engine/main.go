@@ -27,6 +27,7 @@ type machineryStore interface {
 	store.MachineStore
 	store.FactoryStore
 	store.GeneralLawStore
+	store.HistoricalStageStore
 }
 
 func main() {
@@ -53,7 +54,7 @@ func main() {
 	agentURL := getenv("AGENT_SERVICE_URL", "http://agent-service:8082")
 	pf := productivity.New(agentURL, st)
 
-	h := httpapi.New(logger, st, st, pf, st)
+	h := httpapi.New(logger, st, st, pf, st, st)
 	httpapi.Register(srv, h)
 
 	srv.MarkReady(true)

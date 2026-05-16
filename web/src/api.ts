@@ -129,6 +129,10 @@ import type {
   ReserveArmyResult,
   GeneralLawScenarioInput,
   GeneralLawScenarioResult,
+  HistoricalStage,
+  HistoricalStageInput,
+  SeedScenarioInput,
+  SeedScenarioResult,
 } from "./types";
 
 const BASE = "/api";
@@ -793,4 +797,21 @@ export const api = {
 
   getGeneralLawScenario: (id: string) =>
     http<GeneralLawScenarioResult>(`/v1/accumulation/scenarios/${id}`),
+
+  // --- simulation-engine (Ch. 26: The Secret of Primitive Accumulation) ---
+
+  createHistoricalStage: (input: HistoricalStageInput) =>
+    http<HistoricalStage>("/v1/historical-stages", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listHistoricalStages: () =>
+    http<HistoricalStage[]>("/v1/historical-stages"),
+
+  seedScenarioFromStage: (id: string, input: SeedScenarioInput) =>
+    http<SeedScenarioResult>(`/v1/historical-stages/${id}/seed-scenario`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };
