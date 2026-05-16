@@ -1419,3 +1419,47 @@ export interface LabourDisciplineRegime {
   wage_statutes: WageStatute[];
   vagrancy_laws: VagrancyLaw[];
 }
+
+// Ch. 29 — Genesis of the Capitalist Farmer
+
+export type TenantForm = "bailiff" | "metayer" | "capitalist-farmer";
+
+export interface FarmTenureInput {
+  form: TenantForm;
+  lease_period_years: number;
+  rent_pence: number;
+  capital_advanced_pence: number;
+  revenue_pence: number;
+  wage_costs_pence: number;
+}
+
+export interface FarmingSurplus {
+  revenue: number;
+  nominal_rent: number;
+  wage_costs: number;
+  profit: number;
+}
+
+export interface FarmTenure {
+  id: string;
+  historical_stage_id: string;
+  form: TenantForm;
+  lease_period_years: number;
+  rent_pence: number;
+  capital_advanced_pence: number;
+  revenue_pence: number;
+  wage_costs_pence: number;
+  surplus: FarmingSurplus;
+  created_at: string;
+}
+
+export interface RealRentInput {
+  nominal_rent_pence: number;
+  depreciation_factor: number;
+}
+
+export interface RealRentResult {
+  nominal_rent_pence: number;
+  real_rent_pence: number;
+  depreciation_factor: number;
+}

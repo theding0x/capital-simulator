@@ -96,6 +96,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 26    | ✅ Done     | Secret of primitive accumulation; HistoricalStage, PrimitiveAccumulation, ProducerSeparation, SeparationFromStage, SeedCapitalStock | simulation-engine |
 | Ch. 27    | ✅ Done     | Expropriation of agricultural population; EnclosureEvent, displacement timeline, key English enclosure waves | simulation-engine |
 | Ch. 28    | ✅ Done     | Bloody legislation; WageStatute, VagrancyLaw, StatutoryWage, LabourDisciplineRegime, statutory-vs-market wage comparison | simulation-engine |
+| Ch. 29    | ✅ Done     | Genesis of the capitalist farmer; TenantForm (bailiff/metayer/capitalist-farmer), FarmTenure, MoneyDepreciation, FarmingSurplus; ComputeRealRent, ComputeFarmingSurplus; currency depreciation calculator | simulation-engine |
 
 ### Ch. 1 — what was built
 
@@ -371,6 +372,19 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints.** `POST /v1/historical-stages` (create stage + episodes in a single transaction, returns 201 + Location; 409 on duplicate name); `GET /v1/historical-stages` (list); `POST /v1/historical-stages/{id}/seed-scenario` (derive starting `CapitalStock` and `ProducerSeparation`, run `RunSimpleReproduction` over them, return cycles inline).
 - **api-gateway.** Reverse-proxies `/v1/historical-stages` and `/v1/historical-stages/{rest...}` to simulation-engine.
 - **React UI.** "Ch. 26 — Primitive Accumulation" panel: stages table with totals; create-stage form with editable episode rows and an England 15th–18th c. preset; seed-scenario form (pre-capitalist workers, organic composition, surplus rate, periods) that derives the starting capital, projects the separation, and runs a simple-reproduction series. The panel makes explicit the chapter's thesis: *capital is not a thing but a social relation — these numbers are the record of expropriation*.
+
+### Ch. 29 — what was built
+
+`simulation-engine` adds the farm-tenure domain from Capital Vol. I, Ch. 29 — tracing how the capitalist farmer emerged from the metayer system as currency depreciation and long leases transformed nominal rent burdens into windfall profits.
+
+- **TenantForm.** String enum: `"bailiff"` (manages for absentee landlord), `"metayer"` (shares stock and product), `"capitalist-farmer"` (advances own capital, pays money rent).
+- **FarmTenure.** `FarmTenure{ID, HistoricalStageID, Form, LeasePeriodYears, RentPence, CapitalAdvancedPence, RevenuePence, WageCostsPence, CreatedAt}` — one tenure arrangement. `Validate()` enforces non-empty `HistoricalStageID` and `Form`, `LeasePeriodYears ≥ 1`, all monetary fields `≥ 0`.
+- **MoneyDepreciation.** `MoneyDepreciation{NominalRentPence, RealRentPence, DepreciationFactor float64}` — tracks how currency fall reduces the real rent burden. `ComputeRealRent(nominal, md)` = `Pence(float64(nominal) * md.DepreciationFactor)`.
+- **FarmingSurplus.** `FarmingSurplus{Revenue, NominalRent, WageCosts, Profit Pence}` — `ComputeFarmingSurplus` returns `Profit = Revenue − NominalRent − WageCosts`. This is Harrison's "£50 or £100" accumulated per long lease.
+- **Migration.** `00016_ch29_farm_tenures.sql` adds the `farm_tenures` table. `00017_ch29_seed.sql` inserts a 15th-c. metayer (`5eed000000000000002901`, 1-yr lease, revenue=1000, wages=200) and a 99-yr capitalist lease (`5eed000000000000002902`, rent=1200, revenue=3000, wages=600), both linked to the seeded England 15th–18th c. stage.
+- **HTTP endpoints.** `POST /v1/historical-stages/{id}/farm-tenures` (record a tenure; returns 201 + Location); `GET /v1/historical-stages/{id}/farm-tenures` (list tenures for a stage, inline surplus computed); `POST /v1/farm-tenures/real-rent` (stateless — compute real rent given nominal rent and depreciation factor).
+- **api-gateway.** Adds `/v1/farm-tenures` and `/v1/farm-tenures/{rest...}` proxy rules (historical-stages sub-paths already covered by the Ch.26 rules).
+- **React UI.** Ch. 29 panel: stage selector; add-tenure form with 15th-c. Metayer and 99-yr Capitalist Lease presets; tenure records table with inline profit (green if positive) and cumulative surplus footer; currency depreciation calculator (nominal rent input + depreciation factor slider with live preview; API call returns nominal → real comparison).
 
 ### Ch. 28 — what was built
 

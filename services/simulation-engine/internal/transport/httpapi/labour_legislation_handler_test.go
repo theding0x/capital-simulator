@@ -35,7 +35,7 @@ func TestCreateWageStatute_Created(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStage(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	body := map[string]any{
 		"period":              "1349",
@@ -61,7 +61,7 @@ func TestCreateWageStatute_Created(t *testing.T) {
 func TestCreateWageStatute_StageNotFound(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	body := map[string]any{
 		"period": "1349", "jurisdiction": "England",
@@ -83,7 +83,7 @@ func TestCreateWageStatute_BadJSON(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStage(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/"+string(stageID)+"/wage-statutes", bytes.NewReader([]byte("notjson")))
 	req.SetPathValue("id", string(stageID))
@@ -99,7 +99,7 @@ func TestCreateWageStatute_InvalidBounds(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStage(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	body := map[string]any{
 		"period": "1600", "jurisdiction": "England",
@@ -121,7 +121,7 @@ func TestCreateVagrancyLaw_Created(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStage(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	body := map[string]any{
 		"period":            "1530",
@@ -143,7 +143,7 @@ func TestCreateVagrancyLaw_Created(t *testing.T) {
 func TestCreateVagrancyLaw_StageNotFound(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	body := map[string]any{
 		"period": "1530", "jurisdiction": "England",
@@ -164,7 +164,7 @@ func TestGetLabourDiscipline_Empty(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStage(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages/"+string(stageID)+"/labour-discipline", nil)
 	req.SetPathValue("id", string(stageID))
@@ -189,7 +189,7 @@ func TestGetLabourDiscipline_Empty(t *testing.T) {
 func TestGetLabourDiscipline_NotFound(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages/ghost/labour-discipline", nil)
 	req.SetPathValue("id", "ghost")
@@ -205,7 +205,7 @@ func TestGetLabourDiscipline_RoundTrip(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStage(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, st, st, nil)
 
 	wsBody := map[string]any{
 		"period": "1349", "jurisdiction": "England",
@@ -260,7 +260,7 @@ func TestGetLabourDiscipline_RoundTrip(t *testing.T) {
 
 func TestCompareStatutoryWage_Suppression(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	body := map[string]any{"acted_wage_pence": 31, "market_wage_pence": 35}
 	b, _ := json.Marshal(body)
@@ -280,7 +280,7 @@ func TestCompareStatutoryWage_Suppression(t *testing.T) {
 
 func TestCompareStatutoryWage_ZeroMarket(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	body := map[string]any{"acted_wage_pence": 10, "market_wage_pence": 0}
 	b, _ := json.Marshal(body)
@@ -295,7 +295,7 @@ func TestCompareStatutoryWage_ZeroMarket(t *testing.T) {
 
 func TestCompareStatutoryWage_BadJSON(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/statutory-wages/compare", bytes.NewReader([]byte("bad")))
 	w := httptest.NewRecorder()

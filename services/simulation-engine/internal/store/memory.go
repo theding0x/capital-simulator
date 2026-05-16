@@ -24,6 +24,7 @@ type Memory struct {
 	enclosureEvents  []simulation.EnclosureEvent
 	wageStatutes     []simulation.WageStatute
 	vagrancyLaws     []simulation.VagrancyLaw
+	farmTenures      []simulation.FarmTenure
 	now              func() time.Time
 }
 
@@ -371,6 +372,34 @@ func (m *Memory) ListVagrancyLawsByStage(_ context.Context, stageID simulation.H
 	for _, v := range m.vagrancyLaws {
 		if v.HistoricalStageID == stageID {
 			out = append(out, v)
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) CreateFarmTenure(_ context.Context, f simulation.FarmTenure) (simulation.FarmTenure, error) {
+	if err := f.Validate(); err != nil {
+		return simulation.FarmTenure{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if f.ID.IsZero() {
+		f.ID = simulation.NewFarmTenureID()
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now()
+	}
+	m.farmTenures = append(m.farmTenures, f)
+	return f, nil
+}
+
+func (m *Memory) ListFarmTenuresByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.FarmTenure, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.FarmTenure, 0)
+	for _, f := range m.farmTenures {
+		if f.HistoricalStageID == stageID {
+			out = append(out, f)
 		}
 	}
 	return out, nil
