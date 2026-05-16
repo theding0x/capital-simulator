@@ -13,7 +13,7 @@ import (
 )
 
 // Memory is the in-memory implementation of MachineStore, FactoryStore,
-// GeneralLawStore, and HistoricalStageStore.
+// GeneralLawStore, HistoricalStageStore, and EnclosureEventStore.
 type Memory struct {
 	mu               sync.RWMutex
 	machines         map[machinery.MachineID]machinery.Machine
@@ -22,6 +22,7 @@ type Memory struct {
 	generalLaw       map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario
 	historicalStages map[simulation.HistoricalStageID]simulation.HistoricalStage
 	stageNames       map[string]simulation.HistoricalStageID
+	enclosureEvents  []simulation.EnclosureEvent
 	now              func() time.Time
 }
 
@@ -291,5 +292,29 @@ func (m *Memory) ListTicks(_ context.Context, id machinery.FactoryID, limit int)
 	start := len(all) - limit
 	out := make([]engine.Tick, limit)
 	copy(out, all[start:])
+	return out, nil
+}
+
+func (m *Memory) CreateEnclosureEvent(_ context.Context, e simulation.EnclosureEvent) (simulation.EnclosureEvent, error) {
+	if err := e.Validate(); err != nil {
+		return simulation.EnclosureEvent{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if e.ID.IsZero() {
+		e.ID = simulation.NewEnclosureEventID()
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = m.now()
+	}
+	m.enclosureEvents = append(m.enclosureEvents, e)
+	return e, nil
+}
+
+func (m *Memory) ListEnclosureEvents(_ context.Context) ([]simulation.EnclosureEvent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.EnclosureEvent, len(m.enclosureEvents))
+	copy(out, m.enclosureEvents)
 	return out, nil
 }

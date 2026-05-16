@@ -21,13 +21,14 @@ type Handler struct {
 	Productivity     ProductivityFetcher
 	GeneralLaw       store.GeneralLawStore
 	HistoricalStages store.HistoricalStageStore
+	EnclosureEvents  store.EnclosureEventStore
 }
 
-func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore, hs store.HistoricalStageStore) *Handler {
+func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore, hs store.HistoricalStageStore, ee store.EnclosureEventStore) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl, HistoricalStages: hs}
+	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl, HistoricalStages: hs, EnclosureEvents: ee}
 }
 
 // massRequest accepts either {rate, variable_capital} or

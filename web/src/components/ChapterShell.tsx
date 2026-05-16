@@ -27,6 +27,7 @@ import { Ch23SimpleReproduction } from "../chapters/Ch23SimpleReproduction";
 import { Ch24AccumulationOfCapital } from "../chapters/Ch24AccumulationOfCapital";
 import { Ch25GeneralLaw } from "../chapters/Ch25GeneralLaw";
 import { Ch26PrimitiveAccumulation } from "../chapters/Ch26PrimitiveAccumulation";
+import { Ch27EnclosureEvents } from "../chapters/Ch27EnclosureEvents";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -72,6 +73,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch24: Ch24AccumulationOfCapital as AnyPanel,
   ch25: Ch25GeneralLaw as AnyPanel,
   ch26: Ch26PrimitiveAccumulation as AnyPanel,
+  ch27: Ch27EnclosureEvents as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -101,6 +103,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch24: "Accumulation of capital is, therefore, increase of the proletariat.",
   ch25: "Accumulation of wealth at one pole is, therefore, at the same time accumulation of misery, agony of toil, slavery, ignorance, brutality, mental degradation, at the opposite pole.",
   ch26: "Capital is not a thing, but a social relation between persons, established by the instrumentality of things.",
+  ch27: "The spoliation of the Church's property, the fraudulent alienation of the State domains, the robbery of the common lands, the usurpation of feudal and clan property, and its transformation into modern private property under circumstances of reckless terrorism, were just so many idyllic methods of primitive accumulation.",
 };
 
 export function ChapterShell({

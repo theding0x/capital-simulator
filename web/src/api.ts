@@ -133,6 +133,8 @@ import type {
   HistoricalStageInput,
   SeedScenarioInput,
   SeedScenarioResult,
+  EnclosureEvent,
+  EnclosureEventInput,
 } from "./types";
 
 const BASE = "/api";
@@ -814,4 +816,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // --- simulation-engine (Ch. 27: Expropriation of the Agricultural Population) ---
+
+  createEnclosureEvent: (input: EnclosureEventInput) =>
+    http<EnclosureEvent>("/v1/enclosure-events", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listEnclosureEvents: () =>
+    http<EnclosureEvent[]>("/v1/enclosure-events"),
 };

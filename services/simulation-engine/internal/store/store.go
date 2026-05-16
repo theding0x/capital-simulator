@@ -63,3 +63,9 @@ type HistoricalStageStore interface {
 	GetHistoricalStage(ctx context.Context, id simulation.HistoricalStageID) (simulation.HistoricalStage, error)
 	ListHistoricalStages(ctx context.Context) ([]simulation.HistoricalStage, error)
 }
+
+// EnclosureEventStore is the persistence contract for Ch. 27 enclosure events.
+type EnclosureEventStore interface {
+	CreateEnclosureEvent(ctx context.Context, e simulation.EnclosureEvent) (simulation.EnclosureEvent, error)
+	ListEnclosureEvents(ctx context.Context) ([]simulation.EnclosureEvent, error)
+}

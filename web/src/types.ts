@@ -1350,3 +1350,21 @@ export interface SeedScenarioResult {
   periods: number;
   cycles: SeededReproductionCycle[];
 }
+
+// Ch. 27 — Expropriation of the Agricultural Population
+
+export interface EnclosureEventInput {
+  period: string;
+  acres_enclosed: number;
+  population_displaced: number;
+  beneficiary: string;
+}
+
+export interface EnclosureEvent {
+  id: string;
+  period: string;
+  acres_enclosed: number;
+  population_displaced: number;
+  beneficiary: string;
+  created_at: string;
+}

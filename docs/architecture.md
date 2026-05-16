@@ -94,6 +94,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 24    | ✅ Done     | Accumulation of capital; AdditionalCapital, Accumulation, SplitSurplus, RunExtendedReproduction | simulation-engine |
 | Ch. 25    | ✅ Done     | General law of capitalist accumulation; ValueComposition, OrganicComposition, LabourDemand, IndustrialReserveArmy, GeneralLawScenario, RunGeneralLaw | simulation-engine |
 | Ch. 26    | ✅ Done     | Secret of primitive accumulation; HistoricalStage, PrimitiveAccumulation, ProducerSeparation, SeparationFromStage, SeedCapitalStock | simulation-engine |
+| Ch. 27    | ✅ Done     | Expropriation of agricultural population; EnclosureEvent, displacement timeline, key English enclosure waves | simulation-engine |
 
 ### Ch. 1 — what was built
 
@@ -369,6 +370,16 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints.** `POST /v1/historical-stages` (create stage + episodes in a single transaction, returns 201 + Location; 409 on duplicate name); `GET /v1/historical-stages` (list); `POST /v1/historical-stages/{id}/seed-scenario` (derive starting `CapitalStock` and `ProducerSeparation`, run `RunSimpleReproduction` over them, return cycles inline).
 - **api-gateway.** Reverse-proxies `/v1/historical-stages` and `/v1/historical-stages/{rest...}` to simulation-engine.
 - **React UI.** "Ch. 26 — Primitive Accumulation" panel: stages table with totals; create-stage form with editable episode rows and an England 15th–18th c. preset; seed-scenario form (pre-capitalist workers, organic composition, surplus rate, periods) that derives the starting capital, projects the separation, and runs a simple-reproduction series. The panel makes explicit the chapter's thesis: *capital is not a thing but a social relation — these numbers are the record of expropriation*.
+
+### Ch. 27 — what was built
+
+`simulation-engine` adds the enclosure-event domain from Capital Vol. I, Ch. 27 — the paradigm case of how capital expropriates the agricultural population from the land.
+
+- **EnclosureEvent.** `EnclosureEvent{ID, Period, AcresEnclosed, PopulationDisplaced, Beneficiary, CreatedAt}` — one wave of agrarian expropriation. `Validate()` enforces `AcresEnclosed > 0` (land must actually be seized), `PopulationDisplaced ≥ 0`, and non-empty `Period` and `Beneficiary`.
+- **Migration.** `00012_ch27_enclosure_events.sql` adds the `enclosure_events` table. `00013_ch27_seed.sql` inserts three canonical English waves: 15th-c. gentry enclosures (500,000 acres, 40,000 displaced), Parliamentary enclosures 1760–1820 (3,000,000 acres, 150,000 displaced), and the Sutherland clearances 1814–1820 (794,000 acres, 15,000 displaced — the specific figure Marx cites in his footnote).
+- **HTTP endpoints.** `POST /v1/enclosure-events` (record a new wave; returns 201 + Location); `GET /v1/enclosure-events` (list all waves ordered by creation time).
+- **api-gateway.** Reverse-proxies `/v1/enclosure-events` and `/v1/enclosure-events/{rest...}` to simulation-engine.
+- **React UI.** "Ch. 27 — Expropriation of the Agricultural Population" panel: preset buttons for the three canonical English waves; record form (period, acres, population, beneficiary); displacement timeline table with running totals of acres seized and population expelled; summary note connecting each expelled producer to their reappearance as a "free" wage-labourer.
 
 ### Ch. 20 — what was built
 
