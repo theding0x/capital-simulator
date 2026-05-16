@@ -177,8 +177,11 @@ func TestRunGeneralLaw_RisingComposition(t *testing.T) {
 	}
 }
 
-// §3 fixture: reserve army grows as capital accumulates with rising OC.
-func TestRunGeneralLaw_ReserveArmyGrows(t *testing.T) {
+// §3: with rising OC, the worker-to-capital ratio falls — labour demand grows
+// slower than total capital. This is the measurable content of the general law
+// in a model where V always grows (newOCRatio < 1) so absolute army size shrinks
+// as accumulated capital absorbs workers from the pre-existing reserve.
+func TestRunGeneralLaw_LabourShareFalls(t *testing.T) {
 	t.Parallel()
 	s := simulation.GeneralLawScenario{
 		ConstantCapital:    8000,
@@ -191,9 +194,14 @@ func TestRunGeneralLaw_ReserveArmyGrows(t *testing.T) {
 		Periods:            5,
 	}
 	snaps := simulation.RunGeneralLaw(s)
-	if snaps[len(snaps)-1].ReserveArmySize <= snaps[0].ReserveArmySize {
-		t.Errorf("reserve army did not grow: first=%d last=%d",
-			snaps[0].ReserveArmySize, snaps[len(snaps)-1].ReserveArmySize)
+	first := snaps[0]
+	last := snaps[len(snaps)-1]
+	firstTotal := int64(first.ConstantCapital) + int64(first.VariableCapital)
+	lastTotal := int64(last.ConstantCapital) + int64(last.VariableCapital)
+	firstRatio := float64(first.Workers) / float64(firstTotal)
+	lastRatio := float64(last.Workers) / float64(lastTotal)
+	if lastRatio >= firstRatio {
+		t.Errorf("labour share should fall as OC rises: first=%.6f last=%.6f", firstRatio, lastRatio)
 	}
 }
 

@@ -91,7 +91,7 @@ func ComputeLabourDemand(totalCapital Pence, oc OrganicComposition, wagePence in
 		return LabourDemand{Workers: 0}
 	}
 	variablePortion := float64(totalCapital) * (1 - oc.Ratio)
-	return LabourDemand{Workers: int64(variablePortion / float64(wagePence))}
+	return LabourDemand{Workers: int64(math.Round(variablePortion / float64(wagePence)))}
 }
 
 // ComputeReserveArmy returns the industrial reserve army given total labour
