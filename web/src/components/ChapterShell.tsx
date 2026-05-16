@@ -25,6 +25,7 @@ import { Ch21PieceWages } from "../chapters/Ch21PieceWages";
 import { Ch22NationalWages } from "../chapters/Ch22NationalWages";
 import { Ch23SimpleReproduction } from "../chapters/Ch23SimpleReproduction";
 import { Ch24AccumulationOfCapital } from "../chapters/Ch24AccumulationOfCapital";
+import { Ch25GeneralLaw } from "../chapters/Ch25GeneralLaw";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -68,6 +69,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch22: Ch22NationalWages as AnyPanel,
   ch23: Ch23SimpleReproduction as AnyPanel,
   ch24: Ch24AccumulationOfCapital as AnyPanel,
+  ch25: Ch25GeneralLaw as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -94,6 +96,8 @@ const QUOTES: Partial<Record<string, string>> = {
   ch21: "The piece-wage is the converted form of the time-wage, just as time-wage is the converted form of the value, or price, of labour-power.",
   ch22: "In England wages are virtually lower to the capitalist, though higher to the operative than on the Continent of Europe.",
   ch23: "Whatever the form of the process of production in a society, it must be a continuous process, must continue to go periodically through the same phases.",
+  ch24: "Accumulation of capital is, therefore, increase of the proletariat.",
+  ch25: "Accumulation of wealth at one pole is, therefore, at the same time accumulation of misery, agony of toil, slavery, ignorance, brutality, mental degradation, at the opposite pole.",
 };
 
 export function ChapterShell({

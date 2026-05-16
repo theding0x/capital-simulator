@@ -43,4 +43,11 @@ func Register(s *httpx.Server, h *Handler) {
 	// Ch. 24 — The Transformation of Surplus-Value into Capital
 	s.HandleFunc("POST /v1/reproductions/extended", h.RunExtendedReproduction)
 	s.HandleFunc("POST /v1/reproductions/split-surplus", h.SplitSurplusValue)
+
+	// Ch. 25 — The General Law of Capitalist Accumulation
+	s.HandleFunc("POST /v1/accumulation/organic-composition", h.ComputeOrganicComposition)
+	s.HandleFunc("POST /v1/accumulation/labour-demand", h.ComputeLabourDemandEndpoint)
+	s.HandleFunc("POST /v1/accumulation/reserve-army", h.ComputeReserveArmyEndpoint)
+	s.HandleFunc("POST /v1/accumulation/scenarios", h.CreateGeneralLawScenario)
+	s.HandleFunc("GET /v1/accumulation/scenarios/{id}", h.GetGeneralLawScenario)
 }

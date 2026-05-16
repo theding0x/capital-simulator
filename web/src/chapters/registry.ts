@@ -40,7 +40,7 @@ export const CHAPTERS: ChapterDef[] = [
   // Part VII — The Accumulation of Capital
   { id: "ch23", number: 23, title: "Simple Reproduction",                                   part: "Part VII — The Accumulation of Capital",               status: "done" },
   { id: "ch24", number: 24, title: "The Transformation of Surplus-Value into Capital",      part: "Part VII — The Accumulation of Capital",               status: "done" },
-  { id: "ch25", number: 25, title: "The General Law of Capitalist Accumulation",            part: "Part VII — The Accumulation of Capital",               status: "pending" },
+  { id: "ch25", number: 25, title: "The General Law of Capitalist Accumulation",            part: "Part VII — The Accumulation of Capital",               status: "done" },
   // Part VIII — So-Called Primitive Accumulation
   { id: "ch26", number: 26, title: "The Secret of Primitive Accumulation",                  part: "Part VIII — So-Called Primitive Accumulation",         status: "pending" },
   { id: "ch27", number: 27, title: "Expropriation of the Agricultural Population",          part: "Part VIII — So-Called Primitive Accumulation",         status: "pending" },

@@ -121,6 +121,14 @@ import type {
   WageComparison,
   RegisterIntensityInput,
   RegisterDayWageInput,
+  OrganicCompositionInput,
+  OrganicCompositionResult,
+  LabourDemandInput,
+  LabourDemandResult,
+  ReserveArmyInput,
+  ReserveArmyResult,
+  GeneralLawScenarioInput,
+  GeneralLawScenarioResult,
 } from "./types";
 
 const BASE = "/api";
@@ -756,4 +764,33 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // --- simulation-engine (Ch. 25: The General Law of Capitalist Accumulation) ---
+
+  computeOrganicComposition: (input: OrganicCompositionInput) =>
+    http<OrganicCompositionResult>("/v1/accumulation/organic-composition", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  computeLabourDemand: (input: LabourDemandInput) =>
+    http<LabourDemandResult>("/v1/accumulation/labour-demand", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  computeReserveArmy: (input: ReserveArmyInput) =>
+    http<ReserveArmyResult>("/v1/accumulation/reserve-army", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createGeneralLawScenario: (input: GeneralLawScenarioInput) =>
+    http<GeneralLawScenarioResult>("/v1/accumulation/scenarios", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getGeneralLawScenario: (id: string) =>
+    http<GeneralLawScenarioResult>(`/v1/accumulation/scenarios/${id}`),
 };

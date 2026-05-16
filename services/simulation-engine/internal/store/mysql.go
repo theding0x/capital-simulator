@@ -12,6 +12,7 @@ import (
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
 
 //go:embed migrations
@@ -382,6 +383,55 @@ func (m *MySQL) getMachineTx(ctx context.Context, tx *sql.Tx, id machinery.Machi
 		FROM machines WHERE id = ?`
 	row := tx.QueryRowContext(ctx, q, string(id))
 	return scanMachine(row.Scan)
+}
+
+func (m *MySQL) CreateGeneralLawScenario(ctx context.Context, s simulation.GeneralLawScenario) (simulation.GeneralLawScenario, error) {
+	if s.ID.IsZero() {
+		s.ID = simulation.NewGeneralLawScenarioID()
+	}
+	s.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO general_law_scenarios
+		(id, name, constant_capital, variable_capital, surplus_rate, accumulation_rate,
+		 productivity_growth, wage_pence, worker_supply, periods, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID), s.Name,
+		int64(s.ConstantCapital), int64(s.VariableCapital),
+		s.SurplusRate, s.AccumulationRate, s.ProductivityGrowth,
+		s.WagePence, s.WorkerSupply, s.Periods,
+		s.CreatedAt,
+	)
+	if err != nil {
+		return simulation.GeneralLawScenario{}, err
+	}
+	return s, nil
+}
+
+func (m *MySQL) GetGeneralLawScenario(ctx context.Context, id simulation.GeneralLawScenarioID) (simulation.GeneralLawScenario, error) {
+	const q = `SELECT id, name, constant_capital, variable_capital, surplus_rate,
+		accumulation_rate, productivity_growth, wage_pence, worker_supply, periods, created_at
+		FROM general_law_scenarios WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	return scanGeneralLawScenario(row.Scan)
+}
+
+func scanGeneralLawScenario(scan scanFn) (simulation.GeneralLawScenario, error) {
+	var s simulation.GeneralLawScenario
+	var id string
+	var constant, variable int64
+	err := scan(&id, &s.Name, &constant, &variable,
+		&s.SurplusRate, &s.AccumulationRate, &s.ProductivityGrowth,
+		&s.WagePence, &s.WorkerSupply, &s.Periods, &s.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return simulation.GeneralLawScenario{}, ErrNotFound
+	}
+	if err != nil {
+		return simulation.GeneralLawScenario{}, err
+	}
+	s.ID = simulation.GeneralLawScenarioID(id)
+	s.ConstantCapital = simulation.Pence(constant)
+	s.VariableCapital = simulation.Pence(variable)
+	return s, nil
 }
 
 type scanFn func(dest ...any) error

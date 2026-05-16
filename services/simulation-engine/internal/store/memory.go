@@ -8,23 +8,27 @@ import (
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
 
-// Memory is the in-memory implementation of MachineStore and FactoryStore.
+// Memory is the in-memory implementation of MachineStore, FactoryStore, and
+// GeneralLawStore.
 type Memory struct {
-	mu        sync.RWMutex
-	machines  map[machinery.MachineID]machinery.Machine
-	factories map[machinery.FactoryID]machinery.Factory
-	ticks     map[machinery.FactoryID][]engine.Tick
-	now       func() time.Time
+	mu          sync.RWMutex
+	machines    map[machinery.MachineID]machinery.Machine
+	factories   map[machinery.FactoryID]machinery.Factory
+	ticks       map[machinery.FactoryID][]engine.Tick
+	generalLaw  map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario
+	now         func() time.Time
 }
 
 func NewMemory() *Memory {
 	return &Memory{
-		machines:  make(map[machinery.MachineID]machinery.Machine),
-		factories: make(map[machinery.FactoryID]machinery.Factory),
-		ticks:     make(map[machinery.FactoryID][]engine.Tick),
-		now:       time.Now,
+		machines:   make(map[machinery.MachineID]machinery.Machine),
+		factories:  make(map[machinery.FactoryID]machinery.Factory),
+		ticks:      make(map[machinery.FactoryID][]engine.Tick),
+		generalLaw: make(map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario),
+		now:        time.Now,
 	}
 }
 
@@ -192,6 +196,30 @@ func (m *Memory) AdvanceTick(_ context.Context, id machinery.FactoryID) (machine
 	}
 	m.ticks[id] = append(m.ticks[id], tick)
 	return f, tick, nil
+}
+
+func (m *Memory) CreateGeneralLawScenario(_ context.Context, s simulation.GeneralLawScenario) (simulation.GeneralLawScenario, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if s.ID.IsZero() {
+		s.ID = simulation.NewGeneralLawScenarioID()
+	}
+	if _, ok := m.generalLaw[s.ID]; ok {
+		return simulation.GeneralLawScenario{}, ErrAlreadyExists
+	}
+	s.CreatedAt = m.now().UTC()
+	m.generalLaw[s.ID] = s
+	return s, nil
+}
+
+func (m *Memory) GetGeneralLawScenario(_ context.Context, id simulation.GeneralLawScenarioID) (simulation.GeneralLawScenario, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	s, ok := m.generalLaw[id]
+	if !ok {
+		return simulation.GeneralLawScenario{}, ErrNotFound
+	}
+	return s, nil
 }
 
 func (m *Memory) ListTicks(_ context.Context, id machinery.FactoryID, limit int) ([]engine.Tick, error) {

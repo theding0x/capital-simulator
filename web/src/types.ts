@@ -1211,3 +1211,78 @@ export interface SplitSurplusResult {
   new_variable: number;
   revenue: number;
 }
+
+// --- simulation-engine types (Ch. 25: The General Law of Capitalist Accumulation) ---
+
+export interface OrganicCompositionInput {
+  constant_capital: number;
+  variable_capital: number;
+}
+
+export interface OrganicCompositionResult {
+  constant_capital: number;
+  variable_capital: number;
+  ratio: number;
+}
+
+export interface LabourDemandInput {
+  total_capital: number;
+  organic_composition_ratio: number;
+  wage_pence: number;
+}
+
+export interface LabourDemandResult {
+  total_capital: number;
+  organic_composition_ratio: number;
+  wage_pence: number;
+  workers: number;
+}
+
+export interface ReserveArmyInput {
+  worker_supply: number;
+  workers_demanded: number;
+}
+
+export interface ReserveArmyResult {
+  worker_supply: number;
+  workers_demanded: number;
+  reserve_army_size: number;
+  relative_proportion: number;
+}
+
+export interface GeneralLawSnapshot {
+  period: number;
+  constant_capital: number;
+  variable_capital: number;
+  organic_composition: number;
+  workers: number;
+  reserve_army_size: number;
+  relative_proportion: number;
+}
+
+export interface GeneralLawScenarioInput {
+  name: string;
+  constant_capital: number;
+  variable_capital: number;
+  surplus_rate: number;
+  accumulation_rate: number;
+  productivity_growth: number;
+  wage_pence: number;
+  worker_supply: number;
+  periods: number;
+}
+
+export interface GeneralLawScenarioResult {
+  id: string;
+  name: string;
+  constant_capital: number;
+  variable_capital: number;
+  surplus_rate: number;
+  accumulation_rate: number;
+  productivity_growth: number;
+  wage_pence: number;
+  worker_supply: number;
+  periods: number;
+  created_at: string;
+  series: GeneralLawSnapshot[];
+}
