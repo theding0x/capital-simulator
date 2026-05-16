@@ -90,7 +90,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 22    | ✅ Done     | National differences in wages; NationalIntensity, DayWage, StandardisedWage, RelativeLabourPrice, SpindleRatio; StandardiseWage, ComputeRelativePrice; POST/GET /v1/intensities, POST /v1/wages, GET /v1/wages/{country}/standardised, GET /v1/comparisons | agent-service |
 | Ch. 23    | ✅ Done     | Simple reproduction; CapitalStock, SurplusValueFund, ReproductionCycle, RepaymentPeriod | simulation-engine |
 | Ch. 24    | ✅ Done     | Accumulation of capital; AdditionalCapital, Accumulation, SplitSurplus, RunExtendedReproduction | simulation-engine |
-| Ch. 25+   | Pending     | General law of capitalist accumulation | all |
+| Ch. 25    | ✅ Done     | General law of capitalist accumulation; ValueComposition, OrganicComposition, LabourDemand, IndustrialReserveArmy, GeneralLawScenario, RunGeneralLaw | simulation-engine |
 
 ### Ch. 1 — what was built
 
@@ -339,6 +339,19 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints (stateless).** `POST /v1/reproductions/extended` — runs the genealogy simulation, returns the cycle array. `POST /v1/reproductions/split-surplus` — stateless; divides a single surplus-value into new constant capital, new variable capital, and revenue.
 - **api-gateway.** Reverse-proxies `/v1/reproductions/extended` and `/v1/reproductions/split-surplus` to simulation-engine.
 - **React UI.** "Ch. 24 — Accumulation of Capital" panel: extended-reproduction form (c, v, s′, accumulation rate, composition ratio, period slider); preset buttons for spinner §1 and partial-accumulation §3; cycle table showing the genealogy across periods; stateless split-surplus calculator with result cards for new constant capital, new variable capital, and capitalist revenue.
+
+### Ch. 25 — what was built
+
+`simulation-engine` adds the general-law domain from Capital Vol. I, Ch. 25:
+
+- **ValueComposition / OrganicComposition.** `ValueComposition{ConstantCapital, VariableCapital Pence}` — the technical composition at a point in time. `OrganicComposition{Ratio float64}` — c/(c+v), always in [0, 1). `ComputeOrganicComposition(vc) OrganicComposition` — pure function.
+- **LabourDemand.** `LabourDemand{Workers int64}`. `ComputeLabourDemand(totalCapital, oc, wagePence) LabourDemand` — variable-capital share divided by wage: `(totalCapital × (1−oc.Ratio)) / wagePence`.
+- **IndustrialReserveArmy.** `IndustrialReserveArmy{Size int64; RelativeProportion float64}`. `ComputeReserveArmy(supply, demand) IndustrialReserveArmy` — size = max(supply − demanded, 0); proportion = size / demanded.
+- **GeneralLawScenario / RunGeneralLaw.** `GeneralLawScenario` persists the initial conditions; `RunGeneralLaw(s) []GeneralLawSnapshot` simulates accumulation over `s.Periods` periods. Each period: record OC, compute workers absorbed and reserve army, then accumulate surplus via `SplitSurplus`, and advance OC by `productivityGrowth` for the next period.
+- **Migration.** `00008_ch25_general_law.sql` adds `general_law_scenarios`. `00009_ch25_seed.sql` inserts §1 (unchanged OC, `productivity_growth=0.0`) and §2 (rising OC, `productivity_growth=0.05`) with seed IDs `5eed000000000000002501`/`5eed000000000000002502`.
+- **HTTP endpoints.** `POST /v1/accumulation/organic-composition` (stateless OC calculation); `POST /v1/accumulation/labour-demand` (stateless workers absorbed); `POST /v1/accumulation/reserve-army` (stateless reserve army); `POST /v1/accumulation/scenarios` (persist scenario + run, returns 201 + Location); `GET /v1/accumulation/scenarios/{id}` (retrieve with series).
+- **api-gateway.** Reverse-proxies `/v1/accumulation` and `/v1/accumulation/{rest...}` to simulation-engine.
+- **React UI.** "Ch. 25 — General Law" panel: organic composition calculator; labour demand probe; reserve army calculator; multi-period scenario simulator with §1/§2 preset buttons; series table showing C, V, OC, workers, reserve army and relative proportion across periods.
 
 ### Ch. 20 — what was built
 

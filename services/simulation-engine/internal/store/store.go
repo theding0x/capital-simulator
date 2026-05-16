@@ -1,6 +1,6 @@
 // Package store is the persistence layer for simulation-engine. As of Ch. 15
 // it persists Machine and Factory records and the tick log produced by
-// advancing a Factory one period at a time.
+// advancing a Factory one period at a time. Ch. 25 adds GeneralLawScenario.
 package store
 
 import (
@@ -9,6 +9,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
 
 var (
@@ -47,4 +48,10 @@ type FactoryStore interface {
 	ListFactories(ctx context.Context) ([]machinery.Factory, error)
 	AdvanceTick(ctx context.Context, id machinery.FactoryID) (machinery.Factory, engine.Tick, error)
 	ListTicks(ctx context.Context, id machinery.FactoryID, limit int) ([]engine.Tick, error)
+}
+
+// GeneralLawStore is the persistence contract for Ch. 25 general-law scenarios.
+type GeneralLawStore interface {
+	CreateGeneralLawScenario(ctx context.Context, s simulation.GeneralLawScenario) (simulation.GeneralLawScenario, error)
+	GetGeneralLawScenario(ctx context.Context, id simulation.GeneralLawScenarioID) (simulation.GeneralLawScenario, error)
 }

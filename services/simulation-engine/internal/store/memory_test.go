@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 )
 
@@ -96,5 +97,47 @@ func TestMemory_GetMissingReturnsNotFound(t *testing.T) {
 	}
 	if _, err := st.GetFactory(context.Background(), machinery.FactoryID("nope")); err != store.ErrNotFound {
 		t.Fatalf("err = %v, want ErrNotFound", err)
+	}
+	if _, err := st.GetGeneralLawScenario(context.Background(), simulation.GeneralLawScenarioID("nope")); err != store.ErrNotFound {
+		t.Fatalf("GetGeneralLawScenario missing: err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_GeneralLaw_CreateAndGet(t *testing.T) {
+	t.Parallel()
+	st := store.NewMemory()
+	ctx := context.Background()
+
+	s := simulation.GeneralLawScenario{
+		Name:               "§1 unchanged OC",
+		ConstantCapital:    simulation.Pence(8000),
+		VariableCapital:    simulation.Pence(2000),
+		SurplusRate:        1.0,
+		AccumulationRate:   1.0,
+		ProductivityGrowth: 0.0,
+		WagePence:          200,
+		WorkerSupply:       50,
+		Periods:            3,
+	}
+	created, err := st.CreateGeneralLawScenario(ctx, s)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if string(created.ID) == "" {
+		t.Fatal("id should be non-empty")
+	}
+
+	got, err := st.GetGeneralLawScenario(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID {
+		t.Errorf("id = %q, want %q", got.ID, created.ID)
+	}
+	if got.Name != s.Name {
+		t.Errorf("name = %q, want %q", got.Name, s.Name)
+	}
+	if got.ConstantCapital != s.ConstantCapital {
+		t.Errorf("constant_capital = %d, want %d", got.ConstantCapital, s.ConstantCapital)
 	}
 }

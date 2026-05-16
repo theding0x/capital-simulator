@@ -166,6 +166,10 @@ func main() {
 	srv.Handle("/v1/reproductions/extended", simProxy)
 	srv.Handle("/v1/reproductions/split-surplus", simProxy)
 
+	// Ch. 25 — The General Law of Capitalist Accumulation → simulation-engine
+	srv.Handle("/v1/accumulation", simProxy)
+	srv.Handle("/v1/accumulation/{rest...}", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -177,8 +181,8 @@ func main() {
 func handleInfo(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-24-accumulation",
-		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation/wage-form routes to agent-service; machine/factory/surplus-value/reproduction routes to simulation-engine.",
+		"status":      "ch-25-general-law",
+		"description": "External entrypoint. Forwards commodity routes to commodity-service; owner/offer/exchange/price routes to market-service; agent/circuit/exchange-simulation/wage-form routes to agent-service; machine/factory/surplus-value/reproduction/accumulation routes to simulation-engine.",
 		"downstream": []string{
 			"commodity-service",
 			"agent-service",
