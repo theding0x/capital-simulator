@@ -65,4 +65,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/historical-stages/{id}/vagrancy-laws", h.CreateVagrancyLaw)
 	s.HandleFunc("GET /v1/historical-stages/{id}/labour-discipline", h.GetLabourDiscipline)
 	s.HandleFunc("POST /v1/statutory-wages/compare", h.CompareStatutoryWage)
+
+	// Ch. 29 — Genesis of the Capitalist Farmer
+	s.HandleFunc("POST /v1/historical-stages/{id}/farm-tenures", h.CreateFarmTenure)
+	s.HandleFunc("GET /v1/historical-stages/{id}/farm-tenures", h.ListFarmTenures)
+	s.HandleFunc("POST /v1/farm-tenures/real-rent", h.ComputeRealRent)
 }

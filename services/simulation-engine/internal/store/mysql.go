@@ -734,3 +734,56 @@ func (m *MySQL) ListVagrancyLawsByStage(ctx context.Context, stageID simulation.
 	}
 	return out, rows.Err()
 }
+
+func (m *MySQL) CreateFarmTenure(ctx context.Context, f simulation.FarmTenure) (simulation.FarmTenure, error) {
+	if err := f.Validate(); err != nil {
+		return simulation.FarmTenure{}, err
+	}
+	if f.ID.IsZero() {
+		f.ID = simulation.NewFarmTenureID()
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now()
+	}
+	const q = `INSERT INTO farm_tenures
+		(id, historical_stage_id, form, lease_period_years, rent_pence, capital_advanced_pence, revenue_pence, wage_costs_pence, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(f.ID), string(f.HistoricalStageID),
+		string(f.Form), f.LeasePeriodYears,
+		int64(f.RentPence), int64(f.CapitalAdvancedPence),
+		int64(f.RevenuePence), int64(f.WageCostsPence),
+		f.CreatedAt)
+	if err != nil {
+		return simulation.FarmTenure{}, err
+	}
+	return f, nil
+}
+
+func (m *MySQL) ListFarmTenuresByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.FarmTenure, error) {
+	const q = `SELECT id, historical_stage_id, form, lease_period_years, rent_pence, capital_advanced_pence, revenue_pence, wage_costs_pence, created_at
+		FROM farm_tenures WHERE historical_stage_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(stageID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.FarmTenure, 0)
+	for rows.Next() {
+		var f simulation.FarmTenure
+		var id, sid, form string
+		var rent, capital, revenue, wages int64
+		if err := rows.Scan(&id, &sid, &form, &f.LeasePeriodYears, &rent, &capital, &revenue, &wages, &f.CreatedAt); err != nil {
+			return nil, err
+		}
+		f.ID = simulation.FarmTenureID(id)
+		f.HistoricalStageID = simulation.HistoricalStageID(sid)
+		f.Form = simulation.TenantForm(form)
+		f.RentPence = simulation.Pence(rent)
+		f.CapitalAdvancedPence = simulation.Pence(capital)
+		f.RevenuePence = simulation.Pence(revenue)
+		f.WageCostsPence = simulation.Pence(wages)
+		out = append(out, f)
+	}
+	return out, rows.Err()
+}

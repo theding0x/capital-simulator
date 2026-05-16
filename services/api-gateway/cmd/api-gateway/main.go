@@ -182,6 +182,10 @@ func main() {
 	srv.Handle("/v1/statutory-wages", simProxy)
 	srv.Handle("/v1/statutory-wages/{rest...}", simProxy)
 
+	// Ch. 29 — Genesis of the Capitalist Farmer → simulation-engine
+	srv.Handle("/v1/farm-tenures", simProxy)
+	srv.Handle("/v1/farm-tenures/{rest...}", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {

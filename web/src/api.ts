@@ -141,6 +141,9 @@ import type {
   VagrancyLawInput,
   StatutoryWage,
   LabourDisciplineRegime,
+  FarmTenure,
+  FarmTenureInput,
+  RealRentResult,
 } from "./types";
 
 const BASE = "/api";
@@ -855,5 +858,22 @@ export const api = {
     http<StatutoryWage>("/v1/statutory-wages/compare", {
       method: "POST",
       body: JSON.stringify({ acted_wage_pence: acted, market_wage_pence: market }),
+    }),
+
+  // --- simulation-engine (Ch. 29: Genesis of the Capitalist Farmer) ---
+
+  createFarmTenure: (stageId: string, input: FarmTenureInput) =>
+    http<FarmTenure>(`/v1/historical-stages/${stageId}/farm-tenures`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listFarmTenures: (stageId: string) =>
+    http<FarmTenure[]>(`/v1/historical-stages/${stageId}/farm-tenures`),
+
+  computeRealRent: (nominalRentPence: number, depreciationFactor: number) =>
+    http<RealRentResult>("/v1/farm-tenures/real-rent", {
+      method: "POST",
+      body: JSON.stringify({ nominal_rent_pence: nominalRentPence, depreciation_factor: depreciationFactor }),
     }),
 };
