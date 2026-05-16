@@ -8,7 +8,10 @@ Microservice simulation of an economy modeled chapter-by-chapter on Marx's
 *Capital, Vol. I*. One branch + one PR per chapter. Chapter source text and
 spec live in the **red-vault** Obsidian vault at
 `marx-engels/1867/capital-volume-i/{texts,specs}/` and are read via the
-`obsidian` MCP server, not from this repo.
+`obsidian` MCP server, not from this repo. The vault's text files are
+mirrored from the **Marxists Internet Archive** (Moore–Aveling 1887
+edition, `https://www.marxists.org/archive/marx/works/1867-c1/`) — that
+URL is the upstream source-of-truth if a vault file is ever ambiguous.
 
 ## Stack (fixed; do not propose alternatives)
 

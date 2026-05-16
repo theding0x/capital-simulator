@@ -2,6 +2,8 @@
 
 Capital Simulator is a microservices simulation of an economy as described in Karl Marx's *Capital, Volume I*. The architecture is intentionally modular: each Marxist economic category (the commodity, the agent, the market, the production process, the circulation of capital) gets its own service so that chapter-by-chapter additions stay localized.
 
+All textual references in this document are to the Moore–Aveling English translation of *Capital, Vol. I* (1887), as digitised and hosted by the [Marxists Internet Archive](https://www.marxists.org/archive/marx/works/1867-c1/). See the [README's Sources and acknowledgements section](../README.md#sources-and-acknowledgements) for credit details.
+
 ## Topology
 
 ```
