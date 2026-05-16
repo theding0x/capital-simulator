@@ -1,0 +1,191 @@
+name: deploy
+
+# Deploys each service to Cloud Run on merge to main.
+# Only services whose files (or their shared deps) changed are rebuilt and rolled.
+#
+# One-time GCP setup required:
+#   - Artifact Registry repo: ${{ vars.AR_REPOSITORY }} in ${{ vars.GCP_REGION }}
+#   - Workload Identity Pool + Provider trusting this GitHub repo
+#   - Service account (e.g. github-deployer@<project>.iam.gserviceaccount.com) with:
+#       roles/run.admin
+#       roles/iam.serviceAccountUser
+#       roles/artifactregistry.writer
+#   - WIF binding: that SA's iam.workloadIdentityUser granted to the WIF principal
+#
+# GitHub repo configuration required:
+#   secrets:
+#     GCP_WIF_PROVIDER  e.g. projects/123456/locations/global/workloadIdentityPools/github/providers/github
+#     GCP_DEPLOY_SA     e.g. github-deployer@my-project.iam.gserviceaccount.com
+#   variables:
+#     GCP_PROJECT_ID    e.g. capital-simulator-prod
+#     GCP_REGION        e.g. us-central1
+#     AR_REPOSITORY     e.g. capital-simulator
+#
+# Runtime config (MYSQL_DSN, REDIS_ADDR, etc.) is NOT set here. Manage it on each
+# Cloud Run service via --set-secrets / --set-env-vars out-of-band so deploys do
+# not reset it. Adjust the deploy step if you'd rather drive config from git.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated services to force-deploy (blank = all)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  AR_REPOSITORY: ${{ vars.AR_REPOSITORY }}
+
+jobs:
+  detect:
+    name: detect changed services
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.matrix.outputs.services }}
+      any: ${{ steps.matrix.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api-gateway:
+              - 'services/api-gateway/**'
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
+            commodity-service:
+              - 'services/commodity-service/**'
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
+            agent-service:
+              - 'services/agent-service/**'
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
+            market-service:
+              - 'services/market-service/**'
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
+            simulation-engine:
+              - 'services/simulation-engine/**'
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
+            web:
+              - 'web/**'
+
+      - id: matrix
+        name: build deploy matrix
+        env:
+          CHANGED: ${{ steps.filter.outputs.changes }}
+          DISPATCH_SERVICES: ${{ github.event.inputs.services }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          # Ports match the table in CLAUDE.md.
+          ALL='[
+            {"name":"api-gateway",       "dockerfile":"services/api-gateway/Dockerfile",       "context":".",     "port":8080},
+            {"name":"commodity-service", "dockerfile":"services/commodity-service/Dockerfile", "context":".",     "port":8081},
+            {"name":"agent-service",     "dockerfile":"services/agent-service/Dockerfile",     "context":".",     "port":8082},
+            {"name":"market-service",    "dockerfile":"services/market-service/Dockerfile",    "context":".",     "port":8083},
+            {"name":"simulation-engine", "dockerfile":"services/simulation-engine/Dockerfile", "context":".",     "port":8084},
+            {"name":"web",               "dockerfile":"web/Dockerfile",                        "context":"./web", "port":80}
+          ]'
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -z "$DISPATCH_SERVICES" ]; then
+              SELECTED=$(echo "$ALL" | jq -c '[.[].name]')
+            else
+              SELECTED=$(echo "$DISPATCH_SERVICES" | jq -Rc 'split(",") | map(gsub("^\\s+|\\s+$";""))')
+            fi
+          else
+            SELECTED="$CHANGED"
+          fi
+
+          MATRIX=$(jq -nc --argjson all "$ALL" --argjson sel "$SELECTED" \
+            '$all | map(select(.name as $n | $sel | index($n)))')
+
+          echo "services=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "any=$(jq -nc --argjson m "$MATRIX" '($m | length) > 0')" >> "$GITHUB_OUTPUT"
+          echo "Selected: $MATRIX"
+
+  deploy:
+    name: deploy ${{ matrix.service.name }}
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.detect.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: configure docker for Artifact Registry
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          provenance: false
+          tags: |
+            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ matrix.service.name }}:${{ github.sha }}
+            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ matrix.service.name }}:latest
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
+
+      - name: deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ matrix.service.name }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ matrix.service.name }}:${{ github.sha }}
+          # --allow-unauthenticated is intentional while internal service-to-service
+          # auth is not yet wired in api-gateway. Tighten once the gateway mints OIDC tokens.
+          flags: >-
+            --port=${{ matrix.service.port }}
+            --allow-unauthenticated
+            --platform=managed
+            --revision-suffix=sha-${{ github.sha }}
+
+      - name: summary
+        run: |
+          {
+            echo "### ${{ matrix.service.name }}"
+            echo ""
+            echo "- image: \`${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPOSITORY}/${{ matrix.service.name }}:${{ github.sha }}\`"
+            echo "- region: \`${GCP_REGION}\`"
+            url=$(gcloud run services describe "${{ matrix.service.name }}" --region "$GCP_REGION" --format='value(status.url)' 2>/dev/null || true)
+            if [ -n "$url" ]; then echo "- url: $url"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
