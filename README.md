@@ -15,6 +15,13 @@ exploitation, Redgrave's 1866 spindle ratios) the example is preserved
 verbatim as a test fixture and as a seed row in MySQL, so the dashboard
 comes up populated with the same numbers Marx wrote down.
 
+The source text throughout is the **Moore–Aveling English translation
+of 1887**, digitised and maintained by the [Marxists Internet
+Archive](https://www.marxists.org/archive/marx/works/1867-c1/). All
+chapter implementations, test fixtures, and seed rows trace back to
+that text. See [Sources and acknowledgements](#sources-and-acknowledgements)
+below.
+
 **Status.** Volume I is implemented through the end of Part VII (Ch. 25,
 "The General Law of Capitalist Accumulation"). See
 [`docs/architecture.md`](docs/architecture.md) for the full chapter
@@ -219,7 +226,10 @@ CLAUDE.md              contributor conventions, chapter workflow, anti-patterns
 The chapter **source text** and **specs** are deliberately not in this
 repo. They live in a separate Obsidian vault
 (`marx-engels/1867/capital-volume-i/{texts,specs}/`) and are read at
-implementation time via the `obsidian` MCP server. This keeps the
+implementation time via the `obsidian` MCP server. The text files in
+that vault are mirrored from the Marxists Internet Archive's *Capital,
+Vol. I* collection at
+`https://www.marxists.org/archive/marx/works/1867-c1/`. This keeps the
 repo focused on running code, not commentary.
 
 ---
@@ -303,6 +313,36 @@ You do not need to write code or run the project.
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full contributor
 guide, including issue templates, citation conventions, and how
 disagreements over interpretation are resolved.
+
+---
+
+## Sources and acknowledgements
+
+Every line of Marx's prose this project quotes, paraphrases, or models
+comes from the **Marxists Internet Archive** (MIA) at
+[marxists.org](https://www.marxists.org). Specifically:
+
+- **Primary source.** *Capital: A Critique of Political Economy,
+  Volume I*, Karl Marx, 1867. English translation by Samuel Moore and
+  Edward Aveling, 1887, edited by Frederick Engels.
+  [marxists.org/archive/marx/works/1867-c1/](https://www.marxists.org/archive/marx/works/1867-c1/)
+- **Chapter numbering** follows the Moore–Aveling edition as served by
+  MIA, not the Penguin / Fowkes translation. See
+  [`CONTRIBUTING.md`](CONTRIBUTING.md#a-note-before-you-read-further-chapter-numbering)
+  for the implications and for the policy on cross-edition citation.
+
+The texts themselves are public domain — Marx died in 1883, Moore in
+1922, Aveling in 1898, and the translation has been out of copyright
+for over a century. The work for which MIA deserves explicit credit is
+the **digitisation, transcription, proofing, indexing, and free
+hosting** of these texts, sustained by volunteers since 1990. Without
+that work, this project would have to begin by typing *Capital* back in
+from a paper edition. It did not.
+
+If you find this project useful, please consider
+[donating to MIA](https://www.marxists.org/admin/intro/general/donate.htm)
+to support their ongoing transcription and hosting work. They keep the
+text available to everyone; this project just builds on top of it.
 
 ---
 

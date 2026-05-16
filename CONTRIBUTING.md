@@ -23,10 +23,11 @@ nothing but a copy of *Capital* and a GitHub account.
 ## A note before you read further: chapter numbering
 
 This project uses the **Moore–Aveling English chapter numbering**, the
-one available at marxists.org and reproduced in most older English
-editions. The **Penguin / Fowkes** translation renumbers some chapters
-and combines others. The differences begin around Part III and become
-significant later.
+one digitised and served by the [Marxists Internet
+Archive](https://www.marxists.org/archive/marx/works/1867-c1/) (MIA)
+and reproduced in most older English editions. The **Penguin / Fowkes**
+translation renumbers some chapters and combines others. The
+differences begin around Part III and become significant later.
 
 If a chapter number in your edition doesn't match ours, please cite
 either the chapter **title** or a marxists.org URL so we can be sure
@@ -173,10 +174,18 @@ visible than when they pretend to be obvious.
 
 ## Citation conventions
 
-The repo's source-of-truth text is the marxists.org Moore–Aveling
-edition:
+The repo's source-of-truth text is the Moore–Aveling translation of
+*Capital, Vol. I* (1887), as digitised, transcribed, and hosted by the
+**Marxists Internet Archive**:
 
 `https://www.marxists.org/archive/marx/works/1867-c1/`
+
+Every chapter implementation, test fixture, and seed row in this
+repository ultimately traces back to that URL. Crediting MIA when you
+quote *Capital* is not a legal requirement — Marx's text and the
+Moore–Aveling translation are both public domain — but it is the right
+thing to do. The archive's transcription work is what made this
+project possible.
 
 When citing Marx, please include at least one of:
 
@@ -242,3 +251,10 @@ the model corresponds to the argument. The corresponding part is the
 part this maintainer cannot reliably verify alone. Every interpretation
 issue, every fixture correction, every blunt "this is wrong" makes the
 project more useful than it was before.
+
+And a separate, prior thank-you to the volunteers of the **Marxists
+Internet Archive** for digitising, transcribing, proof-reading,
+indexing, and hosting *Capital* (along with the rest of the Marx /
+Engels corpus, and a great deal else) for thirty-plus years and
+counting. If this project is useful to you, please consider
+[donating to MIA](https://www.marxists.org/admin/intro/general/donate.htm).
