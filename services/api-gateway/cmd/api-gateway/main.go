@@ -178,6 +178,10 @@ func main() {
 	srv.Handle("/v1/enclosure-events", simProxy)
 	srv.Handle("/v1/enclosure-events/{rest...}", simProxy)
 
+	// Ch. 28 — Bloody Legislation Against the Expropriated → simulation-engine
+	srv.Handle("/v1/statutory-wages", simProxy)
+	srv.Handle("/v1/statutory-wages/{rest...}", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {

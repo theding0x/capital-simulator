@@ -12,8 +12,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
 
-// Memory is the in-memory implementation of MachineStore, FactoryStore,
-// GeneralLawStore, HistoricalStageStore, and EnclosureEventStore.
+// Memory is the in-memory implementation of all store interfaces.
 type Memory struct {
 	mu               sync.RWMutex
 	machines         map[machinery.MachineID]machinery.Machine
@@ -23,6 +22,8 @@ type Memory struct {
 	historicalStages map[simulation.HistoricalStageID]simulation.HistoricalStage
 	stageNames       map[string]simulation.HistoricalStageID
 	enclosureEvents  []simulation.EnclosureEvent
+	wageStatutes     []simulation.WageStatute
+	vagrancyLaws     []simulation.VagrancyLaw
 	now              func() time.Time
 }
 
@@ -316,5 +317,61 @@ func (m *Memory) ListEnclosureEvents(_ context.Context) ([]simulation.EnclosureE
 	defer m.mu.RUnlock()
 	out := make([]simulation.EnclosureEvent, len(m.enclosureEvents))
 	copy(out, m.enclosureEvents)
+	return out, nil
+}
+
+func (m *Memory) CreateWageStatute(_ context.Context, w simulation.WageStatute) (simulation.WageStatute, error) {
+	if err := w.Validate(); err != nil {
+		return simulation.WageStatute{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if w.ID.IsZero() {
+		w.ID = simulation.NewWageStatuteID()
+	}
+	if w.CreatedAt.IsZero() {
+		w.CreatedAt = m.now()
+	}
+	m.wageStatutes = append(m.wageStatutes, w)
+	return w, nil
+}
+
+func (m *Memory) ListWageStatutesByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.WageStatute, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.WageStatute, 0)
+	for _, w := range m.wageStatutes {
+		if w.HistoricalStageID == stageID {
+			out = append(out, w)
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) CreateVagrancyLaw(_ context.Context, v simulation.VagrancyLaw) (simulation.VagrancyLaw, error) {
+	if err := v.Validate(); err != nil {
+		return simulation.VagrancyLaw{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if v.ID.IsZero() {
+		v.ID = simulation.NewVagrancyLawID()
+	}
+	if v.CreatedAt.IsZero() {
+		v.CreatedAt = m.now()
+	}
+	m.vagrancyLaws = append(m.vagrancyLaws, v)
+	return v, nil
+}
+
+func (m *Memory) ListVagrancyLawsByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.VagrancyLaw, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.VagrancyLaw, 0)
+	for _, v := range m.vagrancyLaws {
+		if v.HistoricalStageID == stageID {
+			out = append(out, v)
+		}
+	}
 	return out, nil
 }

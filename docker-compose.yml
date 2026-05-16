@@ -119,10 +119,14 @@ services:
   web:
     build:
       context: ./web
+    environment:
+      API_GATEWAY_URL: http://api-gateway:8080
+      API_GATEWAY_HOST: api-gateway
     ports:
       - "5173:80"
     depends_on:
       - api-gateway
+
 
 volumes:
   mysql_data:
