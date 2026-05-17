@@ -20,7 +20,7 @@ func TestComputeOrganicComposition_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.ComputeOrganicComposition(w, req)
 
 	if w.Code != http.StatusOK {
@@ -43,7 +43,7 @@ func TestComputeOrganicComposition_BadRequest_MalformedJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.ComputeOrganicComposition(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -58,7 +58,7 @@ func TestComputeOrganicComposition_BadRequest_ZeroVariable(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.ComputeOrganicComposition(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -74,7 +74,7 @@ func TestComputeLabourDemand_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.ComputeLabourDemandEndpoint(w, req)
 
 	if w.Code != http.StatusOK {
@@ -98,7 +98,7 @@ func TestComputeLabourDemand_BadRequest_MalformedJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.ComputeLabourDemandEndpoint(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -114,7 +114,7 @@ func TestComputeReserveArmy_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.ComputeReserveArmyEndpoint(w, req)
 
 	if w.Code != http.StatusOK {
@@ -142,7 +142,7 @@ func TestComputeReserveArmy_BadRequest_MalformedJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.ComputeReserveArmyEndpoint(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -168,7 +168,7 @@ func TestCreateGeneralLawScenario_Success(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.CreateGeneralLawScenario(w, req)
 
 	if w.Code != http.StatusCreated {
@@ -201,7 +201,7 @@ func TestCreateGeneralLawScenario_BadRequest_MalformedJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.CreateGeneralLawScenario(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -216,7 +216,7 @@ func TestCreateGeneralLawScenario_BadRequest_ZeroVariable(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.CreateGeneralLawScenario(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -230,7 +230,7 @@ func TestGetGeneralLawScenario_NotFound(t *testing.T) {
 	req.SetPathValue("id", "nope")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	h.GetGeneralLawScenario(w, req)
 
 	if w.Code != http.StatusNotFound {
@@ -242,7 +242,7 @@ func TestGetGeneralLawScenario_NotFound(t *testing.T) {
 func TestGetGeneralLawScenario_RoundTrip(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, st, st, st, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, st, st, st, nil, nil, nil, nil)
 
 	createBody := `{
 		"name":"§2 rising OC",

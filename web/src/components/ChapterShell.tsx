@@ -30,6 +30,7 @@ import { Ch26PrimitiveAccumulation } from "../chapters/Ch26PrimitiveAccumulation
 import { Ch27EnclosureEvents } from "../chapters/Ch27EnclosureEvents";
 import { Ch28BloodyLegislation } from "../chapters/Ch28BloodyLegislation";
 import { Ch29GenesisFarmer } from "../chapters/Ch29GenesisFarmer";
+import { Ch30HomeMarket } from "../chapters/Ch30HomeMarket";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -78,6 +79,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch27: Ch27EnclosureEvents as AnyPanel,
   ch28: Ch28BloodyLegislation as AnyPanel,
   ch29: Ch29GenesisFarmer as AnyPanel,
+  ch30: Ch30HomeMarket as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -110,6 +112,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch27: "The spoliation of the Church's property, the fraudulent alienation of the State domains, the robbery of the common lands, the usurpation of feudal and clan property, and its transformation into modern private property under circumstances of reckless terrorism, were just so many idyllic methods of primitive accumulation.",
   ch28: "The advance of capitalist production develops a working class which by education, tradition, and habit looks upon the requirements of that mode of production as self-evident natural laws.",
   ch29: "The progressive fall in the value of the precious metals ... lowered wages. A portion of the latter was now added to profits.",
+  ch30: "The expropriation of the agricultural producer, of the peasant, from the soil, is the basis of the whole process. The history of this expropriation, in different countries, assumes different aspects, and runs through its various phases in different orders of succession.",
 };
 
 export function ChapterShell({

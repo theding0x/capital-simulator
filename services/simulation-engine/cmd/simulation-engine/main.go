@@ -32,6 +32,7 @@ type machineryStore interface {
 	store.WageStatuteStore
 	store.VagrancyLawStore
 	store.FarmTenureStore
+	store.DomesticIndustryStore
 }
 
 func main() {
@@ -58,7 +59,7 @@ func main() {
 	agentURL := getenv("AGENT_SERVICE_URL", "http://agent-service:8082")
 	pf := productivity.New(agentURL, st)
 
-	h := httpapi.New(logger, st, st, pf, st, st, st, st, st, st)
+	h := httpapi.New(logger, st, st, pf, st, st, st, st, st, st, st)
 	httpapi.Register(srv, h)
 
 	srv.MarkReady(true)

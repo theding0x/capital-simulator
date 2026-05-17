@@ -87,3 +87,9 @@ type FarmTenureStore interface {
 	CreateFarmTenure(ctx context.Context, f simulation.FarmTenure) (simulation.FarmTenure, error)
 	ListFarmTenuresByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.FarmTenure, error)
 }
+
+// DomesticIndustryStore is the persistence contract for Ch. 30 domestic industries.
+type DomesticIndustryStore interface {
+	CreateDomesticIndustry(ctx context.Context, d simulation.DomesticIndustry) (simulation.DomesticIndustry, error)
+	ListDomesticIndustriesByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.DomesticIndustry, error)
+}

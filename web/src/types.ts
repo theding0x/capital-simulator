@@ -1463,3 +1463,40 @@ export interface RealRentResult {
   real_rent_pence: number;
   depreciation_factor: number;
 }
+
+// Ch. 30 — Reaction of the Agricultural Revolution on Industry
+
+export interface DomesticIndustryInput {
+  name: string;
+  households_engaged: number;
+  annual_output_pence: number;
+}
+
+export interface DomesticIndustry {
+  id: string;
+  historical_stage_id: string;
+  name: string;
+  households_engaged: number;
+  annual_output_pence: number;
+  created_at: string;
+}
+
+export interface MarketFormationInput {
+  name: string;
+  households_engaged: number;
+  annual_output_pence: number;
+  expropriated: number;
+}
+
+export interface MarketFormation {
+  period: string;
+  labourers_proletarianised: number;
+  domestic_industry_destroyed: boolean;
+  new_wage_labourers: number;
+  market_size_pence: number;
+}
+
+export interface HomeMarketSize {
+  commoditised_output_pence: number;
+  wage_labourers: number;
+}

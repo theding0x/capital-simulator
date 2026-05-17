@@ -27,7 +27,7 @@ const englandBody = `{
 func TestCreateHistoricalStage_Success(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, st, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, st, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages", strings.NewReader(englandBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -61,7 +61,7 @@ func TestCreateHistoricalStage_Success(t *testing.T) {
 
 func TestCreateHistoricalStage_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages", strings.NewReader(`{nope`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -73,7 +73,7 @@ func TestCreateHistoricalStage_BadRequest_MalformedJSON(t *testing.T) {
 
 func TestCreateHistoricalStage_BadRequest_MissingName(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	body := `{"name":"","primitive_accumulations":[{"period":"x","method":"y","labourers_expropriated":1,"capital_formed":1}]}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -86,7 +86,7 @@ func TestCreateHistoricalStage_BadRequest_MissingName(t *testing.T) {
 
 func TestCreateHistoricalStage_BadRequest_NoEpisodes(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	body := `{"name":"Empty","description":"","primitive_accumulations":[]}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -99,7 +99,7 @@ func TestCreateHistoricalStage_BadRequest_NoEpisodes(t *testing.T) {
 
 func TestCreateHistoricalStage_BadRequest_NonPositiveCapital(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	body := `{"name":"X","description":"","primitive_accumulations":[{"period":"p","method":"m","labourers_expropriated":1,"capital_formed":0}]}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -113,7 +113,7 @@ func TestCreateHistoricalStage_BadRequest_NonPositiveCapital(t *testing.T) {
 func TestCreateHistoricalStage_Conflict_DuplicateName(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, st, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, st, nil, nil, nil, nil)
 
 	for i := 0; i < 2; i++ {
 		req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages", strings.NewReader(englandBody))
@@ -131,7 +131,7 @@ func TestCreateHistoricalStage_Conflict_DuplicateName(t *testing.T) {
 
 func TestListHistoricalStages_ReturnsNonNilSlice(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages", nil)
 	w := httptest.NewRecorder()
 	h.ListHistoricalStages(w, req)
@@ -156,7 +156,7 @@ func TestListHistoricalStages_ReturnsCreated(t *testing.T) {
 		t.Fatalf("seed: %v", err)
 	}
 
-	h := httpapi.New(nil, nil, nil, nil, nil, st, st, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, st, nil, nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages", nil)
 	w := httptest.NewRecorder()
 	h.ListHistoricalStages(w, req)
@@ -178,7 +178,7 @@ func TestListHistoricalStages_ReturnsCreated(t *testing.T) {
 
 func TestSeedScenarioFromStage_NotFound(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	body := `{"pre_capitalist_workers":100000,"composition_ratio":0.8,"surplus_rate":1.0,"periods":3}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/missing/seed-scenario", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -206,7 +206,7 @@ func TestSeedScenarioFromStage_Success(t *testing.T) {
 		t.Fatalf("seed: %v", err)
 	}
 
-	h := httpapi.New(nil, nil, nil, nil, nil, st, st, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, st, nil, nil, nil, nil)
 	body := `{"pre_capitalist_workers":100000,"composition_ratio":0.8,"surplus_rate":1.0,"periods":3}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/"+string(created.ID)+"/seed-scenario", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -250,7 +250,7 @@ func TestSeedScenarioFromStage_Success(t *testing.T) {
 
 func TestSeedScenarioFromStage_BadRequest_BadInputs(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, store.NewMemory(), store.NewMemory(), nil, nil, nil, nil)
 	cases := []struct {
 		name string
 		body string
