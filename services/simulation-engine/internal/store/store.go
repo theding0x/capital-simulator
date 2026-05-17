@@ -93,3 +93,26 @@ type DomesticIndustryStore interface {
 	CreateDomesticIndustry(ctx context.Context, d simulation.DomesticIndustry) (simulation.DomesticIndustry, error)
 	ListDomesticIndustriesByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.DomesticIndustry, error)
 }
+
+// CapitalOriginStore is the persistence contract for Ch. 31 capital origin records.
+type CapitalOriginStore interface {
+	CreateCapitalOrigin(ctx context.Context, c simulation.CapitalOrigin) (simulation.CapitalOrigin, error)
+	ListCapitalOriginsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.CapitalOrigin, error)
+}
+
+// ColonialTransferStore is the persistence contract for Ch. 31 colonial transfer records.
+type ColonialTransferStore interface {
+	CreateColonialTransfer(ctx context.Context, t simulation.ColonialTransfer) (simulation.ColonialTransfer, error)
+	ListColonialTransfersByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.ColonialTransfer, error)
+}
+
+// NationalDebtStore is the persistence contract for Ch. 31 national debt records.
+type NationalDebtStore interface {
+	CreateNationalDebt(ctx context.Context, d simulation.NationalDebt) (simulation.NationalDebt, error)
+	ListNationalDebtsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.NationalDebt, error)
+}
+
+// ProtectionSystemStore is the persistence contract for Ch. 31 protection system records.
+type ProtectionSystemStore interface {
+	ListProtectionSystemsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.ProtectionSystem, error)
+}

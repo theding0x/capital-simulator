@@ -97,6 +97,8 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 27    | ✅ Done     | Expropriation of agricultural population; EnclosureEvent, displacement timeline, key English enclosure waves | simulation-engine |
 | Ch. 28    | ✅ Done     | Bloody legislation; WageStatute, VagrancyLaw, StatutoryWage, LabourDisciplineRegime, statutory-vs-market wage comparison | simulation-engine |
 | Ch. 29    | ✅ Done     | Genesis of the capitalist farmer; TenantForm (bailiff/metayer/capitalist-farmer), FarmTenure, MoneyDepreciation, FarmingSurplus; ComputeRealRent, ComputeFarmingSurplus; currency depreciation calculator | simulation-engine |
+| Ch. 30    | ✅ Done     | Reaction of the agricultural revolution on industry; DomesticIndustry, MarketFormation, HomeMarketSize; ComputeHomeMarketSize, ComputeMarketFormation; Mirabeau réunie/séparée comparison | simulation-engine |
+| Ch. 31    | ✅ Done     | Genesis of the industrial capitalist; CapitalOrigin, ColonialTransfer, NationalDebt, ProtectionSystem, IndustrialCapitalGenesis; ComputeGenesis; POST capital-origins/colonial-transfers/national-debts, GET genesis | simulation-engine |
 
 ### Ch. 1 — what was built
 
@@ -420,3 +422,13 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints.** `POST /v1/time-wages/hourly-price` (stateless probe), `POST /v1/time-wages/sessions` (create session, returns 201 + Location), `GET /v1/time-wages/sessions/{id}` (retrieve with derived hourly price and nominal wage).
 - **api-gateway.** Reverse-proxies `/v1/time-wages` and `/v1/time-wages/{rest...}` to agent-service.
 - **React UI.** "Ch. 20 — Time-Wages" panel: inputs for daily value, normal hours, overtime hours, overtime rate, wage period; live hourly price preview; result cards showing the exact fraction + decimal hourly price and the nominal wage breakdown (normal pay + overtime).
+
+### Ch. 31 — what was built
+
+`simulation-engine` adds the `industrial_capitalist.go` domain file implementing Marx's Ch. 31 analysis of the genesis of the industrial capitalist through primitive accumulation.
+
+- **Domain types.** `CapitalOriginID`, `CapitalOrigin{Source, AmountPence, Period}`, `ColonialTransferID`, `ColonialTransfer{From, To, ValuePence, Method}`, `NationalDebtID`, `NationalDebt{AmountPence, InterestRateBps, CreditorClass}`, `ProtectionSystemID`, `ProtectionSystem{TariffRateBps, Beneficiary, PeriodStart, PeriodEnd}`, `IndustrialCapitalGenesis`.
+- **ComputeGenesis(stageID, origins, transfers, debts, systems).** Assembles all four slices and computes `TotalCapitalFormedPence = sum(Origins.AmountPence) + sum(ColonialTransfers.ValuePence)`. National debts and protection systems are structural levers; they are returned for display but excluded from the capital total.
+- **Store.** Four new store interfaces (`CapitalOriginStore`, `ColonialTransferStore`, `NationalDebtStore`, `ProtectionSystemStore`) with `Memory` and `MySQL` implementations. `ProtectionSystemStore` is read-only (seed-only per spec). Migrations `00020_ch31_capital_origins.sql` and `00021_ch31_seed.sql`: Liverpool slave trade series (1730/1751/1760/1770/1792), Bank of England founding (£1.2m at 8%), colonial plunder from the Americas, English manufacturers protection system (30% tariff, 17th–19th c.).
+- **HTTP endpoints.** `POST /v1/historical-stages/{id}/capital-origins` (201), `POST /v1/historical-stages/{id}/colonial-transfers` (201), `POST /v1/historical-stages/{id}/national-debts` (201), `GET /v1/historical-stages/{id}/genesis` (200 — full genesis summary). Protection systems are seed-only; no POST endpoint.
+- **React UI.** "Ch. 31 — Genesis of the Industrial Capitalist" panel: stage selector with live genesis summary (total capital formed, counts per category, seeded protection systems); forms to register capital origins, record colonial transfers, and record national debts; results lists with currency formatting.
