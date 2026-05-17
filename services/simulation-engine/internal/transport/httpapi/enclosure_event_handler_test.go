@@ -21,7 +21,7 @@ const sutherlandBody = `{
 func TestCreateEnclosureEvent_Success(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{EnclosureEvents: st})
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/enclosure-events", strings.NewReader(sutherlandBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -59,7 +59,7 @@ func TestCreateEnclosureEvent_Success(t *testing.T) {
 
 func TestCreateEnclosureEvent_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, store.NewMemory(), nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{EnclosureEvents: store.NewMemory()})
 	req := httptest.NewRequest(http.MethodPost, "/v1/enclosure-events", strings.NewReader(`{nope`))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -71,7 +71,7 @@ func TestCreateEnclosureEvent_BadRequest_MalformedJSON(t *testing.T) {
 
 func TestCreateEnclosureEvent_BadRequest_ZeroAcres(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, store.NewMemory(), nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{EnclosureEvents: store.NewMemory()})
 	body := `{"period":"1450–1540","acres_enclosed":0,"population_displaced":40000,"beneficiary":"landed gentry"}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/enclosure-events", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -84,7 +84,7 @@ func TestCreateEnclosureEvent_BadRequest_ZeroAcres(t *testing.T) {
 
 func TestCreateEnclosureEvent_BadRequest_MissingPeriod(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, store.NewMemory(), nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{EnclosureEvents: store.NewMemory()})
 	body := `{"period":"","acres_enclosed":500000,"population_displaced":40000,"beneficiary":"landed gentry"}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/enclosure-events", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -97,7 +97,7 @@ func TestCreateEnclosureEvent_BadRequest_MissingPeriod(t *testing.T) {
 
 func TestListEnclosureEvents_ReturnsNonNilSlice(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, store.NewMemory(), nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{EnclosureEvents: store.NewMemory()})
 	req := httptest.NewRequest(http.MethodGet, "/v1/enclosure-events", nil)
 	w := httptest.NewRecorder()
 	h.ListEnclosureEvents(w, req)
@@ -112,7 +112,7 @@ func TestListEnclosureEvents_ReturnsNonNilSlice(t *testing.T) {
 func TestListEnclosureEvents_ReturnsCreated(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{EnclosureEvents: st})
 
 	createReq := httptest.NewRequest(http.MethodPost, "/v1/enclosure-events",
 		strings.NewReader(`{"period":"1760–1820","acres_enclosed":3000000,"population_displaced":150000,"beneficiary":"improving landlords"}`))

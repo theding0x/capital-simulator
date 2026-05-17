@@ -30,13 +30,54 @@ type Handler struct {
 	ColonialTransfers  store.ColonialTransferStore
 	NationalDebts      store.NationalDebtStore
 	ProtectionSystems  store.ProtectionSystemStore
+	Trajectories       store.AccumulationTrajectoryStore
 }
 
-func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore, hs store.HistoricalStageStore, ee store.EnclosureEventStore, ws store.WageStatuteStore, vl store.VagrancyLawStore, ft store.FarmTenureStore, di store.DomesticIndustryStore, co store.CapitalOriginStore, ct store.ColonialTransferStore, nd store.NationalDebtStore, ps store.ProtectionSystemStore) *Handler {
+// Deps is the dependency bag passed to New. Each field maps to the
+// matching Handler store; unset fields stay nil and the handlers that
+// need them will fail at request time rather than at construction. Add
+// new stores as fields here — callers that do not use them keep
+// working unchanged.
+type Deps struct {
+	Machines           store.MachineStore
+	Factories          store.FactoryStore
+	Productivity       ProductivityFetcher
+	GeneralLaw         store.GeneralLawStore
+	HistoricalStages   store.HistoricalStageStore
+	EnclosureEvents    store.EnclosureEventStore
+	WageStatutes       store.WageStatuteStore
+	VagrancyLaws       store.VagrancyLawStore
+	FarmTenures        store.FarmTenureStore
+	DomesticIndustries store.DomesticIndustryStore
+	CapitalOrigins     store.CapitalOriginStore
+	ColonialTransfers  store.ColonialTransferStore
+	NationalDebts      store.NationalDebtStore
+	ProtectionSystems  store.ProtectionSystemStore
+	Trajectories       store.AccumulationTrajectoryStore
+}
+
+func New(logger *slog.Logger, d Deps) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl, HistoricalStages: hs, EnclosureEvents: ee, WageStatutes: ws, VagrancyLaws: vl, FarmTenures: ft, DomesticIndustries: di, CapitalOrigins: co, ColonialTransfers: ct, NationalDebts: nd, ProtectionSystems: ps}
+	return &Handler{
+		Logger:             logger,
+		Machines:           d.Machines,
+		Factories:          d.Factories,
+		Productivity:       d.Productivity,
+		GeneralLaw:         d.GeneralLaw,
+		HistoricalStages:   d.HistoricalStages,
+		EnclosureEvents:    d.EnclosureEvents,
+		WageStatutes:       d.WageStatutes,
+		VagrancyLaws:       d.VagrancyLaws,
+		FarmTenures:        d.FarmTenures,
+		DomesticIndustries: d.DomesticIndustries,
+		CapitalOrigins:     d.CapitalOrigins,
+		ColonialTransfers:  d.ColonialTransfers,
+		NationalDebts:      d.NationalDebts,
+		ProtectionSystems:  d.ProtectionSystems,
+		Trajectories:       d.Trajectories,
+	}
 }
 
 // massRequest accepts either {rate, variable_capital} or

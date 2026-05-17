@@ -1568,3 +1568,44 @@ export interface IndustrialCapitalGenesis {
   protection_systems: ProtectionSystem[];
   total_capital_formed_pence: number;
 }
+
+// Ch. 32 — The Historical Tendency of Capitalist Accumulation.
+
+export interface Negation {
+  stage: string;
+  description: string;
+}
+
+export interface NegationOfNegationResponse {
+  stages: Negation[];
+  negation: Negation;
+}
+
+export interface CentralisationStep {
+  step_index: number;
+  firms_absorbed: number;
+  capital_concentrated_pence: number;
+}
+
+export interface AccumulationTrajectory {
+  id: string;
+  name: string;
+  initial_firms: number;
+  initial_capital_pence: number;
+  steps: CentralisationStep[];
+  final_firms: number;
+  final_capital_pence: number;
+  reserve_army_size: number;
+  created_at?: string;
+}
+
+export interface RunCentralisationInput {
+  name?: string;
+  firms: number;
+  total_capital_pence: number;
+  wage_labourers: number;
+  steps: number;
+  absorption_rate: number;
+  capital_growth_rate: number;
+  persist?: boolean;
+}

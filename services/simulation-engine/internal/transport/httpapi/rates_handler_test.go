@@ -10,7 +10,7 @@ import (
 
 func newRatesTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
-	h := New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := New(nil, Deps{})
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/surplus-value/rates", h.ComputeRatesOfSurplusValue)
 	ts := httptest.NewServer(mux)
