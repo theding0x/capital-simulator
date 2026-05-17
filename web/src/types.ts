@@ -1500,3 +1500,71 @@ export interface HomeMarketSize {
   commoditised_output_pence: number;
   wage_labourers: number;
 }
+
+// Ch. 31 — Genesis of the Industrial Capitalist
+
+export interface CapitalOriginInput {
+  source: string;
+  amount_pence: number;
+  period: string;
+}
+
+export interface CapitalOrigin {
+  id: string;
+  historical_stage_id: string;
+  source: string;
+  amount_pence: number;
+  period: string;
+  created_at: string;
+}
+
+export interface ColonialTransferInput {
+  from: string;
+  to: string;
+  value_pence: number;
+  method: string;
+}
+
+export interface ColonialTransfer {
+  id: string;
+  historical_stage_id: string;
+  from: string;
+  to: string;
+  value_pence: number;
+  method: string;
+  created_at: string;
+}
+
+export interface NationalDebtInput {
+  amount_pence: number;
+  interest_rate_bps: number;
+  creditor_class: string;
+}
+
+export interface NationalDebt {
+  id: string;
+  historical_stage_id: string;
+  amount_pence: number;
+  interest_rate_bps: number;
+  creditor_class: string;
+  created_at: string;
+}
+
+export interface ProtectionSystem {
+  id: string;
+  historical_stage_id: string;
+  tariff_rate_bps: number;
+  beneficiary: string;
+  period_start: string;
+  period_end: string;
+  created_at: string;
+}
+
+export interface IndustrialCapitalGenesis {
+  historical_stage_id: string;
+  origins: CapitalOrigin[];
+  colonial_transfers: ColonialTransfer[];
+  national_debts: NationalDebt[];
+  protection_systems: ProtectionSystem[];
+  total_capital_formed_pence: number;
+}

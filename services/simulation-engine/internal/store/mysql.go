@@ -833,3 +833,160 @@ func (m *MySQL) ListDomesticIndustriesByStage(ctx context.Context, stageID simul
 	}
 	return out, rows.Err()
 }
+
+func (m *MySQL) CreateCapitalOrigin(ctx context.Context, c simulation.CapitalOrigin) (simulation.CapitalOrigin, error) {
+	if err := c.Validate(); err != nil {
+		return simulation.CapitalOrigin{}, err
+	}
+	if c.ID.IsZero() {
+		c.ID = simulation.NewCapitalOriginID()
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now()
+	}
+	const q = `INSERT INTO capital_origins
+		(id, historical_stage_id, source, amount_pence, period, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(c.ID), string(c.HistoricalStageID),
+		c.Source, int64(c.AmountPence), c.Period, c.CreatedAt)
+	if err != nil {
+		return simulation.CapitalOrigin{}, err
+	}
+	return c, nil
+}
+
+func (m *MySQL) ListCapitalOriginsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.CapitalOrigin, error) {
+	const q = `SELECT id, historical_stage_id, source, amount_pence, period, created_at
+		FROM capital_origins WHERE historical_stage_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(stageID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.CapitalOrigin, 0)
+	for rows.Next() {
+		var c simulation.CapitalOrigin
+		var id, sid string
+		var amount int64
+		if err := rows.Scan(&id, &sid, &c.Source, &amount, &c.Period, &c.CreatedAt); err != nil {
+			return nil, err
+		}
+		c.ID = simulation.CapitalOriginID(id)
+		c.HistoricalStageID = simulation.HistoricalStageID(sid)
+		c.AmountPence = simulation.Pence(amount)
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) CreateColonialTransfer(ctx context.Context, t simulation.ColonialTransfer) (simulation.ColonialTransfer, error) {
+	if err := t.Validate(); err != nil {
+		return simulation.ColonialTransfer{}, err
+	}
+	if t.ID.IsZero() {
+		t.ID = simulation.NewColonialTransferID()
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = m.now()
+	}
+	const q = "INSERT INTO colonial_transfers (id, historical_stage_id, `from`, `to`, value_pence, method, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(t.ID), string(t.HistoricalStageID),
+		t.From, t.To, int64(t.ValuePence), t.Method, t.CreatedAt)
+	if err != nil {
+		return simulation.ColonialTransfer{}, err
+	}
+	return t, nil
+}
+
+func (m *MySQL) ListColonialTransfersByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.ColonialTransfer, error) {
+	const q = "SELECT id, historical_stage_id, `from`, `to`, value_pence, method, created_at FROM colonial_transfers WHERE historical_stage_id = ? ORDER BY created_at ASC"
+	rows, err := m.db.QueryContext(ctx, q, string(stageID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.ColonialTransfer, 0)
+	for rows.Next() {
+		var t simulation.ColonialTransfer
+		var id, sid string
+		var value int64
+		if err := rows.Scan(&id, &sid, &t.From, &t.To, &value, &t.Method, &t.CreatedAt); err != nil {
+			return nil, err
+		}
+		t.ID = simulation.ColonialTransferID(id)
+		t.HistoricalStageID = simulation.HistoricalStageID(sid)
+		t.ValuePence = simulation.Pence(value)
+		out = append(out, t)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) CreateNationalDebt(ctx context.Context, d simulation.NationalDebt) (simulation.NationalDebt, error) {
+	if err := d.Validate(); err != nil {
+		return simulation.NationalDebt{}, err
+	}
+	if d.ID.IsZero() {
+		d.ID = simulation.NewNationalDebtID()
+	}
+	if d.CreatedAt.IsZero() {
+		d.CreatedAt = m.now()
+	}
+	const q = `INSERT INTO national_debts
+		(id, historical_stage_id, amount_pence, interest_rate_bps, creditor_class, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(d.ID), string(d.HistoricalStageID),
+		int64(d.AmountPence), d.InterestRateBps, d.CreditorClass, d.CreatedAt)
+	if err != nil {
+		return simulation.NationalDebt{}, err
+	}
+	return d, nil
+}
+
+func (m *MySQL) ListNationalDebtsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.NationalDebt, error) {
+	const q = `SELECT id, historical_stage_id, amount_pence, interest_rate_bps, creditor_class, created_at
+		FROM national_debts WHERE historical_stage_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(stageID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.NationalDebt, 0)
+	for rows.Next() {
+		var d simulation.NationalDebt
+		var id, sid string
+		var amount int64
+		if err := rows.Scan(&id, &sid, &amount, &d.InterestRateBps, &d.CreditorClass, &d.CreatedAt); err != nil {
+			return nil, err
+		}
+		d.ID = simulation.NationalDebtID(id)
+		d.HistoricalStageID = simulation.HistoricalStageID(sid)
+		d.AmountPence = simulation.Pence(amount)
+		out = append(out, d)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) ListProtectionSystemsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.ProtectionSystem, error) {
+	const q = `SELECT id, historical_stage_id, tariff_rate_bps, beneficiary, period_start, period_end, created_at
+		FROM protection_systems WHERE historical_stage_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(stageID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.ProtectionSystem, 0)
+	for rows.Next() {
+		var s simulation.ProtectionSystem
+		var id, sid string
+		if err := rows.Scan(&id, &sid, &s.TariffRateBps, &s.Beneficiary, &s.PeriodStart, &s.PeriodEnd, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		s.ID = simulation.ProtectionSystemID(id)
+		s.HistoricalStageID = simulation.HistoricalStageID(sid)
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}

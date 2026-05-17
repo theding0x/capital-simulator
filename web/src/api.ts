@@ -149,6 +149,13 @@ import type {
   MarketFormationInput,
   MarketFormation,
   HomeMarketSize,
+  CapitalOriginInput,
+  CapitalOrigin,
+  ColonialTransferInput,
+  ColonialTransfer,
+  NationalDebtInput,
+  NationalDebt,
+  IndustrialCapitalGenesis,
 } from "./types";
 
 const BASE = "/api";
@@ -898,4 +905,27 @@ export const api = {
 
   getHomeMarket: (stageId: string) =>
     http<HomeMarketSize>(`/v1/historical-stages/${stageId}/home-market`),
+
+  // --- simulation-engine (Ch. 31: Genesis of the Industrial Capitalist) ---
+
+  createCapitalOrigin: (stageId: string, input: CapitalOriginInput) =>
+    http<CapitalOrigin>(`/v1/historical-stages/${stageId}/capital-origins`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createColonialTransfer: (stageId: string, input: ColonialTransferInput) =>
+    http<ColonialTransfer>(`/v1/historical-stages/${stageId}/colonial-transfers`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createNationalDebt: (stageId: string, input: NationalDebtInput) =>
+    http<NationalDebt>(`/v1/historical-stages/${stageId}/national-debts`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getIndustrialCapitalGenesis: (stageId: string) =>
+    http<IndustrialCapitalGenesis>(`/v1/historical-stages/${stageId}/genesis`),
 };

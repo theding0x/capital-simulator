@@ -26,6 +26,10 @@ type Memory struct {
 	vagrancyLaws       []simulation.VagrancyLaw
 	farmTenures        []simulation.FarmTenure
 	domesticIndustries []simulation.DomesticIndustry
+	capitalOrigins     []simulation.CapitalOrigin
+	colonialTransfers  []simulation.ColonialTransfer
+	nationalDebts      []simulation.NationalDebt
+	protectionSystems  []simulation.ProtectionSystem
 	now                func() time.Time
 }
 
@@ -429,6 +433,102 @@ func (m *Memory) ListDomesticIndustriesByStage(_ context.Context, stageID simula
 	for _, d := range m.domesticIndustries {
 		if d.HistoricalStageID == stageID {
 			out = append(out, d)
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) CreateCapitalOrigin(_ context.Context, c simulation.CapitalOrigin) (simulation.CapitalOrigin, error) {
+	if err := c.Validate(); err != nil {
+		return simulation.CapitalOrigin{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if c.ID.IsZero() {
+		c.ID = simulation.NewCapitalOriginID()
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now()
+	}
+	m.capitalOrigins = append(m.capitalOrigins, c)
+	return c, nil
+}
+
+func (m *Memory) ListCapitalOriginsByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.CapitalOrigin, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.CapitalOrigin, 0)
+	for _, c := range m.capitalOrigins {
+		if c.HistoricalStageID == stageID {
+			out = append(out, c)
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) CreateColonialTransfer(_ context.Context, t simulation.ColonialTransfer) (simulation.ColonialTransfer, error) {
+	if err := t.Validate(); err != nil {
+		return simulation.ColonialTransfer{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if t.ID.IsZero() {
+		t.ID = simulation.NewColonialTransferID()
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = m.now()
+	}
+	m.colonialTransfers = append(m.colonialTransfers, t)
+	return t, nil
+}
+
+func (m *Memory) ListColonialTransfersByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.ColonialTransfer, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.ColonialTransfer, 0)
+	for _, t := range m.colonialTransfers {
+		if t.HistoricalStageID == stageID {
+			out = append(out, t)
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) CreateNationalDebt(_ context.Context, d simulation.NationalDebt) (simulation.NationalDebt, error) {
+	if err := d.Validate(); err != nil {
+		return simulation.NationalDebt{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if d.ID.IsZero() {
+		d.ID = simulation.NewNationalDebtID()
+	}
+	if d.CreatedAt.IsZero() {
+		d.CreatedAt = m.now()
+	}
+	m.nationalDebts = append(m.nationalDebts, d)
+	return d, nil
+}
+
+func (m *Memory) ListNationalDebtsByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.NationalDebt, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.NationalDebt, 0)
+	for _, d := range m.nationalDebts {
+		if d.HistoricalStageID == stageID {
+			out = append(out, d)
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) ListProtectionSystemsByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.ProtectionSystem, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.ProtectionSystem, 0)
+	for _, s := range m.protectionSystems {
+		if s.HistoricalStageID == stageID {
+			out = append(out, s)
 		}
 	}
 	return out, nil

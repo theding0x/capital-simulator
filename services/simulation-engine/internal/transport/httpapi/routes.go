@@ -75,4 +75,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/historical-stages/{id}/domestic-industries", h.CreateDomesticIndustry)
 	s.HandleFunc("GET /v1/historical-stages/{id}/home-market", h.GetHomeMarket)
 	s.HandleFunc("POST /v1/market-formation", h.ComputeMarketFormation)
+
+	// Ch. 31 — Genesis of the Industrial Capitalist
+	s.HandleFunc("POST /v1/historical-stages/{id}/capital-origins", h.CreateCapitalOrigin)
+	s.HandleFunc("POST /v1/historical-stages/{id}/colonial-transfers", h.CreateColonialTransfer)
+	s.HandleFunc("POST /v1/historical-stages/{id}/national-debts", h.CreateNationalDebt)
+	s.HandleFunc("GET /v1/historical-stages/{id}/genesis", h.GetIndustrialCapitalGenesis)
 }
