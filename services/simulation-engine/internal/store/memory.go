@@ -14,18 +14,19 @@ import (
 
 // Memory is the in-memory implementation of all store interfaces.
 type Memory struct {
-	mu               sync.RWMutex
-	machines         map[machinery.MachineID]machinery.Machine
-	factories        map[machinery.FactoryID]machinery.Factory
-	ticks            map[machinery.FactoryID][]engine.Tick
-	generalLaw       map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario
-	historicalStages map[simulation.HistoricalStageID]simulation.HistoricalStage
-	stageNames       map[string]simulation.HistoricalStageID
-	enclosureEvents  []simulation.EnclosureEvent
-	wageStatutes     []simulation.WageStatute
-	vagrancyLaws     []simulation.VagrancyLaw
-	farmTenures      []simulation.FarmTenure
-	now              func() time.Time
+	mu                 sync.RWMutex
+	machines           map[machinery.MachineID]machinery.Machine
+	factories          map[machinery.FactoryID]machinery.Factory
+	ticks              map[machinery.FactoryID][]engine.Tick
+	generalLaw         map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario
+	historicalStages   map[simulation.HistoricalStageID]simulation.HistoricalStage
+	stageNames         map[string]simulation.HistoricalStageID
+	enclosureEvents    []simulation.EnclosureEvent
+	wageStatutes       []simulation.WageStatute
+	vagrancyLaws       []simulation.VagrancyLaw
+	farmTenures        []simulation.FarmTenure
+	domesticIndustries []simulation.DomesticIndustry
+	now                func() time.Time
 }
 
 func NewMemory() *Memory {
@@ -400,6 +401,34 @@ func (m *Memory) ListFarmTenuresByStage(_ context.Context, stageID simulation.Hi
 	for _, f := range m.farmTenures {
 		if f.HistoricalStageID == stageID {
 			out = append(out, f)
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) CreateDomesticIndustry(_ context.Context, d simulation.DomesticIndustry) (simulation.DomesticIndustry, error) {
+	if err := d.Validate(); err != nil {
+		return simulation.DomesticIndustry{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if d.ID.IsZero() {
+		d.ID = simulation.NewDomesticIndustryID()
+	}
+	if d.CreatedAt.IsZero() {
+		d.CreatedAt = m.now()
+	}
+	m.domesticIndustries = append(m.domesticIndustries, d)
+	return d, nil
+}
+
+func (m *Memory) ListDomesticIndustriesByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.DomesticIndustry, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.DomesticIndustry, 0)
+	for _, d := range m.domesticIndustries {
+		if d.HistoricalStageID == stageID {
+			out = append(out, d)
 		}
 	}
 	return out, nil

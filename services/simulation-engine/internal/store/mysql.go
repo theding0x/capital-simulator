@@ -787,3 +787,49 @@ func (m *MySQL) ListFarmTenuresByStage(ctx context.Context, stageID simulation.H
 	}
 	return out, rows.Err()
 }
+
+func (m *MySQL) CreateDomesticIndustry(ctx context.Context, d simulation.DomesticIndustry) (simulation.DomesticIndustry, error) {
+	if err := d.Validate(); err != nil {
+		return simulation.DomesticIndustry{}, err
+	}
+	if d.ID.IsZero() {
+		d.ID = simulation.NewDomesticIndustryID()
+	}
+	if d.CreatedAt.IsZero() {
+		d.CreatedAt = m.now()
+	}
+	const q = `INSERT INTO domestic_industries
+		(id, historical_stage_id, name, households_engaged, annual_output_pence, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(d.ID), string(d.HistoricalStageID),
+		d.Name, d.HouseholdsEngaged, int64(d.AnnualOutputPence), d.CreatedAt)
+	if err != nil {
+		return simulation.DomesticIndustry{}, err
+	}
+	return d, nil
+}
+
+func (m *MySQL) ListDomesticIndustriesByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.DomesticIndustry, error) {
+	const q = `SELECT id, historical_stage_id, name, households_engaged, annual_output_pence, created_at
+		FROM domestic_industries WHERE historical_stage_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(stageID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.DomesticIndustry, 0)
+	for rows.Next() {
+		var d simulation.DomesticIndustry
+		var id, sid string
+		var outputPence int64
+		if err := rows.Scan(&id, &sid, &d.Name, &d.HouseholdsEngaged, &outputPence, &d.CreatedAt); err != nil {
+			return nil, err
+		}
+		d.ID = simulation.DomesticIndustryID(id)
+		d.HistoricalStageID = simulation.HistoricalStageID(sid)
+		d.AnnualOutputPence = simulation.Pence(outputPence)
+		out = append(out, d)
+	}
+	return out, rows.Err()
+}

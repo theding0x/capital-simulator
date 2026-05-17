@@ -144,6 +144,11 @@ import type {
   FarmTenure,
   FarmTenureInput,
   RealRentResult,
+  DomesticIndustryInput,
+  DomesticIndustry,
+  MarketFormationInput,
+  MarketFormation,
+  HomeMarketSize,
 } from "./types";
 
 const BASE = "/api";
@@ -876,4 +881,21 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ nominal_rent_pence: nominalRentPence, depreciation_factor: depreciationFactor }),
     }),
+
+  // --- simulation-engine (Ch. 30: Reaction of the Agricultural Revolution on Industry) ---
+
+  createDomesticIndustry: (stageId: string, input: DomesticIndustryInput) =>
+    http<DomesticIndustry>(`/v1/historical-stages/${stageId}/domestic-industries`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  computeMarketFormation: (input: MarketFormationInput) =>
+    http<MarketFormation>("/v1/market-formation", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getHomeMarket: (stageId: string) =>
+    http<HomeMarketSize>(`/v1/historical-stages/${stageId}/home-market`),
 };

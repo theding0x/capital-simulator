@@ -15,23 +15,24 @@ import (
 // and the productivity fetcher (added in the Part IV bridge refactor).
 // Pre-Ch.15 surplus and production endpoints remain stateless.
 type Handler struct {
-	Logger           *slog.Logger
-	Machines         store.MachineStore
-	Factories        store.FactoryStore
-	Productivity     ProductivityFetcher
-	GeneralLaw       store.GeneralLawStore
-	HistoricalStages store.HistoricalStageStore
-	EnclosureEvents  store.EnclosureEventStore
-	WageStatutes     store.WageStatuteStore
-	VagrancyLaws     store.VagrancyLawStore
-	FarmTenures      store.FarmTenureStore
+	Logger             *slog.Logger
+	Machines           store.MachineStore
+	Factories          store.FactoryStore
+	Productivity       ProductivityFetcher
+	GeneralLaw         store.GeneralLawStore
+	HistoricalStages   store.HistoricalStageStore
+	EnclosureEvents    store.EnclosureEventStore
+	WageStatutes       store.WageStatuteStore
+	VagrancyLaws       store.VagrancyLawStore
+	FarmTenures        store.FarmTenureStore
+	DomesticIndustries store.DomesticIndustryStore
 }
 
-func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore, hs store.HistoricalStageStore, ee store.EnclosureEventStore, ws store.WageStatuteStore, vl store.VagrancyLawStore, ft store.FarmTenureStore) *Handler {
+func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore, hs store.HistoricalStageStore, ee store.EnclosureEventStore, ws store.WageStatuteStore, vl store.VagrancyLawStore, ft store.FarmTenureStore, di store.DomesticIndustryStore) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl, HistoricalStages: hs, EnclosureEvents: ee, WageStatutes: ws, VagrancyLaws: vl, FarmTenures: ft}
+	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl, HistoricalStages: hs, EnclosureEvents: ee, WageStatutes: ws, VagrancyLaws: vl, FarmTenures: ft, DomesticIndustries: di}
 }
 
 // massRequest accepts either {rate, variable_capital} or
