@@ -99,6 +99,7 @@ Each chapter of *Capital* turns into a feature branch and PR. Approximate mappin
 | Ch. 29    | ✅ Done     | Genesis of the capitalist farmer; TenantForm (bailiff/metayer/capitalist-farmer), FarmTenure, MoneyDepreciation, FarmingSurplus; ComputeRealRent, ComputeFarmingSurplus; currency depreciation calculator | simulation-engine |
 | Ch. 30    | ✅ Done     | Reaction of the agricultural revolution on industry; DomesticIndustry, MarketFormation, HomeMarketSize; ComputeHomeMarketSize, ComputeMarketFormation; Mirabeau réunie/séparée comparison | simulation-engine |
 | Ch. 31    | ✅ Done     | Genesis of the industrial capitalist; CapitalOrigin, ColonialTransfer, NationalDebt, ProtectionSystem, IndustrialCapitalGenesis; ComputeGenesis; POST capital-origins/colonial-transfers/national-debts, GET genesis | simulation-engine |
+| Ch. 32    | 🔄 In progress | Historical tendency of capitalist accumulation; PettyProperty, CapitalistPrivateProperty, CentralisationStep, Negation, AccumulationTrajectory; NegationOfNegation, RunCentralisation; POST /v1/accumulation/centralisation, GET negation-of-negation, persisted trajectories | simulation-engine |
 
 ### Ch. 1 — what was built
 
