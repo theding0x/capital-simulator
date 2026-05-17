@@ -186,6 +186,9 @@ func main() {
 	srv.Handle("/v1/farm-tenures", simProxy)
 	srv.Handle("/v1/farm-tenures/{rest...}", simProxy)
 
+	// Ch. 30 — Reaction of the Agricultural Revolution on Industry → simulation-engine
+	srv.Handle("/v1/market-formation", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
