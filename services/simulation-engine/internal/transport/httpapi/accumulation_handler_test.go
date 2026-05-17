@@ -19,7 +19,7 @@ func TestRunExtendedReproduction_AbrahamSequence(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.RunExtendedReproduction(w, req)
 
 	if w.Code != http.StatusOK {
@@ -58,7 +58,7 @@ func TestRunExtendedReproduction_PartialAccumulation(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.RunExtendedReproduction(w, req)
 
 	if w.Code != http.StatusOK {
@@ -92,7 +92,7 @@ func TestRunExtendedReproduction_BadRequest_MalformedJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.RunExtendedReproduction(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -107,7 +107,7 @@ func TestRunExtendedReproduction_BadRequest_ZeroVariableCapital(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.RunExtendedReproduction(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -122,7 +122,7 @@ func TestRunExtendedReproduction_BadRequest_AccumRateOutOfRange(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.RunExtendedReproduction(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -138,7 +138,7 @@ func TestSplitSurplusValue_SpinnerExample(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.SplitSurplusValue(w, req)
 
 	if w.Code != http.StatusOK {
@@ -171,7 +171,7 @@ func TestSplitSurplusValue_PartialAccumulation(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.SplitSurplusValue(w, req)
 
 	if w.Code != http.StatusOK {
@@ -202,7 +202,7 @@ func TestSplitSurplusValue_BadRequest_MalformedJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.SplitSurplusValue(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -217,7 +217,7 @@ func TestSplitSurplusValue_BadRequest_NegativeSurplus(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.SplitSurplusValue(w, req)
 
 	if w.Code != http.StatusBadRequest {

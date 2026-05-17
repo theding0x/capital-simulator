@@ -18,7 +18,7 @@ func TestRunSimpleReproduction_CoreExample(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.RunSimpleReproduction(w, req)
 
 	if w.Code != http.StatusOK {
@@ -61,7 +61,7 @@ func TestRunSimpleReproduction_BadRequest_MalformedJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.RunSimpleReproduction(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -76,7 +76,7 @@ func TestRunSimpleReproduction_BadRequest_ZeroVariableCapital(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.RunSimpleReproduction(w, req)
 
 	if w.Code != http.StatusBadRequest {
@@ -92,7 +92,7 @@ func TestComputeRepaymentPeriod_CoreExample(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.ComputeRepaymentPeriod(w, req)
 
 	if w.Code != http.StatusOK {
@@ -117,7 +117,7 @@ func TestComputeRepaymentPeriod_HalfConsumed(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.ComputeRepaymentPeriod(w, req)
 
 	var resp struct {
@@ -138,7 +138,7 @@ func TestComputeRepaymentPeriod_BadRequest_NegativeCapital(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{})
 	h.ComputeRepaymentPeriod(w, req)
 
 	if w.Code != http.StatusBadRequest {

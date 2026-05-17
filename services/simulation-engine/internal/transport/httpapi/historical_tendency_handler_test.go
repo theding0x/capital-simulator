@@ -16,7 +16,7 @@ import (
 
 func newCh32Handler() *httpapi.Handler {
 	mem := store.NewMemory()
-	return httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mem)
+	return httpapi.New(nil, httpapi.Deps{Trajectories: mem})
 }
 
 func TestGetNegationOfNegation_ReturnsThreeStages(t *testing.T) {
@@ -153,7 +153,7 @@ func TestRunCentralisation_PersistRequiresName(t *testing.T) {
 func TestRunCentralisation_PersistAndRetrieve(t *testing.T) {
 	t.Parallel()
 	mem := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mem)
+	h := httpapi.New(nil, httpapi.Deps{Trajectories: mem})
 
 	body := `{"name":"Lancashire cotton, 1820-1880","firms":1000,"total_capital_pence":480000000,"wage_labourers":50000,"steps":6,"absorption_rate":0.2,"capital_growth_rate":0.05,"persist":true}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/accumulation/centralisation", bytes.NewBufferString(body))
@@ -209,7 +209,7 @@ func TestRunCentralisation_PersistAndRetrieve(t *testing.T) {
 func TestRunCentralisation_PersistDuplicateNameConflicts(t *testing.T) {
 	t.Parallel()
 	mem := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mem)
+	h := httpapi.New(nil, httpapi.Deps{Trajectories: mem})
 	body := `{"name":"Duplicate","firms":50,"total_capital_pence":1000,"wage_labourers":10,"steps":2,"absorption_rate":0.2,"capital_growth_rate":0.0,"persist":true}`
 	for i := 0; i < 2; i++ {
 		req := httptest.NewRequest(http.MethodPost, "/v1/accumulation/centralisation", bytes.NewBufferString(body))

@@ -26,7 +26,7 @@ func (s stubFetcher) Fetch(_ context.Context, source ProductivitySource, _ strin
 
 func newBridgeTestServer(t *testing.T, fetcher ProductivityFetcher) *httptest.Server {
 	t.Helper()
-	h := New(nil, nil, nil, fetcher, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := New(nil, Deps{Productivity: fetcher})
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/production/relative-surplus", h.RelativeSurplus)
 	mux.HandleFunc("POST /v1/production/relative-surplus-from-productivity", h.RelativeSurplusFromProductivity)

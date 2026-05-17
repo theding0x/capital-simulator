@@ -55,7 +55,7 @@ func TestCreateCapitalOrigin_Success(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, CapitalOrigins: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/"+string(stageID)+"/capital-origins",
@@ -94,7 +94,7 @@ func TestCreateCapitalOrigin_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, CapitalOrigins: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/"+string(stageID)+"/capital-origins",
@@ -113,7 +113,7 @@ func TestCreateCapitalOrigin_BadRequest_MissingSource(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, CapitalOrigins: st})
 
 	body := `{"amount_pence": 1000}`
 	req := httptest.NewRequest(http.MethodPost,
@@ -132,7 +132,7 @@ func TestCreateCapitalOrigin_BadRequest_MissingSource(t *testing.T) {
 func TestCreateCapitalOrigin_NotFound_MissingStage(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, CapitalOrigins: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/ghost/capital-origins",
@@ -153,7 +153,7 @@ func TestCreateColonialTransfer_Success(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, st, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, ColonialTransfers: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/"+string(stageID)+"/colonial-transfers",
@@ -189,7 +189,7 @@ func TestCreateColonialTransfer_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, st, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, ColonialTransfers: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/"+string(stageID)+"/colonial-transfers",
@@ -208,7 +208,7 @@ func TestCreateColonialTransfer_BadRequest_ZeroValue(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, st, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, ColonialTransfers: st})
 
 	body := `{"from":"Americas","to":"England","value_pence":0,"method":"colonial-plunder"}`
 	req := httptest.NewRequest(http.MethodPost,
@@ -227,7 +227,7 @@ func TestCreateColonialTransfer_BadRequest_ZeroValue(t *testing.T) {
 func TestCreateColonialTransfer_NotFound_MissingStage(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, st, nil, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, ColonialTransfers: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/ghost/colonial-transfers",
@@ -248,7 +248,7 @@ func TestCreateNationalDebt_Success(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, st, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, NationalDebts: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/"+string(stageID)+"/national-debts",
@@ -285,7 +285,7 @@ func TestCreateNationalDebt_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, st, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, NationalDebts: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/"+string(stageID)+"/national-debts",
@@ -304,7 +304,7 @@ func TestCreateNationalDebt_BadRequest_ZeroInterestRate(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, st, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, NationalDebts: st})
 
 	body := `{"amount_pence":1000000,"interest_rate_bps":0,"creditor_class":"private-bankers"}`
 	req := httptest.NewRequest(http.MethodPost,
@@ -323,7 +323,7 @@ func TestCreateNationalDebt_BadRequest_ZeroInterestRate(t *testing.T) {
 func TestCreateNationalDebt_NotFound_MissingStage(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, st, nil, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, NationalDebts: st})
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/ghost/national-debts",
@@ -365,7 +365,7 @@ func TestGetIndustrialCapitalGenesis_Success(t *testing.T) {
 		CreditorClass:     "private-bankers",
 	})
 
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, st, st, st, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, CapitalOrigins: st, ColonialTransfers: st, NationalDebts: st, ProtectionSystems: st})
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages/"+string(stageID)+"/genesis", nil)
 	req.SetPathValue("id", string(stageID))
 	w := httptest.NewRecorder()
@@ -413,7 +413,7 @@ func TestGetIndustrialCapitalGenesis_Success(t *testing.T) {
 func TestGetIndustrialCapitalGenesis_NotFound(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, st, st, st, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, CapitalOrigins: st, ColonialTransfers: st, NationalDebts: st, ProtectionSystems: st})
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages/nonexistent/genesis", nil)
 	req.SetPathValue("id", "nonexistent")
@@ -430,7 +430,7 @@ func TestGetIndustrialCapitalGenesis_EmptyStage(t *testing.T) {
 	st := store.NewMemory()
 	stageID := seedStageForGenesis(t, st)
 
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, st, st, st, nil)
+	h := httpapi.New(nil, httpapi.Deps{HistoricalStages: st, CapitalOrigins: st, ColonialTransfers: st, NationalDebts: st, ProtectionSystems: st})
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages/"+string(stageID)+"/genesis", nil)
 	req.SetPathValue("id", string(stageID))
 	w := httptest.NewRecorder()
