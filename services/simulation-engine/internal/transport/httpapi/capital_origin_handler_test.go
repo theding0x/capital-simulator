@@ -93,11 +93,13 @@ func TestCreateCapitalOrigin_Success(t *testing.T) {
 func TestCreateCapitalOrigin_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, st, nil, nil, nil)
+	stageID := seedStageForGenesis(t, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, nil, nil, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/abc/capital-origins",
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/"+string(stageID)+"/capital-origins",
 		strings.NewReader(`{nope`))
-	req.SetPathValue("id", "abc")
+	req.SetPathValue("id", string(stageID))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	h.CreateCapitalOrigin(w, req)
@@ -110,18 +112,38 @@ func TestCreateCapitalOrigin_BadRequest_MalformedJSON(t *testing.T) {
 func TestCreateCapitalOrigin_BadRequest_MissingSource(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, st, nil, nil, nil)
+	stageID := seedStageForGenesis(t, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, nil, nil, nil)
 
 	body := `{"amount_pence": 1000}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/abc/capital-origins",
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/"+string(stageID)+"/capital-origins",
 		strings.NewReader(body))
-	req.SetPathValue("id", "abc")
+	req.SetPathValue("id", string(stageID))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	h.CreateCapitalOrigin(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("want 400, got %d", w.Code)
+	}
+}
+
+func TestCreateCapitalOrigin_NotFound_MissingStage(t *testing.T) {
+	t.Parallel()
+	st := store.NewMemory()
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, st, nil, nil, nil)
+
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/ghost/capital-origins",
+		strings.NewReader(colonialPlunderOriginBody))
+	req.SetPathValue("id", "ghost")
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	h.CreateCapitalOrigin(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("want 404, got %d: %s", w.Code, w.Body.String())
 	}
 }
 
@@ -166,11 +188,13 @@ func TestCreateColonialTransfer_Success(t *testing.T) {
 func TestCreateColonialTransfer_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, st, nil, nil)
+	stageID := seedStageForGenesis(t, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, st, nil, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/abc/colonial-transfers",
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/"+string(stageID)+"/colonial-transfers",
 		strings.NewReader(`{bad`))
-	req.SetPathValue("id", "abc")
+	req.SetPathValue("id", string(stageID))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	h.CreateColonialTransfer(w, req)
@@ -183,18 +207,38 @@ func TestCreateColonialTransfer_BadRequest_MalformedJSON(t *testing.T) {
 func TestCreateColonialTransfer_BadRequest_ZeroValue(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, st, nil, nil)
+	stageID := seedStageForGenesis(t, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, st, nil, nil)
 
 	body := `{"from":"Americas","to":"England","value_pence":0,"method":"colonial-plunder"}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/abc/colonial-transfers",
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/"+string(stageID)+"/colonial-transfers",
 		strings.NewReader(body))
-	req.SetPathValue("id", "abc")
+	req.SetPathValue("id", string(stageID))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	h.CreateColonialTransfer(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("want 400, got %d", w.Code)
+	}
+}
+
+func TestCreateColonialTransfer_NotFound_MissingStage(t *testing.T) {
+	t.Parallel()
+	st := store.NewMemory()
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, st, nil, nil)
+
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/ghost/colonial-transfers",
+		strings.NewReader(liverpoolSlaveTransferBody))
+	req.SetPathValue("id", "ghost")
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	h.CreateColonialTransfer(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("want 404, got %d: %s", w.Code, w.Body.String())
 	}
 }
 
@@ -240,11 +284,13 @@ func TestCreateNationalDebt_Success(t *testing.T) {
 func TestCreateNationalDebt_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, st, nil)
+	stageID := seedStageForGenesis(t, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, st, nil)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/abc/national-debts",
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/"+string(stageID)+"/national-debts",
 		strings.NewReader(`{bad`))
-	req.SetPathValue("id", "abc")
+	req.SetPathValue("id", string(stageID))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	h.CreateNationalDebt(w, req)
@@ -257,18 +303,38 @@ func TestCreateNationalDebt_BadRequest_MalformedJSON(t *testing.T) {
 func TestCreateNationalDebt_BadRequest_ZeroInterestRate(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, st, nil)
+	stageID := seedStageForGenesis(t, st)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, st, nil)
 
 	body := `{"amount_pence":1000000,"interest_rate_bps":0,"creditor_class":"private-bankers"}`
-	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/abc/national-debts",
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/"+string(stageID)+"/national-debts",
 		strings.NewReader(body))
-	req.SetPathValue("id", "abc")
+	req.SetPathValue("id", string(stageID))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	h.CreateNationalDebt(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("want 400, got %d", w.Code)
+	}
+}
+
+func TestCreateNationalDebt_NotFound_MissingStage(t *testing.T) {
+	t.Parallel()
+	st := store.NewMemory()
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, nil, nil, nil, st, nil)
+
+	req := httptest.NewRequest(http.MethodPost,
+		"/v1/historical-stages/ghost/national-debts",
+		strings.NewReader(bankOfEnglandDebtBody))
+	req.SetPathValue("id", "ghost")
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	h.CreateNationalDebt(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("want 404, got %d: %s", w.Code, w.Body.String())
 	}
 }
 

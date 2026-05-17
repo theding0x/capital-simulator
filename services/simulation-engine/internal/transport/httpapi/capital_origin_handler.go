@@ -131,6 +131,15 @@ func (h *Handler) CreateCapitalOrigin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := h.HistoricalStages.GetHistoricalStage(r.Context(), stageID); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "historical stage not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	var req createCapitalOriginRequest
 	if err := decodeJSON(r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -167,6 +176,15 @@ func (h *Handler) CreateColonialTransfer(w http.ResponseWriter, r *http.Request)
 	stageID := simulation.HistoricalStageID(r.PathValue("id"))
 	if stageID.IsZero() {
 		writeError(w, http.StatusBadRequest, "id is required")
+		return
+	}
+
+	if _, err := h.HistoricalStages.GetHistoricalStage(r.Context(), stageID); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "historical stage not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -207,6 +225,15 @@ func (h *Handler) CreateNationalDebt(w http.ResponseWriter, r *http.Request) {
 	stageID := simulation.HistoricalStageID(r.PathValue("id"))
 	if stageID.IsZero() {
 		writeError(w, http.StatusBadRequest, "id is required")
+		return
+	}
+
+	if _, err := h.HistoricalStages.GetHistoricalStage(r.Context(), stageID); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "historical stage not found")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
