@@ -30,6 +30,7 @@ type Memory struct {
 	colonialTransfers  []simulation.ColonialTransfer
 	nationalDebts      []simulation.NationalDebt
 	protectionSystems  []simulation.ProtectionSystem
+	trajectories       map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory
 	now                func() time.Time
 }
 
@@ -41,6 +42,7 @@ func NewMemory() *Memory {
 		generalLaw:       make(map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario),
 		historicalStages: make(map[simulation.HistoricalStageID]simulation.HistoricalStage),
 		stageNames:       make(map[string]simulation.HistoricalStageID),
+		trajectories:     make(map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory),
 		now:              time.Now,
 	}
 }
@@ -531,5 +533,69 @@ func (m *Memory) ListProtectionSystemsByStage(_ context.Context, stageID simulat
 			out = append(out, s)
 		}
 	}
+	return out, nil
+}
+
+func (m *Memory) CreateAccumulationTrajectory(_ context.Context, t simulation.AccumulationTrajectory) (simulation.AccumulationTrajectory, error) {
+	if err := t.Validate(); err != nil {
+		return simulation.AccumulationTrajectory{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if t.ID.IsZero() {
+		t.ID = simulation.NewAccumulationTrajectoryID()
+	}
+	if _, ok := m.trajectories[t.ID]; ok {
+		return simulation.AccumulationTrajectory{}, ErrAlreadyExists
+	}
+	// Mirror the MySQL uq_accumulation_trajectories_name unique constraint.
+	wantName := strings.ToLower(t.Name)
+	for _, existing := range m.trajectories {
+		if strings.ToLower(existing.Name) == wantName {
+			return simulation.AccumulationTrajectory{}, ErrAlreadyExists
+		}
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = m.now().UTC()
+	}
+	if t.Steps == nil {
+		t.Steps = []simulation.CentralisationStep{}
+	}
+	stepsCopy := make([]simulation.CentralisationStep, len(t.Steps))
+	copy(stepsCopy, t.Steps)
+	t.Steps = stepsCopy
+	m.trajectories[t.ID] = t
+	return t, nil
+}
+
+func (m *Memory) GetAccumulationTrajectory(_ context.Context, id simulation.AccumulationTrajectoryID) (simulation.AccumulationTrajectory, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	t, ok := m.trajectories[id]
+	if !ok {
+		return simulation.AccumulationTrajectory{}, ErrNotFound
+	}
+	stepsCopy := make([]simulation.CentralisationStep, len(t.Steps))
+	copy(stepsCopy, t.Steps)
+	t.Steps = stepsCopy
+	return t, nil
+}
+
+func (m *Memory) ListAccumulationTrajectories(_ context.Context) ([]simulation.AccumulationTrajectory, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.AccumulationTrajectory, 0, len(m.trajectories))
+	for _, t := range m.trajectories {
+		stepsCopy := make([]simulation.CentralisationStep, len(t.Steps))
+		copy(stepsCopy, t.Steps)
+		t.Steps = stepsCopy
+		out = append(out, t)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if !out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].CreatedAt.Before(out[j].CreatedAt)
+		}
+		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
+	})
 	return out, nil
 }

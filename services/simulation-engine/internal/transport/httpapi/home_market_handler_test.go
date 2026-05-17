@@ -40,7 +40,7 @@ func TestCreateDomesticIndustry_Success(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
 	stageID := seedStageForMarket(t, st)
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost,
 		"/v1/historical-stages/"+string(stageID)+"/domestic-industries",
@@ -78,7 +78,7 @@ func TestCreateDomesticIndustry_Success(t *testing.T) {
 func TestCreateDomesticIndustry_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/abc/domestic-industries",
 		strings.NewReader(`{nope`))
@@ -95,7 +95,7 @@ func TestCreateDomesticIndustry_BadRequest_MalformedJSON(t *testing.T) {
 func TestCreateDomesticIndustry_BadRequest_ZeroHouseholds(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil, nil)
 
 	body := `{"name":"test","households_engaged":0,"annual_output_pence":1000}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/abc/domestic-industries",
@@ -112,7 +112,7 @@ func TestCreateDomesticIndustry_BadRequest_ZeroHouseholds(t *testing.T) {
 
 func TestComputeMarketFormation_Success(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	// § Westphalian flax: 1500 of 2000 households expropriated.
 	body := `{"name":"Westphalian flax spinning","households_engaged":2000,"annual_output_pence":48000,"expropriated":1500}`
@@ -151,7 +151,7 @@ func TestComputeMarketFormation_Success(t *testing.T) {
 
 func TestComputeMarketFormation_BadRequest_MalformedJSON(t *testing.T) {
 	t.Parallel()
-	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/market-formation", strings.NewReader(`{bad`))
 	req.Header.Set("Content-Type", "application/json")
@@ -181,7 +181,7 @@ func TestGetHomeMarket_Success(t *testing.T) {
 		AnnualOutputPence: 24000,
 	})
 
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages/"+string(stageID)+"/home-market", nil)
 	req.SetPathValue("id", string(stageID))
 	w := httptest.NewRecorder()
@@ -208,7 +208,7 @@ func TestGetHomeMarket_Success(t *testing.T) {
 func TestGetHomeMarket_NotFound(t *testing.T) {
 	t.Parallel()
 	st := store.NewMemory()
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages/nonexistent/home-market", nil)
 	req.SetPathValue("id", "nonexistent")
@@ -225,7 +225,7 @@ func TestGetHomeMarket_EmptyReturnsZero(t *testing.T) {
 	st := store.NewMemory()
 	stageID := seedStageForMarket(t, st)
 
-	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil)
+	h := httpapi.New(nil, nil, nil, nil, nil, st, nil, nil, nil, nil, st, nil, nil, nil, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/v1/historical-stages/"+string(stageID)+"/home-market", nil)
 	req.SetPathValue("id", string(stageID))
 	w := httptest.NewRecorder()

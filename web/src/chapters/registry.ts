@@ -48,6 +48,6 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "ch29", number: 29, title: "Genesis of the Capitalist Farmer",                      part: "Part VIII — So-Called Primitive Accumulation",         status: "done"    },
   { id: "ch30", number: 30, title: "Reaction of the Agricultural Revolution on Industry",   part: "Part VIII — So-Called Primitive Accumulation",         status: "done"    },
   { id: "ch31", number: 31, title: "Genesis of the Industrial Capitalist",                  part: "Part VIII — So-Called Primitive Accumulation",         status: "done"    },
-  { id: "ch32", number: 32, title: "The Historical Tendency of Capitalist Accumulation",    part: "Part VIII — So-Called Primitive Accumulation",         status: "pending" },
+  { id: "ch32", number: 32, title: "The Historical Tendency of Capitalist Accumulation",    part: "Part VIII — So-Called Primitive Accumulation",         status: "done"    },
   { id: "ch33", number: 33, title: "The Modern Theory of Colonisation",                     part: "Part VIII — So-Called Primitive Accumulation",         status: "pending" },
 ]

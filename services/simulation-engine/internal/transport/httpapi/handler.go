@@ -30,13 +30,14 @@ type Handler struct {
 	ColonialTransfers  store.ColonialTransferStore
 	NationalDebts      store.NationalDebtStore
 	ProtectionSystems  store.ProtectionSystemStore
+	Trajectories       store.AccumulationTrajectoryStore
 }
 
-func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore, hs store.HistoricalStageStore, ee store.EnclosureEventStore, ws store.WageStatuteStore, vl store.VagrancyLawStore, ft store.FarmTenureStore, di store.DomesticIndustryStore, co store.CapitalOriginStore, ct store.ColonialTransferStore, nd store.NationalDebtStore, ps store.ProtectionSystemStore) *Handler {
+func New(logger *slog.Logger, ms store.MachineStore, fs store.FactoryStore, pf ProductivityFetcher, gl store.GeneralLawStore, hs store.HistoricalStageStore, ee store.EnclosureEventStore, ws store.WageStatuteStore, vl store.VagrancyLawStore, ft store.FarmTenureStore, di store.DomesticIndustryStore, co store.CapitalOriginStore, ct store.ColonialTransferStore, nd store.NationalDebtStore, ps store.ProtectionSystemStore, at store.AccumulationTrajectoryStore) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl, HistoricalStages: hs, EnclosureEvents: ee, WageStatutes: ws, VagrancyLaws: vl, FarmTenures: ft, DomesticIndustries: di, CapitalOrigins: co, ColonialTransfers: ct, NationalDebts: nd, ProtectionSystems: ps}
+	return &Handler{Logger: logger, Machines: ms, Factories: fs, Productivity: pf, GeneralLaw: gl, HistoricalStages: hs, EnclosureEvents: ee, WageStatutes: ws, VagrancyLaws: vl, FarmTenures: ft, DomesticIndustries: di, CapitalOrigins: co, ColonialTransfers: ct, NationalDebts: nd, ProtectionSystems: ps, Trajectories: at}
 }
 
 // massRequest accepts either {rate, variable_capital} or

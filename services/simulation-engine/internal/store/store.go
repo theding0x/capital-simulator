@@ -116,3 +116,13 @@ type NationalDebtStore interface {
 type ProtectionSystemStore interface {
 	ListProtectionSystemsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.ProtectionSystem, error)
 }
+
+// AccumulationTrajectoryStore is the persistence contract for Ch. 32
+// long-run centralisation trajectories. A trajectory header carries the
+// initial/final aggregates; its steps are stored alongside and are
+// returned in step_index order.
+type AccumulationTrajectoryStore interface {
+	CreateAccumulationTrajectory(ctx context.Context, t simulation.AccumulationTrajectory) (simulation.AccumulationTrajectory, error)
+	GetAccumulationTrajectory(ctx context.Context, id simulation.AccumulationTrajectoryID) (simulation.AccumulationTrajectory, error)
+	ListAccumulationTrajectories(ctx context.Context) ([]simulation.AccumulationTrajectory, error)
+}

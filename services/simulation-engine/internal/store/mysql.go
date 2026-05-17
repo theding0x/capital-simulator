@@ -990,3 +990,146 @@ func (m *MySQL) ListProtectionSystemsByStage(ctx context.Context, stageID simula
 	}
 	return out, rows.Err()
 }
+
+// CreateAccumulationTrajectory persists a Ch. 32 long-run centralisation
+// trajectory header plus its CentralisationStep children in a single
+// transaction. Steps are stored in the order supplied.
+func (m *MySQL) CreateAccumulationTrajectory(ctx context.Context, t simulation.AccumulationTrajectory) (simulation.AccumulationTrajectory, error) {
+	if err := t.Validate(); err != nil {
+		return simulation.AccumulationTrajectory{}, err
+	}
+	if t.ID.IsZero() {
+		t.ID = simulation.NewAccumulationTrajectoryID()
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = m.now().UTC()
+	}
+	if t.Steps == nil {
+		t.Steps = []simulation.CentralisationStep{}
+	}
+
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return simulation.AccumulationTrajectory{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const insertHeader = `INSERT INTO accumulation_trajectories
+		(id, name, initial_firms, initial_capital_pence, final_firms, final_capital_pence, reserve_army_size, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	if _, err := tx.ExecContext(ctx, insertHeader,
+		string(t.ID), t.Name, t.InitialFirms, int64(t.InitialCapitalPence),
+		t.FinalFirms, int64(t.FinalCapitalPence), t.ReserveArmySize, t.CreatedAt); err != nil {
+		if isDuplicateKey(err) {
+			return simulation.AccumulationTrajectory{}, ErrAlreadyExists
+		}
+		return simulation.AccumulationTrajectory{}, err
+	}
+
+	const insertStep = `INSERT INTO centralisation_steps
+		(id, trajectory_id, step_index, firms_absorbed, capital_concentrated_pence, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	stmt, err := tx.PrepareContext(ctx, insertStep)
+	if err != nil {
+		return simulation.AccumulationTrajectory{}, err
+	}
+	defer stmt.Close()
+	for _, s := range t.Steps {
+		stepID := simulation.NewAccumulationTrajectoryID()
+		if _, err := stmt.ExecContext(ctx,
+			string(stepID), string(t.ID), s.StepIndex,
+			s.FirmsAbsorbed, int64(s.CapitalConcentratedPence), t.CreatedAt); err != nil {
+			return simulation.AccumulationTrajectory{}, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return simulation.AccumulationTrajectory{}, err
+	}
+	return t, nil
+}
+
+// GetAccumulationTrajectory returns the trajectory header and its steps,
+// ordered by step_index ascending. Returns ErrNotFound if no header
+// exists.
+func (m *MySQL) GetAccumulationTrajectory(ctx context.Context, id simulation.AccumulationTrajectoryID) (simulation.AccumulationTrajectory, error) {
+	const q = `SELECT id, name, initial_firms, initial_capital_pence, final_firms, final_capital_pence, reserve_army_size, created_at
+		FROM accumulation_trajectories WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	var t simulation.AccumulationTrajectory
+	var rawID string
+	var initCap, finalCap int64
+	if err := row.Scan(&rawID, &t.Name, &t.InitialFirms, &initCap, &t.FinalFirms, &finalCap, &t.ReserveArmySize, &t.CreatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return simulation.AccumulationTrajectory{}, ErrNotFound
+		}
+		return simulation.AccumulationTrajectory{}, err
+	}
+	t.ID = simulation.AccumulationTrajectoryID(rawID)
+	t.InitialCapitalPence = simulation.Pence(initCap)
+	t.FinalCapitalPence = simulation.Pence(finalCap)
+
+	steps, err := m.loadTrajectorySteps(ctx, t.ID)
+	if err != nil {
+		return simulation.AccumulationTrajectory{}, err
+	}
+	t.Steps = steps
+	return t, nil
+}
+
+// ListAccumulationTrajectories returns headers in created_at ascending
+// order, each with its steps populated.
+func (m *MySQL) ListAccumulationTrajectories(ctx context.Context) ([]simulation.AccumulationTrajectory, error) {
+	const q = `SELECT id, name, initial_firms, initial_capital_pence, final_firms, final_capital_pence, reserve_army_size, created_at
+		FROM accumulation_trajectories ORDER BY created_at ASC, name ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.AccumulationTrajectory, 0)
+	for rows.Next() {
+		var t simulation.AccumulationTrajectory
+		var rawID string
+		var initCap, finalCap int64
+		if err := rows.Scan(&rawID, &t.Name, &t.InitialFirms, &initCap, &t.FinalFirms, &finalCap, &t.ReserveArmySize, &t.CreatedAt); err != nil {
+			return nil, err
+		}
+		t.ID = simulation.AccumulationTrajectoryID(rawID)
+		t.InitialCapitalPence = simulation.Pence(initCap)
+		t.FinalCapitalPence = simulation.Pence(finalCap)
+		out = append(out, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	for i := range out {
+		steps, err := m.loadTrajectorySteps(ctx, out[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		out[i].Steps = steps
+	}
+	return out, nil
+}
+
+func (m *MySQL) loadTrajectorySteps(ctx context.Context, id simulation.AccumulationTrajectoryID) ([]simulation.CentralisationStep, error) {
+	const q = `SELECT step_index, firms_absorbed, capital_concentrated_pence
+		FROM centralisation_steps WHERE trajectory_id = ? ORDER BY step_index ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(id))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	steps := make([]simulation.CentralisationStep, 0)
+	for rows.Next() {
+		var s simulation.CentralisationStep
+		var concentrated int64
+		if err := rows.Scan(&s.StepIndex, &s.FirmsAbsorbed, &concentrated); err != nil {
+			return nil, err
+		}
+		s.CapitalConcentratedPence = simulation.Pence(concentrated)
+		steps = append(steps, s)
+	}
+	return steps, rows.Err()
+}

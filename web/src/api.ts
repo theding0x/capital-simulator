@@ -156,6 +156,9 @@ import type {
   NationalDebtInput,
   NationalDebt,
   IndustrialCapitalGenesis,
+  AccumulationTrajectory,
+  NegationOfNegationResponse,
+  RunCentralisationInput,
 } from "./types";
 
 const BASE = "/api";
@@ -928,4 +931,21 @@ export const api = {
 
   getIndustrialCapitalGenesis: (stageId: string) =>
     http<IndustrialCapitalGenesis>(`/v1/historical-stages/${stageId}/genesis`),
+
+  // --- simulation-engine (Ch. 32: Historical Tendency of Capitalist Accumulation) ---
+
+  getNegationOfNegation: () =>
+    http<NegationOfNegationResponse>("/v1/accumulation/negation-of-negation"),
+
+  runCentralisation: (input: RunCentralisationInput) =>
+    http<AccumulationTrajectory>("/v1/accumulation/centralisation", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listAccumulationTrajectories: () =>
+    http<AccumulationTrajectory[]>("/v1/accumulation/trajectories"),
+
+  getAccumulationTrajectory: (id: string) =>
+    http<AccumulationTrajectory>(`/v1/accumulation/trajectories/${id}`),
 };
