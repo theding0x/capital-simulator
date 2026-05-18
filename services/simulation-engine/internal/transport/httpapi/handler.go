@@ -31,6 +31,7 @@ type Handler struct {
 	NationalDebts      store.NationalDebtStore
 	ProtectionSystems  store.ProtectionSystemStore
 	Trajectories       store.AccumulationTrajectoryStore
+	ColonialMarkets    store.ColonialLabourMarketStore
 }
 
 // Deps is the dependency bag passed to New. Each field maps to the
@@ -54,6 +55,7 @@ type Deps struct {
 	NationalDebts      store.NationalDebtStore
 	ProtectionSystems  store.ProtectionSystemStore
 	Trajectories       store.AccumulationTrajectoryStore
+	ColonialMarkets    store.ColonialLabourMarketStore
 }
 
 func New(logger *slog.Logger, d Deps) *Handler {
@@ -77,6 +79,7 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		NationalDebts:      d.NationalDebts,
 		ProtectionSystems:  d.ProtectionSystems,
 		Trajectories:       d.Trajectories,
+		ColonialMarkets:    d.ColonialMarkets,
 	}
 }
 

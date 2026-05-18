@@ -87,4 +87,11 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/accumulation/negation-of-negation", h.GetNegationOfNegation)
 	s.HandleFunc("GET /v1/accumulation/trajectories", h.ListAccumulationTrajectories)
 	s.HandleFunc("GET /v1/accumulation/trajectories/{id}", h.GetAccumulationTrajectory)
+
+	// Ch. 33 — The Modern Theory of Colonisation
+	s.HandleFunc("POST /v1/colonial-markets", h.CreateColonialMarket)
+	s.HandleFunc("GET /v1/colonial-markets", h.ListColonialMarkets)
+	s.HandleFunc("GET /v1/colonial-markets/{id}", h.GetColonialMarket)
+	s.HandleFunc("POST /v1/colonial-markets/{id}/regulate", h.RegulateColonialMarket)
+	s.HandleFunc("POST /v1/colonial-markets/{id}/independence", h.ComputeIndependence)
 }

@@ -33,6 +33,7 @@ import { Ch29GenesisFarmer } from "../chapters/Ch29GenesisFarmer";
 import { Ch30HomeMarket } from "../chapters/Ch30HomeMarket";
 import { Ch31IndustrialCapitalist } from "../chapters/Ch31IndustrialCapitalist";
 import { Ch32HistoricalTendency } from "../chapters/Ch32HistoricalTendency";
+import { Ch33ModernColonisation } from "../chapters/Ch33ModernColonisation";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -84,6 +85,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   ch30: Ch30HomeMarket as AnyPanel,
   ch31: Ch31IndustrialCapitalist as AnyPanel,
   ch32: Ch32HistoricalTendency as AnyPanel,
+  ch33: Ch33ModernColonisation as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -119,6 +121,7 @@ const QUOTES: Partial<Record<string, string>> = {
   ch30: "The expropriation of the agricultural producer, of the peasant, from the soil, is the basis of the whole process. The history of this expropriation, in different countries, assumes different aspects, and runs through its various phases in different orders of succession.",
   ch31: "The discovery of gold and silver in America, the extirpation, enslavement and entombment in mines of the aboriginal population, the beginning of the conquest and looting of the East Indies, the turning of Africa into a warren for the commercial hunting of black-skins, signalised the rosy dawn of the era of capitalist production.",
   ch32: "The knell of capitalist private property sounds. The expropriators are expropriated.",
+  ch33: "Capital is not a thing, but a social relation between persons, established by the instrumentality of things.",
 };
 
 export function ChapterShell({

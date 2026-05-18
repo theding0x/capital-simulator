@@ -1609,3 +1609,48 @@ export interface RunCentralisationInput {
   capital_growth_rate: number;
   persist?: boolean;
 }
+
+// Ch. 33 — The Modern Theory of Colonisation.
+
+export interface ColonialLabourMarket {
+  id: string;
+  colony: string;
+  free_labourers: number;
+  annual_wage_pence: number;
+  land_available: boolean;
+  wakefield_scheme_applied: boolean;
+  independence_years: number;
+  surplus_labour_extractable: boolean;
+  created_at?: string;
+}
+
+export interface CreateColonialLabourMarketInput {
+  colony: string;
+  free_labourers: number;
+  annual_wage_pence: number;
+  land_available: boolean;
+}
+
+export interface SufficientPriceInput {
+  price_per_acre_pence: number;
+  desired_acres: number;
+}
+
+export interface RegulateColonialMarketInput {
+  sufficient_price: SufficientPriceInput;
+}
+
+export interface ComputeIndependenceInput {
+  worker_id: string;
+  sufficient_price: SufficientPriceInput;
+  years_limit?: number;
+}
+
+export interface WageWorkerIndependence {
+  worker_id: string;
+  annual_savings_pence: number;
+  years_worked: number;
+  savings_pence: number;
+  target_ransom_pence: number;
+  became_landowner: boolean;
+}

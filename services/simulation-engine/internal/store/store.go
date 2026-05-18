@@ -126,3 +126,29 @@ type AccumulationTrajectoryStore interface {
 	GetAccumulationTrajectory(ctx context.Context, id simulation.AccumulationTrajectoryID) (simulation.AccumulationTrajectory, error)
 	ListAccumulationTrajectories(ctx context.Context) ([]simulation.AccumulationTrajectory, error)
 }
+
+// ColonialLabourMarketUpdate is the partial-update payload for
+// regulating a Ch. 33 colonial labour market. Non-nil fields are
+// applied; the rest are preserved.
+type ColonialLabourMarketUpdate struct {
+	WakefieldSchemeApplied   *bool
+	IndependenceYears        *int64
+	SurplusLabourExtractable *bool
+}
+
+// IsEmpty reports whether the update would mutate any field.
+func (u ColonialLabourMarketUpdate) IsEmpty() bool {
+	return u.WakefieldSchemeApplied == nil &&
+		u.IndependenceYears == nil &&
+		u.SurplusLabourExtractable == nil
+}
+
+// ColonialLabourMarketStore is the persistence contract for Ch. 33
+// colonial labour markets. Colony names are unique (case-insensitive).
+// Update applies the Wakefield-scheme regulation in place.
+type ColonialLabourMarketStore interface {
+	CreateColonialLabourMarket(ctx context.Context, m simulation.ColonialLabourMarket) (simulation.ColonialLabourMarket, error)
+	GetColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID) (simulation.ColonialLabourMarket, error)
+	ListColonialLabourMarkets(ctx context.Context) ([]simulation.ColonialLabourMarket, error)
+	UpdateColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID, u ColonialLabourMarketUpdate) (simulation.ColonialLabourMarket, error)
+}

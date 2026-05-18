@@ -1133,3 +1133,145 @@ func (m *MySQL) loadTrajectorySteps(ctx context.Context, id simulation.Accumulat
 	}
 	return steps, rows.Err()
 }
+
+// CreateColonialLabourMarket persists a Ch. 33 colonial labour market.
+// Colony name uniqueness is enforced by the UNIQUE index and mapped to
+// ErrAlreadyExists.
+func (m *MySQL) CreateColonialLabourMarket(ctx context.Context, market simulation.ColonialLabourMarket) (simulation.ColonialLabourMarket, error) {
+	if err := market.Validate(); err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	if market.ID.IsZero() {
+		market.ID = simulation.NewColonialLabourMarketID()
+	}
+	if market.CreatedAt.IsZero() {
+		market.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO colonial_labour_markets
+		(id, colony, free_labourers, annual_wage_pence, land_available,
+		 wakefield_scheme_applied, independence_years, surplus_labour_extractable, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	if _, err := m.db.ExecContext(ctx, q,
+		string(market.ID), market.Colony, market.FreeLabourers, int64(market.AnnualWagePence),
+		market.LandAvailable, market.WakefieldSchemeApplied,
+		market.IndependenceYears, market.SurplusLabourExtractable, market.CreatedAt); err != nil {
+		if isDuplicateKey(err) {
+			return simulation.ColonialLabourMarket{}, ErrAlreadyExists
+		}
+		return simulation.ColonialLabourMarket{}, err
+	}
+	return market, nil
+}
+
+// GetColonialLabourMarket returns the market or ErrNotFound.
+func (m *MySQL) GetColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID) (simulation.ColonialLabourMarket, error) {
+	const q = `SELECT id, colony, free_labourers, annual_wage_pence, land_available,
+			wakefield_scheme_applied, independence_years, surplus_labour_extractable, created_at
+		FROM colonial_labour_markets WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	market, err := scanColonialLabourMarket(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return simulation.ColonialLabourMarket{}, ErrNotFound
+		}
+		return simulation.ColonialLabourMarket{}, err
+	}
+	return market, nil
+}
+
+// ListColonialLabourMarkets returns markets ordered by created_at, colony.
+func (m *MySQL) ListColonialLabourMarkets(ctx context.Context) ([]simulation.ColonialLabourMarket, error) {
+	const q = `SELECT id, colony, free_labourers, annual_wage_pence, land_available,
+			wakefield_scheme_applied, independence_years, surplus_labour_extractable, created_at
+		FROM colonial_labour_markets ORDER BY created_at ASC, colony ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]simulation.ColonialLabourMarket, 0)
+	for rows.Next() {
+		market, err := scanColonialLabourMarket(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, market)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if !out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].CreatedAt.Before(out[j].CreatedAt)
+		}
+		return out[i].Colony < out[j].Colony
+	})
+	return out, nil
+}
+
+// UpdateColonialLabourMarket applies the partial regulation update inside
+// a transaction so the read-then-write is consistent.
+func (m *MySQL) UpdateColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID, u ColonialLabourMarketUpdate) (simulation.ColonialLabourMarket, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const sel = `SELECT id, colony, free_labourers, annual_wage_pence, land_available,
+			wakefield_scheme_applied, independence_years, surplus_labour_extractable, created_at
+		FROM colonial_labour_markets WHERE id = ? FOR UPDATE`
+	row := tx.QueryRowContext(ctx, sel, string(id))
+	cur, err := scanColonialLabourMarket(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return simulation.ColonialLabourMarket{}, ErrNotFound
+		}
+		return simulation.ColonialLabourMarket{}, err
+	}
+	if u.WakefieldSchemeApplied != nil {
+		cur.WakefieldSchemeApplied = *u.WakefieldSchemeApplied
+	}
+	if u.IndependenceYears != nil {
+		cur.IndependenceYears = *u.IndependenceYears
+	}
+	if u.SurplusLabourExtractable != nil {
+		cur.SurplusLabourExtractable = *u.SurplusLabourExtractable
+	}
+	const upd = `UPDATE colonial_labour_markets
+		SET wakefield_scheme_applied = ?, independence_years = ?, surplus_labour_extractable = ?
+		WHERE id = ?`
+	if _, err := tx.ExecContext(ctx, upd,
+		cur.WakefieldSchemeApplied, cur.IndependenceYears, cur.SurplusLabourExtractable,
+		string(cur.ID)); err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	return cur, nil
+}
+
+// rowScanner is the minimal interface satisfied by *sql.Row and *sql.Rows
+// so scanColonialLabourMarket can serve both Get and List paths.
+type rowScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanColonialLabourMarket(r rowScanner) (simulation.ColonialLabourMarket, error) {
+	var (
+		market simulation.ColonialLabourMarket
+		rawID  string
+		annual int64
+	)
+	if err := r.Scan(
+		&rawID, &market.Colony, &market.FreeLabourers, &annual, &market.LandAvailable,
+		&market.WakefieldSchemeApplied, &market.IndependenceYears, &market.SurplusLabourExtractable,
+		&market.CreatedAt,
+	); err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	market.ID = simulation.ColonialLabourMarketID(rawID)
+	market.AnnualWagePence = simulation.Pence(annual)
+	return market, nil
+}

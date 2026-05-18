@@ -157,8 +157,13 @@ import type {
   NationalDebt,
   IndustrialCapitalGenesis,
   AccumulationTrajectory,
+  ColonialLabourMarket,
+  ComputeIndependenceInput,
+  CreateColonialLabourMarketInput,
   NegationOfNegationResponse,
+  RegulateColonialMarketInput,
   RunCentralisationInput,
+  WageWorkerIndependence,
 } from "./types";
 
 const BASE = "/api";
@@ -948,4 +953,27 @@ export const api = {
 
   getAccumulationTrajectory: (id: string) =>
     http<AccumulationTrajectory>(`/v1/accumulation/trajectories/${id}`),
+
+  // --- simulation-engine (Ch. 33: The Modern Theory of Colonisation) ---
+
+  createColonialMarket: (input: CreateColonialLabourMarketInput) =>
+    http<ColonialLabourMarket>("/v1/colonial-markets", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listColonialMarkets: () =>
+    http<ColonialLabourMarket[]>("/v1/colonial-markets"),
+
+  regulateColonialMarket: (id: string, input: RegulateColonialMarketInput) =>
+    http<ColonialLabourMarket>(`/v1/colonial-markets/${id}/regulate`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  computeIndependence: (id: string, input: ComputeIndependenceInput) =>
+    http<WageWorkerIndependence>(`/v1/colonial-markets/${id}/independence`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

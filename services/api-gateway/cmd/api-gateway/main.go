@@ -189,6 +189,10 @@ func main() {
 	// Ch. 30 — Reaction of the Agricultural Revolution on Industry → simulation-engine
 	srv.Handle("/v1/market-formation", simProxy)
 
+	// Ch. 33 — The Modern Theory of Colonisation → simulation-engine
+	srv.Handle("/v1/colonial-markets", simProxy)
+	srv.Handle("/v1/colonial-markets/{rest...}", simProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
