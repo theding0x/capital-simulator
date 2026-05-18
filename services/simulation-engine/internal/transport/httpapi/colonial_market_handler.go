@@ -159,25 +159,10 @@ func (h *Handler) RegulateColonialMarket(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	market, err := h.ColonialMarkets.GetColonialLabourMarket(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, store.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "colonial market not found")
-			return
-		}
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
 	scheme := simulation.SystematicColonisation{
-		Colony:          market.Colony,
 		SufficientPrice: price,
 	}
-	regulated := simulation.ColonialLabourRegulation(market, scheme)
-	updated, err := h.ColonialMarkets.UpdateColonialLabourMarket(r.Context(), id, store.ColonialLabourMarketUpdate{
-		WakefieldSchemeApplied:   &regulated.WakefieldSchemeApplied,
-		IndependenceYears:        &regulated.IndependenceYears,
-		SurplusLabourExtractable: &regulated.SurplusLabourExtractable,
-	})
+	updated, err := h.ColonialMarkets.RegulateColonialLabourMarket(r.Context(), id, scheme)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			writeError(w, http.StatusNotFound, "colonial market not found")

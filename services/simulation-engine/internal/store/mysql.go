@@ -1252,6 +1252,44 @@ func (m *MySQL) UpdateColonialLabourMarket(ctx context.Context, id simulation.Co
 	return cur, nil
 }
 
+// RegulateColonialLabourMarket reads the market under SELECT ... FOR
+// UPDATE, runs simulation.ColonialLabourRegulation against the locked
+// row, and writes the regulated state back inside the same
+// transaction. Two concurrent /regulate callers cannot both compute
+// against the same baseline and clobber each other.
+func (m *MySQL) RegulateColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID, scheme simulation.SystematicColonisation) (simulation.ColonialLabourMarket, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const sel = `SELECT id, colony, free_labourers, annual_wage_pence, land_available,
+			wakefield_scheme_applied, independence_years, surplus_labour_extractable, created_at
+		FROM colonial_labour_markets WHERE id = ? FOR UPDATE`
+	row := tx.QueryRowContext(ctx, sel, string(id))
+	cur, err := scanColonialLabourMarket(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return simulation.ColonialLabourMarket{}, ErrNotFound
+		}
+		return simulation.ColonialLabourMarket{}, err
+	}
+	regulated := simulation.ColonialLabourRegulation(cur, scheme)
+	const upd = `UPDATE colonial_labour_markets
+		SET wakefield_scheme_applied = ?, independence_years = ?, surplus_labour_extractable = ?
+		WHERE id = ?`
+	if _, err := tx.ExecContext(ctx, upd,
+		regulated.WakefieldSchemeApplied, regulated.IndependenceYears, regulated.SurplusLabourExtractable,
+		string(regulated.ID)); err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	return regulated, nil
+}
+
 // rowScanner is the minimal interface satisfied by *sql.Row and *sql.Rows
 // so scanColonialLabourMarket can serve both Get and List paths.
 type rowScanner interface {

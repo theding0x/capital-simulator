@@ -100,9 +100,10 @@ func TestSufficientPrice_Ransom(t *testing.T) {
 
 func TestColonialLabourRegulation_PeelAtSwanRiverWithoutScheme(t *testing.T) {
 	t.Parallel()
-	// Without a scheme (zero sufficient price), the market remains
-	// unregulated — IndependenceYears is zero and the wage relation
-	// cannot extract surplus. This is the Peel-fiasco case.
+	// A scheme with zero sufficient price is no scheme. The market is
+	// returned unchanged: WakefieldSchemeApplied stays false, the wage
+	// relation cannot extract surplus, labour walks off into
+	// independent production. This is the Peel-fiasco case.
 	market := ColonialLabourMarket{
 		Colony:          "Swan River",
 		FreeLabourers:   300,
@@ -113,8 +114,8 @@ func TestColonialLabourRegulation_PeelAtSwanRiverWithoutScheme(t *testing.T) {
 
 	out := ColonialLabourRegulation(market, scheme)
 
-	if !out.WakefieldSchemeApplied {
-		t.Errorf("WakefieldSchemeApplied = false, want true (scheme record was applied)")
+	if out.WakefieldSchemeApplied {
+		t.Errorf("WakefieldSchemeApplied = true, want false (no real scheme without a sufficient price)")
 	}
 	if out.IndependenceYears != 0 {
 		t.Errorf("IndependenceYears = %d, want 0 (no ransom)", out.IndependenceYears)

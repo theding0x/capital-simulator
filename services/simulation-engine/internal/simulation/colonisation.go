@@ -48,9 +48,11 @@ func NewColonialLabourMarketID() ColonialLabourMarketID {
 // colonial wage per labourer per year. LandAvailable records whether
 // virgin public land is still effectively open to settlement —
 // Wakefield's central anti-capitalist datum. WakefieldSchemeApplied
-// records whether a SystematicColonisation scheme is currently in force;
-// when true, ColonialLabourRegulation has set the dependence period
-// based on the scheme's sufficient price. SurplusLabourExtractable is
+// records whether a SystematicColonisation scheme with a positive
+// sufficient price has been applied; a scheme with zero sufficient
+// price (no real ransom) is treated as no scheme and leaves this
+// false. When true, ColonialLabourRegulation has set the dependence
+// period based on the scheme's sufficient price. SurplusLabourExtractable is
 // the binary read-out of the chapter's main thesis: without a scheme,
 // labour walks off into independent production and capital cannot
 // extract surplus; with a sufficient price, the wage relation persists.
@@ -183,25 +185,27 @@ func AnnualSavingsPence(market ColonialLabourMarket) Pence {
 //   - FreeLabourers is preserved — the scheme does not change how many
 //     immigrants are in the colony, only how long they remain
 //     wage-workers before exiting.
-//   - IndependenceYears is set to the integer ceiling of
+//   - A scheme with zero sufficient price is no scheme: the market is
+//     returned unchanged (WakefieldSchemeApplied stays false). This is
+//     the Peel-at-Swan-River case, where capital meets producers who
+//     can walk off into independent production unimpeded.
+//   - Otherwise IndependenceYears is set to the integer ceiling of
 //     ransom / annualSavings, using AnnualSavingsPence(market) as the
-//     savings rate assumption (half the colonial wage).
-//   - WakefieldSchemeApplied is set to true.
-//   - SurplusLabourExtractable becomes true when IndependenceYears > 0:
+//     savings rate assumption (half the colonial wage),
+//     WakefieldSchemeApplied is set to true, and
+//     SurplusLabourExtractable becomes true when IndependenceYears > 0:
 //     by extending the dependence period the scheme makes the wage
 //     relation reproducible.
 //
 // The function is pure: no I/O, no state outside the returned struct.
 func ColonialLabourRegulation(market ColonialLabourMarket, scheme SystematicColonisation) ColonialLabourMarket {
-	out := market
-	out.WakefieldSchemeApplied = true
 	annualSavings := AnnualSavingsPence(market)
 	ransom := scheme.SufficientPrice.Ransom()
 	if annualSavings <= 0 || ransom <= 0 {
-		out.IndependenceYears = 0
-		out.SurplusLabourExtractable = false
-		return out
+		return market
 	}
+	out := market
+	out.WakefieldSchemeApplied = true
 	years := int64(ransom) / int64(annualSavings)
 	if int64(ransom)%int64(annualSavings) != 0 {
 		years++

@@ -145,10 +145,15 @@ func (u ColonialLabourMarketUpdate) IsEmpty() bool {
 
 // ColonialLabourMarketStore is the persistence contract for Ch. 33
 // colonial labour markets. Colony names are unique (case-insensitive).
-// Update applies the Wakefield-scheme regulation in place.
+// Update applies a partial regulation payload in place.
+// RegulateColonialLabourMarket reads the locked row, applies
+// simulation.ColonialLabourRegulation against it, and writes the
+// regulated state back in a single transaction — concurrent
+// /regulate calls cannot race a stale baseline through to a clobber.
 type ColonialLabourMarketStore interface {
 	CreateColonialLabourMarket(ctx context.Context, m simulation.ColonialLabourMarket) (simulation.ColonialLabourMarket, error)
 	GetColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID) (simulation.ColonialLabourMarket, error)
 	ListColonialLabourMarkets(ctx context.Context) ([]simulation.ColonialLabourMarket, error)
 	UpdateColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID, u ColonialLabourMarketUpdate) (simulation.ColonialLabourMarket, error)
+	RegulateColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID, scheme simulation.SystematicColonisation) (simulation.ColonialLabourMarket, error)
 }

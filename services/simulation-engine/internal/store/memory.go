@@ -679,3 +679,19 @@ func (m *Memory) UpdateColonialLabourMarket(_ context.Context, id simulation.Col
 	m.colonialMarkets[id] = cur
 	return cur, nil
 }
+
+// RegulateColonialLabourMarket reads the market under the Memory
+// mutex, runs the pure simulation.ColonialLabourRegulation against
+// it, and writes the regulated state back atomically. Two concurrent
+// /regulate callers see serialized reads-and-writes.
+func (m *Memory) RegulateColonialLabourMarket(_ context.Context, id simulation.ColonialLabourMarketID, scheme simulation.SystematicColonisation) (simulation.ColonialLabourMarket, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cur, ok := m.colonialMarkets[id]
+	if !ok {
+		return simulation.ColonialLabourMarket{}, ErrNotFound
+	}
+	regulated := simulation.ColonialLabourRegulation(cur, scheme)
+	m.colonialMarkets[id] = regulated
+	return regulated, nil
+}

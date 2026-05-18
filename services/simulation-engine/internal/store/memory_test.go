@@ -259,3 +259,75 @@ func TestMemory_ColonialLabourMarket_UpdateAppliesPartialFields(t *testing.T) {
 		t.Errorf("FreeLabourers changed: %d -> %d", created.FreeLabourers, updated.FreeLabourers)
 	}
 }
+
+func TestMemory_RegulateColonialLabourMarket_AtomicReadComputeWrite(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+
+	// South Australia, 1836: £20/year wage; savings 2400/yr.
+	// Ransom 240 * 50 = 12000 -> 5 years.
+	created, err := st.CreateColonialLabourMarket(ctx, simulation.ColonialLabourMarket{
+		Colony:          "South Australia, 1836",
+		FreeLabourers:   5000,
+		AnnualWagePence: 4800,
+		LandAvailable:   true,
+	})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	regulated, err := st.RegulateColonialLabourMarket(ctx, created.ID, simulation.SystematicColonisation{
+		SufficientPrice: simulation.SufficientPrice{
+			PricePerAcrePence: 240,
+			DesiredAcres:      50,
+		},
+	})
+	if err != nil {
+		t.Fatalf("regulate: %v", err)
+	}
+	if !regulated.WakefieldSchemeApplied {
+		t.Errorf("WakefieldSchemeApplied = false, want true")
+	}
+	if regulated.IndependenceYears != 5 {
+		t.Errorf("IndependenceYears = %d, want 5", regulated.IndependenceYears)
+	}
+	if !regulated.SurplusLabourExtractable {
+		t.Errorf("SurplusLabourExtractable = false, want true")
+	}
+
+	// Re-read the persisted market: the regulated state must be the
+	// state the store now returns from Get (the write committed).
+	persisted, err := st.GetColonialLabourMarket(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if !persisted.WakefieldSchemeApplied || persisted.IndependenceYears != 5 || !persisted.SurplusLabourExtractable {
+		t.Errorf("persisted state not regulated: %+v", persisted)
+	}
+
+	// Zero sufficient price is no scheme: the market is returned
+	// unchanged. The fact that the previous /regulate already set
+	// WakefieldSchemeApplied=true makes this case observable.
+	noop, err := st.RegulateColonialLabourMarket(ctx, created.ID, simulation.SystematicColonisation{})
+	if err != nil {
+		t.Fatalf("regulate (empty scheme): %v", err)
+	}
+	if noop.WakefieldSchemeApplied != persisted.WakefieldSchemeApplied ||
+		noop.IndependenceYears != persisted.IndependenceYears ||
+		noop.SurplusLabourExtractable != persisted.SurplusLabourExtractable {
+		t.Errorf("empty-scheme regulate changed state: before=%+v after=%+v", persisted, noop)
+	}
+}
+
+func TestMemory_RegulateColonialLabourMarket_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+	_, err := st.RegulateColonialLabourMarket(ctx, "missing", simulation.SystematicColonisation{
+		SufficientPrice: simulation.SufficientPrice{PricePerAcrePence: 240, DesiredAcres: 50},
+	})
+	if !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("err = %v, want ErrNotFound", err)
+	}
+}
