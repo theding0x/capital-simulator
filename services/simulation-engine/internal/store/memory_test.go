@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
@@ -139,5 +140,194 @@ func TestMemory_GeneralLaw_CreateAndGet(t *testing.T) {
 	}
 	if got.ConstantCapital != s.ConstantCapital {
 		t.Errorf("constant_capital = %d, want %d", got.ConstantCapital, s.ConstantCapital)
+	}
+}
+
+func TestMemory_ColonialLabourMarket_CRUD(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+
+	market := simulation.ColonialLabourMarket{
+		Colony:          "Swan River, 1829",
+		FreeLabourers:   300,
+		AnnualWagePence: 4800,
+		LandAvailable:   true,
+	}
+	created, err := st.CreateColonialLabourMarket(ctx, market)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("ID should be assigned")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Errorf("CreatedAt should be assigned")
+	}
+
+	got, err := st.GetColonialLabourMarket(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.Colony != market.Colony {
+		t.Errorf("Colony = %q, want %q", got.Colony, market.Colony)
+	}
+	if got.FreeLabourers != market.FreeLabourers {
+		t.Errorf("FreeLabourers = %d, want %d", got.FreeLabourers, market.FreeLabourers)
+	}
+
+	all, err := st.ListColonialLabourMarkets(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(all) != 1 {
+		t.Fatalf("list len = %d, want 1", len(all))
+	}
+}
+
+func TestMemory_ColonialLabourMarket_DuplicateColonyRejected(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+
+	first := simulation.ColonialLabourMarket{
+		Colony:          "Saint Domingo",
+		FreeLabourers:   50,
+		AnnualWagePence: 3600,
+	}
+	if _, err := st.CreateColonialLabourMarket(ctx, first); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+
+	dup := simulation.ColonialLabourMarket{
+		Colony:          "saint domingo", // case-insensitive uniqueness
+		FreeLabourers:   100,
+		AnnualWagePence: 3600,
+	}
+	_, err := st.CreateColonialLabourMarket(ctx, dup)
+	if !errors.Is(err, store.ErrAlreadyExists) {
+		t.Fatalf("second create error = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ColonialLabourMarket_GetMissingReturnsNotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+	_, err := st.GetColonialLabourMarket(ctx, "nonexistent")
+	if !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_ColonialLabourMarket_UpdateAppliesPartialFields(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+
+	created, err := st.CreateColonialLabourMarket(ctx, simulation.ColonialLabourMarket{
+		Colony:          "South Australia, 1836",
+		FreeLabourers:   5000,
+		AnnualWagePence: 4800,
+		LandAvailable:   true,
+	})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	applied := true
+	years := int64(5)
+	extractable := true
+	updated, err := st.UpdateColonialLabourMarket(ctx, created.ID, store.ColonialLabourMarketUpdate{
+		WakefieldSchemeApplied:   &applied,
+		IndependenceYears:        &years,
+		SurplusLabourExtractable: &extractable,
+	})
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if !updated.WakefieldSchemeApplied {
+		t.Errorf("WakefieldSchemeApplied = false, want true")
+	}
+	if updated.IndependenceYears != 5 {
+		t.Errorf("IndependenceYears = %d, want 5", updated.IndependenceYears)
+	}
+	if !updated.SurplusLabourExtractable {
+		t.Errorf("SurplusLabourExtractable = false, want true")
+	}
+	if updated.FreeLabourers != created.FreeLabourers {
+		t.Errorf("FreeLabourers changed: %d -> %d", created.FreeLabourers, updated.FreeLabourers)
+	}
+}
+
+func TestMemory_RegulateColonialLabourMarket_AtomicReadComputeWrite(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+
+	// South Australia, 1836: £20/year wage; savings 2400/yr.
+	// Ransom 240 * 50 = 12000 -> 5 years.
+	created, err := st.CreateColonialLabourMarket(ctx, simulation.ColonialLabourMarket{
+		Colony:          "South Australia, 1836",
+		FreeLabourers:   5000,
+		AnnualWagePence: 4800,
+		LandAvailable:   true,
+	})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	regulated, err := st.RegulateColonialLabourMarket(ctx, created.ID, simulation.SystematicColonisation{
+		SufficientPrice: simulation.SufficientPrice{
+			PricePerAcrePence: 240,
+			DesiredAcres:      50,
+		},
+	})
+	if err != nil {
+		t.Fatalf("regulate: %v", err)
+	}
+	if !regulated.WakefieldSchemeApplied {
+		t.Errorf("WakefieldSchemeApplied = false, want true")
+	}
+	if regulated.IndependenceYears != 5 {
+		t.Errorf("IndependenceYears = %d, want 5", regulated.IndependenceYears)
+	}
+	if !regulated.SurplusLabourExtractable {
+		t.Errorf("SurplusLabourExtractable = false, want true")
+	}
+
+	// Re-read the persisted market: the regulated state must be the
+	// state the store now returns from Get (the write committed).
+	persisted, err := st.GetColonialLabourMarket(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if !persisted.WakefieldSchemeApplied || persisted.IndependenceYears != 5 || !persisted.SurplusLabourExtractable {
+		t.Errorf("persisted state not regulated: %+v", persisted)
+	}
+
+	// Zero sufficient price is no scheme: the market is returned
+	// unchanged. The fact that the previous /regulate already set
+	// WakefieldSchemeApplied=true makes this case observable.
+	noop, err := st.RegulateColonialLabourMarket(ctx, created.ID, simulation.SystematicColonisation{})
+	if err != nil {
+		t.Fatalf("regulate (empty scheme): %v", err)
+	}
+	if noop.WakefieldSchemeApplied != persisted.WakefieldSchemeApplied ||
+		noop.IndependenceYears != persisted.IndependenceYears ||
+		noop.SurplusLabourExtractable != persisted.SurplusLabourExtractable {
+		t.Errorf("empty-scheme regulate changed state: before=%+v after=%+v", persisted, noop)
+	}
+}
+
+func TestMemory_RegulateColonialLabourMarket_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+	_, err := st.RegulateColonialLabourMarket(ctx, "missing", simulation.SystematicColonisation{
+		SufficientPrice: simulation.SufficientPrice{PricePerAcrePence: 240, DesiredAcres: 50},
+	})
+	if !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("err = %v, want ErrNotFound", err)
 	}
 }

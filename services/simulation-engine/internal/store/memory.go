@@ -31,6 +31,8 @@ type Memory struct {
 	nationalDebts      []simulation.NationalDebt
 	protectionSystems  []simulation.ProtectionSystem
 	trajectories       map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory
+	colonialMarkets    map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket
+	colonyNames        map[string]simulation.ColonialLabourMarketID
 	now                func() time.Time
 }
 
@@ -43,6 +45,8 @@ func NewMemory() *Memory {
 		historicalStages: make(map[simulation.HistoricalStageID]simulation.HistoricalStage),
 		stageNames:       make(map[string]simulation.HistoricalStageID),
 		trajectories:     make(map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory),
+		colonialMarkets:  make(map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket),
+		colonyNames:      make(map[string]simulation.ColonialLabourMarketID),
 		now:              time.Now,
 	}
 }
@@ -598,4 +602,96 @@ func (m *Memory) ListAccumulationTrajectories(_ context.Context) ([]simulation.A
 		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
 	})
 	return out, nil
+}
+
+// CreateColonialLabourMarket persists a Ch. 33 colonial labour market.
+// Colony names are unique case-insensitively.
+func (m *Memory) CreateColonialLabourMarket(_ context.Context, market simulation.ColonialLabourMarket) (simulation.ColonialLabourMarket, error) {
+	if err := market.Validate(); err != nil {
+		return simulation.ColonialLabourMarket{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	key := strings.ToLower(market.Colony)
+	if _, ok := m.colonyNames[key]; ok {
+		return simulation.ColonialLabourMarket{}, ErrAlreadyExists
+	}
+	if market.ID.IsZero() {
+		market.ID = simulation.NewColonialLabourMarketID()
+	}
+	if _, ok := m.colonialMarkets[market.ID]; ok {
+		return simulation.ColonialLabourMarket{}, ErrAlreadyExists
+	}
+	if market.CreatedAt.IsZero() {
+		market.CreatedAt = m.now().UTC()
+	}
+	m.colonialMarkets[market.ID] = market
+	m.colonyNames[key] = market.ID
+	return market, nil
+}
+
+// GetColonialLabourMarket returns the persisted market or ErrNotFound.
+func (m *Memory) GetColonialLabourMarket(_ context.Context, id simulation.ColonialLabourMarketID) (simulation.ColonialLabourMarket, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	market, ok := m.colonialMarkets[id]
+	if !ok {
+		return simulation.ColonialLabourMarket{}, ErrNotFound
+	}
+	return market, nil
+}
+
+// ListColonialLabourMarkets returns markets ordered by created_at
+// ascending then by colony name.
+func (m *Memory) ListColonialLabourMarkets(_ context.Context) ([]simulation.ColonialLabourMarket, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.ColonialLabourMarket, 0, len(m.colonialMarkets))
+	for _, market := range m.colonialMarkets {
+		out = append(out, market)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if !out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].CreatedAt.Before(out[j].CreatedAt)
+		}
+		return strings.ToLower(out[i].Colony) < strings.ToLower(out[j].Colony)
+	})
+	return out, nil
+}
+
+// UpdateColonialLabourMarket applies a partial regulation update.
+func (m *Memory) UpdateColonialLabourMarket(_ context.Context, id simulation.ColonialLabourMarketID, u ColonialLabourMarketUpdate) (simulation.ColonialLabourMarket, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cur, ok := m.colonialMarkets[id]
+	if !ok {
+		return simulation.ColonialLabourMarket{}, ErrNotFound
+	}
+	if u.WakefieldSchemeApplied != nil {
+		cur.WakefieldSchemeApplied = *u.WakefieldSchemeApplied
+	}
+	if u.IndependenceYears != nil {
+		cur.IndependenceYears = *u.IndependenceYears
+	}
+	if u.SurplusLabourExtractable != nil {
+		cur.SurplusLabourExtractable = *u.SurplusLabourExtractable
+	}
+	m.colonialMarkets[id] = cur
+	return cur, nil
+}
+
+// RegulateColonialLabourMarket reads the market under the Memory
+// mutex, runs the pure simulation.ColonialLabourRegulation against
+// it, and writes the regulated state back atomically. Two concurrent
+// /regulate callers see serialized reads-and-writes.
+func (m *Memory) RegulateColonialLabourMarket(_ context.Context, id simulation.ColonialLabourMarketID, scheme simulation.SystematicColonisation) (simulation.ColonialLabourMarket, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cur, ok := m.colonialMarkets[id]
+	if !ok {
+		return simulation.ColonialLabourMarket{}, ErrNotFound
+	}
+	regulated := simulation.ColonialLabourRegulation(cur, scheme)
+	m.colonialMarkets[id] = regulated
+	return regulated, nil
 }
