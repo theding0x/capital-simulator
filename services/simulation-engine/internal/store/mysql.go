@@ -1035,7 +1035,7 @@ func (m *MySQL) CreateAccumulationTrajectory(ctx context.Context, t simulation.A
 	}
 	defer stmt.Close()
 	for _, s := range t.Steps {
-		stepID := simulation.NewAccumulationTrajectoryID()
+		stepID := simulation.NewCentralisationStepID()
 		if _, err := stmt.ExecContext(ctx,
 			string(stepID), string(t.ID), s.StepIndex,
 			s.FirmsAbsorbed, int64(s.CapitalConcentratedPence), t.CreatedAt); err != nil {
