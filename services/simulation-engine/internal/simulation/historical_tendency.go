@@ -209,9 +209,6 @@ func RunCentralisation(initial CapitalistPrivateProperty, steps int64, absorptio
 	if steps <= 0 || initial.Firms <= 1 || absorptionRate <= 0 {
 		return traj
 	}
-	if absorptionRate > 1 {
-		absorptionRate = 1
-	}
 
 	firms := initial.Firms
 	capital := initial.TotalCapitalPence
