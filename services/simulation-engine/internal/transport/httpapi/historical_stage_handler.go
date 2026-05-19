@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -109,7 +110,7 @@ func toHistoricalStageResponse(h simulation.HistoricalStage) historicalStageResp
 		PrimitiveAccumulations:     episodesToDTO(h.PrimitiveAccumulations),
 		TotalCapitalFormed:         int64(h.TotalCapitalFormed()),
 		TotalLabourersExpropriated: h.TotalLabourersExpropriated(),
-		CreatedAt:                  h.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:                  h.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 

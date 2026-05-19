@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -68,7 +69,7 @@ func toFarmTenureResponse(f simulation.FarmTenure) farmTenureResponse {
 			WageCosts:   int64(surplus.WageCosts),
 			Profit:      int64(surplus.Profit),
 		},
-		CreatedAt: f.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt: f.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 

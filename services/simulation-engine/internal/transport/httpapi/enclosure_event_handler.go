@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
@@ -31,7 +32,7 @@ func toEnclosureEventResponse(e simulation.EnclosureEvent) enclosureEventRespons
 		AcresEnclosed:       e.AcresEnclosed,
 		PopulationDisplaced: e.PopulationDisplaced,
 		Beneficiary:         e.Beneficiary,
-		CreatedAt:           e.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:           e.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 
