@@ -145,7 +145,7 @@ func (h *Handler) CreateHistoricalStage(w http.ResponseWriter, r *http.Request) 
 			writeError(w, http.StatusConflict, "historical stage with that name already exists")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -157,7 +157,7 @@ func (h *Handler) CreateHistoricalStage(w http.ResponseWriter, r *http.Request) 
 func (h *Handler) ListHistoricalStages(w http.ResponseWriter, r *http.Request) {
 	stages, err := h.HistoricalStages.ListHistoricalStages(r.Context())
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	out := make([]historicalStageResponse, 0, len(stages))
@@ -206,7 +206,7 @@ func (h *Handler) SeedScenarioFromStage(w http.ResponseWriter, r *http.Request) 
 			writeError(w, http.StatusNotFound, "historical stage not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 

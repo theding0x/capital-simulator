@@ -82,7 +82,7 @@ func (h *Handler) CreateFarmTenure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *Handler) CreateFarmTenure(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.FarmTenures.CreateFarmTenure(r.Context(), ft)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -127,13 +127,13 @@ func (h *Handler) ListFarmTenures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
 	tenures, err := h.FarmTenures.ListFarmTenuresByStage(r.Context(), stageID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 

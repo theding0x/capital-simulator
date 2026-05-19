@@ -87,7 +87,7 @@ func (h *Handler) CreateMachine(w http.ResponseWriter, r *http.Request) {
 		HandLabourPerUnit:     machinery.LabourMinutes(req.HandLabourPerUnit),
 	})
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, dtoFromMachine(mc))
@@ -101,7 +101,7 @@ func (h *Handler) ListMachines(w http.ResponseWriter, r *http.Request) {
 	}
 	list, err := h.Machines.ListMachines(r.Context())
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	out := make([]machineDTO, 0, len(list))
@@ -120,7 +120,7 @@ func (h *Handler) GetMachine(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	mc, err := h.Machines.GetMachine(r.Context(), machinery.MachineID(id))
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, dtoFromMachine(mc))
@@ -143,7 +143,7 @@ func (h *Handler) GetMachineWear(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	mc, err := h.Machines.GetMachine(r.Context(), machinery.MachineID(id))
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	remaining := int64(mc.MachineValue) - int64(mc.AccumulatedWear.Value) - int64(mc.AccumulatedDepreciation.Value)
@@ -267,7 +267,7 @@ func (h *Handler) CreateFactory(w http.ResponseWriter, r *http.Request) {
 		IntensityFactor: intensity,
 	})
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, dtoFromFactory(f))
@@ -282,7 +282,7 @@ func (h *Handler) GetFactory(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	f, err := h.Factories.GetFactory(r.Context(), machinery.FactoryID(id))
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, dtoFromFactory(f))
@@ -296,7 +296,7 @@ func (h *Handler) ListFactories(w http.ResponseWriter, r *http.Request) {
 	}
 	list, err := h.Factories.ListFactories(r.Context())
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	out := make([]factoryDTO, 0, len(list))
@@ -345,7 +345,7 @@ func (h *Handler) TickFactory(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	f, tick, err := h.Factories.AdvanceTick(r.Context(), machinery.FactoryID(id))
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, tickResponse{
@@ -372,7 +372,7 @@ func (h *Handler) ListFactoryTicks(w http.ResponseWriter, r *http.Request) {
 	}
 	ticks, err := h.Factories.ListTicks(r.Context(), machinery.FactoryID(id), limit)
 	if err != nil {
-		writeMachineryError(w, err)
+		h.writeMachineryError(w, err)
 		return
 	}
 	out := make([]engineTickDTO, 0, len(ticks))
@@ -382,7 +382,7 @@ func (h *Handler) ListFactoryTicks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"items": out})
 }
 
-func writeMachineryError(w http.ResponseWriter, err error) {
+func (h *Handler) writeMachineryError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, store.ErrNotFound):
 		writeError(w, http.StatusNotFound, err.Error())
@@ -396,6 +396,6 @@ func writeMachineryError(w http.ResponseWriter, err error) {
 		errors.Is(err, machinery.ErrFactoryNoMover):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 	}
 }

@@ -266,7 +266,7 @@ func (h *Handler) CreateGeneralLawScenario(w http.ResponseWriter, r *http.Reques
 	}
 	created, err := h.GeneralLaw.CreateGeneralLawScenario(r.Context(), s)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -288,7 +288,7 @@ func (h *Handler) GetGeneralLawScenario(w http.ResponseWriter, r *http.Request) 
 			writeError(w, http.StatusNotFound, "scenario not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 

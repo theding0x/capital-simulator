@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -221,4 +223,20 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 
 func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+// writeServerError logs err via the handler's structured logger and writes an
+// opaque 500 response with a random correlation ID. Callers must not write
+// anything to w after calling this.
+func (h *Handler) writeServerError(w http.ResponseWriter, err error) {
+	b := make([]byte, 8)
+	if _, randErr := rand.Read(b); randErr != nil {
+		panic("crypto/rand unavailable: " + randErr.Error())
+	}
+	id := hex.EncodeToString(b)
+	h.Logger.Error("internal error", "error", err, "correlation_id", id)
+	writeJSON(w, http.StatusInternalServerError, map[string]string{
+		"error":          "internal error",
+		"correlation_id": id,
+	})
 }

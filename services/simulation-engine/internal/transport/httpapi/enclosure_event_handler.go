@@ -56,7 +56,7 @@ func (h *Handler) CreateEnclosureEvent(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.EnclosureEvents.CreateEnclosureEvent(r.Context(), e)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -68,7 +68,7 @@ func (h *Handler) CreateEnclosureEvent(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ListEnclosureEvents(w http.ResponseWriter, r *http.Request) {
 	events, err := h.EnclosureEvents.ListEnclosureEvents(r.Context())
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	out := make([]enclosureEventResponse, 0, len(events))
