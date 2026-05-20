@@ -3,7 +3,6 @@ package simulation
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"math"
 )
 
 // Pence is the monetary unit for Part VII — The Accumulation of Capital.
@@ -72,7 +71,7 @@ func RunSimpleReproduction(initial CapitalStock, surplusRate float64, periods in
 	cycles := make([]ReproductionCycle, periods)
 	cap := initial
 	for i := int64(0); i < periods; i++ {
-		sv := Pence(math.Round(float64(cap.VariableCapital) * surplusRate))
+		sv := ProduceSurplus(cap.VariableCapital, surplusRate)
 		fund := SurplusValueFund{
 			Total:       sv,
 			Revenue:     sv,
