@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 import { api } from "../api";
 import { usePounds } from "../CurrencyContext";
 import type { GeneralLawScenarioResult, OrganicCompositionResult, LabourDemandResult, ReserveArmyResult } from "../types";
+import { CapitalCompositionForm } from "./CapitalCompositionForm";
+import type { CapitalCompositionValues } from "./CapitalCompositionForm";
 
 export function Ch25GeneralLaw() {
   const fmt = usePounds();
@@ -31,42 +33,33 @@ export function Ch25GeneralLaw() {
 
   // Scenario simulation
   const [scenName, setScenName] = useState("§1 Unchanged composition");
-  const [scenConstant, setScenConstant] = useState(8000);
-  const [scenVariable, setScenVariable] = useState(2000);
-  const [scenSurplusRate, setScenSurplusRate] = useState(1.0);
+  const [scenCv, setScenCv] = useState<CapitalCompositionValues>({ constant: 8000, variable: 2000, surplusRate: 1.0, periods: 5 });
   const [scenAccumRate, setScenAccumRate] = useState(1.0);
   const [scenProductivity, setScenProductivity] = useState(0.0);
   const [scenWage, setScenWage] = useState(200);
   const [scenSupply, setScenSupply] = useState(50);
-  const [scenPeriods, setScenPeriods] = useState(5);
   const [scenResult, setScenResult] = useState<GeneralLawScenarioResult | null>(null);
   const [scenLoading, setScenLoading] = useState(false);
   const [scenError, setScenError] = useState("");
 
   function applySection1() {
     setScenName("§1 Unchanged composition — demand rises with capital");
-    setScenConstant(8000);
-    setScenVariable(2000);
-    setScenSurplusRate(1.0);
+    setScenCv({ constant: 8000, variable: 2000, surplusRate: 1.0, periods: 5 });
     setScenAccumRate(1.0);
     setScenProductivity(0.0);
     setScenWage(200);
     setScenSupply(50);
-    setScenPeriods(5);
     setScenResult(null);
     setScenError("");
   }
 
   function applySection2() {
     setScenName("§2 Rising OC — reserve army swells as machinery displaces labour");
-    setScenConstant(8000);
-    setScenVariable(2000);
-    setScenSurplusRate(1.0);
+    setScenCv({ constant: 8000, variable: 2000, surplusRate: 1.0, periods: 10 });
     setScenAccumRate(1.0);
     setScenProductivity(0.05);
     setScenWage(200);
     setScenSupply(50);
-    setScenPeriods(10);
     setScenResult(null);
     setScenError("");
   }
@@ -134,14 +127,14 @@ export function Ch25GeneralLaw() {
     try {
       const r = await api.createGeneralLawScenario({
         name: scenName,
-        constant_capital: scenConstant,
-        variable_capital: scenVariable,
-        surplus_rate: scenSurplusRate,
+        constant_capital: scenCv.constant,
+        variable_capital: scenCv.variable,
+        surplus_rate: scenCv.surplusRate,
         accumulation_rate: scenAccumRate,
         productivity_growth: scenProductivity,
         wage_pence: scenWage,
         worker_supply: scenSupply,
-        periods: scenPeriods,
+        periods: scenCv.periods,
       });
       setScenResult(r);
     } catch (err) {
@@ -255,18 +248,11 @@ export function Ch25GeneralLaw() {
             Scenario Name
             <input type="text" value={scenName} onChange={e => setScenName(e.target.value)} />
           </label>
-          <label>
-            Constant Capital (£)
-            <input type="number" value={scenConstant} onChange={e => setScenConstant(Number(e.target.value))} min={0} />
-          </label>
-          <label>
-            Variable Capital (£)
-            <input type="number" value={scenVariable} onChange={e => setScenVariable(Number(e.target.value))} min={1} />
-          </label>
-          <label>
-            Surplus Rate (s′)
-            <input type="number" step="0.01" value={scenSurplusRate} onChange={e => setScenSurplusRate(Number(e.target.value))} min={0} />
-          </label>
+          <CapitalCompositionForm
+            values={scenCv}
+            presets={[]}
+            onChange={(next) => { setScenCv(next); setScenResult(null); setScenError(""); }}
+          />
           <label>
             Accumulation Rate
             <input type="number" step="0.01" value={scenAccumRate} onChange={e => setScenAccumRate(Number(e.target.value))} min={0} max={1} />
@@ -282,10 +268,6 @@ export function Ch25GeneralLaw() {
           <label>
             Worker Supply
             <input type="number" value={scenSupply} onChange={e => setScenSupply(Number(e.target.value))} min={1} />
-          </label>
-          <label>
-            Periods
-            <input type="number" value={scenPeriods} onChange={e => setScenPeriods(Number(e.target.value))} min={1} />
           </label>
           <button type="submit" disabled={scenLoading}>{scenLoading ? "Running…" : "Run Simulation"}</button>
         </form>

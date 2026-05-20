@@ -3,17 +3,16 @@ import type { FormEvent } from "react";
 import { api } from "../api";
 import { usePounds } from "../CurrencyContext";
 import type { AccumulationPeriod, ExtendedReproductionResult, SplitSurplusResult } from "../types";
+import { CapitalCompositionForm } from "./CapitalCompositionForm";
+import type { CapitalCompositionValues } from "./CapitalCompositionForm";
 
 export function Ch24AccumulationOfCapital() {
   const fmt = usePounds();
 
-  // Extended reproduction inputs
-  const [constantCapital, setConstantCapital] = useState(8000);
-  const [variableCapital, setVariableCapital] = useState(2000);
-  const [surplusRate, setSurplusRate] = useState(1.0);
+  // Extended reproduction inputs — shared (c, v, s′, periods)
+  const [cv, setCv] = useState<CapitalCompositionValues>({ constant: 8000, variable: 2000, surplusRate: 1.0, periods: 3 });
   const [accumRate, setAccumRate] = useState(1.0);
   const [compositionRatio, setCompositionRatio] = useState(0.8);
-  const [periods, setPeriods] = useState(3);
   const [result, setResult] = useState<ExtendedReproductionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,24 +25,24 @@ export function Ch24AccumulationOfCapital() {
   const [splitLoading, setSplitLoading] = useState(false);
   const [splitError, setSplitError] = useState("");
 
+  function handleCvChange(next: CapitalCompositionValues) {
+    setCv(next);
+    setResult(null);
+    setError("");
+  }
+
   function applySpinnerExample() {
-    setConstantCapital(8000);
-    setVariableCapital(2000);
-    setSurplusRate(1.0);
+    setCv({ constant: 8000, variable: 2000, surplusRate: 1.0, periods: 3 });
     setAccumRate(1.0);
     setCompositionRatio(0.8);
-    setPeriods(3);
     setResult(null);
     setError("");
   }
 
   function applyPartialAccumulationExample() {
-    setConstantCapital(8000);
-    setVariableCapital(2000);
-    setSurplusRate(1.0);
+    setCv({ constant: 8000, variable: 2000, surplusRate: 1.0, periods: 3 });
     setAccumRate(0.5);
     setCompositionRatio(0.8);
-    setPeriods(3);
     setResult(null);
     setError("");
   }
@@ -55,12 +54,12 @@ export function Ch24AccumulationOfCapital() {
     setLoading(true);
     try {
       const r = await api.runExtendedReproduction({
-        constant_capital: constantCapital,
-        variable_capital: variableCapital,
-        surplus_rate: surplusRate,
+        constant_capital: cv.constant,
+        variable_capital: cv.variable,
+        surplus_rate: cv.surplusRate,
         accum_rate: accumRate,
         composition_ratio: compositionRatio,
-        periods,
+        periods: cv.periods,
       });
       setResult(r);
     } catch (err) {
@@ -113,43 +112,8 @@ export function Ch24AccumulationOfCapital() {
         </div>
 
         <form className="ch-form" onSubmit={handleExtendedSubmit}>
+          <CapitalCompositionForm values={cv} maxPeriods={10} presets={[]} onChange={handleCvChange} />
           <div className="form-row">
-            <label className="form-label">
-              Constant capital c (pence)
-              <input
-                type="number"
-                min={0}
-                className="form-input"
-                value={constantCapital}
-                onChange={(e) => setConstantCapital(Number(e.target.value))}
-                required
-              />
-            </label>
-            <label className="form-label">
-              Variable capital v (pence)
-              <input
-                type="number"
-                min={1}
-                className="form-input"
-                value={variableCapital}
-                onChange={(e) => setVariableCapital(Number(e.target.value))}
-                required
-              />
-            </label>
-          </div>
-          <div className="form-row">
-            <label className="form-label">
-              Rate of surplus-value s′
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                className="form-input"
-                value={surplusRate}
-                onChange={(e) => setSurplusRate(Number(e.target.value))}
-                required
-              />
-            </label>
             <label className="form-label">
               Accumulation rate (0–1)
               <input
@@ -163,8 +127,6 @@ export function Ch24AccumulationOfCapital() {
                 required
               />
             </label>
-          </div>
-          <div className="form-row">
             <label className="form-label">
               Composition ratio (c-share of new capital)
               <input
@@ -176,17 +138,6 @@ export function Ch24AccumulationOfCapital() {
                 value={compositionRatio}
                 onChange={(e) => setCompositionRatio(Number(e.target.value))}
                 required
-              />
-            </label>
-            <label className="form-label">
-              Periods: {periods}
-              <input
-                type="range"
-                min={1}
-                max={10}
-                className="form-input"
-                value={periods}
-                onChange={(e) => setPeriods(Number(e.target.value))}
               />
             </label>
           </div>
