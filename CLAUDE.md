@@ -5,13 +5,33 @@ Project memory for Claude. Read this once per session; do not re-derive.
 ## What this is
 
 Microservice simulation of an economy modeled chapter-by-chapter on Marx's
-*Capital, Vol. I*. One branch + one PR per chapter. Chapter source text and
-spec live in the **red-vault** Obsidian vault at
-`marx-engels/1867/capital-volume-i/{texts,specs}/` and are read via the
-`obsidian` MCP server, not from this repo. The vault's text files are
-mirrored from the **Marxists Internet Archive** (Moore–Aveling 1887
-edition, `https://www.marxists.org/archive/marx/works/1867-c1/`) — that
+*Capital* — all three volumes. One branch + one PR per chapter. Chapter
+source text and spec live in the **red-vault** Obsidian vault, read via the
+`obsidian` MCP server (not from this repo):
+
+- Vol. I (1867):  `marx-engels/1867/capital-volume-i/{texts,specs}/`
+- Vol. II (1885): `marx-engels/1885/capital-volume-ii/{texts,specs}/`
+- Vol. III (1894):`marx-engels/1894/capital-volume-iii/{texts,specs}/`
+
+Vol. I texts come from the **Marxists Internet Archive** Moore–Aveling 1887
+edition (`https://www.marxists.org/archive/marx/works/1867-c1/`) — that
 URL is the upstream source-of-truth if a vault file is ever ambiguous.
+
+## Volumes
+
+The application models capital as **value in motion** — the circuit
+**M—C(Lp+Mp)…P…C'—M'**. Each volume is a depth of explanation on the same
+circuit, not a separate exhibit:
+
+- **Vol. I — production**: how surplus-value is created in **P**.
+- **Vol. II — circulation & turnover**: how value moves through **M—C** and
+  **C'—M'**, the time of production, the time of circulation, and the
+  reproduction schemes.
+- **Vol. III — totality & distribution**: how surplus-value distributes as
+  profit, rent, interest; the average rate of profit; prices of production.
+
+Chapter IDs, file paths, and migration filenames all carry a volume token
+(`v1`, `v2`, `v3`) so the three volumes coexist without collision.
 
 ## Stack (fixed; do not propose alternatives)
 
@@ -48,8 +68,8 @@ red-vault Obsidian vault, accessed through the `obsidian` MCP server.
 - **Go imports**: stdlib group, blank line, third-party, blank line, local.
 - **HTTP**: pkg/httpx.Server. Routes use Go 1.22+ mux syntax (`POST /v1/...`).
 - **Persistence**: every domain service gets `internal/store/{store.go,memory.go,mysql.go}`. Store interface, Memory for tests, MySQL for prod.
-- **Migrations**: `github.com/pressly/goose/v3`. SQL files live at `internal/store/migrations/NNNNN_chNN_<slug>.sql`, embedded via `//go:embed` and applied by `pkg/mysql.Migrate` inside `NewMySQL`. Add a new numbered file per chapter; never edit existing ones.
-- **Seeds**: every chapter that adds a domain type also ships a `NNNNN_chNN_seed.sql` migration that inserts Marx-faithful exemplars (named after his actual fixtures), with a `-- +goose Down` that DELETEs every seeded id. Seed IDs follow `5eed00000000000000<CC><…>` so they're recognisable on sight and never collide with `commodity.NewID()`. The dashboard must come up populated on a fresh MySQL volume — empty panels are a regression.
+- **Migrations**: `github.com/pressly/goose/v3`. SQL files live at `internal/store/migrations/NNNNN_v<V>_ch<NN>_<slug>.sql` where `V` ∈ `{1,2,3}` is the volume, embedded via `//go:embed` and applied by `pkg/mysql.Migrate` inside `NewMySQL`. Add a new numbered file per chapter; never edit existing ones. Goose tracks by the integer prefix only, so the `v<V>_ch<NN>` token is informational.
+- **Seeds**: every chapter that adds a domain type also ships a `NNNNN_v<V>_ch<NN>_seed.sql` migration that inserts Marx-faithful exemplars (named after his actual fixtures), with a `-- +goose Down` that DELETEs every seeded id. Seed IDs follow `5eed00000000000000<CC><…>` so they're recognisable on sight and never collide with `commodity.NewID()`. The dashboard must come up populated on a fresh MySQL volume — empty panels are a regression.
 - **Errors**: sentinel `ErrNotFound`/`ErrAlreadyExists` in store; HTTP layer maps via `errors.Is`.
 - **Time/labour**: `LabourMinutes int64` is the canonical value-magnitude unit.
 - **IDs**: `commodity.NewID()` style — 96-bit hex from crypto/rand. No google/uuid.
@@ -301,12 +321,14 @@ Then spawn the five agents below as background tasks via the Claude Code Task to
 - HTTP routes: `services/<svc>/internal/transport/httpapi/routes.go`
 - Gateway proxy targets: `services/api-gateway/cmd/api-gateway/main.go`
 - Env config patterns: `pkg/mysql/client.go` (`ConfigFromEnv`)
-- Migration files: `services/<svc>/internal/store/migrations/`
+- Migration files: `services/<svc>/internal/store/migrations/NNNNN_v<V>_ch<NN>_<slug>.sql`
 - Migration runner: `pkg/mysql/migrate.go` (`Migrate`)
 - React API client: `web/src/api.ts`
 - Wire types: `web/src/types.ts` (mirror of Go structs — keep in sync)
-- Chapter source text (Marx prose): vault `marx-engels/1867/capital-volume-i/texts/NN-<slug>.md` (read via `mcp__obsidian__obsidian_get_file_contents`)
-- Chapter spec (code-facing view): vault `marx-engels/1867/capital-volume-i/specs/NN-<slug>.spec.md` (read via `mcp__obsidian__obsidian_get_file_contents`, or use the `chapter-spec` skill)
+- Chapter components: `web/src/chapters/vol<V>/Ch<NN><Title>.tsx`; shared form fragments live at `web/src/chapters/` root
+- Chapter registry: `web/src/chapters/registry.ts` — IDs are `v<V>-ch<NN>`; each entry declares `volume`, `circuitNode[]`, `part`, `status`
+- Chapter source text (Marx prose): vault `marx-engels/<year>/capital-volume-<roman>/texts/NN-<slug>.md` where `(year, roman)` ∈ `{(1867, i), (1885, ii), (1894, iii)}` — read via `mcp__obsidian__obsidian_get_file_contents`
+- Chapter spec (code-facing view): vault `marx-engels/<year>/capital-volume-<roman>/specs/NN-<slug>.spec.md` (read via `mcp__obsidian__obsidian_get_file_contents`, or use the `chapter-spec` skill)
 
 ## Anti-patterns (do not propose)
 

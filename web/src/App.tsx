@@ -7,7 +7,7 @@ import { ChapterShell } from "./components/ChapterShell";
 import { CurrencyProvider, CurrencyToggle } from "./CurrencyContext";
 
 const defaultChapterId =
-  CHAPTERS.filter((c) => c.status === "done").at(-1)?.id ?? "ch01";
+  CHAPTERS.filter((c) => c.status === "done").at(-1)?.id ?? "v1-ch01";
 
 export default function App() {
   const [activeChapterId, setActiveChapterId] = useState(defaultChapterId);
