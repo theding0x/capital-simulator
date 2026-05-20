@@ -14,11 +14,18 @@
 --   South Australia, 1836 — Wakefield's testbed for systematic
 --     colonisation; sufficient price in force, labourers held on the
 --     wage market while the Land Fund imports fresh have-nothings.
+--     Seeded with independence_years = 50, produced by:
+--       SufficientPrice{PricePerAcrePence: 2400, DesiredAcres: 50}
+--       ransom = 120,000 p = £500; annual savings = 2,400 p = £10/yr
+--       (PricePerAcrePence 2400 is 10× the panel default of 240)
 --
 --   Upper Canada, 1830s — the "supernumerary" labour pool Wakefield
 --     describes in §4 (the conversation with "capitalists of Canada
 --     and the state of New York"). Sufficient price applied with a
 --     shorter dependence period.
+--     Seeded with independence_years = 8, produced by:
+--       SufficientPrice{PricePerAcrePence: 416, DesiredAcres: 50}
+--       ransom = 20,800 p = £86 13s 4d; annual savings = 2,600 p = £10 16s 8d/yr
 --
 -- Seed IDs follow 5eed00000000000000<CC><XX> where CC=33.
 
