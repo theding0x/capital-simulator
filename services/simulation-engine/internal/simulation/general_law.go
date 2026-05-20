@@ -14,6 +14,8 @@ type ValueComposition struct {
 }
 
 // TechnicalComposition is the material ratio of means of production to labour-power.
+// TODO(Vol.I Ch.15): activated when machinery chapters extend the organic composition
+// with quantified material input ratios (spindles per operative, etc.).
 type TechnicalComposition struct {
 	MeansOfProductionUnits int64 `json:"means_of_production_units"`
 	LabourPowerUnits        int64 `json:"labour_power_units"`
@@ -26,6 +28,8 @@ type OrganicComposition struct {
 }
 
 // Concentration records the average capital per firm as accumulation proceeds.
+// TODO(Vol.III Ch.15/27): activated when credit and concentration chapters model
+// the growing average scale of capitals alongside centralisation.
 type Concentration struct {
 	TotalCapital Pence `json:"total_capital"`
 	Firms        int64 `json:"firms"`
@@ -41,6 +45,8 @@ func (c Concentration) AverageCapitalPerFirm() Pence {
 
 // Centralisation records capital absorbed by merger or takeover rather than by
 // surplus-value accumulation.
+// TODO(Vol.III Ch.27): activated when the credit system chapter models joint-stock
+// centralisation as a mechanism distinct from Ch.32's expropriation narrative.
 type Centralisation struct {
 	AcquiredCapital Pence `json:"acquired_capital"`
 	FirmsAbsorbed   int64 `json:"firms_absorbed"`
@@ -49,6 +55,8 @@ type Centralisation struct {
 // RelativeSurplusPopulation is the reserve army divided into its three strata:
 // floating (factory workers displaced by machinery), latent (agricultural
 // workers ready to enter industry), and stagnant (irregular casual labour).
+// TODO(Vol.I Ch.25 extension): activated when RunGeneralLaw is extended to
+// partition IndustrialReserveArmy.Size across the three strata by sector.
 type RelativeSurplusPopulation struct {
 	Floating int64 `json:"floating"`
 	Latent   int64 `json:"latent"`

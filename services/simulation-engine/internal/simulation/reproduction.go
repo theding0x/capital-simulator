@@ -31,23 +31,6 @@ type ReproductionCycle struct {
 	Fund        SurplusValueFund `json:"fund"`
 }
 
-// OriginalCapital is the value advanced before any surplus-value is produced.
-type OriginalCapital struct {
-	Pence int64 `json:"pence"`
-}
-
-// IndividualConsumption is the capitalist's personal expenditure out of revenue.
-// It does not enlarge capital.
-type IndividualConsumption struct {
-	Pence int64 `json:"pence"`
-}
-
-// ProductiveConsumption is the consumption of means of production and
-// labour-power in the production process.
-type ProductiveConsumption struct {
-	Pence int64 `json:"pence"`
-}
-
 // ScenarioID is a 96-bit hex identifier for a persisted reproduction scenario.
 type ScenarioID string
 
