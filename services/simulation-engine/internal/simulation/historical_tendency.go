@@ -266,8 +266,8 @@ func RunCentralisation(initial CapitalistPrivateProperty, steps int64, absorptio
 	traj.FinalFirms = firms
 	traj.FinalCapitalPence = capital
 	if initial.Firms > 0 {
-		avgPerFirm := labourers / initial.Firms
-		traj.ReserveArmySize = (initial.Firms - firms) * avgPerFirm
+		avgPerFirm := float64(labourers) / float64(initial.Firms)
+		traj.ReserveArmySize = int64(math.Round(float64(initial.Firms-firms) * avgPerFirm))
 	}
 	return traj
 }

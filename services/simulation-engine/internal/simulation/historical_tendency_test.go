@@ -168,6 +168,22 @@ func TestRunCentralisation_ZeroStepsLeavesInitialState(t *testing.T) {
 	}
 }
 
+func TestRunCentralisation_FewLabourersStillProducesReserveArmy(t *testing.T) {
+	t.Parallel()
+	// When WageLabourers < Firms, integer division of labourers/firms
+	// previously yielded 0, silently reporting ReserveArmySize == 0
+	// regardless of how many firms were absorbed. Float math corrects this.
+	initial := CapitalistPrivateProperty{
+		Firms:             100,
+		TotalCapitalPence: 50_000,
+		WageLabourers:     10,
+	}
+	traj := RunCentralisation(initial, 5, 0.2, 0.0)
+	if traj.ReserveArmySize <= 0 {
+		t.Errorf("ReserveArmySize = %d, want > 0 when firms are absorbed", traj.ReserveArmySize)
+	}
+}
+
 func TestRunCentralisation_SingleFirmIsTerminal(t *testing.T) {
 	t.Parallel()
 	initial := CapitalistPrivateProperty{
