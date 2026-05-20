@@ -3,20 +3,29 @@ import type { FormEvent } from "react";
 import { api } from "../api";
 import { usePounds } from "../CurrencyContext";
 import type { ReproductionCycleItem, SimpleReproductionResult } from "../types";
+import { CapitalCompositionForm } from "./CapitalCompositionForm";
+import type { CapitalCompositionValues } from "./CapitalCompositionForm";
 
 function runningTotal(cycles: ReproductionCycleItem[], upTo: number): number {
   return cycles.slice(0, upTo).reduce((sum, c) => sum + c.revenue, 0);
 }
 
+const CH23_PRESETS: Array<{ label: string; values: CapitalCompositionValues }> = [
+  { label: "§ Core example — £800c + £200v, s′=100%", values: { constant: 800, variable: 200, surplusRate: 1.0, periods: 10 } },
+];
+
 export function Ch23SimpleReproduction() {
   const fmt = usePounds();
-  const [constantCapital, setConstantCapital] = useState(800);
-  const [variableCapital, setVariableCapital] = useState(200);
-  const [surplusRate, setSurplusRate] = useState(1.0);
-  const [periods, setPeriods] = useState(10);
+  const [cv, setCv] = useState<CapitalCompositionValues>({ constant: 800, variable: 200, surplusRate: 1.0, periods: 10 });
   const [result, setResult] = useState<SimpleReproductionResult | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function handleCvChange(next: CapitalCompositionValues) {
+    setCv(next);
+    setResult(null);
+    setError("");
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -25,10 +34,10 @@ export function Ch23SimpleReproduction() {
     setLoading(true);
     try {
       const r = await api.runSimpleReproduction({
-        constant_capital: constantCapital,
-        variable_capital: variableCapital,
-        surplus_rate: surplusRate,
-        periods,
+        constant_capital: cv.constant,
+        variable_capital: cv.variable,
+        surplus_rate: cv.surplusRate,
+        periods: cv.periods,
       });
       setResult(r);
     } catch (err) {
@@ -38,18 +47,9 @@ export function Ch23SimpleReproduction() {
     }
   }
 
-  function applyMarxExample() {
-    setConstantCapital(800);
-    setVariableCapital(200);
-    setSurplusRate(1.0);
-    setPeriods(10);
-    setResult(null);
-    setError("");
-  }
-
   const originalCapital = result
     ? result.constant_capital + result.variable_capital
-    : constantCapital + variableCapital;
+    : cv.constant + cv.variable;
 
   return (
     <div className="ch-panel">
@@ -62,62 +62,8 @@ export function Ch23SimpleReproduction() {
           capital is replaced entirely by past unpaid labour.
         </p>
 
-        <div className="preset-row">
-          <button type="button" className="preset-btn" onClick={applyMarxExample}>
-            § Core example — £800c + £200v, s′=100%
-          </button>
-        </div>
-
         <form className="ch-form" onSubmit={handleSubmit}>
-          <div className="form-row">
-            <label className="form-label">
-              Constant capital c (pence)
-              <input
-                type="number"
-                min={0}
-                className="form-input"
-                value={constantCapital}
-                onChange={(e) => setConstantCapital(Number(e.target.value))}
-                required
-              />
-            </label>
-            <label className="form-label">
-              Variable capital v (pence)
-              <input
-                type="number"
-                min={1}
-                className="form-input"
-                value={variableCapital}
-                onChange={(e) => setVariableCapital(Number(e.target.value))}
-                required
-              />
-            </label>
-          </div>
-          <div className="form-row">
-            <label className="form-label">
-              Rate of surplus-value s′
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                className="form-input"
-                value={surplusRate}
-                onChange={(e) => setSurplusRate(Number(e.target.value))}
-                required
-              />
-            </label>
-            <label className="form-label">
-              Periods: {periods}
-              <input
-                type="range"
-                min={1}
-                max={20}
-                className="form-input"
-                value={periods}
-                onChange={(e) => setPeriods(Number(e.target.value))}
-              />
-            </label>
-          </div>
+          <CapitalCompositionForm values={cv} presets={CH23_PRESETS} onChange={handleCvChange} />
           <button type="submit" className="ch-btn" disabled={loading}>
             {loading ? "Running..." : "Run simulation"}
           </button>
