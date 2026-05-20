@@ -363,6 +363,16 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **api-gateway.** Reverse-proxies `/v1/accumulation` and `/v1/accumulation/{rest...}` to simulation-engine.
 - **React UI.** "Ch. 25 — General Law" panel: organic composition calculator; labour demand probe; reserve army calculator; multi-period scenario simulator with §1/§2 preset buttons; series table showing C, V, OC, workers, reserve army and relative proportion across periods.
 
+### Part VII API prefix decision
+
+Marx's Part VII ("The Accumulation of Capital") covers Ch. 23–25 as a single conceptual arc. Our HTTP surface currently uses two prefixes:
+
+- `POST /v1/reproductions/simple` and `/v1/reproductions/repayment-period` (Ch. 23)
+- `POST /v1/reproductions/extended` and `/v1/reproductions/split-surplus` (Ch. 24)
+- `POST /v1/accumulation/organic-composition`, `/labour-demand`, `/reserve-army`, `/scenarios`, `GET /v1/accumulation/scenarios/{id}` (Ch. 25)
+
+**Decision:** The canonical Part VII prefix is `/v1/accumulation/*`. Simple reproduction (Ch. 23) is the zero-accumulation limit case and belongs under that tree. The `/v1/reproductions/*` routes are legacy; they will be unified under `/v1/accumulation/*` when Vol. II reproduction-schemes work makes a coordinated route migration worthwhile. Until then the split is kept to avoid breaking the React UI without a migration plan.
+
 ### Ch. 26 — what was built
 
 `simulation-engine` adds the historical-genesis layer from Capital Vol. I, Ch. 26 — the layer the rest of Part VII has been treating as given.
