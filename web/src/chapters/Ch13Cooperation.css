@@ -153,6 +153,7 @@
 }
 
 .ch13-row { cursor: pointer; }
+.ch13-row:focus-visible { outline: 2px solid var(--accent, #8a2b2b); outline-offset: -2px; }
 
 /* ── Selection dot ─────────────────────────────────────────────────────── */
 .ch13-dot {
@@ -219,6 +220,7 @@
 
 /* ── Assembled co-ops table tweaks ─────────────────────────────────────── */
 .ch13-coop-row { cursor: pointer; }
+.ch13-coop-row:focus-visible { outline: 2px solid var(--accent, #8a2b2b); outline-offset: -2px; }
 .ch13-coop-name {
   font-family: 'Playfair Display', serif;
   font-weight: 600;

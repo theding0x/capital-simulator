@@ -389,7 +389,11 @@ function RosterTable({
             <tr
               key={w.id}
               className={included ? "ch13-row ch13-row--on" : "ch13-row"}
+              role="button"
+              tabIndex={0}
+              aria-pressed={included}
               onClick={() => onToggle(w.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(w.id); } }}
             >
               <td className="ch13-roster-dot">
                 <SelectionDot on={included} />
@@ -539,7 +543,13 @@ function FragmentRow({
 }) {
   return (
     <>
-      <tr onClick={onExpand} className="ch13-coop-row">
+      <tr
+        onClick={onExpand}
+        className="ch13-coop-row"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onExpand(); } }}
+      >
         <td className="ch13-coop-name">{c.name || c.id.slice(0, 8)}</td>
         <td>{capitalistName(c.capitalist_id)}</td>
         <td className="ch13-coop-num">{c.size}</td>

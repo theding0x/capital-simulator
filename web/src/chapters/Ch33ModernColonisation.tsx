@@ -135,7 +135,11 @@ export function Ch33ModernColonisation() {
             <li
               key={m.id}
               className={`ch33-row${m.id === selectedId ? " selected" : ""}`}
+              role="button"
+              tabIndex={0}
+              aria-pressed={m.id === selectedId}
               onClick={() => setSelectedId(m.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(m.id); } }}
             >
               <div>
                 <div className="ch33-row-title">{m.colony}</div>
