@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -53,7 +54,7 @@ func toDomesticIndustryResponse(d simulation.DomesticIndustry) domesticIndustryR
 		Name:              d.Name,
 		HouseholdsEngaged: d.HouseholdsEngaged,
 		AnnualOutputPence: int64(d.AnnualOutputPence),
-		CreatedAt:         d.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:         d.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 

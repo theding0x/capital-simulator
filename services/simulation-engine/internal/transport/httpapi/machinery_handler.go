@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
@@ -47,7 +48,7 @@ func dtoFromMachine(m machinery.Machine) machineDTO {
 		DailyLabourDisplaced:    int64(machinery.LabourDisplaced(m.HandLabourPerUnit, int64(m.ProductivePower))),
 	}
 	if !m.CreatedAt.IsZero() {
-		d.CreatedAt = m.CreatedAt.UTC().Format("2006-01-02T15:04:05Z07:00")
+		d.CreatedAt = m.CreatedAt.UTC().Format(time.RFC3339)
 	}
 	return d
 }
@@ -193,7 +194,7 @@ func dtoFromFactory(f machinery.Factory) factoryDTO {
 		d.Machines = append(d.Machines, dtoFromMachine(m))
 	}
 	if !f.CreatedAt.IsZero() {
-		d.CreatedAt = f.CreatedAt.UTC().Format("2006-01-02T15:04:05Z07:00")
+		d.CreatedAt = f.CreatedAt.UTC().Format(time.RFC3339)
 	}
 	return d
 }
@@ -332,7 +333,7 @@ func dtoFromTick(t engine.Tick) engineTickDTO {
 		ValueTransferred: t.ValueTransferred,
 		UnitsProduced:    t.UnitsProduced,
 		HandLabourSaved:  t.HandLabourSaved,
-		OccurredAt:       t.OccurredAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
+		OccurredAt:       t.OccurredAt.UTC().Format(time.RFC3339),
 	}
 }
 

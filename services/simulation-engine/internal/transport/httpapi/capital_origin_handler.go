@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -84,7 +85,7 @@ func toCapitalOriginResponse(c simulation.CapitalOrigin) capitalOriginResponse {
 		Source:            c.Source,
 		AmountPence:       int64(c.AmountPence),
 		Period:            c.Period,
-		CreatedAt:         c.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:         c.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 
@@ -96,7 +97,7 @@ func toColonialTransferResponse(t simulation.ColonialTransfer) colonialTransferR
 		To:                t.To,
 		ValuePence:        int64(t.ValuePence),
 		Method:            t.Method,
-		CreatedAt:         t.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:         t.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 
@@ -107,7 +108,7 @@ func toNationalDebtResponse(d simulation.NationalDebt) nationalDebtResponse {
 		AmountPence:       int64(d.AmountPence),
 		InterestRateBps:   d.InterestRateBps,
 		CreditorClass:     d.CreditorClass,
-		CreatedAt:         d.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:         d.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 
@@ -119,7 +120,7 @@ func toProtectionSystemResponse(s simulation.ProtectionSystem) protectionSystemR
 		Beneficiary:       s.Beneficiary,
 		PeriodStart:       s.PeriodStart,
 		PeriodEnd:         s.PeriodEnd,
-		CreatedAt:         s.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:         s.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 

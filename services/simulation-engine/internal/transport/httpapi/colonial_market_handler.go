@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -66,7 +67,7 @@ func toColonialMarketResponse(m simulation.ColonialLabourMarket) colonialMarketR
 		SurplusLabourExtractable: m.SurplusLabourExtractable,
 	}
 	if !m.CreatedAt.IsZero() {
-		resp.CreatedAt = m.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00")
+		resp.CreatedAt = m.CreatedAt.Format(time.RFC3339Nano)
 	}
 	return resp
 }

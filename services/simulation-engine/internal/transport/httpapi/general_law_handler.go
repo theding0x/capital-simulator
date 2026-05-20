@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -204,7 +205,7 @@ func toGeneralLawScenarioResponse(s simulation.GeneralLawScenario) generalLawSce
 		WagePence:          s.WagePence,
 		WorkerSupply:       s.WorkerSupply,
 		Periods:            s.Periods,
-		CreatedAt:          s.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:          s.CreatedAt.Format(time.RFC3339Nano),
 		Series:             snaps,
 	}
 }

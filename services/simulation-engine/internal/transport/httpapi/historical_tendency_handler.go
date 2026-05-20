@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -74,7 +75,7 @@ func toAccumulationTrajectoryResponse(t simulation.AccumulationTrajectory) accum
 		ReserveArmySize:     t.ReserveArmySize,
 	}
 	if !t.CreatedAt.IsZero() {
-		resp.CreatedAt = t.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00")
+		resp.CreatedAt = t.CreatedAt.Format(time.RFC3339Nano)
 	}
 	return resp
 }

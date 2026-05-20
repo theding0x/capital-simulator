@@ -3,6 +3,7 @@ package httpapi
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -40,7 +41,7 @@ func toWageStatuteResponse(w simulation.WageStatute) wageStatuteResponse {
 		MaxWagePence:       w.MaxWagePence,
 		MinWagePence:       w.MinWagePence,
 		EnforcementPenalty: w.EnforcementPenalty,
-		CreatedAt:          w.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:          w.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 
@@ -71,7 +72,7 @@ func toVagrancyLawResponse(v simulation.VagrancyLaw) vagrancyLawResponse {
 		Jurisdiction:      v.Jurisdiction,
 		Punishment:        v.Punishment,
 		TargetPopulation:  v.TargetPopulation,
-		CreatedAt:         v.CreatedAt.Format("2006-01-02T15:04:05.999999Z07:00"),
+		CreatedAt:         v.CreatedAt.Format(time.RFC3339Nano),
 	}
 }
 
