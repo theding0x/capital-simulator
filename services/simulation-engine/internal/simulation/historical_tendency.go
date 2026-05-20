@@ -93,6 +93,20 @@ func NewAccumulationTrajectoryID() AccumulationTrajectoryID {
 	return AccumulationTrajectoryID(hex.EncodeToString(b))
 }
 
+// CentralisationStepID is a 96-bit hex identifier for a single
+// centralisation_steps row within a trajectory.
+type CentralisationStepID string
+
+// NewCentralisationStepID generates a 96-bit hex identifier via
+// crypto/rand.
+func NewCentralisationStepID() CentralisationStepID {
+	b := make([]byte, 12)
+	if _, err := rand.Read(b); err != nil {
+		panic("crypto/rand unavailable: " + err.Error())
+	}
+	return CentralisationStepID(hex.EncodeToString(b))
+}
+
 // AccumulationTrajectory is the long-run series of centralisation steps
 // from an initial CapitalistPrivateProperty to a final state with fewer
 // firms holding a larger capital. ReserveArmySize is the displaced
