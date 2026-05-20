@@ -242,9 +242,12 @@ func RunCentralisation(initial CapitalistPrivateProperty, steps int64, absorptio
 		// CapitalConcentratedPence is the share of the *initial* capital
 		// pool held by firms absorbed at this step. Apportioning against
 		// the initial pool keeps the invariant Σ(concentrated) ≤ initial
-		// capital, so FinalCapitalPence (initial + growth) always exceeds
-		// the sum — concentration redistributes value rather than destroying
-		// it.
+		// capital, so FinalCapitalPence (initial + growth) is always ≥ the
+		// sum — concentration redistributes value rather than destroying it.
+		// Note: apportioning against the initial firm count (not the
+		// surviving count) means each absorbed firm contributes the same
+		// fixed fraction regardless of step; this trades per-step realism
+		// for a clean value-conservation invariant.
 		concentrated := Pence(int64(math.Round(float64(initial.TotalCapitalPence) * (float64(absorbed) / float64(initial.Firms)))))
 		if concentrated <= 0 {
 			concentrated = 1
