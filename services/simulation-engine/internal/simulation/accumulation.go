@@ -11,7 +11,9 @@ type AccumulationRate float64
 type CompositionRatio float64
 
 // AdditionalCapital is the portion of surplus-value converted into new means
-// of production and new labour-power.
+// of production and new labour-power. It is a *flow* (new capital being added
+// this period) rather than a stock, which is why its fields are named Constant
+// and Variable rather than ConstantCapital and VariableCapital.
 type AdditionalCapital struct {
 	Constant Pence `json:"constant"`
 	Variable Pence `json:"variable"`

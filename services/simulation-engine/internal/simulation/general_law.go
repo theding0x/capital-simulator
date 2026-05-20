@@ -7,12 +7,6 @@ import (
 	"time"
 )
 
-// ValueComposition is the monetary ratio of constant to variable capital (c:v).
-type ValueComposition struct {
-	ConstantCapital Pence `json:"constant_capital"`
-	VariableCapital Pence `json:"variable_capital"`
-}
-
 // TechnicalComposition is the material ratio of means of production to labour-power.
 type TechnicalComposition struct {
 	MeansOfProductionUnits int64 `json:"means_of_production_units"`
@@ -73,14 +67,14 @@ type LabourDemand struct {
 	Workers int64 `json:"workers"`
 }
 
-// ComputeOrganicComposition derives the organic composition from the value
-// composition. Ratio = c/(c+v); always in [0,1).
-func ComputeOrganicComposition(vc ValueComposition) OrganicComposition {
-	total := float64(vc.ConstantCapital) + float64(vc.VariableCapital)
+// ComputeOrganicComposition derives the organic composition from the capital
+// stock. Ratio = c/(c+v); always in [0,1).
+func ComputeOrganicComposition(cs CapitalStock) OrganicComposition {
+	total := float64(cs.ConstantCapital) + float64(cs.VariableCapital)
 	if total <= 0 {
 		return OrganicComposition{Ratio: 0}
 	}
-	return OrganicComposition{Ratio: float64(vc.ConstantCapital) / total}
+	return OrganicComposition{Ratio: float64(cs.ConstantCapital) / total}
 }
 
 // ComputeLabourDemand returns the number of workers demanded given total
@@ -168,8 +162,7 @@ func RunGeneralLaw(s GeneralLawScenario) []GeneralLawSnapshot {
 	c := s.ConstantCapital
 	v := s.VariableCapital
 	for i := int64(0); i < s.Periods; i++ {
-		vc := ValueComposition{ConstantCapital: c, VariableCapital: v}
-		oc := ComputeOrganicComposition(vc)
+		oc := ComputeOrganicComposition(CapitalStock{ConstantCapital: c, VariableCapital: v})
 		total := c + v
 		demand := ComputeLabourDemand(total, oc, s.WagePence)
 		army := ComputeReserveArmy(s.WorkerSupply, demand)
