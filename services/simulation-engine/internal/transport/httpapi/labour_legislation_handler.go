@@ -101,7 +101,7 @@ func (h *Handler) CreateWageStatute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -126,7 +126,7 @@ func (h *Handler) CreateWageStatute(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.WageStatutes.CreateWageStatute(r.Context(), ws)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -144,7 +144,7 @@ func (h *Handler) CreateVagrancyLaw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -168,7 +168,7 @@ func (h *Handler) CreateVagrancyLaw(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.VagrancyLaws.CreateVagrancyLaw(r.Context(), vl)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -187,18 +187,18 @@ func (h *Handler) GetLabourDiscipline(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
 	ws, err := h.WageStatutes.ListWageStatutesByStage(r.Context(), stageID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	vl, err := h.VagrancyLaws.ListVagrancyLawsByStage(r.Context(), stageID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 

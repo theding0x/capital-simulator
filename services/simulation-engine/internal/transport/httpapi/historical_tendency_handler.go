@@ -86,7 +86,7 @@ func (h *Handler) GetNegationOfNegation(w http.ResponseWriter, _ *http.Request) 
 	stages := simulation.DialecticalSequence()
 	neg, err := simulation.NegationOfNegation(stages)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	respStages := make([]negationResponse, len(stages))
@@ -154,7 +154,7 @@ func (h *Handler) RunCentralisation(w http.ResponseWriter, r *http.Request) {
 				writeError(w, http.StatusConflict, "trajectory with that name already exists")
 				return
 			}
-			writeError(w, http.StatusInternalServerError, err.Error())
+			h.writeServerError(w, err)
 			return
 		}
 		w.Header().Set("Location", fmt.Sprintf("/v1/accumulation/trajectories/%s", string(stored.ID)))
@@ -169,7 +169,7 @@ func (h *Handler) RunCentralisation(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ListAccumulationTrajectories(w http.ResponseWriter, r *http.Request) {
 	trajectories, err := h.Trajectories.ListAccumulationTrajectories(r.Context())
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	out := make([]accumulationTrajectoryResponse, len(trajectories))
@@ -192,7 +192,7 @@ func (h *Handler) GetAccumulationTrajectory(w http.ResponseWriter, r *http.Reque
 			writeError(w, http.StatusNotFound, "accumulation trajectory not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, toAccumulationTrajectoryResponse(traj))

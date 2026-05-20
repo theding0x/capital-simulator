@@ -136,7 +136,7 @@ func (h *Handler) CreateCapitalOrigin(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusNotFound, "historical stage not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -163,7 +163,7 @@ func (h *Handler) CreateCapitalOrigin(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusConflict, "capital origin already exists")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -184,7 +184,7 @@ func (h *Handler) CreateColonialTransfer(w http.ResponseWriter, r *http.Request)
 			writeError(w, http.StatusNotFound, "historical stage not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -212,7 +212,7 @@ func (h *Handler) CreateColonialTransfer(w http.ResponseWriter, r *http.Request)
 			writeError(w, http.StatusConflict, "colonial transfer already exists")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -233,7 +233,7 @@ func (h *Handler) CreateNationalDebt(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusNotFound, "historical stage not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -260,7 +260,7 @@ func (h *Handler) CreateNationalDebt(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusConflict, "national debt already exists")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -283,28 +283,28 @@ func (h *Handler) GetIndustrialCapitalGenesis(w http.ResponseWriter, r *http.Req
 			writeError(w, http.StatusNotFound, "historical stage not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
 	origins, err := h.CapitalOrigins.ListCapitalOriginsByStage(r.Context(), stageID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	transfers, err := h.ColonialTransfers.ListColonialTransfersByStage(r.Context(), stageID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	debts, err := h.NationalDebts.ListNationalDebtsByStage(r.Context(), stageID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 	systems, err := h.ProtectionSystems.ListProtectionSystemsByStage(r.Context(), stageID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 

@@ -88,7 +88,7 @@ func (h *Handler) CreateDomesticIndustry(w http.ResponseWriter, r *http.Request)
 			writeError(w, http.StatusConflict, "domestic industry already exists")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
@@ -146,13 +146,13 @@ func (h *Handler) GetHomeMarket(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusNotFound, "historical stage not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
 	industries, err := h.DomesticIndustries.ListDomesticIndustriesByStage(r.Context(), stageID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.writeServerError(w, err)
 		return
 	}
 
