@@ -41,11 +41,10 @@ func (h *Handler) ComputeOrganicComposition(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	vc := simulation.ValueComposition{
+	oc := simulation.ComputeOrganicComposition(simulation.CapitalStock{
 		ConstantCapital: simulation.Pence(req.ConstantCapital),
 		VariableCapital: simulation.Pence(req.VariableCapital),
-	}
-	oc := simulation.ComputeOrganicComposition(vc)
+	})
 
 	writeJSON(w, http.StatusOK, organicCompositionResponse{
 		ConstantCapital: req.ConstantCapital,

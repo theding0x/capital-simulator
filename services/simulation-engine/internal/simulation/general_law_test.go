@@ -9,7 +9,7 @@ import (
 // §2: ComputeOrganicComposition(ValueComposition{8000,2000}).Ratio == 0.8
 func TestComputeOrganicComposition_InitialComposition(t *testing.T) {
 	t.Parallel()
-	vc := simulation.ValueComposition{ConstantCapital: 8000, VariableCapital: 2000}
+	vc := simulation.CapitalStock{ConstantCapital: 8000, VariableCapital: 2000}
 	got := simulation.ComputeOrganicComposition(vc)
 	if got.Ratio != 0.8 {
 		t.Errorf("ratio = %v, want 0.8", got.Ratio)
@@ -19,8 +19,8 @@ func TestComputeOrganicComposition_InitialComposition(t *testing.T) {
 // §2 rising OC: ComputeOrganicComposition(ValueComposition{9000,1000}).Ratio == 0.9 > 0.8
 func TestComputeOrganicComposition_RisingComposition(t *testing.T) {
 	t.Parallel()
-	low := simulation.ComputeOrganicComposition(simulation.ValueComposition{ConstantCapital: 8000, VariableCapital: 2000})
-	high := simulation.ComputeOrganicComposition(simulation.ValueComposition{ConstantCapital: 9000, VariableCapital: 1000})
+	low := simulation.ComputeOrganicComposition(simulation.CapitalStock{ConstantCapital: 8000, VariableCapital: 2000})
+	high := simulation.ComputeOrganicComposition(simulation.CapitalStock{ConstantCapital: 9000, VariableCapital: 1000})
 	if high.Ratio != 0.9 {
 		t.Errorf("ratio = %v, want 0.9", high.Ratio)
 	}
@@ -32,7 +32,7 @@ func TestComputeOrganicComposition_RisingComposition(t *testing.T) {
 // Zero total capital returns Ratio=0, no division by zero.
 func TestComputeOrganicComposition_ZeroTotal(t *testing.T) {
 	t.Parallel()
-	got := simulation.ComputeOrganicComposition(simulation.ValueComposition{})
+	got := simulation.ComputeOrganicComposition(simulation.CapitalStock{})
 	if got.Ratio != 0 {
 		t.Errorf("ratio = %v, want 0", got.Ratio)
 	}
@@ -41,7 +41,7 @@ func TestComputeOrganicComposition_ZeroTotal(t *testing.T) {
 // §1 unchanged composition: doubling total capital doubles labour demand.
 func TestComputeLabourDemand_DoublingCapitalDoublesWorkers(t *testing.T) {
 	t.Parallel()
-	vc := simulation.ValueComposition{ConstantCapital: 8000, VariableCapital: 2000}
+	vc := simulation.CapitalStock{ConstantCapital: 8000, VariableCapital: 2000}
 	oc := simulation.ComputeOrganicComposition(vc)
 	wagePence := int64(200)
 
@@ -59,8 +59,8 @@ func TestComputeLabourDemand_RisingOCReducesDemand(t *testing.T) {
 	total := simulation.Pence(10000)
 	wagePence := int64(200)
 
-	lowOC := simulation.ComputeOrganicComposition(simulation.ValueComposition{ConstantCapital: 8000, VariableCapital: 2000})
-	highOC := simulation.ComputeOrganicComposition(simulation.ValueComposition{ConstantCapital: 9000, VariableCapital: 1000})
+	lowOC := simulation.ComputeOrganicComposition(simulation.CapitalStock{ConstantCapital: 8000, VariableCapital: 2000})
+	highOC := simulation.ComputeOrganicComposition(simulation.CapitalStock{ConstantCapital: 9000, VariableCapital: 1000})
 
 	demandLow := simulation.ComputeLabourDemand(total, lowOC, wagePence)
 	demandHigh := simulation.ComputeLabourDemand(total, highOC, wagePence)
@@ -88,11 +88,11 @@ func TestComputeReserveArmy_GrowsWithRisingOC(t *testing.T) {
 	supply := int64(50)
 	wagePence := int64(200)
 
-	oc1 := simulation.ComputeOrganicComposition(simulation.ValueComposition{ConstantCapital: 8000, VariableCapital: 2000})
+	oc1 := simulation.ComputeOrganicComposition(simulation.CapitalStock{ConstantCapital: 8000, VariableCapital: 2000})
 	demand1 := simulation.ComputeLabourDemand(10000, oc1, wagePence)
 	army1 := simulation.ComputeReserveArmy(supply, demand1)
 
-	oc2 := simulation.ComputeOrganicComposition(simulation.ValueComposition{ConstantCapital: 9000, VariableCapital: 1000})
+	oc2 := simulation.ComputeOrganicComposition(simulation.CapitalStock{ConstantCapital: 9000, VariableCapital: 1000})
 	demand2 := simulation.ComputeLabourDemand(12000, oc2, wagePence)
 	army2 := simulation.ComputeReserveArmy(supply, demand2)
 
