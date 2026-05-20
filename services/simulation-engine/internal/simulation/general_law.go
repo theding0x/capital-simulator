@@ -186,7 +186,7 @@ func RunGeneralLaw(s GeneralLawScenario) []GeneralLawSnapshot {
 
 		// New capital's composition ratio rises by ProductivityGrowth each period,
 		// modelling the displacement of labour by machinery.
-		sv := Pence(math.Round(float64(v) * s.SurplusRate))
+		sv := ProduceSurplus(v, s.SurplusRate)
 		newOCRatio := oc.Ratio + s.ProductivityGrowth
 		if newOCRatio >= 1.0 {
 			newOCRatio = 0.99

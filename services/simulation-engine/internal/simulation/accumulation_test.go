@@ -140,6 +140,33 @@ func TestRunExtendedReproduction_PeriodOneAdditional(t *testing.T) {
 	}
 }
 
+// § spinner §1: 2000v at 100% surplus rate → 2000 pence surplus.
+func TestProduceSurplus_SpinnerFullRate(t *testing.T) {
+	t.Parallel()
+	got := simulation.ProduceSurplus(2000, 1.0)
+	if got != 2000 {
+		t.Errorf("ProduceSurplus(2000, 1.0) = %d, want 2000", got)
+	}
+}
+
+// § spinner §3: 2000v at 50% surplus rate → 1000 pence.
+func TestProduceSurplus_SpinnerHalfRate(t *testing.T) {
+	t.Parallel()
+	got := simulation.ProduceSurplus(2000, 0.5)
+	if got != 1000 {
+		t.Errorf("ProduceSurplus(2000, 0.5) = %d, want 1000", got)
+	}
+}
+
+// Zero rate produces zero surplus (simple reproduction with no exploitation).
+func TestProduceSurplus_ZeroRate(t *testing.T) {
+	t.Parallel()
+	got := simulation.ProduceSurplus(2000, 0.0)
+	if got != 0 {
+		t.Errorf("ProduceSurplus(2000, 0.0) = %d, want 0", got)
+	}
+}
+
 // Zero periods returns an empty slice, never nil.
 func TestRunExtendedReproduction_ZeroPeriods(t *testing.T) {
 	t.Parallel()

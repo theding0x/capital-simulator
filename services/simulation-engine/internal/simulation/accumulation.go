@@ -29,6 +29,12 @@ type Accumulation struct {
 	Revenue         Pence        `json:"revenue"`
 }
 
+// ProduceSurplus returns the pence-rounded surplus-value produced by variable
+// capital v at the given surplus rate: round(v × s′).
+func ProduceSurplus(v Pence, rate float64) Pence {
+	return Pence(math.Round(float64(v) * rate))
+}
+
 // SplitSurplus divides surplus-value into new constant capital, new variable
 // capital, and revenue consumed by the capitalist, according to the
 // accumulation rate and organic composition ratio.
@@ -52,7 +58,7 @@ func RunExtendedReproduction(initial CapitalStock, surplusRate, accumRate, compo
 	result := make([]Accumulation, periods)
 	cap := initial
 	for i := int64(0); i < periods; i++ {
-		sv := Pence(math.Round(float64(cap.VariableCapital) * surplusRate))
+		sv := ProduceSurplus(cap.VariableCapital, surplusRate)
 		additional := SplitSurplus(sv, accumRate, compositionRatio)
 		revenue := sv - additional.Constant - additional.Variable
 		result[i] = Accumulation{
