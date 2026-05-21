@@ -12,6 +12,7 @@ resources:
   - services/agent-service.yaml
   - services/market-service.yaml
   - services/simulation-engine.yaml
+  - services/finance-service.yaml
   - services/web.yaml
 
 commonLabels:

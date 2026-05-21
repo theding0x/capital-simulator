@@ -3,7 +3,7 @@
 GO          ?= go
 GOFLAGS     ?=
 BIN_DIR     ?= bin
-SERVICES    := api-gateway commodity-service agent-service market-service simulation-engine
+SERVICES    := api-gateway commodity-service agent-service market-service simulation-engine finance-service
 DOCKER_REPO ?= ghcr.io/theding0x/capital-simulator
 TAG         ?= dev
 

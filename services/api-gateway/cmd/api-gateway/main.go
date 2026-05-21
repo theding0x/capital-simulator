@@ -193,6 +193,30 @@ func main() {
 	srv.Handle("/v1/colonial-markets", simProxy)
 	srv.Handle("/v1/colonial-markets/{rest...}", simProxy)
 
+	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
+	// interest, credit, fictitious capital, the trinity formula). The
+	// service is scaffolded empty in foundation Phase 3; each Vol. III
+	// chapter PR uncomments / adds its route block below.
+	financeURL := getenv("FINANCE_SERVICE_URL", "http://finance-service:8085")
+	financeProxy, err := proxy.New(financeURL, logger)
+	if err != nil {
+		logger.Error("failed to build finance proxy", "err", err)
+		os.Exit(1)
+	}
+	_ = financeProxy // keep the variable live until the first Vol. III route uncomments below
+	// Vol. III, Ch. 1-2 — Cost-Price, Profit, Rate of Profit → finance-service
+	// srv.Handle("/v1/cost-prices", financeProxy)
+	// srv.Handle("/v1/profit-rates", financeProxy)
+	// Vol. III, Ch. 9 — General Rate of Profit + Prices of Production → finance-service
+	// srv.Handle("/v1/general-profit-rate", financeProxy)
+	// srv.Handle("/v1/prices-of-production", financeProxy)
+	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
+	// srv.Handle("/v1/interest-rates", financeProxy)
+	// srv.Handle("/v1/credit", financeProxy)
+	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
+	// srv.Handle("/v1/ground-rent", financeProxy)
+	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)
+
 	srv.MarkReady(true)
 
 	if err := srv.Run(context.Background()); err != nil {
@@ -211,6 +235,7 @@ func handleInfo(w http.ResponseWriter, _ *http.Request) {
 			"agent-service",
 			"market-service",
 			"simulation-engine",
+			"finance-service",
 		},
 		"chapter": "Capital Vol. I, Ch. 23 — Simple Reproduction",
 	}

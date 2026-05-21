@@ -1,8 +1,8 @@
 # Architecture
 
-Capital Simulator is a microservices simulation of an economy as described in Karl Marx's *Capital, Volume I*. The architecture is intentionally modular: each Marxist economic category (the commodity, the agent, the market, the production process, the circulation of capital) gets its own service so that chapter-by-chapter additions stay localized.
+Capital Simulator is a microservices simulation of an economy as described in Karl Marx's *Capital* — all three volumes. The architecture is intentionally modular: each Marxist economic category (the commodity, the agent, the market, the production process, the circulation of capital, the distribution of profit) gets its own service so that chapter-by-chapter additions stay localized. The application models capital as **value in motion** — the circuit **M—C(Lp+Mp)…P…C'—M'**. Vol. I zooms into **P** (production), Vol. II into the circulation phases and turnover, Vol. III into the totality and the distribution of surplus-value.
 
-All textual references in this document are to the Moore–Aveling English translation of *Capital, Vol. I* (1887), as digitised and hosted by the [Marxists Internet Archive](https://www.marxists.org/archive/marx/works/1867-c1/). See the [README's Sources and acknowledgements section](../README.md#sources-and-acknowledgements) for credit details.
+Textual references for Vol. I use the Moore–Aveling English translation (1887), as digitised and hosted by the [Marxists Internet Archive](https://www.marxists.org/archive/marx/works/1867-c1/). Vol. II (1885) and Vol. III (1894) texts live in the [red-vault Obsidian vault](../CLAUDE.md#what-this-is) mirrored from the same source. See the [README's Sources and acknowledgements section](../README.md#sources-and-acknowledgements) for credit details.
 
 ## Topology
 
@@ -14,21 +14,22 @@ All textual references in this document are to the Moore–Aveling English trans
                        ▼
                 ┌──────────────┐
                 │ api-gateway  │  external HTTP entrypoint, fans out
-                └──┬─┬─┬─┬─────┘
-                   │ │ │ │
-       ┌───────────┘ │ │ └────────────┐
-       ▼             ▼ ▼              ▼
-┌────────────┐ ┌──────────┐ ┌──────────────────┐
-│ commodity- │ │  agent-  │ │ market-service   │
-│  service   │ │ service  │ │                  │
-└─────┬──────┘ └────┬─────┘ └────────┬─────────┘
-      │             │                │
-      └─────────────┼────────────────┘
-                    │
-            ┌───────▼────────────┐
-            │ simulation-engine  │  drives ticks
-            └───────┬────────────┘
-                    │
+                └──┬─┬─┬─┬─┬───┘
+                   │ │ │ │ │
+       ┌───────────┘ │ │ │ └────────────────────┐
+       │   ┌─────────┘ │ └────────────────┐     │
+       ▼   ▼           ▼                  ▼     ▼
+┌────────────┐ ┌──────────┐ ┌──────────────────┐ ┌────────────────┐
+│ commodity- │ │  agent-  │ │ market-service   │ │  finance-      │
+│  service   │ │ service  │ │                  │ │   service      │
+└─────┬──────┘ └────┬─────┘ └────────┬─────────┘ └────────┬───────┘
+      │             │                │                    │
+      └─────────────┼────────────────┘                    │
+                    │                                     │
+            ┌───────▼────────────┐                        │
+            │ simulation-engine  │  drives ticks          │
+            └───────┬────────────┘                        │
+                    │              ◀────────── reads ─────┘
    ┌────────────────┴───────────────┐
    ▼                                ▼
 ┌────────┐                       ┌───────┐
@@ -38,13 +39,14 @@ All textual references in this document are to the Moore–Aveling English trans
 
 ## Services
 
-| Service              | Port  | Marxist role                                                            | Persistence       |
-|----------------------|-------|-------------------------------------------------------------------------|-------------------|
-| `api-gateway`        | 8080  | External entrypoint; fans out to domain services.                       | —                 |
-| `commodity-service`  | 8081  | Use-value, exchange-value, value (Ch. 1).                               | MySQL             |
-| `agent-service`      | 8082  | Workers, capitalists, and other class-bearers (Ch. 4+).                 | MySQL             |
-| `market-service`     | 8083  | Exchange and circulation; C-M-C and M-C-M' (Ch. 2-3).                   | MySQL + Redis     |
-| `simulation-engine`  | 8084  | Time-step orchestrator; advances the economy one period at a time.      | MySQL + Redis     |
+| Service              | Port  | Marxist role                                                                             | Persistence       |
+|----------------------|-------|------------------------------------------------------------------------------------------|-------------------|
+| `api-gateway`        | 8080  | External entrypoint; fans out to domain services.                                        | —                 |
+| `commodity-service`  | 8081  | Vol. I — commodity, value, value-forms, c+v decomposition.                               | MySQL             |
+| `agent-service`      | 8082  | Vol. I — workers, capitalists, labour-process, wages, cooperation, manufacture.          | MySQL             |
+| `market-service`     | 8083  | Vol. I — exchange, money, prices; Vol. II — circulation phases.                          | MySQL + Redis     |
+| `simulation-engine`  | 8084  | Vol. I — production tick, machinery, reproduction; Vol. II — turnover; Vol. III — avg-rate-of-profit. | MySQL + Redis     |
+| `finance-service`    | 8085  | Vol. III — profit, prices of production, rent, interest, credit, fictitious capital, the trinity formula. | MySQL             |
 
 All Go services share a single root `go.mod` (`github.com/theding0x/capital-simulator`). Cross-cutting concerns live under `pkg/`:
 
@@ -65,7 +67,9 @@ This is the *target*; the initial scaffold ships health endpoints only.
 
 ## Roadmap (chapter-driven)
 
-Each chapter of *Capital* turns into a feature branch and PR. Approximate mapping:
+Each chapter of *Capital* turns into a feature branch and PR. Branches are named `volume-X/chapter-Y` where X ∈ {1, 2, 3}. Approximate mapping per volume:
+
+### Volume I Roadmap — The Process of Production of Capital
 
 | Chapter   | Status      | Concepts                                                 | Primary services              |
 |-----------|-------------|----------------------------------------------------------|-------------------------------|
@@ -466,3 +470,90 @@ Marx's Part VII ("The Accumulation of Capital") covers Ch. 23–25 as a single c
 - **HTTP endpoints.** `POST /v1/colonial-markets` (201 + Location, 409 on duplicate colony, 400 on validation failure), `GET /v1/colonial-markets` (200 — list, `[]` not `null`), `GET /v1/colonial-markets/{id}` (200/404), `POST /v1/colonial-markets/{id}/regulate` (200 — applies sufficient price, persists the regulated state), `POST /v1/colonial-markets/{id}/independence` (200 — per-worker projection with optional `years_limit`). api-gateway proxies `/v1/colonial-markets` and `/v1/colonial-markets/{rest...}` to simulation-engine.
 - **React UI.** "Ch. 33 — The Modern Theory of Colonisation" panel: a four-card grid with the seeded colony list (free / wage-dependent pill), Wakefield's remedy controls (price per acre + desired acres → before/after comparison), a colony registration form, and a per-worker independence projection (years to ransom at the colonial wage).
 - **Vol. I closure.** This is the final chapter of Volume I. The simulation now spans every stage of the dialectic from §1 (the commodity) through §33 (the negation of the negation read through Wakefield's confession).
+
+### Volume II Roadmap — The Process of Circulation of Capital
+
+Spec sweep pending; titles below are drawn from the vault filenames and will be refined as each chapter spec is authored at `marx-engels/1885/capital-volume-ii/specs/`. Primary-service column is a planning guess.
+
+| Chapter   | Status      | Concepts                                                                                          | Primary services                  |
+|-----------|-------------|---------------------------------------------------------------------------------------------------|-----------------------------------|
+| Ch. 1     | ⏳ Pending  | The Circuit of Money-Capital — M—C…P…C'—M' as the money-form of the circuit                       | simulation-engine                 |
+| Ch. 2     | ⏳ Pending  | The Circuit of Productive Capital — P…C'—M'—C…P as the production-form of the circuit             | simulation-engine                 |
+| Ch. 3     | ⏳ Pending  | The Circuit of Commodity-Capital — C'—M'—C…P…C' as the commodity-form of the circuit              | simulation-engine                 |
+| Ch. 4     | ⏳ Pending  | The Three Formulas of the Circuit — interruption, continuity, the unity of all three forms        | simulation-engine                 |
+| Ch. 5     | ⏳ Pending  | The Time of Circulation — selling time, buying time, capital tied up in metamorphosis              | simulation-engine, market-service |
+| Ch. 6     | ⏳ Pending  | Costs of Transportation — productive transport vs unproductive circulation costs                    | simulation-engine, market-service |
+| Ch. 7     | ⏳ Pending  | The Turnover Time and the Number of Turnovers                                                       | simulation-engine                 |
+| Ch. 8     | ⏳ Pending  | Fixed Capital and Circulating Capital                                                               | simulation-engine                 |
+| Ch. 9     | ⏳ Pending  | The Aggregate Turnover of Advanced Capital — cycles of turnover                                     | simulation-engine                 |
+| Ch. 10    | ⏳ Pending  | Theories of Fixed and Circulating Capital — Physiocrats and Adam Smith                              | simulation-engine                 |
+| Ch. 11    | ⏳ Pending  | Theories of Fixed and Circulating Capital — Ricardo                                                 | simulation-engine                 |
+| Ch. 12    | ⏳ Pending  | The Working Period                                                                                  | simulation-engine                 |
+| Ch. 13    | ⏳ Pending  | The Time of Production                                                                              | simulation-engine                 |
+| Ch. 14    | ⏳ Pending  | The Time of Circulation                                                                             | simulation-engine, market-service |
+| Ch. 15    | ⏳ Pending  | The Effects of a Change of Prices on capital advanced and released                                  | simulation-engine                 |
+| Ch. 16    | ⏳ Pending  | The Turnover of Variable Capital — annual rate of surplus-value                                     | simulation-engine                 |
+| Ch. 17    | ⏳ Pending  | The Circulation of Surplus-Value (introductory)                                                     | simulation-engine                 |
+| Ch. 18    | ⏳ Pending  | The Role of Money-Capital in Reproduction                                                           | simulation-engine                 |
+| Ch. 19    | ⏳ Pending  | Former Presentations of the Subject — Quesnay, Smith, and others                                    | simulation-engine                 |
+| Ch. 20    | ⏳ Pending  | Simple Reproduction (Vol. II treatment — Departments I & II)                                        | simulation-engine                 |
+| Ch. 21    | ⏳ Pending  | Accumulation and Reproduction on an Extended Scale                                                  | simulation-engine                 |
+
+### Volume III Roadmap — The Process of Capitalist Production as a Whole
+
+Spec sweep pending; titles below are drawn from the vault filenames at `marx-engels/1894/capital-volume-iii/texts/` and will be refined as each chapter spec is authored. Primary-service column is a planning guess; most rows are `finance-service` with `simulation-engine` for cross-capital aggregations (average rate of profit, formation of prices of production).
+
+| Chapter   | Status      | Concepts                                                                                          | Primary services                  |
+|-----------|-------------|---------------------------------------------------------------------------------------------------|-----------------------------------|
+| Ch. 1     | ⏳ Pending  | Cost-Price and Profit (k + p) — surplus-value reappears as profit on total capital                | finance-service                   |
+| Ch. 2     | ⏳ Pending  | The Rate of Profit — p′ = s / (c + v)                                                              | finance-service                   |
+| Ch. 3     | ⏳ Pending  | Relation of the Rate of Profit to the Rate of Surplus-Value                                        | finance-service                   |
+| Ch. 4     | ⏳ Pending  | The Effect of the Turnover on the Rate of Profit                                                   | finance-service, simulation-engine|
+| Ch. 5     | ⏳ Pending  | Economy in the Employment of Constant Capital                                                       | finance-service                   |
+| Ch. 6     | ⏳ Pending  | The Effect of Price Fluctuation on the Rate of Profit                                              | finance-service                   |
+| Ch. 7     | ⏳ Pending  | Supplementary Remarks (on the rate of profit)                                                       | finance-service                   |
+| Ch. 8     | ⏳ Pending  | Different Compositions of Capitals in Different Branches → differences in rates of profit          | finance-service                   |
+| Ch. 9     | ⏳ Pending  | Formation of a General Rate of Profit; transformation of values into prices of production          | finance-service, simulation-engine|
+| Ch. 10    | ⏳ Pending  | Equalisation of the General Rate of Profit through Competition; market prices and market values    | finance-service, market-service   |
+| Ch. 11    | ⏳ Pending  | Effects of General Wage Fluctuations on Prices of Production                                       | finance-service                   |
+| Ch. 12    | ⏳ Pending  | Supplementary Remarks (on prices of production)                                                     | finance-service                   |
+| Ch. 13    | ⏳ Pending  | The Law of the Tendential Fall in the Rate of Profit — As Such                                     | finance-service, simulation-engine|
+| Ch. 14    | ⏳ Pending  | Counteracting Influences                                                                            | finance-service                   |
+| Ch. 15    | ⏳ Pending  | Exposition of the Internal Contradictions of the Law                                                | finance-service, simulation-engine|
+| Ch. 16    | ⏳ Pending  | Commercial Capital                                                                                  | finance-service                   |
+| Ch. 17    | ⏳ Pending  | Commercial Profit                                                                                   | finance-service                   |
+| Ch. 18    | ⏳ Pending  | The Turnover of Merchant's Capital; Prices                                                          | finance-service                   |
+| Ch. 19    | ⏳ Pending  | Money-Dealing Capital                                                                               | finance-service                   |
+| Ch. 20    | ⏳ Pending  | Historical Facts about Merchant's Capital                                                           | finance-service                   |
+| Ch. 21    | ⏳ Pending  | Interest-Bearing Capital                                                                            | finance-service                   |
+| Ch. 22    | ⏳ Pending  | Division of Profit; Rate of Interest; Natural Rate of Interest                                     | finance-service                   |
+| Ch. 23    | ⏳ Pending  | Interest and Profit of Enterprise                                                                   | finance-service                   |
+| Ch. 24    | ⏳ Pending  | Externalisation of the Relations of Capital in the Form of Interest-Bearing Capital                | finance-service                   |
+| Ch. 25    | ⏳ Pending  | Credit and Fictitious Capital                                                                       | finance-service                   |
+| Ch. 26    | ⏳ Pending  | Accumulation of Money-Capital — its influence on the interest rate                                  | finance-service                   |
+| Ch. 27    | ⏳ Pending  | The Role of Credit in Capitalist Production                                                         | finance-service                   |
+| Ch. 28    | ⏳ Pending  | Medium of Circulation and Capital — views of Tooke and Fullarton                                    | finance-service                   |
+| Ch. 29    | ⏳ Pending  | Component Parts of Bank Capital                                                                     | finance-service                   |
+| Ch. 30    | ⏳ Pending  | Money-Capital and Real Capital, I                                                                   | finance-service                   |
+| Ch. 31    | ⏳ Pending  | Money-Capital and Real Capital, II                                                                  | finance-service                   |
+| Ch. 32    | ⏳ Pending  | Money-Capital and Real Capital, III                                                                 | finance-service                   |
+| Ch. 33    | ⏳ Pending  | The Medium of Circulation in the Credit System                                                      | finance-service                   |
+| Ch. 34    | ⏳ Pending  | The Currency Principle and the English Bank Legislation of 1844                                     | finance-service                   |
+| Ch. 35    | ⏳ Pending  | Precious Metal and Rate of Exchange                                                                 | finance-service                   |
+| Ch. 36    | ⏳ Pending  | Pre-Capitalist Relationships                                                                        | finance-service                   |
+| Ch. 37    | ⏳ Pending  | Introduction (to Ground-Rent)                                                                       | finance-service                   |
+| Ch. 38    | ⏳ Pending  | General Remarks (on differential rent)                                                              | finance-service                   |
+| Ch. 39    | ⏳ Pending  | First Form of Differential Rent — Differential Rent I                                              | finance-service                   |
+| Ch. 40    | ⏳ Pending  | Second Form of Differential Rent — Differential Rent II                                            | finance-service                   |
+| Ch. 41    | ⏳ Pending  | Differential Rent II — Constant Price of Production                                                | finance-service                   |
+| Ch. 42    | ⏳ Pending  | Differential Rent II — Falling Price of Production                                                 | finance-service                   |
+| Ch. 43    | ⏳ Pending  | Differential Rent II — Rising Price of Production                                                  | finance-service                   |
+| Ch. 44    | ⏳ Pending  | Differential Rent Also on the Worst Cultivated Soil                                                 | finance-service                   |
+| Ch. 45    | ⏳ Pending  | Absolute Ground-Rent                                                                                | finance-service                   |
+| Ch. 46    | ⏳ Pending  | Building Site Rent — Rent in Mining — Price of Land                                                | finance-service                   |
+| Ch. 47    | ⏳ Pending  | Genesis of Capitalist Ground-Rent                                                                   | finance-service                   |
+| Ch. 48    | ⏳ Pending  | The Trinity Formula — capital→profit, land→rent, labour→wages                                      | finance-service                   |
+| Ch. 49    | ⏳ Pending  | Concerning the Analysis of the Process of Production                                                | finance-service, simulation-engine|
+| Ch. 50    | ⏳ Pending  | Illusions Created by Competition                                                                    | finance-service                   |
+| Ch. 51    | ⏳ Pending  | Distribution Relations and Production Relations                                                     | finance-service                   |
+| Ch. 52    | ⏳ Pending  | Classes (unfinished — Marx died mid-chapter)                                                        | finance-service                   |

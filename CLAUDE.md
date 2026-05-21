@@ -58,10 +58,11 @@ red-vault Obsidian vault, accessed through the `obsidian` MCP server.
 | svc                | port | role                                                              |
 |--------------------|------|-------------------------------------------------------------------|
 | api-gateway        | 8080 | external entrypoint; reverse-proxies to domain services           |
-| commodity-service  | 8081 | Ch. 1 - commodity, value, value-forms, fetishism                  |
-| agent-service      | 8082 | (placeholder until Ch. 4)                                         |
-| market-service     | 8083 | (placeholder until Ch. 2-3)                                       |
-| simulation-engine  | 8084 | (placeholder)                                                     |
+| commodity-service  | 8081 | Vol. I — commodity, value, value-forms, fetishism, c+v decomposition |
+| agent-service      | 8082 | Vol. I — workers, capitalists, labour-process, wages, cooperation, manufacture |
+| market-service     | 8083 | Vol. I — exchange, money, prices; Vol. II — circulation phases    |
+| simulation-engine  | 8084 | Vol. I — production tick, machinery, reproduction, accumulation, primitive accumulation; Vol. II — turnover and reproduction schemes |
+| finance-service    | 8085 | Vol. III — profit, average rate of profit, prices of production, rent, interest, credit, fictitious capital, the trinity formula |
 
 ## Conventions (don't re-explain to the user)
 
