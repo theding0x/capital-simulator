@@ -116,6 +116,23 @@ services:
       redis:
         condition: service_healthy
 
+  finance-service:
+    build:
+      context: .
+      dockerfile: services/finance-service/Dockerfile
+    environment:
+      LOG_LEVEL: info
+      SERVICE_ADDR: ":8085"
+      MYSQL_DSN: "root:capital@tcp(mysql:3306)/finance?parseTime=true&loc=UTC"
+      REDIS_ADDR: redis:6379
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   web:
     build:
       context: ./web
