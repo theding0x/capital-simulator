@@ -138,11 +138,13 @@ export function ChapterShell({
   const sharedProps: PanelProps = { commodities, owners, onSharedChanged };
   const Panel = CHAPTER_PANELS[activeChapterId];
 
+  const volumeRoman = chapter.volume === 1 ? "I" : chapter.volume === 2 ? "II" : "III";
+
   return (
     <main className="chapter-main">
       <header className="chapter-header">
         <div className="chapter-header-num">
-          Vol. I &middot; Chapter {String(chapter.number).padStart(2, "0")}
+          Vol. {volumeRoman} &middot; Chapter {String(chapter.number).padStart(2, "0")}
         </div>
         <h1 className="chapter-header-title">{chapter.title}</h1>
         {quote && <p className="chapter-header-quote">{quote}</p>}
