@@ -7,7 +7,7 @@ SERVICES    := api-gateway commodity-service agent-service market-service simula
 DOCKER_REPO ?= ghcr.io/theding0x/capital-simulator
 TAG         ?= dev
 
-.PHONY: all build test vet tidy clean $(addprefix run-,$(SERVICES)) docker docker-% k8s-apply k8s-delete web-install web-dev web-build
+.PHONY: all build test vet tidy clean $(addprefix run-,$(SERVICES)) docker docker-% k8s-apply k8s-delete web-install web-dev web-build mysql-bootstrap
 
 all: vet test build
 
@@ -45,6 +45,15 @@ k8s-apply:
 
 k8s-delete:
 	kubectl delete -k deploy/k8s
+
+# mysql-bootstrap: re-apply deploy/mysql/init.sql against the running MySQL
+# container. init.sql only auto-runs on first MySQL boot (when the data volume
+# is empty), so existing volumes miss any database added by a later service.
+# This target is idempotent — every statement uses CREATE DATABASE IF NOT EXISTS.
+# Run it once after adding a new service to init.sql.
+mysql-bootstrap:
+	@docker compose exec -T mysql mysql -uroot -pcapital < deploy/mysql/init.sql
+	@echo "mysql bootstrap applied (deploy/mysql/init.sql)"
 
 # Web (Vite + React)
 web-install:
