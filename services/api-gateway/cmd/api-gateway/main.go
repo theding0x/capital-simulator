@@ -193,6 +193,10 @@ func main() {
 	srv.Handle("/v1/colonial-markets", simProxy)
 	srv.Handle("/v1/colonial-markets/{rest...}", simProxy)
 
+	// Vol. II Ch. 2 — The Circuit of Productive Capital → simulation-engine
+	srv.Handle("/v1/productive-circuits", simProxy)
+	srv.Handle("/v1/productive-circuits/{rest...}", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III

@@ -164,6 +164,13 @@ import type {
   RegulateColonialMarketInput,
   RunCentralisationInput,
   WageWorkerIndependence,
+  ProductiveCircuit,
+  CreateProductiveCircuitInput,
+  LatentMoneyCapital,
+  RevenueCircuit,
+  CapitalisationStep,
+  ReserveFund,
+  ReserveDraw,
 } from "./types";
 
 const BASE = "/api";
@@ -975,5 +982,48 @@ export const api = {
     http<WageWorkerIndependence>(`/v1/colonial-markets/${id}/independence`, {
       method: "POST",
       body: JSON.stringify(input),
+    }),
+
+  // Vol. II Ch. 2 — The Circuit of Productive Capital
+  listProductiveCircuits: () =>
+    http<ProductiveCircuit[]>("/v1/productive-circuits"),
+
+  createProductiveCircuit: (input: CreateProductiveCircuitInput) =>
+    http<ProductiveCircuit>("/v1/productive-circuits", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getProductiveCircuit: (id: string) =>
+    http<ProductiveCircuit>(`/v1/productive-circuits/${id}`),
+
+  recordRevenue: (id: string, amount: number) =>
+    http<RevenueCircuit>(`/v1/productive-circuits/${id}/revenue`, {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
+
+  accumulateLatentCapital: (id: string, amount: number) =>
+    http<LatentMoneyCapital>(`/v1/productive-circuits/${id}/accumulate`, {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
+
+  capitaliseCircuit: (id: string, amount: number, delta_constant_pence: number, delta_variable_pence: number) =>
+    http<CapitalisationStep>(`/v1/productive-circuits/${id}/capitalise`, {
+      method: "POST",
+      body: JSON.stringify({ amount, delta_constant_pence, delta_variable_pence }),
+    }),
+
+  depositReserve: (id: string, amount: number) =>
+    http<ReserveFund>(`/v1/productive-circuits/${id}/reserve/deposit`, {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    }),
+
+  drawReserve: (id: string, amount: number, reason: string) =>
+    http<ReserveDraw>(`/v1/productive-circuits/${id}/reserve/draw`, {
+      method: "POST",
+      body: JSON.stringify({ amount, reason }),
     }),
 };

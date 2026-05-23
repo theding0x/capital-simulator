@@ -1654,3 +1654,61 @@ export interface WageWorkerIndependence {
   target_ransom_pence: number;
   became_landowner: boolean;
 }
+
+// Vol. II Ch. 2 — The Circuit of Productive Capital
+export interface LatentMoneyCapital {
+  productive_circuit_id: string;
+  accumulated: number;
+  threshold: number;
+  is_armed: boolean;
+}
+
+export interface ReserveFund {
+  productive_circuit_id: string;
+  balance: number;
+}
+
+export interface RevenueCircuit {
+  productive_circuit_id: string;
+  amount: number;
+  spent_at: string;
+}
+
+export interface CapitalisationStep {
+  productive_circuit_id: string;
+  amount_injected: number;
+  delta_constant_pence: number;
+  delta_variable_pence: number;
+  occurred_at: string;
+}
+
+export interface ReserveDraw {
+  productive_circuit_id: string;
+  drawn_pence: number;
+  reason: string;
+  occurred_at: string;
+}
+
+export interface ProductiveCircuit {
+  id: string;
+  agent_id?: string;
+  constant_pence: number;
+  variable_pence: number;
+  total_advance: number;
+  mode: string;
+  min_capitalisation_increment_pence: number;
+  latent_money_capital: LatentMoneyCapital;
+  reserve_fund: ReserveFund;
+  revenue_circuits: RevenueCircuit[];
+  capitalisation_steps: CapitalisationStep[];
+  reserve_draws: ReserveDraw[];
+  created_at?: string;
+}
+
+export interface CreateProductiveCircuitInput {
+  agent_id?: string;
+  constant_pence: number;
+  variable_pence: number;
+  mode: "simple" | "extended" | "mixed";
+  min_capitalisation_increment_pence: number;
+}

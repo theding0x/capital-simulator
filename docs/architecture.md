@@ -477,8 +477,8 @@ Spec sweep pending; titles below are drawn from the vault filenames and will be 
 
 | Chapter   | Status      | Concepts                                                                                          | Primary services                  |
 |-----------|-------------|---------------------------------------------------------------------------------------------------|-----------------------------------|
-| Ch. 1     | ⏳ Pending  | The Circuit of Money-Capital — M—C…P…C'—M' as the money-form of the circuit                       | simulation-engine                 |
-| Ch. 2     | ⏳ Pending  | The Circuit of Productive Capital — P…C'—M'—C…P as the production-form of the circuit             | simulation-engine                 |
+| Ch. 1     | In progress | The Circuit of Money-Capital — M—C…P…C'—M' as the money-form of the circuit                       | simulation-engine                 |
+| Ch. 2     | ✅ Done     | The Circuit of Productive Capital — P…C'—M'—C…P as the production-form of the circuit             | simulation-engine                 |
 | Ch. 3     | ⏳ Pending  | The Circuit of Commodity-Capital — C'—M'—C…P…C' as the commodity-form of the circuit              | simulation-engine                 |
 | Ch. 4     | ⏳ Pending  | The Three Formulas of the Circuit — interruption, continuity, the unity of all three forms        | simulation-engine                 |
 | Ch. 5     | ⏳ Pending  | The Time of Circulation — selling time, buying time, capital tied up in metamorphosis              | simulation-engine, market-service |
