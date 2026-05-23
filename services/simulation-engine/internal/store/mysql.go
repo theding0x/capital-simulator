@@ -12,6 +12,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
@@ -1312,4 +1313,370 @@ func scanColonialLabourMarket(r rowScanner) (simulation.ColonialLabourMarket, er
 	market.ID = simulation.ColonialLabourMarketID(rawID)
 	market.AnnualWagePence = simulation.Pence(annual)
 	return market, nil
+}
+
+// --- Vol. II Ch. 2 — ProductiveCircuitStore ---
+
+func (m *MySQL) CreateProductiveCircuit(ctx context.Context, pc circulation.ProductiveCircuit) (circulation.ProductiveCircuit, error) {
+	if err := pc.Validate(); err != nil {
+		return circulation.ProductiveCircuit{}, err
+	}
+	if pc.ID.IsZero() {
+		pc.ID = circulation.NewProductiveCircuitID()
+	}
+	pc.LatentMoneyCapital.ProductiveCircuitID = pc.ID
+	pc.LatentMoneyCapital.Threshold = pc.MinCapitalisationIncrement
+	pc.ReserveFund.ProductiveCircuitID = pc.ID
+	pc.CreatedAt = m.now().UTC()
+
+	const q = `INSERT INTO productive_circuits
+		(id, agent_id, constant_pence, variable_pence, mode, min_capitalisation_increment_pence,
+		 latent_accumulated, reserve_balance, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(pc.ID), pc.AgentID, int64(pc.ConstantPence), int64(pc.VariablePence),
+		string(pc.Mode), int64(pc.MinCapitalisationIncrement),
+		int64(0), int64(0), pc.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicateKey(err) {
+			return circulation.ProductiveCircuit{}, ErrAlreadyExists
+		}
+		return circulation.ProductiveCircuit{}, err
+	}
+	if pc.RevenueCircuits == nil {
+		pc.RevenueCircuits = []circulation.RevenueCircuit{}
+	}
+	if pc.CapitalisationSteps == nil {
+		pc.CapitalisationSteps = []circulation.CapitalisationStep{}
+	}
+	if pc.ReserveDraws == nil {
+		pc.ReserveDraws = []circulation.ReserveDraw{}
+	}
+	return pc, nil
+}
+
+func (m *MySQL) GetProductiveCircuit(ctx context.Context, id circulation.ProductiveCircuitID) (circulation.ProductiveCircuit, error) {
+	const q = `SELECT id, agent_id, constant_pence, variable_pence, mode,
+		min_capitalisation_increment_pence, latent_accumulated, reserve_balance, created_at
+		FROM productive_circuits WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	pc, err := scanProductiveCircuit(row)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.ProductiveCircuit{}, ErrNotFound
+		}
+		return circulation.ProductiveCircuit{}, err
+	}
+
+	rc, err := m.listRevenueCircuits(ctx, id)
+	if err != nil {
+		return circulation.ProductiveCircuit{}, err
+	}
+	pc.RevenueCircuits = rc
+
+	steps, err := m.listCapitalisationSteps(ctx, id)
+	if err != nil {
+		return circulation.ProductiveCircuit{}, err
+	}
+	pc.CapitalisationSteps = steps
+
+	draws, err := m.listReserveDraws(ctx, id)
+	if err != nil {
+		return circulation.ProductiveCircuit{}, err
+	}
+	pc.ReserveDraws = draws
+	return pc, nil
+}
+
+func (m *MySQL) ListProductiveCircuits(ctx context.Context) ([]circulation.ProductiveCircuit, error) {
+	const q = `SELECT id, agent_id, constant_pence, variable_pence, mode,
+		min_capitalisation_increment_pence, latent_accumulated, reserve_balance, created_at
+		FROM productive_circuits ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []circulation.ProductiveCircuit
+	for rows.Next() {
+		pc, err := scanProductiveCircuit(rows)
+		if err != nil {
+			return nil, err
+		}
+		rc, _ := m.listRevenueCircuits(ctx, pc.ID)
+		pc.RevenueCircuits = rc
+		steps, _ := m.listCapitalisationSteps(ctx, pc.ID)
+		pc.CapitalisationSteps = steps
+		draws, _ := m.listReserveDraws(ctx, pc.ID)
+		pc.ReserveDraws = draws
+		out = append(out, pc)
+	}
+	if out == nil {
+		out = []circulation.ProductiveCircuit{}
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) RecordRevenue(ctx context.Context, id circulation.ProductiveCircuitID, rc circulation.RevenueCircuit) (circulation.RevenueCircuit, error) {
+	if _, err := m.GetProductiveCircuit(ctx, id); err != nil {
+		return circulation.RevenueCircuit{}, err
+	}
+	rc.ProductiveCircuitID = id
+	if rc.SpentAt.IsZero() {
+		rc.SpentAt = m.now().UTC()
+	}
+	const q = `INSERT INTO revenue_circuits (productive_circuit_id, amount, spent_at) VALUES (?, ?, ?)`
+	if _, err := m.db.ExecContext(ctx, q, string(id), int64(rc.Amount), rc.SpentAt); err != nil {
+		return circulation.RevenueCircuit{}, err
+	}
+	return rc, nil
+}
+
+func (m *MySQL) Accumulate(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence) (circulation.LatentMoneyCapital, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.LatentMoneyCapital{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const sel = `SELECT latent_accumulated, min_capitalisation_increment_pence FROM productive_circuits WHERE id = ? FOR UPDATE`
+	var latentAcc, threshold int64
+	if err := tx.QueryRowContext(ctx, sel, string(id)).Scan(&latentAcc, &threshold); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.LatentMoneyCapital{}, ErrNotFound
+		}
+		return circulation.LatentMoneyCapital{}, err
+	}
+	latentAcc += int64(amount)
+	if _, err := tx.ExecContext(ctx, `UPDATE productive_circuits SET latent_accumulated = ? WHERE id = ?`, latentAcc, string(id)); err != nil {
+		return circulation.LatentMoneyCapital{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return circulation.LatentMoneyCapital{}, err
+	}
+	return circulation.LatentMoneyCapital{
+		ProductiveCircuitID: id,
+		Accumulated:         circulation.Pence(latentAcc),
+		Threshold:           circulation.Pence(threshold),
+	}, nil
+}
+
+func (m *MySQL) Capitalise(ctx context.Context, id circulation.ProductiveCircuitID, amount, dc, dv circulation.Pence) (circulation.CapitalisationStep, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.CapitalisationStep{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const sel = `SELECT constant_pence, variable_pence, latent_accumulated, min_capitalisation_increment_pence
+		FROM productive_circuits WHERE id = ? FOR UPDATE`
+	var (
+		constant, variable, latentAcc, minIncrement int64
+	)
+	if err := tx.QueryRowContext(ctx, sel, string(id)).Scan(&constant, &variable, &latentAcc, &minIncrement); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.CapitalisationStep{}, ErrNotFound
+		}
+		return circulation.CapitalisationStep{}, err
+	}
+	if int64(amount) > 0 && int64(amount) < minIncrement {
+		return circulation.CapitalisationStep{}, circulation.ErrIndivisibleProductionElement
+	}
+	now := m.now().UTC()
+	const ins = `INSERT INTO capitalisation_steps
+		(productive_circuit_id, amount_injected, delta_constant_pence, delta_variable_pence, occurred_at)
+		VALUES (?, ?, ?, ?, ?)`
+	if _, err := tx.ExecContext(ctx, ins, string(id), int64(amount), int64(dc), int64(dv), now); err != nil {
+		return circulation.CapitalisationStep{}, err
+	}
+	const upd = `UPDATE productive_circuits
+		SET constant_pence = ?, variable_pence = ?, latent_accumulated = ? WHERE id = ?`
+	if _, err := tx.ExecContext(ctx, upd, constant+int64(dc), variable+int64(dv), latentAcc-int64(amount), string(id)); err != nil {
+		return circulation.CapitalisationStep{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return circulation.CapitalisationStep{}, err
+	}
+	return circulation.CapitalisationStep{
+		ProductiveCircuitID: id,
+		AmountInjected:      amount,
+		DeltaConstantPence:  dc,
+		DeltaVariablePence:  dv,
+		OccurredAt:          now,
+	}, nil
+}
+
+func (m *MySQL) DepositReserve(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence) (circulation.ReserveFund, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.ReserveFund{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const sel = `SELECT reserve_balance FROM productive_circuits WHERE id = ? FOR UPDATE`
+	var balance int64
+	if err := tx.QueryRowContext(ctx, sel, string(id)).Scan(&balance); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.ReserveFund{}, ErrNotFound
+		}
+		return circulation.ReserveFund{}, err
+	}
+	balance += int64(amount)
+	if _, err := tx.ExecContext(ctx, `UPDATE productive_circuits SET reserve_balance = ? WHERE id = ?`, balance, string(id)); err != nil {
+		return circulation.ReserveFund{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return circulation.ReserveFund{}, err
+	}
+	return circulation.ReserveFund{ProductiveCircuitID: id, Balance: circulation.Pence(balance)}, nil
+}
+
+func (m *MySQL) WithdrawReserve(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence, reason circulation.ReserveDrawReason) (circulation.ReserveDraw, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.ReserveDraw{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const sel = `SELECT reserve_balance FROM productive_circuits WHERE id = ? FOR UPDATE`
+	var balance int64
+	if err := tx.QueryRowContext(ctx, sel, string(id)).Scan(&balance); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.ReserveDraw{}, ErrNotFound
+		}
+		return circulation.ReserveDraw{}, err
+	}
+	if int64(amount) > balance {
+		return circulation.ReserveDraw{}, circulation.ErrInsufficientReserve
+	}
+	now := m.now().UTC()
+	const ins = `INSERT INTO reserve_draws (productive_circuit_id, drawn_pence, reason, occurred_at) VALUES (?, ?, ?, ?)`
+	if _, err := tx.ExecContext(ctx, ins, string(id), int64(amount), string(reason), now); err != nil {
+		return circulation.ReserveDraw{}, err
+	}
+	balance -= int64(amount)
+	if _, err := tx.ExecContext(ctx, `UPDATE productive_circuits SET reserve_balance = ? WHERE id = ?`, balance, string(id)); err != nil {
+		return circulation.ReserveDraw{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return circulation.ReserveDraw{}, err
+	}
+	return circulation.ReserveDraw{
+		ProductiveCircuitID: id,
+		DrawnPence:          amount,
+		Reason:              reason,
+		OccurredAt:          now,
+	}, nil
+}
+
+func (m *MySQL) listRevenueCircuits(ctx context.Context, id circulation.ProductiveCircuitID) ([]circulation.RevenueCircuit, error) {
+	const q = `SELECT productive_circuit_id, amount, spent_at FROM revenue_circuits WHERE productive_circuit_id = ? ORDER BY spent_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(id))
+	if err != nil {
+		return []circulation.RevenueCircuit{}, err
+	}
+	defer rows.Close()
+	var out []circulation.RevenueCircuit
+	for rows.Next() {
+		var rc circulation.RevenueCircuit
+		var rawID string
+		var amt int64
+		if err := rows.Scan(&rawID, &amt, &rc.SpentAt); err != nil {
+			return nil, err
+		}
+		rc.ProductiveCircuitID = circulation.ProductiveCircuitID(rawID)
+		rc.Amount = circulation.Pence(amt)
+		out = append(out, rc)
+	}
+	if out == nil {
+		out = []circulation.RevenueCircuit{}
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) listCapitalisationSteps(ctx context.Context, id circulation.ProductiveCircuitID) ([]circulation.CapitalisationStep, error) {
+	const q = `SELECT productive_circuit_id, amount_injected, delta_constant_pence, delta_variable_pence, occurred_at
+		FROM capitalisation_steps WHERE productive_circuit_id = ? ORDER BY occurred_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(id))
+	if err != nil {
+		return []circulation.CapitalisationStep{}, err
+	}
+	defer rows.Close()
+	var out []circulation.CapitalisationStep
+	for rows.Next() {
+		var step circulation.CapitalisationStep
+		var rawID string
+		var injected, dc, dv int64
+		if err := rows.Scan(&rawID, &injected, &dc, &dv, &step.OccurredAt); err != nil {
+			return nil, err
+		}
+		step.ProductiveCircuitID = circulation.ProductiveCircuitID(rawID)
+		step.AmountInjected = circulation.Pence(injected)
+		step.DeltaConstantPence = circulation.Pence(dc)
+		step.DeltaVariablePence = circulation.Pence(dv)
+		out = append(out, step)
+	}
+	if out == nil {
+		out = []circulation.CapitalisationStep{}
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) listReserveDraws(ctx context.Context, id circulation.ProductiveCircuitID) ([]circulation.ReserveDraw, error) {
+	const q = `SELECT productive_circuit_id, drawn_pence, reason, occurred_at
+		FROM reserve_draws WHERE productive_circuit_id = ? ORDER BY occurred_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(id))
+	if err != nil {
+		return []circulation.ReserveDraw{}, err
+	}
+	defer rows.Close()
+	var out []circulation.ReserveDraw
+	for rows.Next() {
+		var draw circulation.ReserveDraw
+		var rawID, reason string
+		var drawn int64
+		if err := rows.Scan(&rawID, &drawn, &reason, &draw.OccurredAt); err != nil {
+			return nil, err
+		}
+		draw.ProductiveCircuitID = circulation.ProductiveCircuitID(rawID)
+		draw.DrawnPence = circulation.Pence(drawn)
+		draw.Reason = circulation.ReserveDrawReason(reason)
+		out = append(out, draw)
+	}
+	if out == nil {
+		out = []circulation.ReserveDraw{}
+	}
+	return out, rows.Err()
+}
+
+func scanProductiveCircuit(r rowScanner) (circulation.ProductiveCircuit, error) {
+	var (
+		pc      circulation.ProductiveCircuit
+		rawID   string
+		agentID sql.NullString
+		constant, variable, minIncrement, latentAcc, reserveBal int64
+		mode    string
+	)
+	if err := r.Scan(&rawID, &agentID, &constant, &variable, &mode, &minIncrement, &latentAcc, &reserveBal, &pc.CreatedAt); err != nil {
+		return circulation.ProductiveCircuit{}, err
+	}
+	pc.ID = circulation.ProductiveCircuitID(rawID)
+	if agentID.Valid {
+		pc.AgentID = agentID.String
+	}
+	pc.ConstantPence = circulation.Pence(constant)
+	pc.VariablePence = circulation.Pence(variable)
+	pc.Mode = circulation.ReproductionMode(mode)
+	pc.MinCapitalisationIncrement = circulation.Pence(minIncrement)
+	pc.LatentMoneyCapital = circulation.LatentMoneyCapital{
+		ProductiveCircuitID: pc.ID,
+		Accumulated:         circulation.Pence(latentAcc),
+		Threshold:           circulation.Pence(minIncrement),
+	}
+	pc.ReserveFund = circulation.ReserveFund{
+		ProductiveCircuitID: pc.ID,
+		Balance:             circulation.Pence(reserveBal),
+	}
+	return pc, nil
 }

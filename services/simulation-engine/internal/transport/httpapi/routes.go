@@ -3,6 +3,16 @@ package httpapi
 import "github.com/theding0x/capital-simulator/pkg/httpx"
 
 func Register(s *httpx.Server, h *Handler) {
+	// Vol. II Ch. 2 — The Circuit of Productive Capital
+	s.HandleFunc("POST /v1/productive-circuits", h.CreateProductiveCircuit)
+	s.HandleFunc("GET /v1/productive-circuits", h.ListProductiveCircuits)
+	s.HandleFunc("GET /v1/productive-circuits/{id}", h.GetProductiveCircuit)
+	s.HandleFunc("POST /v1/productive-circuits/{id}/revenue", h.RecordRevenue)
+	s.HandleFunc("POST /v1/productive-circuits/{id}/accumulate", h.AccumulateLatentCapital)
+	s.HandleFunc("POST /v1/productive-circuits/{id}/capitalise", h.CapitaliseCircuit)
+	s.HandleFunc("POST /v1/productive-circuits/{id}/reserve/deposit", h.DepositReserve)
+	s.HandleFunc("POST /v1/productive-circuits/{id}/reserve/draw", h.DrawReserve)
+
 	// Ch. 11 — Rate and Mass of Surplus-Value
 	s.HandleFunc("POST /v1/surplus/mass", h.ComputeMass)
 	s.HandleFunc("GET /v1/surplus/limits", h.GetLimits)

@@ -1,12 +1,14 @@
 // Package store is the persistence layer for simulation-engine. As of Ch. 15
 // it persists Machine and Factory records and the tick log produced by
 // advancing a Factory one period at a time. Ch. 25 adds GeneralLawScenario.
+// Vol. II Ch. 2 adds ProductiveCircuit.
 package store
 
 import (
 	"context"
 	"errors"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
@@ -156,4 +158,18 @@ type ColonialLabourMarketStore interface {
 	ListColonialLabourMarkets(ctx context.Context) ([]simulation.ColonialLabourMarket, error)
 	UpdateColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID, u ColonialLabourMarketUpdate) (simulation.ColonialLabourMarket, error)
 	RegulateColonialLabourMarket(ctx context.Context, id simulation.ColonialLabourMarketID, scheme simulation.SystematicColonisation) (simulation.ColonialLabourMarket, error)
+}
+
+// ProductiveCircuitStore is the persistence contract for Vol. II Ch. 2
+// productive-circuit records. The full state (latent capital, reserve fund,
+// revenue exits, capitalisation steps, reserve draws) is assembled on Get.
+type ProductiveCircuitStore interface {
+	CreateProductiveCircuit(ctx context.Context, pc circulation.ProductiveCircuit) (circulation.ProductiveCircuit, error)
+	GetProductiveCircuit(ctx context.Context, id circulation.ProductiveCircuitID) (circulation.ProductiveCircuit, error)
+	ListProductiveCircuits(ctx context.Context) ([]circulation.ProductiveCircuit, error)
+	RecordRevenue(ctx context.Context, id circulation.ProductiveCircuitID, rc circulation.RevenueCircuit) (circulation.RevenueCircuit, error)
+	Accumulate(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence) (circulation.LatentMoneyCapital, error)
+	Capitalise(ctx context.Context, id circulation.ProductiveCircuitID, amount, dc, dv circulation.Pence) (circulation.CapitalisationStep, error)
+	DepositReserve(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence) (circulation.ReserveFund, error)
+	WithdrawReserve(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence, reason circulation.ReserveDrawReason) (circulation.ReserveDraw, error)
 }

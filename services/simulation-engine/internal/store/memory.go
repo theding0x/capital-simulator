@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
@@ -33,21 +34,23 @@ type Memory struct {
 	trajectories       map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory
 	colonialMarkets    map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket
 	colonyNames        map[string]simulation.ColonialLabourMarketID
+	productiveCircuits map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit
 	now                func() time.Time
 }
 
 func NewMemory() *Memory {
 	return &Memory{
-		machines:         make(map[machinery.MachineID]machinery.Machine),
-		factories:        make(map[machinery.FactoryID]machinery.Factory),
-		ticks:            make(map[machinery.FactoryID][]engine.Tick),
-		generalLaw:       make(map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario),
-		historicalStages: make(map[simulation.HistoricalStageID]simulation.HistoricalStage),
-		stageNames:       make(map[string]simulation.HistoricalStageID),
-		trajectories:     make(map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory),
-		colonialMarkets:  make(map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket),
-		colonyNames:      make(map[string]simulation.ColonialLabourMarketID),
-		now:              time.Now,
+		machines:           make(map[machinery.MachineID]machinery.Machine),
+		factories:          make(map[machinery.FactoryID]machinery.Factory),
+		ticks:              make(map[machinery.FactoryID][]engine.Tick),
+		generalLaw:         make(map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario),
+		historicalStages:   make(map[simulation.HistoricalStageID]simulation.HistoricalStage),
+		stageNames:         make(map[string]simulation.HistoricalStageID),
+		trajectories:       make(map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory),
+		colonialMarkets:    make(map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket),
+		colonyNames:        make(map[string]simulation.ColonialLabourMarketID),
+		productiveCircuits: make(map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit),
+		now:                time.Now,
 	}
 }
 
@@ -694,4 +697,151 @@ func (m *Memory) RegulateColonialLabourMarket(_ context.Context, id simulation.C
 	regulated := simulation.ColonialLabourRegulation(cur, scheme)
 	m.colonialMarkets[id] = regulated
 	return regulated, nil
+}
+
+// --- Vol. II Ch. 2 — ProductiveCircuitStore ---
+
+func (m *Memory) CreateProductiveCircuit(_ context.Context, pc circulation.ProductiveCircuit) (circulation.ProductiveCircuit, error) {
+	if err := pc.Validate(); err != nil {
+		return circulation.ProductiveCircuit{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if pc.ID.IsZero() {
+		pc.ID = circulation.NewProductiveCircuitID()
+	}
+	if _, ok := m.productiveCircuits[pc.ID]; ok {
+		return circulation.ProductiveCircuit{}, ErrAlreadyExists
+	}
+	if pc.RevenueCircuits == nil {
+		pc.RevenueCircuits = []circulation.RevenueCircuit{}
+	}
+	if pc.CapitalisationSteps == nil {
+		pc.CapitalisationSteps = []circulation.CapitalisationStep{}
+	}
+	if pc.ReserveDraws == nil {
+		pc.ReserveDraws = []circulation.ReserveDraw{}
+	}
+	pc.LatentMoneyCapital.ProductiveCircuitID = pc.ID
+	pc.LatentMoneyCapital.Threshold = pc.MinCapitalisationIncrement
+	pc.ReserveFund.ProductiveCircuitID = pc.ID
+	pc.CreatedAt = m.now().UTC()
+	m.productiveCircuits[pc.ID] = pc
+	return pc, nil
+}
+
+func (m *Memory) GetProductiveCircuit(_ context.Context, id circulation.ProductiveCircuitID) (circulation.ProductiveCircuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	pc, ok := m.productiveCircuits[id]
+	if !ok {
+		return circulation.ProductiveCircuit{}, ErrNotFound
+	}
+	pc.RevenueCircuits = append([]circulation.RevenueCircuit(nil), pc.RevenueCircuits...)
+	pc.CapitalisationSteps = append([]circulation.CapitalisationStep(nil), pc.CapitalisationSteps...)
+	pc.ReserveDraws = append([]circulation.ReserveDraw(nil), pc.ReserveDraws...)
+	return pc, nil
+}
+
+func (m *Memory) ListProductiveCircuits(_ context.Context) ([]circulation.ProductiveCircuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]circulation.ProductiveCircuit, 0, len(m.productiveCircuits))
+	for _, pc := range m.productiveCircuits {
+		pc.RevenueCircuits = append([]circulation.RevenueCircuit(nil), pc.RevenueCircuits...)
+		pc.CapitalisationSteps = append([]circulation.CapitalisationStep(nil), pc.CapitalisationSteps...)
+		pc.ReserveDraws = append([]circulation.ReserveDraw(nil), pc.ReserveDraws...)
+		out = append(out, pc)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+func (m *Memory) RecordRevenue(_ context.Context, id circulation.ProductiveCircuitID, rc circulation.RevenueCircuit) (circulation.RevenueCircuit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	pc, ok := m.productiveCircuits[id]
+	if !ok {
+		return circulation.RevenueCircuit{}, ErrNotFound
+	}
+	rc.ProductiveCircuitID = id
+	if rc.SpentAt.IsZero() {
+		rc.SpentAt = m.now().UTC()
+	}
+	pc.RevenueCircuits = append(pc.RevenueCircuits, rc)
+	m.productiveCircuits[id] = pc
+	return rc, nil
+}
+
+func (m *Memory) Accumulate(_ context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence) (circulation.LatentMoneyCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	pc, ok := m.productiveCircuits[id]
+	if !ok {
+		return circulation.LatentMoneyCapital{}, ErrNotFound
+	}
+	pc.LatentMoneyCapital.Accumulated += amount
+	m.productiveCircuits[id] = pc
+	return pc.LatentMoneyCapital, nil
+}
+
+func (m *Memory) Capitalise(_ context.Context, id circulation.ProductiveCircuitID, amount, dc, dv circulation.Pence) (circulation.CapitalisationStep, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	pc, ok := m.productiveCircuits[id]
+	if !ok {
+		return circulation.CapitalisationStep{}, ErrNotFound
+	}
+	if amount > 0 && amount < pc.MinCapitalisationIncrement {
+		return circulation.CapitalisationStep{}, circulation.ErrIndivisibleProductionElement
+	}
+	step := circulation.CapitalisationStep{
+		ProductiveCircuitID: id,
+		AmountInjected:      amount,
+		DeltaConstantPence:  dc,
+		DeltaVariablePence:  dv,
+		OccurredAt:          m.now().UTC(),
+	}
+	pc.ConstantPence += dc
+	pc.VariablePence += dv
+	pc.LatentMoneyCapital.Accumulated -= amount
+	pc.CapitalisationSteps = append(pc.CapitalisationSteps, step)
+	m.productiveCircuits[id] = pc
+	return step, nil
+}
+
+func (m *Memory) DepositReserve(_ context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence) (circulation.ReserveFund, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	pc, ok := m.productiveCircuits[id]
+	if !ok {
+		return circulation.ReserveFund{}, ErrNotFound
+	}
+	pc.ReserveFund.Balance += amount
+	m.productiveCircuits[id] = pc
+	return pc.ReserveFund, nil
+}
+
+func (m *Memory) WithdrawReserve(_ context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence, reason circulation.ReserveDrawReason) (circulation.ReserveDraw, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	pc, ok := m.productiveCircuits[id]
+	if !ok {
+		return circulation.ReserveDraw{}, ErrNotFound
+	}
+	if amount > pc.ReserveFund.Balance {
+		return circulation.ReserveDraw{}, circulation.ErrInsufficientReserve
+	}
+	draw := circulation.ReserveDraw{
+		ProductiveCircuitID: id,
+		DrawnPence:          amount,
+		Reason:              reason,
+		OccurredAt:          m.now().UTC(),
+	}
+	pc.ReserveFund.Balance -= amount
+	pc.ReserveDraws = append(pc.ReserveDraws, draw)
+	m.productiveCircuits[id] = pc
+	return draw, nil
 }
