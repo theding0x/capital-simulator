@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/theding0x/capital-simulator/services/market-service/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/market"
 )
 
@@ -16,8 +17,35 @@ var (
 	ErrAlreadyExists = errors.New("market: already exists")
 )
 
+// TurnoverTimeStore is the persistence contract for Vol. II Ch. 5 circulation
+// time records. It is embedded in Store.
+type TurnoverTimeStore interface {
+	// TurnoverTime operations.
+	CreateTurnoverTime(ctx context.Context, t circulation.TurnoverTime) (circulation.TurnoverTime, error)
+	GetTurnoverTime(ctx context.Context, id circulation.TurnoverTimeID) (circulation.TurnoverTime, error)
+	ListTurnoverTimes(ctx context.Context) ([]circulation.TurnoverTime, error)
+	AddLabourTime(ctx context.Context, id circulation.TurnoverTimeID, nanos int64) (circulation.TurnoverTime, error)
+	AddLabourInterruption(ctx context.Context, id circulation.TurnoverTimeID, nanos int64) (circulation.TurnoverTime, error)
+
+	// Sub-span records.
+	RecordLatentMP(ctx context.Context, lpc circulation.LatentProductiveCapital) (circulation.LatentProductiveCapital, error)
+	RecordNaturalProcess(ctx context.Context, nps circulation.NaturalProcessSpan) (circulation.NaturalProcessSpan, error)
+
+	// Selling and buying phases. Open = ClosedAt nil; Close = ClosedAt set.
+	OpenSellingPhase(ctx context.Context, sp circulation.SellingPhase) (circulation.SellingPhase, error)
+	CloseSellingPhase(ctx context.Context, id circulation.TurnoverTimeID, spID circulation.SellingPhaseID, outcome circulation.SellingOutcome) (circulation.SellingPhase, error)
+	OpenBuyingPhase(ctx context.Context, bp circulation.BuyingPhase) (circulation.BuyingPhase, error)
+	CloseBuyingPhase(ctx context.Context, id circulation.TurnoverTimeID, bpID circulation.BuyingPhaseID) (circulation.BuyingPhase, error)
+
+	// Perishability and market separation.
+	SetPerishability(ctx context.Context, p circulation.Perishability) (circulation.Perishability, error)
+	GetPerishability(ctx context.Context, commodityID circulation.CommodityID) (circulation.Perishability, error)
+	SetMarketSeparation(ctx context.Context, ms circulation.MarketSeparation) (circulation.MarketSeparation, error)
+}
+
 // Store is the persistence contract for market-service domain records.
 type Store interface {
+	TurnoverTimeStore
 	// Owner operations.
 	CreateOwner(ctx context.Context, o market.Owner) (market.Owner, error)
 	GetOwner(ctx context.Context, id market.OwnerID) (market.Owner, error)
