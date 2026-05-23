@@ -1786,3 +1786,88 @@ export interface CommodityCircuitAggregate {
   total_initial_pence: number;
   total_terminal_pence: number;
 }
+
+// Vol. II Ch. 5 — The Time of Circulation
+export interface ProductionTime {
+  labour_time_nanos: number;
+  labour_interruption_nanos: number;
+  latent_nanos: number;
+  natural_process_nanos: number;
+}
+
+export interface CirculationTime {
+  selling_time_nanos: number;
+  buying_time_nanos: number;
+}
+
+export interface TurnoverTime {
+  id: string;
+  industrial_capital_id: string;
+  production: ProductionTime;
+  circulation: CirculationTime;
+  circulation_open: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTurnoverTimeInput {
+  industrial_capital_id: string;
+}
+
+export interface SellingPhase {
+  id: string;
+  turnover_time_id: string;
+  industrial_capital_id: string;
+  commodity_circuit_id: string;
+  opened_at: string;
+  closed_at?: string;
+  outcome: "sold" | "spoiled" | "partial" | "pending";
+}
+
+export interface BuyingPhase {
+  id: string;
+  turnover_time_id: string;
+  industrial_capital_id: string;
+  money_circuit_id: string;
+  opened_at: string;
+  closed_at?: string;
+  market_location: string;
+}
+
+export interface NaturalProcessSpan {
+  id: string;
+  turnover_time_id: string;
+  industrial_capital_id: string;
+  process: "ripening" | "fermentation" | "tanning" | "drying" | "other";
+  duration_nanos: number;
+  started_at: string;
+}
+
+export interface LatentProductiveCapital {
+  id: string;
+  turnover_time_id: string;
+  industrial_capital_id: string;
+  pence: number;
+  held_at: string;
+  entered_production_at?: string;
+}
+
+export interface Perishability {
+  id: string;
+  commodity_id: string;
+  window_nanos: number;
+}
+
+export interface MarketSeparation {
+  id: string;
+  industrial_capital_id: string;
+  selling_market_id: string;
+  buying_market_id: string;
+}
+
+export interface ActiveFractionResponse {
+  turnover_time_id: string;
+  production_time_nanos: number;
+  total_nanos: number;
+  active_fraction_basis_points: number;
+}

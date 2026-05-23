@@ -93,6 +93,10 @@ func (h *Handler) CreateTurnoverTime(w http.ResponseWriter, r *http.Request) {
 	tt := circulation.TurnoverTime{
 		IndustrialCapitalID: circulation.IndustrialCapitalID(req.IndustrialCapitalID),
 	}
+	if err := tt.Validate(); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	created, err := h.Store.CreateTurnoverTime(r.Context(), tt)
 	if err != nil {
 		writeStoreError(w, err)
