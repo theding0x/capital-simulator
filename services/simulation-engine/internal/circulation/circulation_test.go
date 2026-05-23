@@ -1,6 +1,202 @@
 package circulation
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
+
+// Vol. II Ch. 3 — The Circuit of Commodity-Capital tests.
+// Fixture: Spinning Mill 1871 — 10,000 lbs cotton yarn, C′ = £500
+//   (c=£372, v=£50, s=£78). Three successive partial sales exhaust the output.
+
+// TestVol2Ch03_CommodityCircuit_SpinningMill1871_SimpleReproduction verifies that
+// a valid C′ circuit (SurplusPence > 0) passes validation and computes its Total.
+func TestVol2Ch03_CommodityCircuit_SpinningMill1871_SimpleReproduction(t *testing.T) {
+	t.Parallel()
+	cc := CommodityCircuit{
+		Initial: OpeningCommodityCapital{
+			ConstantPence: 37200,
+			VariablePence: 5000,
+			SurplusPence:  7800,
+			PoundsTotal:   10000,
+		},
+		Mode: ReproductionSimple,
+	}
+	if err := cc.Validate(); err != nil {
+		t.Fatalf("Validate() = %v, want nil", err)
+	}
+	if got := cc.Initial.Total(); got != 50000 {
+		t.Errorf("Total() = %d pence, want 50000 (£500)", got)
+	}
+	if got := cc.Initial.ValueOriginalPence(); got != 42200 {
+		t.Errorf("ValueOriginalPence() = %d pence, want 42200 (£422 capital)", got)
+	}
+}
+
+// TestVol2Ch03_CommodityCircuit_NotCommodityCapital verifies ErrNotCommodityCapital
+// is returned when SurplusPence == 0 and IsFirstInvestment is false.
+func TestVol2Ch03_CommodityCircuit_NotCommodityCapital(t *testing.T) {
+	t.Parallel()
+	cc := CommodityCircuit{
+		Initial: OpeningCommodityCapital{
+			ConstantPence: 37200,
+			VariablePence: 5000,
+			SurplusPence:  0,
+			PoundsTotal:   10000,
+		},
+		Mode: ReproductionSimple,
+	}
+	if err := cc.Validate(); !errors.Is(err, ErrNotCommodityCapital) {
+		t.Errorf("Validate() = %v, want ErrNotCommodityCapital", err)
+	}
+}
+
+// TestVol2Ch03_CommodityAugmented_SimpleReproduction checks that a closing circuit
+// with the same total as the opening is not extended.
+func TestVol2Ch03_CommodityAugmented_SimpleReproduction(t *testing.T) {
+	t.Parallel()
+	opening := OpeningCommodityCapital{
+		ConstantPence: 37200,
+		VariablePence: 5000,
+		SurplusPence:  7800,
+		PoundsTotal:   10000,
+	}
+	terminal := CommodityAugmented{
+		ConstantPence: 37200,
+		VariablePence: 5000,
+		SurplusPence:  7800,
+		PoundsTotal:   10000,
+	}
+	if terminal.IsExtended(opening.Total()) {
+		t.Error("IsExtended() = true for simple reproduction, want false")
+	}
+}
+
+// TestVol2Ch03_CommodityAugmented_ExtendedReproduction checks that a closing circuit
+// with a higher total is marked extended.
+func TestVol2Ch03_CommodityAugmented_ExtendedReproduction(t *testing.T) {
+	t.Parallel()
+	opening := OpeningCommodityCapital{
+		ConstantPence: 37200,
+		VariablePence: 5000,
+		SurplusPence:  7800,
+		PoundsTotal:   10000,
+	}
+	// Surplus capitalised: new P starts at £500; next C′ reflects extended base.
+	terminal := CommodityAugmented{
+		ConstantPence:    45000,
+		VariablePence:    5000,
+		SurplusPence:     7800,
+		CapitalisedPence: 7800,
+		PoundsTotal:      11560,
+	}
+	if !terminal.IsExtended(opening.Total()) {
+		t.Error("IsExtended() = false for extended reproduction, want true")
+	}
+}
+
+// TestVol2Ch03_AliquotDecomposition verifies three successive partial sales of
+// the Spinning Mill 1871 C′. Each sale's components must sum to its own
+// realised_pence. The grand total of all components must equal the grand total
+// of all realisations (50000 pence = £500). Individual component grand totals
+// are allowed to differ from the opening ratios by integer truncation; surplus
+// absorbs the remainder within each sale, not across all sales.
+func TestVol2Ch03_AliquotDecomposition(t *testing.T) {
+	t.Parallel()
+	cc := CommodityCircuit{
+		Initial: OpeningCommodityCapital{
+			ConstantPence: 37200,
+			VariablePence: 5000,
+			SurplusPence:  7800,
+			PoundsTotal:   10000,
+		},
+		Mode: ReproductionSimple,
+	}
+
+	sales := []struct {
+		qty      int64
+		realised Pence
+	}{
+		{7440, 37200},
+		{1000, 5000},
+		{1560, 7800},
+	}
+
+	var grandTotal, grandRealised Pence
+	for _, s := range sales {
+		d := cc.ComputeDecomposition(s.qty, s.realised)
+		if d.Total() != s.realised {
+			t.Errorf("sale qty=%d: decomposition total %d != realised %d", s.qty, d.Total(), s.realised)
+		}
+		grandTotal += d.Total()
+		grandRealised += s.realised
+	}
+
+	if grandTotal != grandRealised {
+		t.Errorf("grand decomposition total %d != grand realised %d", grandTotal, grandRealised)
+	}
+	if grandRealised != 50000 {
+		t.Errorf("grand realised = %d pence, want 50000 (£500 = full C′)", grandRealised)
+	}
+}
+
+// TestVol2Ch03_EnsureMaterialAdequacy verifies that capitalisation without linked
+// MP sources returns ErrInsufficientMaterialBase.
+func TestVol2Ch03_EnsureMaterialAdequacy(t *testing.T) {
+	t.Parallel()
+	cc := CommodityCircuit{
+		Initial: OpeningCommodityCapital{SurplusPence: 7800, PoundsTotal: 10000},
+		Mode:    ReproductionExtended,
+	}
+
+	if err := cc.EnsureMaterialAdequacy(7800); !errors.Is(err, ErrInsufficientMaterialBase) {
+		t.Errorf("EnsureMaterialAdequacy(7800) = %v, want ErrInsufficientMaterialBase", err)
+	}
+
+	cc.MPSources = []MeansOfProductionSource{{SourceKind: SourceImport}}
+	if err := cc.EnsureMaterialAdequacy(7800); err != nil {
+		t.Errorf("EnsureMaterialAdequacy(7800) with MP source = %v, want nil", err)
+	}
+
+	if err := cc.EnsureMaterialAdequacy(0); err != nil {
+		t.Errorf("EnsureMaterialAdequacy(0) = %v, want nil (zero capitalisation ok)", err)
+	}
+}
+
+// TestVol2Ch03_MeansOfProductionSource_Validate checks that valid source kinds
+// pass and unrecognised kinds return ErrUnsourcedMeansOfProduction.
+func TestVol2Ch03_MeansOfProductionSource_Validate(t *testing.T) {
+	t.Parallel()
+	valid := []MeansOfProductionSourceKind{
+		SourceProducerCircuit,
+		SourceMerchantHolding,
+		SourceImport,
+	}
+	for _, k := range valid {
+		s := MeansOfProductionSource{SourceKind: k}
+		if err := s.Validate(); err != nil {
+			t.Errorf("Validate(%q) = %v, want nil", k, err)
+		}
+	}
+	bad := MeansOfProductionSource{SourceKind: "fantasy_source"}
+	if err := bad.Validate(); !errors.Is(err, ErrUnsourcedMeansOfProduction) {
+		t.Errorf("Validate(fantasy_source) = %v, want ErrUnsourcedMeansOfProduction", err)
+	}
+}
+
+// TestVol2Ch03_NewCommodityCircuitID_Unique checks that two successive calls
+// produce distinct 24-char hex identifiers.
+func TestVol2Ch03_NewCommodityCircuitID_Unique(t *testing.T) {
+	t.Parallel()
+	a := NewCommodityCircuitID()
+	b := NewCommodityCircuitID()
+	if a == b {
+		t.Errorf("NewCommodityCircuitID() collision: %s == %s", a, b)
+	}
+	if len(string(a)) != 24 {
+		t.Errorf("ID length = %d, want 24 hex chars (96-bit)", len(string(a)))
+	}
+}
 
 // TestVol2Ch01_TheCircuitOfMoneyCapital is the textual anchor for Capital
 // Vol. II, Ch. 1 — The Circuit of Money-Capital.

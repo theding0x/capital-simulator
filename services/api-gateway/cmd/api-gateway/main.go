@@ -193,6 +193,10 @@ func main() {
 	srv.Handle("/v1/colonial-markets", simProxy)
 	srv.Handle("/v1/colonial-markets/{rest...}", simProxy)
 
+	// Vol. II Ch. 3 — The Circuit of Commodity-Capital → simulation-engine
+	srv.Handle("/v1/commodity-circuits", simProxy)
+	srv.Handle("/v1/commodity-circuits/{rest...}", simProxy)
+
 	// Vol. II Ch. 2 — The Circuit of Productive Capital → simulation-engine
 	srv.Handle("/v1/productive-circuits", simProxy)
 	srv.Handle("/v1/productive-circuits/{rest...}", simProxy)

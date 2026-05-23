@@ -171,6 +171,11 @@ import type {
   CapitalisationStep,
   ReserveFund,
   ReserveDraw,
+  CommodityCircuit,
+  CreateCommodityCircuitInput,
+  SuccessivePartialSale,
+  MeansOfProductionSource,
+  CommodityCircuitAggregate,
 } from "./types";
 
 const BASE = "/api";
@@ -1025,5 +1030,44 @@ export const api = {
     http<ReserveDraw>(`/v1/productive-circuits/${id}/reserve/draw`, {
       method: "POST",
       body: JSON.stringify({ amount, reason }),
+    }),
+};
+
+// Vol. II Ch. 3 — The Circuit of Commodity-Capital
+export const commodityCircuitApi = {
+  list: (agentId?: string) => {
+    const qs = agentId ? `?agent_id=${encodeURIComponent(agentId)}` : "";
+    return http<CommodityCircuit[]>(`/v1/commodity-circuits${qs}`);
+  },
+
+  create: (input: CreateCommodityCircuitInput) =>
+    http<CommodityCircuit>("/v1/commodity-circuits", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  get: (id: string) => http<CommodityCircuit>(`/v1/commodity-circuits/${id}`),
+
+  aggregate: () => http<CommodityCircuitAggregate>("/v1/commodity-circuits/aggregate"),
+
+  recordPartialSale: (id: string, quantity: number, realisedPence: number) =>
+    http<SuccessivePartialSale>(`/v1/commodity-circuits/${id}/partial-sales`, {
+      method: "POST",
+      body: JSON.stringify({ quantity, realised_pence: realisedPence }),
+    }),
+
+  linkMPSource: (id: string, sourceKind: MeansOfProductionSource["source_kind"], sourceCommodityCircuitId?: string) =>
+    http<MeansOfProductionSource>(`/v1/commodity-circuits/${id}/mp-source`, {
+      method: "POST",
+      body: JSON.stringify({
+        source_kind: sourceKind,
+        ...(sourceCommodityCircuitId ? { source_commodity_circuit_id: sourceCommodityCircuitId } : {}),
+      }),
+    }),
+
+  close: (id: string, terminal: { constant_pence: number; variable_pence: number; surplus_pence: number; capitalised_pence: number; pounds_total: number }) =>
+    http<CommodityCircuit>(`/v1/commodity-circuits/${id}/close`, {
+      method: "POST",
+      body: JSON.stringify(terminal),
     }),
 };

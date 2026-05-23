@@ -35,6 +35,7 @@ type Memory struct {
 	colonialMarkets    map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket
 	colonyNames        map[string]simulation.ColonialLabourMarketID
 	productiveCircuits map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit
+	commodityCircuits  map[circulation.CommodityCircuitID]circulation.CommodityCircuit
 	now                func() time.Time
 }
 
@@ -50,6 +51,7 @@ func NewMemory() *Memory {
 		colonialMarkets:    make(map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket),
 		colonyNames:        make(map[string]simulation.ColonialLabourMarketID),
 		productiveCircuits: make(map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit),
+		commodityCircuits:  make(map[circulation.CommodityCircuitID]circulation.CommodityCircuit),
 		now:                time.Now,
 	}
 }
@@ -844,4 +846,100 @@ func (m *Memory) WithdrawReserve(_ context.Context, id circulation.ProductiveCir
 	pc.ReserveDraws = append(pc.ReserveDraws, draw)
 	m.productiveCircuits[id] = pc
 	return draw, nil
+}
+
+// Vol. II Ch. 3 — CommodityCircuitStore implementation.
+
+func (m *Memory) CreateCommodityCircuit(_ context.Context, cc circulation.CommodityCircuit) (circulation.CommodityCircuit, error) {
+	if err := cc.Validate(); err != nil {
+		return circulation.CommodityCircuit{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if cc.ID.IsZero() {
+		cc.ID = circulation.NewCommodityCircuitID()
+	}
+	if _, ok := m.commodityCircuits[cc.ID]; ok {
+		return circulation.CommodityCircuit{}, ErrAlreadyExists
+	}
+	cc.CreatedAt = m.now().UTC()
+	if cc.PartialSales == nil {
+		cc.PartialSales = []circulation.SuccessivePartialSale{}
+	}
+	if cc.MPSources == nil {
+		cc.MPSources = []circulation.MeansOfProductionSource{}
+	}
+	m.commodityCircuits[cc.ID] = cc
+	return cc, nil
+}
+
+func (m *Memory) GetCommodityCircuit(_ context.Context, id circulation.CommodityCircuitID) (circulation.CommodityCircuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	cc, ok := m.commodityCircuits[id]
+	if !ok {
+		return circulation.CommodityCircuit{}, ErrNotFound
+	}
+	return cc, nil
+}
+
+func (m *Memory) ListCommodityCircuits(_ context.Context, agentID string) ([]circulation.CommodityCircuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]circulation.CommodityCircuit, 0, len(m.commodityCircuits))
+	for _, cc := range m.commodityCircuits {
+		if agentID != "" && cc.AgentID != agentID {
+			continue
+		}
+		out = append(out, cc)
+	}
+	return out, nil
+}
+
+func (m *Memory) RecordPartialSale(_ context.Context, id circulation.CommodityCircuitID, sale circulation.SuccessivePartialSale) (circulation.SuccessivePartialSale, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cc, ok := m.commodityCircuits[id]
+	if !ok {
+		return circulation.SuccessivePartialSale{}, ErrNotFound
+	}
+	sale.CommodityCircuitID = id
+	if sale.SoldAt.IsZero() {
+		sale.SoldAt = m.now().UTC()
+	}
+	cc.PartialSales = append(cc.PartialSales, sale)
+	m.commodityCircuits[id] = cc
+	return sale, nil
+}
+
+func (m *Memory) LinkMPSource(_ context.Context, id circulation.CommodityCircuitID, source circulation.MeansOfProductionSource) (circulation.MeansOfProductionSource, error) {
+	if err := source.Validate(); err != nil {
+		return circulation.MeansOfProductionSource{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cc, ok := m.commodityCircuits[id]
+	if !ok {
+		return circulation.MeansOfProductionSource{}, ErrNotFound
+	}
+	source.CommodityCircuitID = id
+	cc.MPSources = append(cc.MPSources, source)
+	m.commodityCircuits[id] = cc
+	return source, nil
+}
+
+func (m *Memory) CloseCommodityCircuit(_ context.Context, id circulation.CommodityCircuitID, aug circulation.CommodityAugmented) (circulation.CommodityCircuit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cc, ok := m.commodityCircuits[id]
+	if !ok {
+		return circulation.CommodityCircuit{}, ErrNotFound
+	}
+	aug.CommodityCircuitID = id
+	if aug.ClosedAt.IsZero() {
+		aug.ClosedAt = m.now().UTC()
+	}
+	cc.Terminal = &aug
+	m.commodityCircuits[id] = cc
+	return cc, nil
 }

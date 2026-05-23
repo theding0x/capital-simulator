@@ -173,3 +173,15 @@ type ProductiveCircuitStore interface {
 	DepositReserve(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence) (circulation.ReserveFund, error)
 	WithdrawReserve(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence, reason circulation.ReserveDrawReason) (circulation.ReserveDraw, error)
 }
+
+// CommodityCircuitStore is the persistence contract for Vol. II Ch. 3
+// commodity-circuit records. The full state (partial sales, MP sources, terminal)
+// is assembled on Get and included on List.
+type CommodityCircuitStore interface {
+	CreateCommodityCircuit(ctx context.Context, cc circulation.CommodityCircuit) (circulation.CommodityCircuit, error)
+	GetCommodityCircuit(ctx context.Context, id circulation.CommodityCircuitID) (circulation.CommodityCircuit, error)
+	ListCommodityCircuits(ctx context.Context, agentID string) ([]circulation.CommodityCircuit, error)
+	RecordPartialSale(ctx context.Context, id circulation.CommodityCircuitID, sale circulation.SuccessivePartialSale) (circulation.SuccessivePartialSale, error)
+	LinkMPSource(ctx context.Context, id circulation.CommodityCircuitID, source circulation.MeansOfProductionSource) (circulation.MeansOfProductionSource, error)
+	CloseCommodityCircuit(ctx context.Context, id circulation.CommodityCircuitID, aug circulation.CommodityAugmented) (circulation.CommodityCircuit, error)
+}
