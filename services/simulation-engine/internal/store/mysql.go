@@ -1650,6 +1650,290 @@ func (m *MySQL) listReserveDraws(ctx context.Context, id circulation.ProductiveC
 	return out, rows.Err()
 }
 
+// Vol. II Ch. 3 — CommodityCircuitStore implementation.
+
+func (m *MySQL) CreateCommodityCircuit(ctx context.Context, cc circulation.CommodityCircuit) (circulation.CommodityCircuit, error) {
+	if err := cc.Validate(); err != nil {
+		return circulation.CommodityCircuit{}, err
+	}
+	if cc.ID.IsZero() {
+		cc.ID = circulation.NewCommodityCircuitID()
+	}
+	cc.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO commodity_circuits
+		(id, agent_id, constant_pence, variable_pence, surplus_pence, pounds_total,
+		 mode, is_first_investment, social_capital_lens, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(cc.ID), cc.AgentID,
+		int64(cc.Initial.ConstantPence), int64(cc.Initial.VariablePence),
+		int64(cc.Initial.SurplusPence), cc.Initial.PoundsTotal,
+		string(cc.Mode), cc.IsFirstInvestment, bool(cc.SocialCapitalLens),
+		cc.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicateKey(err) {
+			return circulation.CommodityCircuit{}, ErrAlreadyExists
+		}
+		return circulation.CommodityCircuit{}, err
+	}
+	if cc.PartialSales == nil {
+		cc.PartialSales = []circulation.SuccessivePartialSale{}
+	}
+	if cc.MPSources == nil {
+		cc.MPSources = []circulation.MeansOfProductionSource{}
+	}
+	return cc, nil
+}
+
+func (m *MySQL) GetCommodityCircuit(ctx context.Context, id circulation.CommodityCircuitID) (circulation.CommodityCircuit, error) {
+	const q = `SELECT id, agent_id, constant_pence, variable_pence, surplus_pence, pounds_total,
+		mode, is_first_investment, social_capital_lens,
+		terminal_constant, terminal_variable, terminal_surplus, terminal_capitalised,
+		terminal_pounds, terminal_closed_at, created_at
+		FROM commodity_circuits WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	cc, err := scanCommodityCircuit(row.Scan)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.CommodityCircuit{}, ErrNotFound
+		}
+		return circulation.CommodityCircuit{}, err
+	}
+	sales, err := m.listPartialSales(ctx, id)
+	if err != nil {
+		return circulation.CommodityCircuit{}, err
+	}
+	cc.PartialSales = sales
+	sources, err := m.listMPSources(ctx, id)
+	if err != nil {
+		return circulation.CommodityCircuit{}, err
+	}
+	cc.MPSources = sources
+	return cc, nil
+}
+
+func (m *MySQL) ListCommodityCircuits(ctx context.Context, agentID string) ([]circulation.CommodityCircuit, error) {
+	q := `SELECT id, agent_id, constant_pence, variable_pence, surplus_pence, pounds_total,
+		mode, is_first_investment, social_capital_lens,
+		terminal_constant, terminal_variable, terminal_surplus, terminal_capitalised,
+		terminal_pounds, terminal_closed_at, created_at
+		FROM commodity_circuits`
+	args := []any{}
+	if agentID != "" {
+		q += ` WHERE agent_id = ?`
+		args = append(args, agentID)
+	}
+	q += ` ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []circulation.CommodityCircuit
+	for rows.Next() {
+		cc, err := scanCommodityCircuit(rows.Scan)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, cc)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return []circulation.CommodityCircuit{}, nil
+	}
+	for i := range out {
+		sales, err := m.listPartialSales(ctx, out[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		out[i].PartialSales = sales
+		sources, err := m.listMPSources(ctx, out[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		out[i].MPSources = sources
+	}
+	return out, nil
+}
+
+func (m *MySQL) RecordPartialSale(ctx context.Context, id circulation.CommodityCircuitID, sale circulation.SuccessivePartialSale) (circulation.SuccessivePartialSale, error) {
+	if _, err := m.GetCommodityCircuit(ctx, id); err != nil {
+		return circulation.SuccessivePartialSale{}, err
+	}
+	sale.CommodityCircuitID = id
+	if sale.SoldAt.IsZero() {
+		sale.SoldAt = m.now().UTC()
+	}
+	const q = `INSERT INTO successive_partial_sales
+		(commodity_circuit_id, quantity, realised_pence, constant_share, variable_share, surplus_share, sold_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(id), sale.Quantity, int64(sale.RealisedPence),
+		int64(sale.Decomposition.ConstantShare), int64(sale.Decomposition.VariableShare),
+		int64(sale.Decomposition.SurplusShare), sale.SoldAt,
+	)
+	if err != nil {
+		return circulation.SuccessivePartialSale{}, err
+	}
+	return sale, nil
+}
+
+func (m *MySQL) LinkMPSource(ctx context.Context, id circulation.CommodityCircuitID, source circulation.MeansOfProductionSource) (circulation.MeansOfProductionSource, error) {
+	if err := source.Validate(); err != nil {
+		return circulation.MeansOfProductionSource{}, err
+	}
+	if _, err := m.GetCommodityCircuit(ctx, id); err != nil {
+		return circulation.MeansOfProductionSource{}, err
+	}
+	source.CommodityCircuitID = id
+	const q = `INSERT INTO mp_sources
+		(commodity_circuit_id, source_commodity_circuit_id, source_kind)
+		VALUES (?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q, string(id), source.SourceCommodityCircuitID, string(source.SourceKind))
+	if err != nil {
+		return circulation.MeansOfProductionSource{}, err
+	}
+	return source, nil
+}
+
+func (m *MySQL) CloseCommodityCircuit(ctx context.Context, id circulation.CommodityCircuitID, aug circulation.CommodityAugmented) (circulation.CommodityCircuit, error) {
+	aug.CommodityCircuitID = id
+	if aug.ClosedAt.IsZero() {
+		aug.ClosedAt = m.now().UTC()
+	}
+	const q = `UPDATE commodity_circuits
+		SET terminal_constant = ?, terminal_variable = ?, terminal_surplus = ?,
+		    terminal_capitalised = ?, terminal_pounds = ?, terminal_closed_at = ?
+		WHERE id = ?`
+	res, err := m.db.ExecContext(ctx, q,
+		int64(aug.ConstantPence), int64(aug.VariablePence), int64(aug.SurplusPence),
+		int64(aug.CapitalisedPence), aug.PoundsTotal, aug.ClosedAt,
+		string(id),
+	)
+	if err != nil {
+		return circulation.CommodityCircuit{}, err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return circulation.CommodityCircuit{}, err
+	}
+	if n == 0 {
+		return circulation.CommodityCircuit{}, ErrNotFound
+	}
+	return m.GetCommodityCircuit(ctx, id)
+}
+
+func (m *MySQL) listPartialSales(ctx context.Context, id circulation.CommodityCircuitID) ([]circulation.SuccessivePartialSale, error) {
+	const q = `SELECT commodity_circuit_id, quantity, realised_pence,
+		constant_share, variable_share, surplus_share, sold_at
+		FROM successive_partial_sales WHERE commodity_circuit_id = ? ORDER BY sold_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(id))
+	if err != nil {
+		return []circulation.SuccessivePartialSale{}, err
+	}
+	defer rows.Close()
+	var out []circulation.SuccessivePartialSale
+	for rows.Next() {
+		var sale circulation.SuccessivePartialSale
+		var rawID string
+		var qty, realised, cs, vs, ss int64
+		if err := rows.Scan(&rawID, &qty, &realised, &cs, &vs, &ss, &sale.SoldAt); err != nil {
+			return nil, err
+		}
+		sale.CommodityCircuitID = circulation.CommodityCircuitID(rawID)
+		sale.Quantity = qty
+		sale.RealisedPence = circulation.Pence(realised)
+		sale.Decomposition = circulation.ValueComposition{
+			ConstantShare: circulation.Pence(cs),
+			VariableShare: circulation.Pence(vs),
+			SurplusShare:  circulation.Pence(ss),
+		}
+		out = append(out, sale)
+	}
+	if out == nil {
+		out = []circulation.SuccessivePartialSale{}
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) listMPSources(ctx context.Context, id circulation.CommodityCircuitID) ([]circulation.MeansOfProductionSource, error) {
+	const q = `SELECT commodity_circuit_id, source_commodity_circuit_id, source_kind
+		FROM mp_sources WHERE commodity_circuit_id = ? ORDER BY id ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(id))
+	if err != nil {
+		return []circulation.MeansOfProductionSource{}, err
+	}
+	defer rows.Close()
+	var out []circulation.MeansOfProductionSource
+	for rows.Next() {
+		var src circulation.MeansOfProductionSource
+		var rawID, sourceID, kind string
+		if err := rows.Scan(&rawID, &sourceID, &kind); err != nil {
+			return nil, err
+		}
+		src.CommodityCircuitID = circulation.CommodityCircuitID(rawID)
+		src.SourceCommodityCircuitID = sourceID
+		src.SourceKind = circulation.MeansOfProductionSourceKind(kind)
+		out = append(out, src)
+	}
+	if out == nil {
+		out = []circulation.MeansOfProductionSource{}
+	}
+	return out, rows.Err()
+}
+
+func scanCommodityCircuit(scan func(...any) error) (circulation.CommodityCircuit, error) {
+	var (
+		cc             circulation.CommodityCircuit
+		rawID, agentID string
+		constant, variable, surplus, pounds int64
+		mode           string
+		isFirst, social bool
+		tConst, tVar, tSurp, tCap sql.NullInt64
+		tPounds        sql.NullInt64
+		tClosedAt      sql.NullTime
+	)
+	if err := scan(
+		&rawID, &agentID, &constant, &variable, &surplus, &pounds,
+		&mode, &isFirst, &social,
+		&tConst, &tVar, &tSurp, &tCap, &tPounds, &tClosedAt,
+		&cc.CreatedAt,
+	); err != nil {
+		return circulation.CommodityCircuit{}, err
+	}
+	cc.ID = circulation.CommodityCircuitID(rawID)
+	cc.AgentID = agentID
+	cc.Initial = circulation.OpeningCommodityCapital{
+		ConstantPence: circulation.Pence(constant),
+		VariablePence: circulation.Pence(variable),
+		SurplusPence:  circulation.Pence(surplus),
+		PoundsTotal:   pounds,
+	}
+	cc.Mode = circulation.ReproductionMode(mode)
+	cc.IsFirstInvestment = isFirst
+	cc.SocialCapitalLens = circulation.SocialCapitalLens(social)
+	if tConst.Valid {
+		aug := &circulation.CommodityAugmented{
+			CommodityCircuitID: cc.ID,
+			ConstantPence:      circulation.Pence(tConst.Int64),
+			VariablePence:      circulation.Pence(tVar.Int64),
+			SurplusPence:       circulation.Pence(tSurp.Int64),
+			CapitalisedPence:   circulation.Pence(tCap.Int64),
+		}
+		if tPounds.Valid {
+			aug.PoundsTotal = tPounds.Int64
+		}
+		if tClosedAt.Valid {
+			aug.ClosedAt = tClosedAt.Time
+		}
+		cc.Terminal = aug
+	}
+	return cc, nil
+}
+
 func scanProductiveCircuit(r rowScanner) (circulation.ProductiveCircuit, error) {
 	var (
 		pc      circulation.ProductiveCircuit

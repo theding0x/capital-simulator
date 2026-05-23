@@ -1712,3 +1712,77 @@ export interface CreateProductiveCircuitInput {
   mode: "simple" | "extended" | "mixed";
   min_capitalisation_increment_pence: number;
 }
+
+// Vol. II Ch. 3 — The Circuit of Commodity-Capital
+export interface OpeningCommodityCapital {
+  constant_pence: number;
+  variable_pence: number;
+  surplus_pence: number;
+  value_original_pence: number;
+  total: number;
+  pounds_total: number;
+}
+
+export interface CommodityAugmented {
+  commodity_circuit_id: string;
+  constant_pence: number;
+  variable_pence: number;
+  surplus_pence: number;
+  capitalised_pence: number;
+  total: number;
+  pounds_total: number;
+  is_extended: boolean;
+  closed_at: string;
+}
+
+export interface ValueComposition {
+  constant_share: number;
+  variable_share: number;
+  surplus_share: number;
+  total: number;
+}
+
+export interface SuccessivePartialSale {
+  commodity_circuit_id: string;
+  quantity: number;
+  realised_pence: number;
+  decomposition: ValueComposition;
+  sold_at: string;
+}
+
+export interface MeansOfProductionSource {
+  commodity_circuit_id: string;
+  source_commodity_circuit_id?: string;
+  source_kind: "producer_circuit" | "merchant_holding" | "import";
+}
+
+export interface CommodityCircuit {
+  id: string;
+  agent_id?: string;
+  initial: OpeningCommodityCapital;
+  mode: "simple" | "extended" | "mixed";
+  is_first_investment: boolean;
+  social_capital_lens: boolean;
+  partial_sales: SuccessivePartialSale[];
+  mp_sources: MeansOfProductionSource[];
+  terminal?: CommodityAugmented;
+  created_at: string;
+}
+
+export interface CreateCommodityCircuitInput {
+  agent_id?: string;
+  constant_pence: number;
+  variable_pence: number;
+  surplus_pence: number;
+  pounds_total: number;
+  mode: "simple" | "extended" | "mixed";
+  is_first_investment?: boolean;
+  social_capital_lens?: boolean;
+}
+
+export interface CommodityCircuitAggregate {
+  circuit_count: number;
+  closed_count: number;
+  total_initial_pence: number;
+  total_terminal_pence: number;
+}
