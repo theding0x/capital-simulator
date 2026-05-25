@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 
+	comp "github.com/theding0x/capital-simulator/services/simulation-engine/internal/composition"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
@@ -228,4 +229,20 @@ type TurnoverStore interface {
 	RecordCycle(ctx context.Context, id tv.TurnoverID, c tv.TurnoverCycle) (tv.TurnoverCycle, error)
 	RecomputeNumber(ctx context.Context, id tv.TurnoverID) (tv.TurnoverNumber, error)
 	GetNumber(ctx context.Context, id tv.TurnoverID) (tv.TurnoverNumber, error)
+}
+
+// CompositionStore is the persistence contract for Vol. II Ch. 8 fixed and
+// circulating capital composition records.
+type CompositionStore interface {
+	CreateComponent(ctx context.Context, c comp.CapitalComponent) (comp.CapitalComponent, error)
+	GetComponent(ctx context.Context, id comp.CapitalComponentID) (comp.CapitalComponent, error)
+	ListComponents(ctx context.Context, industrialCapitalID string, kind comp.CapitalKind, role comp.RoleInProcess) ([]comp.CapitalComponent, error)
+	RegisterFixedItem(ctx context.Context, item comp.FixedCapitalItem) (comp.FixedCapitalItem, error)
+	GetFixedItem(ctx context.Context, id comp.FixedCapitalItemID) (comp.FixedCapitalItem, error)
+	RecordSubcomponent(ctx context.Context, sub comp.FixedCapitalSubcomponent) (comp.FixedCapitalSubcomponent, error)
+	RecordWear(ctx context.Context, w comp.WearAndTear) (comp.WearAndTear, error)
+	GetSinkingFund(ctx context.Context, itemID comp.FixedCapitalItemID) (comp.SinkingFundForItem, error)
+	RecordRepair(ctx context.Context, r comp.Repair) (comp.Repair, error)
+	RecordCirculatingCycle(ctx context.Context, c comp.CirculatingCycle) (comp.CirculatingCycle, error)
+	RecordReinvestment(ctx context.Context, r comp.SinkingFundReinvestment) (comp.SinkingFundReinvestment, error)
 }

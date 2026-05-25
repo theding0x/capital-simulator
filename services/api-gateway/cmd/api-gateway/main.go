@@ -228,6 +228,13 @@ func main() {
 	srv.Handle("/v1/turnovers", simProxy)
 	srv.Handle("/v1/turnovers/{rest...}", simProxy)
 
+	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital → simulation-engine
+	srv.Handle("/v1/capital-components", simProxy)
+	srv.Handle("/v1/capital-components/{rest...}", simProxy)
+	srv.Handle("/v1/fixed-items", simProxy)
+	srv.Handle("/v1/fixed-items/{rest...}", simProxy)
+	srv.Handle("/v1/circulating-cycles", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III

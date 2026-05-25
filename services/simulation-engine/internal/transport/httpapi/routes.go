@@ -146,4 +146,17 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/colonial-markets/{id}", h.GetColonialMarket)
 	s.HandleFunc("POST /v1/colonial-markets/{id}/regulate", h.RegulateColonialMarket)
 	s.HandleFunc("POST /v1/colonial-markets/{id}/independence", h.ComputeIndependence)
+
+	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
+	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
+	s.HandleFunc("GET /v1/capital-components", h.ListComponents)
+	s.HandleFunc("GET /v1/capital-components/{id}", h.GetComponent)
+	s.HandleFunc("POST /v1/fixed-items", h.RegisterFixedItem)
+	s.HandleFunc("GET /v1/fixed-items/{id}", h.GetFixedItem)
+	s.HandleFunc("POST /v1/fixed-items/{id}/subcomponents", h.RecordSubcomponent)
+	s.HandleFunc("POST /v1/fixed-items/{id}/wear", h.RecordWear)
+	s.HandleFunc("GET /v1/fixed-items/{id}/sinking-fund", h.GetSinkingFund)
+	s.HandleFunc("POST /v1/fixed-items/{id}/repairs", h.RecordRepair)
+	s.HandleFunc("POST /v1/fixed-items/{id}/reinvestments", h.RecordReinvestment)
+	s.HandleFunc("POST /v1/circulating-cycles", h.RecordCirculatingCycle)
 }

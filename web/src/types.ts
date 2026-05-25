@@ -2189,3 +2189,87 @@ export interface TurnoverNumber {
   turnover_time_minutes: number;
   basis_points: number;
 }
+
+// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
+
+export type CapitalKind = "fixed" | "circulating";
+export type RoleInProcess =
+  | "instrument_of_labour"
+  | "raw_material"
+  | "auxiliary_material"
+  | "labour_power";
+export type WearCause = "use" | "atmospheric" | "moral_depreciation";
+export type WearModel = "linear" | "quadratic";
+export type RepairKind = "running" | "large";
+export type ReinvestmentKind = "intensive" | "extensive";
+
+export interface CapitalComponent {
+  id: string;
+  industrial_capital_id: string;
+  kind: CapitalKind;
+  role: RoleInProcess;
+  pence: number;
+  entered_at: string;
+}
+
+export interface FixedCapitalItem {
+  id: string;
+  capital_component_id: string;
+  description: string;
+  pence_purchased: number;
+  service_life_minutes: number;
+  wear_model: WearModel;
+  purchased_at: string;
+  retired_at?: string;
+}
+
+export interface FixedCapitalSubcomponent {
+  id: string;
+  fixed_capital_item_id: string;
+  name: string;
+  pence: number;
+  service_life_minutes: number;
+  wear_model: WearModel;
+  last_replaced_at: string;
+}
+
+export interface WearAndTear {
+  id: string;
+  fixed_capital_item_id: string;
+  pence: number;
+  period_covered_minutes: number;
+  calculated_at: string;
+  cause: WearCause;
+}
+
+export interface SinkingFundForItem {
+  id: string;
+  fixed_capital_item_id: string;
+  accumulated_pence: number;
+  target_pence: number;
+}
+
+export interface Repair {
+  id: string;
+  fixed_capital_item_id: string;
+  kind: RepairKind;
+  pence: number;
+  occurred_at: string;
+  service_life_extension_minutes: number;
+}
+
+export interface CirculatingCycle {
+  id: string;
+  capital_component_id: string;
+  started_at: string;
+  ended_at: string;
+  pence: number;
+}
+
+export interface SinkingFundReinvestment {
+  id: string;
+  fixed_capital_item_id: string;
+  pence: number;
+  kind: ReinvestmentKind;
+  occurred_at: string;
+}

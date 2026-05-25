@@ -39,6 +39,7 @@ type Handler struct {
 	MoneyCircuits      store.MoneyCircuitStore
 	IndustrialCapitals store.IndustrialCapitalStore
 	Turnovers          store.TurnoverStore
+	Composition        store.CompositionStore
 }
 
 // Deps is the dependency bag passed to New. Each field maps to the
@@ -68,6 +69,7 @@ type Deps struct {
 	MoneyCircuits      store.MoneyCircuitStore
 	IndustrialCapitals store.IndustrialCapitalStore
 	Turnovers          store.TurnoverStore
+	Composition        store.CompositionStore
 }
 
 func New(logger *slog.Logger, d Deps) *Handler {
@@ -97,6 +99,7 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		MoneyCircuits:      d.MoneyCircuits,
 		IndustrialCapitals: d.IndustrialCapitals,
 		Turnovers:          d.Turnovers,
+		Composition:        d.Composition,
 	}
 }
 
