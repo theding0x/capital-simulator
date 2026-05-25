@@ -1,4 +1,10 @@
 import type {
+  MoneyCircuit,
+  CreateMoneyCircuitInput,
+  ProductiveState,
+  MoneyCircuitCommodityCapital,
+  Realisation,
+  CircuitMoment,
   ExtendedReproductionInput,
   ExtendedReproductionResult,
   RepaymentPeriodInput,
@@ -1069,5 +1075,67 @@ export const commodityCircuitApi = {
     http<CommodityCircuit>(`/v1/commodity-circuits/${id}/close`, {
       method: "POST",
       body: JSON.stringify(terminal),
+    }),
+};
+
+// Vol. II Ch. 1 — The Circuit of Money-Capital
+export const moneyCircuitApi = {
+  list: (agentId?: string, moment?: CircuitMoment) => {
+    const qs = new URLSearchParams();
+    if (agentId) qs.set("agent_id", agentId);
+    if (moment) qs.set("moment", moment);
+    const q = qs.toString();
+    return http<MoneyCircuit[]>(`/v1/money-circuits${q ? `?${q}` : ""}`);
+  },
+
+  create: (input: CreateMoneyCircuitInput) =>
+    http<MoneyCircuit>("/v1/money-circuits", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  get: (id: string) => http<MoneyCircuit>(`/v1/money-circuits/${id}`),
+
+  recordPurchase: (
+    id: string,
+    legs: {
+      labour_amount: number;
+      labour_power_hours: number;
+      means_amount: number;
+      means_capacity_hours: number;
+    }
+  ) =>
+    http<MoneyCircuit>(`/v1/money-circuits/${id}/purchase`, {
+      method: "POST",
+      body: JSON.stringify(legs),
+    }),
+
+  recordProduce: (
+    id: string,
+    state: Pick<ProductiveState, "constant_pence" | "variable_pence"> & { entered_at?: string }
+  ) =>
+    http<MoneyCircuit>(`/v1/money-circuits/${id}/produce`, {
+      method: "POST",
+      body: JSON.stringify(state),
+    }),
+
+  recordCommodity: (
+    id: string,
+    cc: Pick<MoneyCircuitCommodityCapital, "value_original" | "value_surplus"> & {
+      commodity_id?: string;
+    }
+  ) =>
+    http<MoneyCircuit>(`/v1/money-circuits/${id}/commodity`, {
+      method: "POST",
+      body: JSON.stringify(cc),
+    }),
+
+  recordRealise: (
+    id: string,
+    rl: Pick<Realisation, "realised_pence"> & { sold_at?: string }
+  ) =>
+    http<MoneyCircuit>(`/v1/money-circuits/${id}/realise`, {
+      method: "POST",
+      body: JSON.stringify(rl),
     }),
 };

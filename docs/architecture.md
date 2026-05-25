@@ -482,13 +482,25 @@ Marx's Part VII ("The Accumulation of Capital") covers Ch. 23–25 as a single c
 - **HTTP endpoints.** `POST /v1/commodity-circuits` (201 + Location), `GET /v1/commodity-circuits` (200 list, `[]` not null), `GET /v1/commodity-circuits/aggregate` (200 social-capital totals), `GET /v1/commodity-circuits/{id}` (200/404), `POST /v1/commodity-circuits/{id}/partial-sales` (201 — server computes aliquot decomposition), `POST /v1/commodity-circuits/{id}/mp-source` (201), `POST /v1/commodity-circuits/{id}/close` (200 with `is_extended` flag). api-gateway proxies `/v1/commodity-circuits` and `/v1/commodity-circuits/{rest...}` to simulation-engine.
 - **React UI.** "Vol. II Ch. 3 — The Circuit of Commodity-Capital" panel: circuit diagram C′—M′—C(Lp+Mp)…P…C′, social-capital aggregate card, circuit list + create form (c/v/s pence, pounds total, mode), detail panel with opening C′ balance sheet, successive-partial-sales table (qty / realised / c-share / v-share / s-share), MP-source linker, and terminal C′ card (colour-coded simple vs extended).
 
+### Vol. II Ch. 1 — what was built
+
+`simulation-engine` models the circuit of money-capital from Capital Vol. II, Ch. 1:
+
+- **Domain.** `circulation.MoneyCircuit` — the full M—C(Lp+Mp)…P…C′—M′ circuit as a state-machine with six moments (`M`, `M-C`, `P`, `C-prime`, `C-M-prime`, `M-prime`). Sub-structs: `MoneyAdvance` (M), `PurchasePhase` (M—C, with `LabourLeg` and `MeansLeg`), `ProductiveState` (P, c+v decomposition), `CommodityCapital` (C′, original + surplus), `Realisation` (M′, realised pence + surplus realised). Invariant enforcement: phase-order transitions, labour+means total must equal advance (within tolerance), magnitude-preservation check on realisation.
+
+- **Store.** `MoneyCircuitStore` interface with `CreateMoneyCircuit`, `GetMoneyCircuit`, `ListMoneyCircuits` (agent\_id + moment filters), `RecordPurchase`, `RecordProductive`, `RecordCommodity`, `RecordRealisation`. Memory and MySQL implementations. Migrations `00031_v2_ch01_money_circuits.sql` and `00032_v2_ch01_seed.sql`: SpinningMill1871 at 156% rate (advance=£422) and 100% rate (advance=£436).
+
+- **HTTP API.** `POST /v1/money-circuits`, `GET /v1/money-circuits`, `GET /v1/money-circuits/{id}`, `POST /v1/money-circuits/{id}/purchase`, `POST /v1/money-circuits/{id}/produce`, `POST /v1/money-circuits/{id}/commodity`, `POST /v1/money-circuits/{id}/realise`. Validation errors map to 400; `ErrNotFound` maps to 404.
+
+- **React UI.** "Vol. II Ch. 1 — The Circuit of Money-Capital" panel: animated circuit diagram (active node highlighted per current moment), circuit list + create form (advance pence, optional agent ID), detail panel with moment-progress chips, balance sheet (M → C decomposition → P → C′ → M′/ΔM), and step-by-step phase forms (each form appears only when the circuit is at the preceding moment).
+
 ### Volume II Roadmap — The Process of Circulation of Capital
 
 Spec sweep pending; titles below are drawn from the vault filenames and will be refined as each chapter spec is authored at `marx-engels/1885/capital-volume-ii/specs/`. Primary-service column is a planning guess.
 
 | Chapter   | Status      | Concepts                                                                                          | Primary services                  |
 |-----------|-------------|---------------------------------------------------------------------------------------------------|-----------------------------------|
-| Ch. 1     | In progress | The Circuit of Money-Capital — M—C…P…C'—M' as the money-form of the circuit                       | simulation-engine                 |
+| Ch. 1     | ✅ Done     | The Circuit of Money-Capital — M—C…P…C'—M' as the money-form of the circuit                       | simulation-engine                 |
 | Ch. 2     | ✅ Done     | The Circuit of Productive Capital — P…C'—M'—C…P as the production-form of the circuit             | simulation-engine                 |
 | Ch. 3     | ✅ Done     | The Circuit of Commodity-Capital — C'—M'—C…P…C' as the commodity-form of the circuit              | simulation-engine                 |
 | Ch. 4     | ⏳ Pending  | The Three Formulas of the Circuit — interruption, continuity, the unity of all three forms        | simulation-engine                 |

@@ -185,3 +185,16 @@ type CommodityCircuitStore interface {
 	LinkMPSource(ctx context.Context, id circulation.CommodityCircuitID, source circulation.MeansOfProductionSource) (circulation.MeansOfProductionSource, error)
 	CloseCommodityCircuit(ctx context.Context, id circulation.CommodityCircuitID, aug circulation.CommodityAugmented) (circulation.CommodityCircuit, error)
 }
+
+// MoneyCircuitStore is the persistence contract for Vol. II Ch. 1
+// money-circuit records. Each phase (M—C, P, C′, C′—M′) is recorded
+// sequentially; the store enforces the linear phase-transition invariant.
+type MoneyCircuitStore interface {
+	CreateMoneyCircuit(ctx context.Context, mc circulation.MoneyCircuit) (circulation.MoneyCircuit, error)
+	GetMoneyCircuit(ctx context.Context, id circulation.MoneyCircuitID) (circulation.MoneyCircuit, error)
+	ListMoneyCircuits(ctx context.Context, agentID string, moment circulation.CircuitMoment) ([]circulation.MoneyCircuit, error)
+	RecordPurchase(ctx context.Context, id circulation.MoneyCircuitID, p circulation.PurchasePhase) (circulation.MoneyCircuit, error)
+	RecordProductive(ctx context.Context, id circulation.MoneyCircuitID, ps circulation.ProductiveState) (circulation.MoneyCircuit, error)
+	RecordCommodity(ctx context.Context, id circulation.MoneyCircuitID, cc circulation.CommodityCapital) (circulation.MoneyCircuit, error)
+	RecordRealisation(ctx context.Context, id circulation.MoneyCircuitID, r circulation.Realisation) (circulation.MoneyCircuit, error)
+}

@@ -1786,3 +1786,70 @@ export interface CommodityCircuitAggregate {
   total_initial_pence: number;
   total_terminal_pence: number;
 }
+
+// Vol. II Ch. 1 — The Circuit of Money-Capital (M—C(Lp+Mp)…P…C'—M')
+
+export type CircuitMoment = "M" | "M-C" | "P" | "C-prime" | "C-M-prime" | "M-prime";
+
+export interface MoneyAdvance {
+  amount: number;       // Pence
+  agent_id?: string;
+  advanced_at: string;  // RFC3339
+}
+
+export interface LabourLeg {
+  amount: number;           // Pence
+  labour_power_hours: number;
+}
+
+export interface MeansLeg {
+  amount: number;             // Pence
+  means_capacity_hours: number;
+}
+
+export interface PurchasePhase {
+  money_circuit_id: string;
+  labour_leg: LabourLeg;
+  means_leg: MeansLeg;
+  total: number; // Pence
+}
+
+export interface ProductiveState {
+  money_circuit_id: string;
+  entered_at: string;    // RFC3339
+  constant_pence: number;
+  variable_pence: number;
+  total_advance: number; // Pence
+}
+
+export interface MoneyCircuitCommodityCapital {
+  money_circuit_id: string;
+  commodity_id?: string;
+  value_original: number; // Pence
+  value_surplus: number;  // Pence
+  total: number;          // Pence
+}
+
+export interface Realisation {
+  money_circuit_id: string;
+  sold_at: string;          // RFC3339
+  realised_pence: number;
+  surplus_realised: number; // Pence
+}
+
+export interface MoneyCircuit {
+  id: string;
+  advance: MoneyAdvance;
+  moment: CircuitMoment;
+  purchase?: PurchasePhase;
+  productive?: ProductiveState;
+  commodity?: MoneyCircuitCommodityCapital;
+  realisation?: Realisation;
+  created_at: string; // RFC3339
+}
+
+export interface CreateMoneyCircuitInput {
+  amount: number;        // Pence
+  agent_id?: string;
+  advanced_at?: string;  // RFC3339 — omit to use server time
+}

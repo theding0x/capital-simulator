@@ -3,6 +3,15 @@ package httpapi
 import "github.com/theding0x/capital-simulator/pkg/httpx"
 
 func Register(s *httpx.Server, h *Handler) {
+	// Vol. II Ch. 1 — The Circuit of Money-Capital
+	s.HandleFunc("POST /v1/money-circuits", h.CreateMoneyCircuit)
+	s.HandleFunc("GET /v1/money-circuits", h.ListMoneyCircuits)
+	s.HandleFunc("GET /v1/money-circuits/{id}", h.GetMoneyCircuit)
+	s.HandleFunc("POST /v1/money-circuits/{id}/purchase", h.RecordMoneyPurchase)
+	s.HandleFunc("POST /v1/money-circuits/{id}/produce", h.RecordMoneyProduce)
+	s.HandleFunc("POST /v1/money-circuits/{id}/commodity", h.RecordMoneyCommodity)
+	s.HandleFunc("POST /v1/money-circuits/{id}/realise", h.RecordMoneyRealise)
+
 	// Vol. II Ch. 3 — The Circuit of Commodity-Capital
 	s.HandleFunc("POST /v1/commodity-circuits", h.CreateCommodityCircuit)
 	s.HandleFunc("GET /v1/commodity-circuits", h.ListCommodityCircuits)

@@ -34,6 +34,7 @@ import { Ch30HomeMarket } from "../chapters/vol1/Ch30HomeMarket";
 import { Ch31IndustrialCapitalist } from "../chapters/vol1/Ch31IndustrialCapitalist";
 import { Ch32HistoricalTendency } from "../chapters/vol1/Ch32HistoricalTendency";
 import { Ch33ModernColonisation } from "../chapters/vol1/Ch33ModernColonisation";
+import { Ch01CircuitMoneyCapital } from "../chapters/vol2/Ch01CircuitMoneyCapital";
 import { Ch02CircuitProductiveCapital } from "../chapters/vol2/Ch02CircuitProductiveCapital";
 import { Ch03CircuitCommodityCapital } from "../chapters/vol2/Ch03CircuitCommodityCapital";
 
@@ -88,6 +89,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v1-ch31": Ch31IndustrialCapitalist as AnyPanel,
   "v1-ch32": Ch32HistoricalTendency as AnyPanel,
   "v1-ch33": Ch33ModernColonisation as AnyPanel,
+  "v2-ch01": Ch01CircuitMoneyCapital as AnyPanel,
   "v2-ch02": Ch02CircuitProductiveCapital as AnyPanel,
   "v2-ch03": Ch03CircuitCommodityCapital as AnyPanel,
 };
@@ -126,6 +128,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v1-ch31": "The discovery of gold and silver in America, the extirpation, enslavement and entombment in mines of the aboriginal population, the beginning of the conquest and looting of the East Indies, the turning of Africa into a warren for the commercial hunting of black-skins, signalised the rosy dawn of the era of capitalist production.",
   "v1-ch32": "The knell of capitalist private property sounds. The expropriators are expropriated.",
   "v1-ch33": "Capital is not a thing, but a social relation between persons, established by the instrumentality of things.",
+  "v2-ch01": "The circuit of money-capital ... M—C(Lp+Mp)…P…C′—M′. The starting point and termination of its motion is the money-form of capital.",
   "v2-ch02": "The circuit of productive capital ... begins with the act of production and ends with the same act.",
   "v2-ch03": "C′—M′—C(Lp+Mp)…P…C′. The starting-point and the finishing-point of the circuit is commodity-capital, or C′, i.e., capital-value plus surplus-value.",
 };
