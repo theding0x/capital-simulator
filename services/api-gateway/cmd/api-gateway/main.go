@@ -65,6 +65,17 @@ func main() {
 	srv.Handle("/v1/perishability", marketProxy)
 	srv.Handle("/v1/market-separation", marketProxy)
 
+	// Vol. II Ch. 6 — Costs of Circulation → market-service
+	srv.Handle("/v1/circulation-costs", marketProxy)
+	srv.Handle("/v1/circulation-costs/{rest...}", marketProxy)
+	srv.Handle("/v1/circulation-agents", marketProxy)
+	srv.Handle("/v1/money-as-faux-frais", marketProxy)
+	srv.Handle("/v1/commodity-supplies", marketProxy)
+	srv.Handle("/v1/commodity-supplies/{rest...}", marketProxy)
+	srv.Handle("/v1/transport-tariffs", marketProxy)
+	srv.Handle("/v1/transport-legs", marketProxy)
+	srv.Handle("/v1/transport-legs/{rest...}", marketProxy)
+
 	// Reverse-proxy routes to agent-service.
 	agentURL := getenv("AGENT_SERVICE_URL", "http://agent-service:8082")
 	agentProxy, err := proxy.New(agentURL, logger)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/theding0x/capital-simulator/services/market-service/internal/circulation"
+	"github.com/theding0x/capital-simulator/services/market-service/internal/costs"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/market"
 )
 
@@ -33,6 +34,15 @@ type Memory struct {
 	openSellingPhase map[circulation.TurnoverTimeID]circulation.SellingPhaseID
 	// openBuyingPhase tracks the currently open buying phase per TurnoverTimeID.
 	openBuyingPhase map[circulation.TurnoverTimeID]circulation.BuyingPhaseID
+
+	// Vol. II Ch. 6 — costs of circulation.
+	circulationCosts    map[costs.CirculationCostID]costs.CirculationCost
+	circulationAgents   map[costs.CirculationAgentID]costs.CirculationAgent
+	moneyAsFauxFrais    map[costs.MoneyAsFauxFraisID]costs.MoneyAsFauxFrais
+	commoditySupplies   map[costs.CommoditySupplyID]costs.CommoditySupply
+	storageCosts        map[costs.StorageCostID]costs.StorageCost
+	transportTariffs    map[costs.CommodityID]costs.TransportTariff
+	transportLegs       map[costs.TransportLegID]costs.TransportLeg
 }
 
 // NewMemory returns an empty in-memory store.
@@ -52,6 +62,14 @@ func NewMemory() *Memory {
 		openSellingPhase:    make(map[circulation.TurnoverTimeID]circulation.SellingPhaseID),
 		openBuyingPhase:     make(map[circulation.TurnoverTimeID]circulation.BuyingPhaseID),
 		now:                 time.Now,
+		// Vol. II Ch. 6
+		circulationCosts:  make(map[costs.CirculationCostID]costs.CirculationCost),
+		circulationAgents: make(map[costs.CirculationAgentID]costs.CirculationAgent),
+		moneyAsFauxFrais:  make(map[costs.MoneyAsFauxFraisID]costs.MoneyAsFauxFrais),
+		commoditySupplies: make(map[costs.CommoditySupplyID]costs.CommoditySupply),
+		storageCosts:      make(map[costs.StorageCostID]costs.StorageCost),
+		transportTariffs:  make(map[costs.CommodityID]costs.TransportTariff),
+		transportLegs:     make(map[costs.TransportLegID]costs.TransportLeg),
 	}
 }
 
@@ -496,4 +514,233 @@ func (m *Memory) SetMarketSeparation(_ context.Context, ms circulation.MarketSep
 	}
 	m.marketSeparations[ms.IndustrialCapitalID] = ms
 	return ms, nil
+}
+
+// --- Vol. II Ch. 6 — CirculationCostStore -----------------------------------
+
+func (m *Memory) CreateCirculationCost(_ context.Context, c costs.CirculationCost) (costs.CirculationCost, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if c.ID == "" {
+		c.ID = costs.NewCirculationCostID()
+	}
+	if c.IncurredAt.IsZero() {
+		c.IncurredAt = m.now()
+	}
+	c.Nature = costs.NatureOf(c.Kind)
+	m.circulationCosts[c.ID] = c
+	return c, nil
+}
+
+func (m *Memory) GetCirculationCost(_ context.Context, id costs.CirculationCostID) (costs.CirculationCost, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	c, ok := m.circulationCosts[id]
+	if !ok {
+		return costs.CirculationCost{}, ErrNotFound
+	}
+	return c, nil
+}
+
+func (m *Memory) ListCirculationCosts(_ context.Context, icID costs.IndustrialCapitalID, kind costs.CirculationCostKind, nature costs.CostNature) ([]costs.CirculationCost, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []costs.CirculationCost
+	for _, c := range m.circulationCosts {
+		if icID != "" && c.IndustrialCapitalID != icID {
+			continue
+		}
+		if kind != "" && c.Kind != kind {
+			continue
+		}
+		if nature != "" && c.Nature != nature {
+			continue
+		}
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].IncurredAt.Before(out[j].IncurredAt) })
+	return out, nil
+}
+
+func (m *Memory) CreateCirculationAgent(_ context.Context, a costs.CirculationAgent) (costs.CirculationAgent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if a.ID == "" {
+		a.ID = costs.NewCirculationAgentID()
+	}
+	m.circulationAgents[a.ID] = a
+	return a, nil
+}
+
+func (m *Memory) ListCirculationAgents(_ context.Context, icID costs.IndustrialCapitalID) ([]costs.CirculationAgent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []costs.CirculationAgent
+	for _, a := range m.circulationAgents {
+		if icID != "" && a.IndustrialCapitalID != icID {
+			continue
+		}
+		out = append(out, a)
+	}
+	return out, nil
+}
+
+func (m *Memory) CreateMoneyAsFauxFrais(_ context.Context, mf costs.MoneyAsFauxFrais) (costs.MoneyAsFauxFrais, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if mf.ID == "" {
+		mf.ID = costs.NewMoneyAsFauxFraisID()
+	}
+	m.moneyAsFauxFrais[mf.ID] = mf
+	return mf, nil
+}
+
+func (m *Memory) ListMoneyAsFauxFrais(_ context.Context) ([]costs.MoneyAsFauxFrais, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]costs.MoneyAsFauxFrais, 0, len(m.moneyAsFauxFrais))
+	for _, mf := range m.moneyAsFauxFrais {
+		out = append(out, mf)
+	}
+	return out, nil
+}
+
+func (m *Memory) CreateCommoditySupply(_ context.Context, s costs.CommoditySupply) (costs.CommoditySupply, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if s.ID == "" {
+		s.ID = costs.NewCommoditySupplyID()
+	}
+	if s.HeldSince.IsZero() {
+		s.HeldSince = m.now()
+	}
+	m.commoditySupplies[s.ID] = s
+	return s, nil
+}
+
+func (m *Memory) GetCommoditySupply(_ context.Context, id costs.CommoditySupplyID) (costs.CommoditySupply, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	s, ok := m.commoditySupplies[id]
+	if !ok {
+		return costs.CommoditySupply{}, ErrNotFound
+	}
+	return s, nil
+}
+
+func (m *Memory) ListCommoditySupplies(_ context.Context, icID costs.IndustrialCapitalID) ([]costs.CommoditySupply, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []costs.CommoditySupply
+	for _, s := range m.commoditySupplies {
+		if icID != "" && s.IndustrialCapitalID != icID {
+			continue
+		}
+		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].HeldSince.Before(out[j].HeldSince) })
+	return out, nil
+}
+
+func (m *Memory) CreateStorageCost(_ context.Context, sc costs.StorageCost) (costs.StorageCost, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if sc.ID == "" {
+		sc.ID = costs.NewStorageCostID()
+	}
+	m.storageCosts[sc.ID] = sc
+	return sc, nil
+}
+
+func (m *Memory) ListStorageCosts(_ context.Context, supplyID costs.CommoditySupplyID) ([]costs.StorageCost, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []costs.StorageCost
+	for _, sc := range m.storageCosts {
+		if sc.CommoditySupplyID == supplyID {
+			out = append(out, sc)
+		}
+	}
+	return out, nil
+}
+
+func (m *Memory) SetTransportTariff(_ context.Context, t costs.TransportTariff) (costs.TransportTariff, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if t.ID == "" {
+		t.ID = costs.NewTransportTariffID()
+	}
+	m.transportTariffs[t.CommodityID] = t
+	return t, nil
+}
+
+func (m *Memory) GetTransportTariff(_ context.Context, commodityID costs.CommodityID) (costs.TransportTariff, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	t, ok := m.transportTariffs[commodityID]
+	if !ok {
+		return costs.TransportTariff{}, ErrNotFound
+	}
+	return t, nil
+}
+
+func (m *Memory) CreateTransportLeg(_ context.Context, leg costs.TransportLeg) (costs.TransportLeg, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if leg.ID == "" {
+		leg.ID = costs.NewTransportLegID()
+	}
+	m.transportLegs[leg.ID] = leg
+	return leg, nil
+}
+
+func (m *Memory) ListTransportLegs(_ context.Context, commodityID costs.CommodityID) ([]costs.TransportLeg, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []costs.TransportLeg
+	for _, leg := range m.transportLegs {
+		if commodityID != "" && leg.CommodityID != commodityID {
+			continue
+		}
+		out = append(out, leg)
+	}
+	return out, nil
+}
+
+func (m *Memory) AggregateForCapital(_ context.Context, icID costs.IndustrialCapitalID, period string) (costs.AggregateResult, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	res := costs.AggregateResult{
+		IndustrialCapitalID: icID,
+		Period:              period,
+		Items:               []costs.CirculationCost{},
+	}
+	for _, c := range m.circulationCosts {
+		if c.IndustrialCapitalID != icID {
+			continue
+		}
+		res.Items = append(res.Items, c)
+		if c.Nature == costs.NatureValueAdding {
+			res.TotalTransportPence += c.Pence
+		} else {
+			res.TotalFauxFraisPence += c.Pence
+		}
+	}
+	sort.Slice(res.Items, func(i, j int) bool { return res.Items[i].IncurredAt.Before(res.Items[j].IncurredAt) })
+	return res, nil
+}
+
+func (m *Memory) SystemFauxFrais(_ context.Context, period string) (costs.SystemFauxFraisResult, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	res := costs.SystemFauxFraisResult{
+		Period: period,
+		Items:  []costs.MoneyAsFauxFrais{},
+	}
+	for _, mf := range m.moneyAsFauxFrais {
+		res.Items = append(res.Items, mf)
+		res.TotalReservePence += mf.Pence
+		res.TotalAnnualReplacementPence += mf.AnnualReplacementPence
+	}
+	return res, nil
 }

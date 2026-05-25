@@ -2055,3 +2055,107 @@ export interface SinkingFund {
   annual_payment_pence: number;
   accumulated_pence: number;
 }
+
+// Vol. II Ch. 6 — Costs of Circulation
+
+export type CirculationCostKind =
+  | "purchase_sale_time"
+  | "book_keeping"
+  | "money_as_faux_frais"
+  | "supply_formation"
+  | "commodity_supply"
+  | "transportation";
+
+export type CostNature = "value_preserving" | "value_adding";
+
+export interface CirculationCost {
+  id: string;
+  industrial_capital_id: string;
+  kind: CirculationCostKind;
+  nature: CostNature;
+  pence: number;
+  incurred_at: string;
+}
+
+export interface CirculationCostList {
+  items: CirculationCost[];
+}
+
+export interface CirculationAgent {
+  id: string;
+  industrial_capital_id: string;
+  agent_id: string;
+  role: string;
+  wage_rate_pence: number;
+  labour_minutes_necessary: number;
+  labour_minutes_surplus: number;
+}
+
+export interface MoneyAsFauxFrais {
+  id: string;
+  industrial_capital_id: string;
+  pence: number;
+  annual_replacement_pence: number;
+}
+
+export interface StorageCost {
+  id: string;
+  commodity_supply_id: string;
+  building_pence: number;
+  labour_pence: number;
+  preservation_labour_pence: number;
+}
+
+export interface CommoditySupply {
+  id: string;
+  industrial_capital_id: string;
+  commodity_id: string;
+  pence: number;
+  held_since: string;
+  is_voluntary: boolean;
+  storage_costs: StorageCost[];
+}
+
+export interface TransportTariff {
+  id: string;
+  commodity_id: string;
+  base_pence_per_ton_mile: number;
+  fragility_multiplier_basis_points: number;
+  breakage_risk_multiplier_basis_points: number;
+}
+
+export interface TransportLeg {
+  id: string;
+  commodity_id: string;
+  quantity: number;
+  origin_id: string;
+  destination_id: string;
+  distance_meters: number;
+  weight_grams: number;
+  volume_cubic_millimeters: number;
+  labour_cost_pence: number;
+  means_of_transport_pence: number;
+  surplus_pence: number;
+}
+
+export interface AggregateCirculationCostsResult {
+  industrial_capital_id: string;
+  period: string;
+  value_preserving_pence: number;
+  value_adding_pence: number;
+  total_pence: number;
+}
+
+export interface SystemFauxFraisItem {
+  id: string;
+  industrial_capital_id: string;
+  pence: number;
+  annual_replacement_pence: number;
+}
+
+export interface SystemFauxFraisResult {
+  period: string;
+  items: SystemFauxFraisItem[];
+  total_pence: number;
+  total_annual_replacement_pence: number;
+}

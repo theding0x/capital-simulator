@@ -39,6 +39,7 @@ import { Ch02CircuitProductiveCapital } from "../chapters/vol2/Ch02CircuitProduc
 import { Ch03CircuitCommodityCapital } from "../chapters/vol2/Ch03CircuitCommodityCapital";
 import { Ch04ThreeFormulas } from "../chapters/vol2/Ch04ThreeFormulas";
 import { Ch05TimeOfCirculation } from "../chapters/vol2/Ch05TimeOfCirculation";
+import { Ch06CostsOfCirculation } from "../chapters/vol2/Ch06CostsOfCirculation";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -96,6 +97,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v2-ch03": Ch03CircuitCommodityCapital as AnyPanel,
   "v2-ch04": Ch04ThreeFormulas as AnyPanel,
   "v2-ch05": Ch05TimeOfCirculation as AnyPanel,
+  "v2-ch06": Ch06CostsOfCirculation as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -137,6 +139,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v2-ch03": "C′—M′—C(Lp+Mp)…P…C′. The starting-point and the finishing-point of the circuit is commodity-capital, or C′, i.e., capital-value plus surplus-value.",
   "v2-ch04": "The circuit of industrial capital … encompasses within its cycle all three circuits … by the side of one another, i.e., simultaneously.",
   "v2-ch05": "The time of circulation of capital limits its time of production and hence the creation of surplus-value.",
+  "v2-ch06": "The costs of circulation which we are considering here are not costs out of which surplus-value grows, but costs which limit it, pure deductions from surplus-value.",
 };
 
 export function ChapterShell({
