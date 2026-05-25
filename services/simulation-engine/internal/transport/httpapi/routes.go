@@ -21,6 +21,14 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/commodity-circuits/{id}/mp-source", h.LinkCommodityMPSource)
 	s.HandleFunc("POST /v1/commodity-circuits/{id}/close", h.CloseCommodityCircuit)
 
+	// Vol. II Ch. 7 — The Turnover Time and the Number of Turnovers
+	s.HandleFunc("POST /v1/turnovers", h.CreateTurnover)
+	s.HandleFunc("GET /v1/turnovers", h.ListTurnovers)
+	s.HandleFunc("GET /v1/turnovers/{id}", h.GetTurnover)
+	s.HandleFunc("POST /v1/turnovers/{id}/cycles", h.RecordCycle)
+	s.HandleFunc("POST /v1/turnovers/{id}/recompute-number", h.RecomputeNumber)
+	s.HandleFunc("GET /v1/turnovers/{id}/number", h.GetNumber)
+
 	// Vol. II Ch. 4 — The Three Formulas of the Circuit
 	s.HandleFunc("POST /v1/industrial-capitals", h.CreateIndustrialCapital)
 	s.HandleFunc("GET /v1/industrial-capitals", h.ListIndustrialCapitals)

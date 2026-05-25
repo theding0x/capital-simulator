@@ -2159,3 +2159,33 @@ export interface SystemFauxFraisResult {
   total_pence: number;
   total_annual_replacement_pence: number;
 }
+
+// Vol. II Ch. 7 — The Turnover Time and the Number of Turnovers
+export type CircuitLens = "money" | "productive";
+
+export interface Turnover {
+  id: string;
+  industrial_capital_id: string;
+  lens: CircuitLens;
+  turnover_time_minutes: number;
+  cycles: string[];
+}
+
+export interface TurnoverCycle {
+  id: string;
+  turnover_id: string;
+  started_at: string;
+  ended_at: string;
+  advance_pence: number;
+  returned_pence: number;
+  production_minutes: number;
+  circulation_minutes: number;
+}
+
+export interface TurnoverNumber {
+  id: string;
+  turnover_id: string;
+  year_reference_minutes: number;
+  turnover_time_minutes: number;
+  basis_points: number;
+}

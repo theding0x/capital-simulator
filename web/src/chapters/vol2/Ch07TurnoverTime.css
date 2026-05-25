@@ -1,0 +1,54 @@
+.ch07-turnover {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.ch07-fixtures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.ch07-fixture-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.ch07-fixture-card h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ch07-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+}
+
+.ch07-stat:last-child {
+  border-bottom: none;
+}
+
+.ch07-stat-label {
+  color: var(--text-secondary);
+}
+
+.ch07-stat-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ch07-number-highlight {
+  color: var(--accent);
+}

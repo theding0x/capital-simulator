@@ -11,6 +11,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
+	tv "github.com/theding0x/capital-simulator/services/simulation-engine/internal/turnover"
 )
 
 // Memory is the in-memory implementation of all store interfaces.
@@ -45,6 +46,9 @@ type Memory struct {
 	interlocks          map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock
 	supplyDemand        map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance
 	sinkingFunds        map[circulation.IndustrialCapitalID]circulation.SinkingFund
+	turnovers           map[tv.TurnoverID]tv.Turnover
+	turnoverCycles      map[tv.TurnoverID][]tv.TurnoverCycle
+	turnoverNumbers     map[tv.TurnoverID]tv.TurnoverNumber
 	now                 func() time.Time
 }
 
@@ -70,6 +74,9 @@ func NewMemory() *Memory {
 		interlocks:         make(map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock),
 		supplyDemand:       make(map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance),
 		sinkingFunds:       make(map[circulation.IndustrialCapitalID]circulation.SinkingFund),
+		turnovers:          make(map[tv.TurnoverID]tv.Turnover),
+		turnoverCycles:     make(map[tv.TurnoverID][]tv.TurnoverCycle),
+		turnoverNumbers:    make(map[tv.TurnoverID]tv.TurnoverNumber),
 		now:                time.Now,
 	}
 }
