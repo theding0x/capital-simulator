@@ -34,10 +34,18 @@ type Memory struct {
 	trajectories       map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory
 	colonialMarkets    map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket
 	colonyNames        map[string]simulation.ColonialLabourMarketID
-	productiveCircuits map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit
-	commodityCircuits  map[circulation.CommodityCircuitID]circulation.CommodityCircuit
-	moneyCircuits      map[circulation.MoneyCircuitID]circulation.MoneyCircuit
-	now                func() time.Time
+	productiveCircuits  map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit
+	commodityCircuits   map[circulation.CommodityCircuitID]circulation.CommodityCircuit
+	moneyCircuits       map[circulation.MoneyCircuitID]circulation.MoneyCircuit
+	industrialCapitals  map[circulation.IndustrialCapitalID]circulation.IndustrialCapital
+	capitalParts        map[circulation.IndustrialCapitalID][]circulation.CapitalPart
+	stageDistributions  map[circulation.IndustrialCapitalID][]circulation.StageDistribution
+	stageBlocks         map[circulation.IndustrialCapitalID][]circulation.StageBlock
+	valueRevolutions    map[circulation.IndustrialCapitalID][]circulation.ValueRevolutionResult
+	interlocks          map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock
+	supplyDemand        map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance
+	sinkingFunds        map[circulation.IndustrialCapitalID]circulation.SinkingFund
+	now                 func() time.Time
 }
 
 func NewMemory() *Memory {
@@ -1073,4 +1081,250 @@ func (m *Memory) RecordRealisation(_ context.Context, id circulation.MoneyCircui
 	mc.Moment = circulation.MomentMPrime
 	m.moneyCircuits[id] = mc
 	return mc, nil
+}
+
+// --- IndustrialCapitalStore (Vol. II Ch. 4) ---------------------------------
+
+func (m *Memory) CreateIndustrialCapital(_ context.Context, ic circulation.IndustrialCapital) (circulation.IndustrialCapital, error) {
+	if err := ic.Validate(); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if ic.ID.IsZero() {
+		ic.ID = circulation.NewIndustrialCapitalID()
+	}
+	if _, ok := m.industrialCapitals[ic.ID]; ok {
+		return circulation.IndustrialCapital{}, ErrAlreadyExists
+	}
+	now := m.now().UTC()
+	ic.CreatedAt = now
+	ic.UpdatedAt = now
+	if ic.Status == "" {
+		ic.Status = circulation.StatusActive
+	}
+	m.industrialCapitals[ic.ID] = ic
+	return ic, nil
+}
+
+func (m *Memory) GetIndustrialCapital(_ context.Context, id circulation.IndustrialCapitalID) (circulation.IndustrialCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	ic, ok := m.industrialCapitals[id]
+	if !ok {
+		return circulation.IndustrialCapital{}, ErrNotFound
+	}
+	if sds, ok2 := m.stageDistributions[id]; ok2 && len(sds) > 0 {
+		latest := sds[len(sds)-1]
+		ic.Latest = &latest
+	}
+	ic.OpenBlocks = nil
+	for _, b := range m.stageBlocks[id] {
+		if b.IsOpen() {
+			ic.OpenBlocks = append(ic.OpenBlocks, b)
+		}
+	}
+	if ic.OpenBlocks == nil {
+		ic.OpenBlocks = []circulation.StageBlock{}
+	}
+	return ic, nil
+}
+
+func (m *Memory) ListIndustrialCapitals(_ context.Context, agentID, status, economyMode string) ([]circulation.IndustrialCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := []circulation.IndustrialCapital{}
+	for _, ic := range m.industrialCapitals {
+		if agentID != "" && ic.AgentID != agentID {
+			continue
+		}
+		if status != "" && string(ic.Status) != status {
+			continue
+		}
+		if economyMode != "" && string(ic.EconomyMode) != economyMode {
+			continue
+		}
+		out = append(out, ic)
+	}
+	return out, nil
+}
+
+func (m *Memory) RecordCapitalPart(_ context.Context, id circulation.IndustrialCapitalID, part circulation.CapitalPart) (circulation.CapitalPart, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.industrialCapitals[id]; !ok {
+		return circulation.CapitalPart{}, ErrNotFound
+	}
+	if part.ID.IsZero() {
+		part.ID = circulation.NewCapitalPartID()
+	}
+	part.IndustrialCapitalID = id
+	if part.EnteredStageAt.IsZero() {
+		part.EnteredStageAt = m.now().UTC()
+	}
+	m.capitalParts[id] = append(m.capitalParts[id], part)
+	return part, nil
+}
+
+func (m *Memory) Snapshot(_ context.Context, id circulation.IndustrialCapitalID, sd circulation.StageDistribution) (circulation.StageDistribution, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	ic, ok := m.industrialCapitals[id]
+	if !ok {
+		return circulation.StageDistribution{}, ErrNotFound
+	}
+	if err := sd.Validate(ic.TotalPence); err != nil {
+		return circulation.StageDistribution{}, err
+	}
+	if sd.ID.IsZero() {
+		sd.ID = circulation.NewStageDistributionID()
+	}
+	sd.IndustrialCapitalID = id
+	if sd.At.IsZero() {
+		sd.At = m.now().UTC()
+	}
+	m.stageDistributions[id] = append(m.stageDistributions[id], sd)
+	return sd, nil
+}
+
+func (m *Memory) OpenBlock(_ context.Context, id circulation.IndustrialCapitalID, b circulation.StageBlock) (circulation.StageBlock, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	ic, ok := m.industrialCapitals[id]
+	if !ok {
+		return circulation.StageBlock{}, ErrNotFound
+	}
+	if b.ID.IsZero() {
+		b.ID = circulation.NewStageBlockID()
+	}
+	b.IndustrialCapitalID = id
+	if b.OpenedAt.IsZero() {
+		b.OpenedAt = m.now().UTC()
+	}
+	m.stageBlocks[id] = append(m.stageBlocks[id], b)
+	openCount := int64(0)
+	for _, sb := range m.stageBlocks[id] {
+		if sb.IsOpen() {
+			openCount++
+		}
+	}
+	if ic.StagnationToleranceTicks > 0 && openCount > ic.StagnationToleranceTicks {
+		ic.Status = circulation.StatusHalted
+		m.industrialCapitals[id] = ic
+	}
+	return b, nil
+}
+
+func (m *Memory) CloseBlock(_ context.Context, id circulation.IndustrialCapitalID, blockID circulation.StageBlockID) (circulation.StageBlock, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.industrialCapitals[id]; !ok {
+		return circulation.StageBlock{}, ErrNotFound
+	}
+	blocks := m.stageBlocks[id]
+	for i, b := range blocks {
+		if b.ID == blockID {
+			if !b.IsOpen() {
+				return b, nil
+			}
+			now := m.now().UTC()
+			blocks[i].ClosedAt = &now
+			m.stageBlocks[id] = blocks
+			return blocks[i], nil
+		}
+	}
+	return circulation.StageBlock{}, ErrNotFound
+}
+
+func (m *Memory) RecordValueRevolution(_ context.Context, res circulation.ValueRevolutionResult) (circulation.ValueRevolutionResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	id := res.Event.IndustrialCapitalID
+	if _, ok := m.industrialCapitals[id]; !ok {
+		return circulation.ValueRevolutionResult{}, ErrNotFound
+	}
+	if res.Event.ID.IsZero() {
+		res.Event.ID = circulation.NewValueRevolutionEventID()
+	}
+	if res.Event.OccurredAt.IsZero() {
+		res.Event.OccurredAt = m.now().UTC()
+	}
+	m.valueRevolutions[id] = append(m.valueRevolutions[id], res)
+	return res, nil
+}
+
+func (m *Memory) RecordInterlock(_ context.Context, id circulation.IndustrialCapitalID, mi circulation.MetamorphosisInterlock) (circulation.MetamorphosisInterlock, error) {
+	if err := mi.Validate(); err != nil {
+		return circulation.MetamorphosisInterlock{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.industrialCapitals[id]; !ok {
+		return circulation.MetamorphosisInterlock{}, ErrNotFound
+	}
+	if mi.ID.IsZero() {
+		mi.ID = circulation.NewMetamorphosisInterlockID()
+	}
+	mi.BuyerIndustrialCapitalID = id
+	if mi.OccurredAt.IsZero() {
+		mi.OccurredAt = m.now().UTC()
+	}
+	m.interlocks[id] = append(m.interlocks[id], mi)
+	return mi, nil
+}
+
+func (m *Memory) GetSupplyDemand(_ context.Context, id circulation.IndustrialCapitalID, period string) (circulation.SupplyDemandImbalance, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, sdi := range m.supplyDemand[id] {
+		if sdi.Period == period {
+			return sdi, nil
+		}
+	}
+	return circulation.SupplyDemandImbalance{}, ErrNotFound
+}
+
+func (m *Memory) AggregateSupplyDemand(_ context.Context, period string) (circulation.AggregateSupplyDemandImbalance, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	agg := circulation.AggregateSupplyDemandImbalance{Period: period}
+	for _, sdis := range m.supplyDemand {
+		for _, sdi := range sdis {
+			if sdi.Period == period {
+				agg.DemandPence += sdi.DemandPence
+				agg.SupplyPence += sdi.SupplyPence
+				agg.ExcessPence += sdi.ExcessPence
+			}
+		}
+	}
+	return agg, nil
+}
+
+func (m *Memory) SetSinkingFund(_ context.Context, id circulation.IndustrialCapitalID, sf circulation.SinkingFund) (circulation.SinkingFund, error) {
+	if err := sf.Validate(); err != nil {
+		return circulation.SinkingFund{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.industrialCapitals[id]; !ok {
+		return circulation.SinkingFund{}, ErrNotFound
+	}
+	if sf.ID.IsZero() {
+		sf.ID = circulation.NewSinkingFundID()
+	}
+	sf.IndustrialCapitalID = id
+	m.sinkingFunds[id] = sf
+	return sf, nil
+}
+
+func (m *Memory) TickSinkingFund(_ context.Context, id circulation.IndustrialCapitalID) (circulation.SinkingFund, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	sf, ok := m.sinkingFunds[id]
+	if !ok {
+		return circulation.SinkingFund{}, ErrNotFound
+	}
+	sf = sf.Tick()
+	m.sinkingFunds[id] = sf
+	return sf, nil
 }
