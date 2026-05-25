@@ -84,7 +84,7 @@ export const CHAPTERS: ChapterDef[] = [
 
   // Volume II — The Process of Circulation of Capital
   // Part I — The Metamorphoses of Capital and Their Circuits
-  { id: "v2-ch01", volume: 2, number: 1,  title: "The Circuit of Money-Capital",                              part: "Part I — The Metamorphoses of Capital and Their Circuits",          circuitNode: ["whole", "M", "M-prime"],          status: "pending" },
+  { id: "v2-ch01", volume: 2, number: 1,  title: "The Circuit of Money-Capital",                              part: "Part I — The Metamorphoses of Capital and Their Circuits",          circuitNode: ["whole", "M", "M-prime"],          status: "done" },
   { id: "v2-ch02", volume: 2, number: 2,  title: "The Circuit of Productive Capital",                         part: "Part I — The Metamorphoses of Capital and Their Circuits",          circuitNode: ["whole", "P"],                     status: "done" },
   { id: "v2-ch03", volume: 2, number: 3,  title: "The Circuit of Commodity-Capital",                          part: "Part I — The Metamorphoses of Capital and Their Circuits",          circuitNode: ["whole", "C-prime", "C-M-prime"],  status: "done" },
   { id: "v2-ch04", volume: 2, number: 4,  title: "The Three Formulas of the Circuit",                         part: "Part I — The Metamorphoses of Capital and Their Circuits",          circuitNode: ["whole"],                          status: "pending" },

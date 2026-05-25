@@ -36,6 +36,7 @@ type Memory struct {
 	colonyNames        map[string]simulation.ColonialLabourMarketID
 	productiveCircuits map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit
 	commodityCircuits  map[circulation.CommodityCircuitID]circulation.CommodityCircuit
+	moneyCircuits      map[circulation.MoneyCircuitID]circulation.MoneyCircuit
 	now                func() time.Time
 }
 
@@ -52,6 +53,7 @@ func NewMemory() *Memory {
 		colonyNames:        make(map[string]simulation.ColonialLabourMarketID),
 		productiveCircuits: make(map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit),
 		commodityCircuits:  make(map[circulation.CommodityCircuitID]circulation.CommodityCircuit),
+		moneyCircuits:      make(map[circulation.MoneyCircuitID]circulation.MoneyCircuit),
 		now:                time.Now,
 	}
 }
@@ -942,4 +944,133 @@ func (m *Memory) CloseCommodityCircuit(_ context.Context, id circulation.Commodi
 	cc.Terminal = &aug
 	m.commodityCircuits[id] = cc
 	return cc, nil
+}
+
+// --- Vol. II Ch. 1 — MoneyCircuitStore ---
+
+func (m *Memory) CreateMoneyCircuit(_ context.Context, mc circulation.MoneyCircuit) (circulation.MoneyCircuit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if mc.ID.IsZero() {
+		mc.ID = circulation.NewMoneyCircuitID()
+	}
+	if _, ok := m.moneyCircuits[mc.ID]; ok {
+		return circulation.MoneyCircuit{}, ErrAlreadyExists
+	}
+	mc.Moment = circulation.MomentM
+	mc.CreatedAt = m.now().UTC()
+	if mc.Advance.AdvancedAt.IsZero() {
+		mc.Advance.AdvancedAt = mc.CreatedAt
+	}
+	m.moneyCircuits[mc.ID] = mc
+	return mc, nil
+}
+
+func (m *Memory) GetMoneyCircuit(_ context.Context, id circulation.MoneyCircuitID) (circulation.MoneyCircuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	mc, ok := m.moneyCircuits[id]
+	if !ok {
+		return circulation.MoneyCircuit{}, ErrNotFound
+	}
+	return mc, nil
+}
+
+func (m *Memory) ListMoneyCircuits(_ context.Context, agentID string, moment circulation.CircuitMoment) ([]circulation.MoneyCircuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]circulation.MoneyCircuit, 0, len(m.moneyCircuits))
+	for _, mc := range m.moneyCircuits {
+		if agentID != "" && mc.Advance.AgentID != agentID {
+			continue
+		}
+		if moment != "" && mc.Moment != moment {
+			continue
+		}
+		out = append(out, mc)
+	}
+	return out, nil
+}
+
+func (m *Memory) RecordPurchase(_ context.Context, id circulation.MoneyCircuitID, p circulation.PurchasePhase) (circulation.MoneyCircuit, error) {
+	if err := p.Validate(); err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	mc, ok := m.moneyCircuits[id]
+	if !ok {
+		return circulation.MoneyCircuit{}, ErrNotFound
+	}
+	if err := mc.CanTransitionTo(circulation.MomentMC); err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	p.MoneyCircuitID = id
+	mc.Purchase = &p
+	mc.Moment = circulation.MomentMC
+	m.moneyCircuits[id] = mc
+	return mc, nil
+}
+
+func (m *Memory) RecordProductive(_ context.Context, id circulation.MoneyCircuitID, ps circulation.ProductiveState) (circulation.MoneyCircuit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	mc, ok := m.moneyCircuits[id]
+	if !ok {
+		return circulation.MoneyCircuit{}, ErrNotFound
+	}
+	if err := mc.CanTransitionTo(circulation.MomentP); err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	if ps.TotalAdvance() != mc.Advance.Amount {
+		return circulation.MoneyCircuit{}, circulation.ErrMagnitudeNotPreserved
+	}
+	ps.MoneyCircuitID = id
+	if ps.EnteredAt.IsZero() {
+		ps.EnteredAt = m.now().UTC()
+	}
+	mc.Productive = &ps
+	mc.Moment = circulation.MomentP
+	m.moneyCircuits[id] = mc
+	return mc, nil
+}
+
+func (m *Memory) RecordCommodity(_ context.Context, id circulation.MoneyCircuitID, cc circulation.CommodityCapital) (circulation.MoneyCircuit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	mc, ok := m.moneyCircuits[id]
+	if !ok {
+		return circulation.MoneyCircuit{}, ErrNotFound
+	}
+	if err := mc.CanTransitionTo(circulation.MomentCPrime); err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	if mc.Productive == nil {
+		return circulation.MoneyCircuit{}, circulation.ErrNoProductionPhase
+	}
+	cc.MoneyCircuitID = id
+	mc.Commodity = &cc
+	mc.Moment = circulation.MomentCPrime
+	m.moneyCircuits[id] = mc
+	return mc, nil
+}
+
+func (m *Memory) RecordRealisation(_ context.Context, id circulation.MoneyCircuitID, r circulation.Realisation) (circulation.MoneyCircuit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	mc, ok := m.moneyCircuits[id]
+	if !ok {
+		return circulation.MoneyCircuit{}, ErrNotFound
+	}
+	if err := mc.CanTransitionTo(circulation.MomentCMPrime); err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	r.MoneyCircuitID = id
+	if r.SoldAt.IsZero() {
+		r.SoldAt = m.now().UTC()
+	}
+	mc.Realisation = &r
+	mc.Moment = circulation.MomentMPrime
+	m.moneyCircuits[id] = mc
+	return mc, nil
 }

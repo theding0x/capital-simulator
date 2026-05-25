@@ -1964,3 +1964,287 @@ func scanProductiveCircuit(r rowScanner) (circulation.ProductiveCircuit, error) 
 	}
 	return pc, nil
 }
+
+// --- Vol. II Ch. 1 — MoneyCircuitStore ---
+
+func (m *MySQL) CreateMoneyCircuit(ctx context.Context, mc circulation.MoneyCircuit) (circulation.MoneyCircuit, error) {
+	if mc.ID.IsZero() {
+		mc.ID = circulation.NewMoneyCircuitID()
+	}
+	mc.Moment = circulation.MomentM
+	if mc.Advance.AdvancedAt.IsZero() {
+		mc.Advance.AdvancedAt = time.Now().UTC()
+	}
+	mc.CreatedAt = time.Now().UTC()
+	const q = `
+		INSERT INTO money_circuits
+			(id, agent_id, advance_amount, advanced_at, moment, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(mc.ID), mc.Advance.AgentID, int64(mc.Advance.Amount),
+		mc.Advance.AdvancedAt, string(mc.Moment), mc.CreatedAt)
+	if err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	return mc, nil
+}
+
+func (m *MySQL) GetMoneyCircuit(ctx context.Context, id circulation.MoneyCircuitID) (circulation.MoneyCircuit, error) {
+	const q = `
+		SELECT id, agent_id, advance_amount, advanced_at, moment,
+		       labour_amount, labour_power_hours,
+		       means_amount, means_capacity_hours,
+		       productive_constant, productive_variable, productive_entered_at,
+		       commodity_id, value_original, value_surplus,
+		       realised_pence, sold_at,
+		       created_at
+		FROM money_circuits WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	mc, err := scanMoneyCircuit(row.Scan)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.MoneyCircuit{}, ErrNotFound
+		}
+		return circulation.MoneyCircuit{}, err
+	}
+	return mc, nil
+}
+
+func (m *MySQL) ListMoneyCircuits(ctx context.Context, agentID string, moment circulation.CircuitMoment) ([]circulation.MoneyCircuit, error) {
+	q := `
+		SELECT id, agent_id, advance_amount, advanced_at, moment,
+		       labour_amount, labour_power_hours,
+		       means_amount, means_capacity_hours,
+		       productive_constant, productive_variable, productive_entered_at,
+		       commodity_id, value_original, value_surplus,
+		       realised_pence, sold_at,
+		       created_at
+		FROM money_circuits WHERE 1=1`
+	args := []any{}
+	if agentID != "" {
+		q += " AND agent_id = ?"
+		args = append(args, agentID)
+	}
+	if moment != "" {
+		q += " AND moment = ?"
+		args = append(args, string(moment))
+	}
+	rows, err := m.db.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []circulation.MoneyCircuit
+	for rows.Next() {
+		mc, err := scanMoneyCircuit(rows.Scan)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, mc)
+	}
+	if out == nil {
+		return []circulation.MoneyCircuit{}, nil
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) RecordPurchase(ctx context.Context, id circulation.MoneyCircuitID, p circulation.PurchasePhase) (circulation.MoneyCircuit, error) {
+	if err := p.Validate(); err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	const q = `
+		UPDATE money_circuits
+		SET labour_amount=?, labour_power_hours=?,
+		    means_amount=?, means_capacity_hours=?,
+		    moment=?
+		WHERE id=? AND moment=?`
+	res, err := m.db.ExecContext(ctx, q,
+		int64(p.LabourLeg.Amount), p.LabourLeg.LabourPowerHours,
+		int64(p.MeansLeg.Amount), p.MeansLeg.MeansCapacityHours,
+		string(circulation.MomentMC),
+		string(id), string(circulation.MomentM))
+	if err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		if _, getErr := m.GetMoneyCircuit(ctx, id); getErr != nil {
+			return circulation.MoneyCircuit{}, getErr
+		}
+		return circulation.MoneyCircuit{}, circulation.ErrInvalidPhaseTransition
+	}
+	return m.GetMoneyCircuit(ctx, id)
+}
+
+func (m *MySQL) RecordProductive(ctx context.Context, id circulation.MoneyCircuitID, ps circulation.ProductiveState) (circulation.MoneyCircuit, error) {
+	mc, err := m.GetMoneyCircuit(ctx, id)
+	if err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	if mc.Advance.Amount != ps.TotalAdvance() {
+		return circulation.MoneyCircuit{}, circulation.ErrMagnitudeNotPreserved
+	}
+	if ps.EnteredAt.IsZero() {
+		ps.EnteredAt = time.Now().UTC()
+	}
+	const q = `
+		UPDATE money_circuits
+		SET productive_constant=?, productive_variable=?, productive_entered_at=?,
+		    moment=?
+		WHERE id=? AND moment=?`
+	res, err := m.db.ExecContext(ctx, q,
+		int64(ps.ConstantPence), int64(ps.VariablePence), ps.EnteredAt,
+		string(circulation.MomentP),
+		string(id), string(circulation.MomentMC))
+	if err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return circulation.MoneyCircuit{}, circulation.ErrInvalidPhaseTransition
+	}
+	return m.GetMoneyCircuit(ctx, id)
+}
+
+func (m *MySQL) RecordCommodity(ctx context.Context, id circulation.MoneyCircuitID, cc circulation.CommodityCapital) (circulation.MoneyCircuit, error) {
+	mc, err := m.GetMoneyCircuit(ctx, id)
+	if err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	if mc.Productive == nil {
+		return circulation.MoneyCircuit{}, circulation.ErrNoProductionPhase
+	}
+	const q = `
+		UPDATE money_circuits
+		SET commodity_id=?, value_original=?, value_surplus=?,
+		    moment=?
+		WHERE id=? AND moment=?`
+	res, err := m.db.ExecContext(ctx, q,
+		cc.CommodityID, int64(cc.ValueOriginal), int64(cc.ValueSurplus),
+		string(circulation.MomentCPrime),
+		string(id), string(circulation.MomentP))
+	if err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return circulation.MoneyCircuit{}, circulation.ErrInvalidPhaseTransition
+	}
+	return m.GetMoneyCircuit(ctx, id)
+}
+
+func (m *MySQL) RecordRealisation(ctx context.Context, id circulation.MoneyCircuitID, r circulation.Realisation) (circulation.MoneyCircuit, error) {
+	if r.SoldAt.IsZero() {
+		r.SoldAt = time.Now().UTC()
+	}
+	const q = `
+		UPDATE money_circuits
+		SET realised_pence=?, sold_at=?,
+		    moment=?
+		WHERE id=? AND moment=?`
+	res, err := m.db.ExecContext(ctx, q,
+		int64(r.RealisedPence), r.SoldAt,
+		string(circulation.MomentMPrime),
+		string(id), string(circulation.MomentCPrime))
+	if err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		if _, getErr := m.GetMoneyCircuit(ctx, id); getErr != nil {
+			return circulation.MoneyCircuit{}, getErr
+		}
+		return circulation.MoneyCircuit{}, circulation.ErrInvalidPhaseTransition
+	}
+	return m.GetMoneyCircuit(ctx, id)
+}
+
+func scanMoneyCircuit(scan func(...any) error) (circulation.MoneyCircuit, error) {
+	var (
+		mc                  circulation.MoneyCircuit
+		rawID               string
+		agentID             string
+		advanceAmount       int64
+		advancedAt          time.Time
+		moment              string
+		labourAmount        sql.NullInt64
+		labourPowerHours    sql.NullInt64
+		meansAmount         sql.NullInt64
+		meansCapacityHours  sql.NullInt64
+		productiveConstant  sql.NullInt64
+		productiveVariable  sql.NullInt64
+		productiveEnteredAt sql.NullTime
+		commodityID         sql.NullString
+		valueOriginal       sql.NullInt64
+		valueSurplus        sql.NullInt64
+		realisedPence       sql.NullInt64
+		soldAt              sql.NullTime
+		createdAt           time.Time
+	)
+	if err := scan(
+		&rawID, &agentID, &advanceAmount, &advancedAt, &moment,
+		&labourAmount, &labourPowerHours,
+		&meansAmount, &meansCapacityHours,
+		&productiveConstant, &productiveVariable, &productiveEnteredAt,
+		&commodityID, &valueOriginal, &valueSurplus,
+		&realisedPence, &soldAt,
+		&createdAt,
+	); err != nil {
+		return circulation.MoneyCircuit{}, err
+	}
+	mc.ID = circulation.MoneyCircuitID(rawID)
+	mc.Advance = circulation.MoneyAdvance{
+		Amount:     circulation.Pence(advanceAmount),
+		AgentID:    agentID,
+		AdvancedAt: advancedAt,
+	}
+	mc.Moment = circulation.CircuitMoment(moment)
+	mc.CreatedAt = createdAt
+
+	if labourAmount.Valid && meansAmount.Valid {
+		mc.Purchase = &circulation.PurchasePhase{
+			MoneyCircuitID: mc.ID,
+			LabourLeg: circulation.LabourLeg{
+				Amount:           circulation.Pence(labourAmount.Int64),
+				LabourPowerHours: labourPowerHours.Int64,
+			},
+			MeansLeg: circulation.MeansLeg{
+				Amount:             circulation.Pence(meansAmount.Int64),
+				MeansCapacityHours: meansCapacityHours.Int64,
+			},
+		}
+	}
+	if productiveConstant.Valid && productiveVariable.Valid {
+		ps := &circulation.ProductiveState{
+			MoneyCircuitID: mc.ID,
+			ConstantPence:  circulation.Pence(productiveConstant.Int64),
+			VariablePence:  circulation.Pence(productiveVariable.Int64),
+		}
+		if productiveEnteredAt.Valid {
+			ps.EnteredAt = productiveEnteredAt.Time
+		}
+		mc.Productive = ps
+	}
+	if valueOriginal.Valid {
+		cc := &circulation.CommodityCapital{
+			MoneyCircuitID: mc.ID,
+			ValueOriginal:  circulation.Pence(valueOriginal.Int64),
+			ValueSurplus:   circulation.Pence(valueSurplus.Int64),
+		}
+		if commodityID.Valid {
+			cc.CommodityID = commodityID.String
+		}
+		mc.Commodity = cc
+	}
+	if realisedPence.Valid {
+		r := &circulation.Realisation{
+			MoneyCircuitID: mc.ID,
+			RealisedPence:  circulation.Pence(realisedPence.Int64),
+		}
+		if soldAt.Valid {
+			r.SoldAt = soldAt.Time
+		}
+		mc.Realisation = r
+	}
+	return mc, nil
+}

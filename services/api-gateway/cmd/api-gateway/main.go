@@ -197,6 +197,10 @@ func main() {
 	srv.Handle("/v1/commodity-circuits", simProxy)
 	srv.Handle("/v1/commodity-circuits/{rest...}", simProxy)
 
+	// Vol. II Ch. 1 — The Circuit of Money-Capital → simulation-engine
+	srv.Handle("/v1/money-circuits", simProxy)
+	srv.Handle("/v1/money-circuits/{rest...}", simProxy)
+
 	// Vol. II Ch. 2 — The Circuit of Productive Capital → simulation-engine
 	srv.Handle("/v1/productive-circuits", simProxy)
 	srv.Handle("/v1/productive-circuits/{rest...}", simProxy)
