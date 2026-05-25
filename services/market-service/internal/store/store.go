@@ -8,6 +8,7 @@ import (
 	"errors"
 
 	"github.com/theding0x/capital-simulator/services/market-service/internal/circulation"
+	"github.com/theding0x/capital-simulator/services/market-service/internal/costs"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/market"
 )
 
@@ -43,9 +44,40 @@ type TurnoverTimeStore interface {
 	SetMarketSeparation(ctx context.Context, ms circulation.MarketSeparation) (circulation.MarketSeparation, error)
 }
 
+// CirculationCostStore is the persistence contract for Vol. II Ch. 6
+// costs-of-circulation records. It is embedded in Store.
+type CirculationCostStore interface {
+	CreateCirculationCost(ctx context.Context, c costs.CirculationCost) (costs.CirculationCost, error)
+	GetCirculationCost(ctx context.Context, id costs.CirculationCostID) (costs.CirculationCost, error)
+	ListCirculationCosts(ctx context.Context, icID costs.IndustrialCapitalID, kind costs.CirculationCostKind, nature costs.CostNature) ([]costs.CirculationCost, error)
+
+	CreateCirculationAgent(ctx context.Context, a costs.CirculationAgent) (costs.CirculationAgent, error)
+	ListCirculationAgents(ctx context.Context, icID costs.IndustrialCapitalID) ([]costs.CirculationAgent, error)
+
+	CreateMoneyAsFauxFrais(ctx context.Context, m costs.MoneyAsFauxFrais) (costs.MoneyAsFauxFrais, error)
+	ListMoneyAsFauxFrais(ctx context.Context) ([]costs.MoneyAsFauxFrais, error)
+
+	CreateCommoditySupply(ctx context.Context, s costs.CommoditySupply) (costs.CommoditySupply, error)
+	GetCommoditySupply(ctx context.Context, id costs.CommoditySupplyID) (costs.CommoditySupply, error)
+	ListCommoditySupplies(ctx context.Context, icID costs.IndustrialCapitalID) ([]costs.CommoditySupply, error)
+
+	CreateStorageCost(ctx context.Context, sc costs.StorageCost) (costs.StorageCost, error)
+	ListStorageCosts(ctx context.Context, supplyID costs.CommoditySupplyID) ([]costs.StorageCost, error)
+
+	SetTransportTariff(ctx context.Context, t costs.TransportTariff) (costs.TransportTariff, error)
+	GetTransportTariff(ctx context.Context, commodityID costs.CommodityID) (costs.TransportTariff, error)
+
+	CreateTransportLeg(ctx context.Context, leg costs.TransportLeg) (costs.TransportLeg, error)
+	ListTransportLegs(ctx context.Context, commodityID costs.CommodityID) ([]costs.TransportLeg, error)
+
+	AggregateForCapital(ctx context.Context, icID costs.IndustrialCapitalID, period string) (costs.AggregateResult, error)
+	SystemFauxFrais(ctx context.Context, period string) (costs.SystemFauxFraisResult, error)
+}
+
 // Store is the persistence contract for market-service domain records.
 type Store interface {
 	TurnoverTimeStore
+	CirculationCostStore
 	// Owner operations.
 	CreateOwner(ctx context.Context, o market.Owner) (market.Owner, error)
 	GetOwner(ctx context.Context, id market.OwnerID) (market.Owner, error)

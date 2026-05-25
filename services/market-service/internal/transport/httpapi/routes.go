@@ -33,6 +33,19 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/prices", h.ListPrices)
 	s.HandleFunc("GET /v1/prices/{commodityID}", h.GetPrice)
 
+	// Vol. II Ch. 6 — Costs of circulation
+	s.HandleFunc("POST /v1/circulation-costs", h.CreateCirculationCost)
+	s.HandleFunc("GET /v1/circulation-costs/aggregate", h.AggregateCirculationCosts)
+	s.HandleFunc("GET /v1/circulation-costs/system-faux-frais", h.SystemFauxFrais)
+	s.HandleFunc("GET /v1/circulation-costs/{id}", h.GetCirculationCost)
+	s.HandleFunc("GET /v1/circulation-costs", h.ListCirculationCosts)
+	s.HandleFunc("POST /v1/circulation-agents", h.CreateCirculationAgent)
+	s.HandleFunc("POST /v1/money-as-faux-frais", h.CreateMoneyAsFauxFrais)
+	s.HandleFunc("POST /v1/commodity-supplies", h.CreateCommoditySupply)
+	s.HandleFunc("POST /v1/commodity-supplies/{id}/storage-cost", h.AddStorageCost)
+	s.HandleFunc("POST /v1/transport-tariffs", h.SetTransportTariff)
+	s.HandleFunc("POST /v1/transport-legs", h.CreateTransportLeg)
+
 	// Vol. II Ch. 5 — Turnover time and circulation phases
 	s.HandleFunc("POST /v1/turnover-time", h.CreateTurnoverTime)
 	s.HandleFunc("GET /v1/turnover-time", h.ListTurnoverTimes)

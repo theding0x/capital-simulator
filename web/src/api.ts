@@ -1226,3 +1226,97 @@ export const turnoverTimeApi = {
       body: JSON.stringify({ industrial_capital_id, selling_market_id, buying_market_id }),
     }),
 };
+
+// Vol. II Ch. 6 — Costs of Circulation
+export const circulationCostsApi = {
+  list: (industrial_capital_id?: string, kind?: string, nature?: string) => {
+    const params = new URLSearchParams();
+    if (industrial_capital_id) params.set("industrial_capital_id", industrial_capital_id);
+    if (kind) params.set("kind", kind);
+    if (nature) params.set("nature", nature);
+    const qs = params.toString();
+    return http<{ items: import("./types").CirculationCost[] }>(`/v1/circulation-costs${qs ? `?${qs}` : ""}`);
+  },
+
+  get: (id: string) =>
+    http<import("./types").CirculationCost>(`/v1/circulation-costs/${id}`),
+
+  create: (industrial_capital_id: string, kind: import("./types").CirculationCostKind, pence: number) =>
+    http<import("./types").CirculationCost>("/v1/circulation-costs", {
+      method: "POST",
+      body: JSON.stringify({ industrial_capital_id, kind, pence }),
+    }),
+
+  aggregate: (industrial_capital_id: string, period?: string) => {
+    const params = new URLSearchParams({ industrial_capital_id });
+    if (period) params.set("period", period);
+    return http<import("./types").AggregateCirculationCostsResult>(`/v1/circulation-costs/aggregate?${params}`);
+  },
+
+  systemFauxFrais: (period?: string) => {
+    const qs = period ? `?period=${encodeURIComponent(period)}` : "";
+    return http<import("./types").SystemFauxFraisResult>(`/v1/circulation-costs/system-faux-frais${qs}`);
+  },
+
+  createAgent: (
+    industrial_capital_id: string,
+    role: string,
+    wage_rate_pence: number,
+    labour_minutes_necessary: number,
+    labour_minutes_surplus: number,
+  ) =>
+    http<import("./types").CirculationAgent>("/v1/circulation-agents", {
+      method: "POST",
+      body: JSON.stringify({ industrial_capital_id, role, wage_rate_pence, labour_minutes_necessary, labour_minutes_surplus }),
+    }),
+
+  createMoneyAsFauxFrais: (pence: number, annual_replacement_pence: number, industrial_capital_id?: string) =>
+    http<import("./types").MoneyAsFauxFrais>("/v1/money-as-faux-frais", {
+      method: "POST",
+      body: JSON.stringify({ pence, annual_replacement_pence, industrial_capital_id }),
+    }),
+
+  createCommoditySupply: (industrial_capital_id: string, pence: number, is_voluntary: boolean, commodity_id?: string) =>
+    http<import("./types").CommoditySupply>("/v1/commodity-supplies", {
+      method: "POST",
+      body: JSON.stringify({ industrial_capital_id, pence, is_voluntary, commodity_id }),
+    }),
+
+  addStorageCost: (
+    supply_id: string,
+    building_pence: number,
+    labour_pence: number,
+    preservation_labour_pence: number,
+  ) =>
+    http<import("./types").StorageCost>(`/v1/commodity-supplies/${supply_id}/storage-cost`, {
+      method: "POST",
+      body: JSON.stringify({ building_pence, labour_pence, preservation_labour_pence }),
+    }),
+
+  setTransportTariff: (
+    commodity_id: string,
+    base_pence_per_ton_mile: number,
+    fragility_multiplier_basis_points: number,
+    breakage_risk_multiplier_basis_points: number,
+  ) =>
+    http<import("./types").TransportTariff>("/v1/transport-tariffs", {
+      method: "POST",
+      body: JSON.stringify({ commodity_id, base_pence_per_ton_mile, fragility_multiplier_basis_points, breakage_risk_multiplier_basis_points }),
+    }),
+
+  createTransportLeg: (leg: {
+    commodity_id: string;
+    quantity: number;
+    origin_id: string;
+    destination_id: string;
+    distance_meters: number;
+    weight_grams: number;
+    labour_cost_pence: number;
+    means_of_transport_pence: number;
+    surplus_pence: number;
+  }) =>
+    http<import("./types").TransportLeg>("/v1/transport-legs", {
+      method: "POST",
+      body: JSON.stringify(leg),
+    }),
+};
