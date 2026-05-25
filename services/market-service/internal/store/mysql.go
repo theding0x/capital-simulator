@@ -11,6 +11,7 @@ import (
 
 	mysql "github.com/go-sql-driver/mysql"
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
+	"github.com/theding0x/capital-simulator/services/market-service/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/market"
 )
 
@@ -402,6 +403,315 @@ func (m *MySQL) ListPrices(ctx context.Context) ([]market.Price, error) {
 		out = append(out, p)
 	}
 	return out, rows.Err()
+}
+
+// --- Vol. II Ch. 5 — TurnoverTimeStore -------------------------------------
+
+func (m *MySQL) CreateTurnoverTime(ctx context.Context, t circulation.TurnoverTime) (circulation.TurnoverTime, error) {
+	if err := t.Validate(); err != nil {
+		return circulation.TurnoverTime{}, err
+	}
+	if t.ID.IsZero() {
+		t.ID = circulation.NewTurnoverTimeID()
+	}
+	now := m.now()
+	t.CreatedAt = now
+	t.UpdatedAt = now
+	const q = `INSERT INTO turnover_times
+		(id, industrial_capital_id, labour_time_nanos, labour_interruption_nanos, latent_nanos,
+		 natural_process_nanos, selling_time_nanos, buying_time_nanos, circulation_open, created_at, updated_at)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(t.ID), string(t.IndustrialCapitalID),
+		t.Production.LabourTimeNanos, t.Production.LabourInterruptionNanos,
+		t.Production.LatentNanos, t.Production.NaturalProcessNanos,
+		t.Circulation.SellingTimeNanos, t.Circulation.BuyingTimeNanos,
+		t.CirculationOpen, t.CreatedAt, t.UpdatedAt)
+	if err != nil {
+		if isDuplicate(err) {
+			return circulation.TurnoverTime{}, ErrAlreadyExists
+		}
+		return circulation.TurnoverTime{}, err
+	}
+	return t, nil
+}
+
+func (m *MySQL) GetTurnoverTime(ctx context.Context, id circulation.TurnoverTimeID) (circulation.TurnoverTime, error) {
+	const q = `SELECT id, industrial_capital_id, labour_time_nanos, labour_interruption_nanos,
+		latent_nanos, natural_process_nanos, selling_time_nanos, buying_time_nanos,
+		circulation_open, created_at, updated_at FROM turnover_times WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	return scanTurnoverTime(row)
+}
+
+func scanTurnoverTime(row *sql.Row) (circulation.TurnoverTime, error) {
+	var t circulation.TurnoverTime
+	var tid, capID string
+	err := row.Scan(&tid, &capID,
+		&t.Production.LabourTimeNanos, &t.Production.LabourInterruptionNanos,
+		&t.Production.LatentNanos, &t.Production.NaturalProcessNanos,
+		&t.Circulation.SellingTimeNanos, &t.Circulation.BuyingTimeNanos,
+		&t.CirculationOpen, &t.CreatedAt, &t.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return circulation.TurnoverTime{}, ErrNotFound
+	}
+	if err != nil {
+		return circulation.TurnoverTime{}, err
+	}
+	t.ID = circulation.TurnoverTimeID(tid)
+	t.IndustrialCapitalID = circulation.IndustrialCapitalID(capID)
+	return t, nil
+}
+
+func (m *MySQL) ListTurnoverTimes(ctx context.Context) ([]circulation.TurnoverTime, error) {
+	const q = `SELECT id, industrial_capital_id, labour_time_nanos, labour_interruption_nanos,
+		latent_nanos, natural_process_nanos, selling_time_nanos, buying_time_nanos,
+		circulation_open, created_at, updated_at FROM turnover_times ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []circulation.TurnoverTime
+	for rows.Next() {
+		var t circulation.TurnoverTime
+		var tid, capID string
+		if err := rows.Scan(&tid, &capID,
+			&t.Production.LabourTimeNanos, &t.Production.LabourInterruptionNanos,
+			&t.Production.LatentNanos, &t.Production.NaturalProcessNanos,
+			&t.Circulation.SellingTimeNanos, &t.Circulation.BuyingTimeNanos,
+			&t.CirculationOpen, &t.CreatedAt, &t.UpdatedAt); err != nil {
+			return nil, err
+		}
+		t.ID = circulation.TurnoverTimeID(tid)
+		t.IndustrialCapitalID = circulation.IndustrialCapitalID(capID)
+		out = append(out, t)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) AddLabourTime(ctx context.Context, id circulation.TurnoverTimeID, nanos int64) (circulation.TurnoverTime, error) {
+	const check = `SELECT circulation_open FROM turnover_times WHERE id = ?`
+	var open bool
+	if err := m.db.QueryRowContext(ctx, check, string(id)).Scan(&open); errors.Is(err, sql.ErrNoRows) {
+		return circulation.TurnoverTime{}, ErrNotFound
+	} else if err != nil {
+		return circulation.TurnoverTime{}, err
+	}
+	if open {
+		return circulation.TurnoverTime{}, circulation.ErrConcurrentProductionAndCirculation
+	}
+	const q = `UPDATE turnover_times SET labour_time_nanos = labour_time_nanos + ?, updated_at = ? WHERE id = ?`
+	if _, err := m.db.ExecContext(ctx, q, nanos, m.now(), string(id)); err != nil {
+		return circulation.TurnoverTime{}, err
+	}
+	return m.GetTurnoverTime(ctx, id)
+}
+
+func (m *MySQL) AddLabourInterruption(ctx context.Context, id circulation.TurnoverTimeID, nanos int64) (circulation.TurnoverTime, error) {
+	const check = `SELECT circulation_open FROM turnover_times WHERE id = ?`
+	var open bool
+	if err := m.db.QueryRowContext(ctx, check, string(id)).Scan(&open); errors.Is(err, sql.ErrNoRows) {
+		return circulation.TurnoverTime{}, ErrNotFound
+	} else if err != nil {
+		return circulation.TurnoverTime{}, err
+	}
+	if open {
+		return circulation.TurnoverTime{}, circulation.ErrConcurrentProductionAndCirculation
+	}
+	const q = `UPDATE turnover_times SET labour_interruption_nanos = labour_interruption_nanos + ?, updated_at = ? WHERE id = ?`
+	if _, err := m.db.ExecContext(ctx, q, nanos, m.now(), string(id)); err != nil {
+		return circulation.TurnoverTime{}, err
+	}
+	return m.GetTurnoverTime(ctx, id)
+}
+
+func (m *MySQL) RecordLatentMP(ctx context.Context, lpc circulation.LatentProductiveCapital) (circulation.LatentProductiveCapital, error) {
+	if lpc.ID.IsZero() {
+		lpc.ID = circulation.NewLatentProductiveCapitalID()
+	}
+	const q = `INSERT INTO latent_productive_capital
+		(id, turnover_time_id, industrial_capital_id, pence, held_at, entered_production_at)
+		VALUES (?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(lpc.ID), string(lpc.TurnoverTimeID), string(lpc.IndustrialCapitalID),
+		int64(lpc.Pence), lpc.HeldAt, lpc.EnteredProductionAt)
+	if err != nil {
+		return circulation.LatentProductiveCapital{}, err
+	}
+	const upd = `UPDATE turnover_times SET latent_nanos = latent_nanos + ?, updated_at = ? WHERE id = ?`
+	if _, err := m.db.ExecContext(ctx, upd, int64(time.Second), m.now(), string(lpc.TurnoverTimeID)); err != nil {
+		return circulation.LatentProductiveCapital{}, err
+	}
+	return lpc, nil
+}
+
+func (m *MySQL) RecordNaturalProcess(ctx context.Context, nps circulation.NaturalProcessSpan) (circulation.NaturalProcessSpan, error) {
+	if nps.ID.IsZero() {
+		nps.ID = circulation.NewNaturalProcessSpanID()
+	}
+	const q = `INSERT INTO natural_process_spans
+		(id, turnover_time_id, industrial_capital_id, process, duration_nanos, started_at)
+		VALUES (?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(nps.ID), string(nps.TurnoverTimeID), string(nps.IndustrialCapitalID),
+		string(nps.Process), nps.DurationNanos, nps.StartedAt)
+	if err != nil {
+		return circulation.NaturalProcessSpan{}, err
+	}
+	const upd = `UPDATE turnover_times SET natural_process_nanos = natural_process_nanos + ?, updated_at = ? WHERE id = ?`
+	if _, err := m.db.ExecContext(ctx, upd, nps.DurationNanos, m.now(), string(nps.TurnoverTimeID)); err != nil {
+		return circulation.NaturalProcessSpan{}, err
+	}
+	return nps, nil
+}
+
+func (m *MySQL) OpenSellingPhase(ctx context.Context, sp circulation.SellingPhase) (circulation.SellingPhase, error) {
+	if sp.ID.IsZero() {
+		sp.ID = circulation.NewSellingPhaseID()
+	}
+	if sp.Outcome == "" {
+		sp.Outcome = circulation.OutcomePending
+	}
+	const q = `INSERT INTO selling_phases
+		(id, turnover_time_id, industrial_capital_id, commodity_circuit_id, opened_at, outcome)
+		VALUES (?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(sp.ID), string(sp.TurnoverTimeID), string(sp.IndustrialCapitalID),
+		string(sp.CommodityCircuitID), sp.OpenedAt, string(sp.Outcome))
+	if err != nil {
+		if isDuplicate(err) {
+			return circulation.SellingPhase{}, circulation.ErrSellingPhaseAlreadyOpen
+		}
+		return circulation.SellingPhase{}, err
+	}
+	const upd = `UPDATE turnover_times SET circulation_open = true, updated_at = ? WHERE id = ?`
+	if _, err := m.db.ExecContext(ctx, upd, m.now(), string(sp.TurnoverTimeID)); err != nil {
+		return circulation.SellingPhase{}, err
+	}
+	return sp, nil
+}
+
+func (m *MySQL) CloseSellingPhase(ctx context.Context, id circulation.TurnoverTimeID, spID circulation.SellingPhaseID, outcome circulation.SellingOutcome) (circulation.SellingPhase, error) {
+	now := m.now()
+	const q = `UPDATE selling_phases SET closed_at = ?, outcome = ? WHERE id = ? AND turnover_time_id = ? AND closed_at IS NULL`
+	res, err := m.db.ExecContext(ctx, q, now, string(outcome), string(spID), string(id))
+	if err != nil {
+		return circulation.SellingPhase{}, err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return circulation.SellingPhase{}, circulation.ErrNoOpenSellingPhase
+	}
+	const sel = `SELECT id, turnover_time_id, industrial_capital_id, commodity_circuit_id, opened_at, closed_at, outcome FROM selling_phases WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, sel, string(spID))
+	var sp circulation.SellingPhase
+	var sid, ttid, capID, ccid, oc string
+	if err := row.Scan(&sid, &ttid, &capID, &ccid, &sp.OpenedAt, &sp.ClosedAt, &oc); err != nil {
+		return circulation.SellingPhase{}, err
+	}
+	sp.ID = circulation.SellingPhaseID(sid)
+	sp.TurnoverTimeID = circulation.TurnoverTimeID(ttid)
+	sp.IndustrialCapitalID = circulation.IndustrialCapitalID(capID)
+	sp.CommodityCircuitID = circulation.CommodityCircuitID(ccid)
+	sp.Outcome = circulation.SellingOutcome(oc)
+
+	const upd = `UPDATE turnover_times SET selling_time_nanos = selling_time_nanos + TIMESTAMPDIFF(second, ?, ?) * 1000000000, updated_at = ? WHERE id = ?`
+	if _, err := m.db.ExecContext(ctx, upd, sp.OpenedAt, now, now, string(id)); err != nil {
+		return circulation.SellingPhase{}, err
+	}
+	return sp, nil
+}
+
+func (m *MySQL) OpenBuyingPhase(ctx context.Context, bp circulation.BuyingPhase) (circulation.BuyingPhase, error) {
+	if bp.ID.IsZero() {
+		bp.ID = circulation.NewBuyingPhaseID()
+	}
+	const q = `INSERT INTO buying_phases
+		(id, turnover_time_id, industrial_capital_id, money_circuit_id, opened_at, market_location)
+		VALUES (?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(bp.ID), string(bp.TurnoverTimeID), string(bp.IndustrialCapitalID),
+		string(bp.MoneyCircuitID), bp.OpenedAt, bp.MarketLocation)
+	if err != nil {
+		if isDuplicate(err) {
+			return circulation.BuyingPhase{}, circulation.ErrBuyingPhaseAlreadyOpen
+		}
+		return circulation.BuyingPhase{}, err
+	}
+	const upd = `UPDATE turnover_times SET circulation_open = true, updated_at = ? WHERE id = ?`
+	if _, err := m.db.ExecContext(ctx, upd, m.now(), string(bp.TurnoverTimeID)); err != nil {
+		return circulation.BuyingPhase{}, err
+	}
+	return bp, nil
+}
+
+func (m *MySQL) CloseBuyingPhase(ctx context.Context, id circulation.TurnoverTimeID, bpID circulation.BuyingPhaseID) (circulation.BuyingPhase, error) {
+	now := m.now()
+	const q = `UPDATE buying_phases SET closed_at = ? WHERE id = ? AND turnover_time_id = ? AND closed_at IS NULL`
+	res, err := m.db.ExecContext(ctx, q, now, string(bpID), string(id))
+	if err != nil {
+		return circulation.BuyingPhase{}, err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return circulation.BuyingPhase{}, circulation.ErrNoOpenBuyingPhase
+	}
+	const sel = `SELECT id, turnover_time_id, industrial_capital_id, money_circuit_id, opened_at, closed_at, market_location FROM buying_phases WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, sel, string(bpID))
+	var bp circulation.BuyingPhase
+	var bid, ttid, capID, mcid string
+	if err := row.Scan(&bid, &ttid, &capID, &mcid, &bp.OpenedAt, &bp.ClosedAt, &bp.MarketLocation); err != nil {
+		return circulation.BuyingPhase{}, err
+	}
+	bp.ID = circulation.BuyingPhaseID(bid)
+	bp.TurnoverTimeID = circulation.TurnoverTimeID(ttid)
+	bp.IndustrialCapitalID = circulation.IndustrialCapitalID(capID)
+	bp.MoneyCircuitID = circulation.MoneyCircuitID(mcid)
+
+	const upd = `UPDATE turnover_times SET buying_time_nanos = buying_time_nanos + TIMESTAMPDIFF(second, ?, ?) * 1000000000, circulation_open = false, updated_at = ? WHERE id = ?`
+	if _, err := m.db.ExecContext(ctx, upd, bp.OpenedAt, now, now, string(id)); err != nil {
+		return circulation.BuyingPhase{}, err
+	}
+	return bp, nil
+}
+
+func (m *MySQL) SetPerishability(ctx context.Context, p circulation.Perishability) (circulation.Perishability, error) {
+	if p.ID.IsZero() {
+		p.ID = circulation.NewPerishabilityID()
+	}
+	const q = `INSERT INTO perishability (id, commodity_id, window_nanos)
+		VALUES (?,?,?) ON DUPLICATE KEY UPDATE window_nanos = VALUES(window_nanos)`
+	if _, err := m.db.ExecContext(ctx, q, string(p.ID), string(p.CommodityID), p.WindowNanos); err != nil {
+		return circulation.Perishability{}, err
+	}
+	return p, nil
+}
+
+func (m *MySQL) GetPerishability(ctx context.Context, commodityID circulation.CommodityID) (circulation.Perishability, error) {
+	const q = `SELECT id, commodity_id, window_nanos FROM perishability WHERE commodity_id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(commodityID))
+	var p circulation.Perishability
+	var pid, cid string
+	if err := row.Scan(&pid, &cid, &p.WindowNanos); errors.Is(err, sql.ErrNoRows) {
+		return circulation.Perishability{}, ErrNotFound
+	} else if err != nil {
+		return circulation.Perishability{}, err
+	}
+	p.ID = circulation.PerishabilityID(pid)
+	p.CommodityID = circulation.CommodityID(cid)
+	return p, nil
+}
+
+func (m *MySQL) SetMarketSeparation(ctx context.Context, ms circulation.MarketSeparation) (circulation.MarketSeparation, error) {
+	if ms.ID.IsZero() {
+		ms.ID = circulation.NewMarketSeparationID()
+	}
+	const q = `INSERT INTO market_separation
+		(id, industrial_capital_id, selling_market_id, buying_market_id)
+		VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE selling_market_id = VALUES(selling_market_id), buying_market_id = VALUES(buying_market_id)`
+	if _, err := m.db.ExecContext(ctx, q, string(ms.ID), string(ms.IndustrialCapitalID), ms.SellingMarketID, ms.BuyingMarketID); err != nil {
+		return circulation.MarketSeparation{}, err
+	}
+	return ms, nil
 }
 
 // isDuplicate reports whether err is a MySQL duplicate-key error (1062).

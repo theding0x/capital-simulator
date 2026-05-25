@@ -32,4 +32,18 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/prices", h.ComputePrice)
 	s.HandleFunc("GET /v1/prices", h.ListPrices)
 	s.HandleFunc("GET /v1/prices/{commodityID}", h.GetPrice)
+
+	// Vol. II Ch. 5 — Turnover time and circulation phases
+	s.HandleFunc("POST /v1/turnover-time", h.CreateTurnoverTime)
+	s.HandleFunc("GET /v1/turnover-time", h.ListTurnoverTimes)
+	s.HandleFunc("GET /v1/turnover-time/{id}", h.GetTurnoverTime)
+	s.HandleFunc("POST /v1/turnover-time/{id}/labour-time", h.AddLabourTime)
+	s.HandleFunc("POST /v1/turnover-time/{id}/labour-interruption", h.AddLabourInterruption)
+	s.HandleFunc("POST /v1/turnover-time/{id}/latent-mp", h.RecordLatentMP)
+	s.HandleFunc("POST /v1/turnover-time/{id}/natural-process", h.RecordNaturalProcess)
+	s.HandleFunc("POST /v1/turnover-time/{id}/selling-phase", h.RecordSellingPhase)
+	s.HandleFunc("POST /v1/turnover-time/{id}/buying-phase", h.RecordBuyingPhase)
+	s.HandleFunc("GET /v1/turnover-time/{id}/active-fraction", h.GetActiveFraction)
+	s.HandleFunc("POST /v1/perishability", h.SetPerishability)
+	s.HandleFunc("POST /v1/market-separation", h.SetMarketSeparation)
 }

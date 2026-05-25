@@ -37,6 +37,7 @@ import { Ch33ModernColonisation } from "../chapters/vol1/Ch33ModernColonisation"
 import { Ch01CircuitMoneyCapital } from "../chapters/vol2/Ch01CircuitMoneyCapital";
 import { Ch02CircuitProductiveCapital } from "../chapters/vol2/Ch02CircuitProductiveCapital";
 import { Ch03CircuitCommodityCapital } from "../chapters/vol2/Ch03CircuitCommodityCapital";
+import { Ch05TimeOfCirculation } from "../chapters/vol2/Ch05TimeOfCirculation";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -92,6 +93,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v2-ch01": Ch01CircuitMoneyCapital as AnyPanel,
   "v2-ch02": Ch02CircuitProductiveCapital as AnyPanel,
   "v2-ch03": Ch03CircuitCommodityCapital as AnyPanel,
+  "v2-ch05": Ch05TimeOfCirculation as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -131,6 +133,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v2-ch01": "The circuit of money-capital ... M—C(Lp+Mp)…P…C′—M′. The starting point and termination of its motion is the money-form of capital.",
   "v2-ch02": "The circuit of productive capital ... begins with the act of production and ends with the same act.",
   "v2-ch03": "C′—M′—C(Lp+Mp)…P…C′. The starting-point and the finishing-point of the circuit is commodity-capital, or C′, i.e., capital-value plus surplus-value.",
+  "v2-ch05": "The time of circulation of capital limits its time of production and hence the creation of surplus-value.",
 };
 
 export function ChapterShell({
