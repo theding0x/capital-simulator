@@ -1,0 +1,76 @@
+/* ─── Ch.26 · Secret of Primitive Accumulation ─────────────────────────── */
+.ch26-myths { list-style: none; margin: 0; padding: 0; }
+.ch26-myth {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  align-items: stretch;
+  border-top: 1px solid var(--rule);
+}
+.ch26-myth:first-child { border-top: none; }
+.ch26-myth-side {
+  padding: 1.5rem 1.5rem 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.ch26-myth-side + .ch26-myth-side { border-left: 1px solid var(--rule); padding-left: 1.5rem; padding-right: 0; }
+.ch26-myth-tag {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.ch26-myth-side--idyll .ch26-myth-tag { color: var(--lead-hover); }
+.ch26-myth-side--record .ch26-myth-tag { color: var(--red); }
+.ch26-myth-claim {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--ink);
+  margin: 0;
+  max-width: 42ch;
+}
+.ch26-myth-side--idyll .ch26-myth-claim { color: var(--ink-muted); }
+.ch26-myth-evidence {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ch26-myth-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  padding: 0 0.5rem;
+  min-width: 4rem;
+}
+.ch26-coda {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--red-dim);
+  border-left: 2px solid var(--red);
+}
+.ch26-coda p {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.98rem;
+  color: var(--ink);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 60ch;
+}
+
+@media (max-width: 880px) {
+  .ch26-myth { grid-template-columns: 1fr; }
+  .ch26-myth-side + .ch26-myth-side { border-left: none; border-top: 1px solid var(--rule); padding-left: 0; padding-top: 1rem; }
+  .ch26-myth-divider { display: none; }
+}

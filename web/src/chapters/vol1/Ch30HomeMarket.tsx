@@ -1,343 +1,242 @@
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
-import { api } from "../../api";
-import { usePounds } from "../../CurrencyContext";
-import type {
-  HistoricalStage,
-  DomesticIndustry,
-  MarketFormation,
-  HomeMarketSize,
-} from "../../types";
+import { useState } from "react";
+import "./Ch30HomeMarket.css";
+
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "red" | "gold" | "lead" | "muted";
+}) {
+  const color =
+    tone === "red"   ? "var(--red)" :
+    tone === "gold"  ? "var(--gold-bright)" :
+    tone === "lead"  ? "var(--lead-hover)" :
+    tone === "muted" ? "var(--ink-muted)" :
+    "var(--ink)";
+  return (
+    <div className="ch32-stat">
+      <div className="ch32-stat-label">{label}</div>
+      <div className="ch32-stat-value mono" style={{ color }}>{value}</div>
+    </div>
+  );
+}
 
 export function Ch30HomeMarket() {
-  const fmt = usePounds();
+  const [released,      setReleased] = useState(50000);
+  const [absorb,        setAbsorb]   = useState(0.62);
+  const [annualSubsist, setSubsist]  = useState(720);
+  const [factorySpend,  setSpend]    = useState(540);
+  const [householdSize, setHH]       = useState(4.5);
 
-  const [stages, setStages] = useState<HistoricalStage[]>([]);
-  const [selectedStageId, setSelectedStageId] = useState("");
-  const [homeMarket, setHomeMarket] = useState<HomeMarketSize | null>(null);
-  const [homeMarketError, setHomeMarketError] = useState("");
-  const [industries, setIndustries] = useState<DomesticIndustry[]>([]);
-
-  // create domestic industry form
-  const [diName, setDiName] = useState("Westphalian flax spinning");
-  const [diHouseholds, setDiHouseholds] = useState("2000");
-  const [diOutput, setDiOutput] = useState("48000");
-  const [diError, setDiError] = useState("");
-  const [diCreating, setDiCreating] = useState(false);
-
-  // market formation (stateless) form
-  const [mfName, setMfName] = useState("Westphalian flax spinning");
-  const [mfHouseholds, setMfHouseholds] = useState("2000");
-  const [mfOutput, setMfOutput] = useState("48000");
-  const [mfExpropriated, setMfExpropriated] = useState("1500");
-  const [mfResult, setMfResult] = useState<MarketFormation | null>(null);
-  const [mfError, setMfError] = useState("");
-  const [mfComputing, setMfComputing] = useState(false);
-
-  // Mirabeau comparison
-  const [reunieWorkers, setReunie] = useState("200");
-  const [reunieOutput, setReuniedOutput] = useState("12000");
-  const [separeeProducers, setSeparee] = useState("200");
-  const [separeeOutput, setSepareeOutput] = useState("8000");
-
-  useEffect(() => {
-    api.listHistoricalStages().then((list) => {
-      setStages(list);
-      if (list.length > 0) {
-        setSelectedStageId(list[0].id);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!selectedStageId) return;
-    loadHomeMarket(selectedStageId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStageId]);
-
-  async function loadHomeMarket(id: string) {
-    setHomeMarketError("");
-    try {
-      const size = await api.getHomeMarket(id);
-      setHomeMarket(size);
-    } catch (e) {
-      setHomeMarketError(String(e));
-    }
-  }
-
-  async function handleCreateDomesticIndustry(e: FormEvent) {
-    e.preventDefault();
-    if (!selectedStageId) return;
-    setDiError("");
-    setDiCreating(true);
-    try {
-      const di = await api.createDomesticIndustry(selectedStageId, {
-        name: diName,
-        households_engaged: parseInt(diHouseholds, 10),
-        annual_output_pence: parseInt(diOutput, 10),
-      });
-      setIndustries((prev) => [...prev, di]);
-      await loadHomeMarket(selectedStageId);
-    } catch (e) {
-      setDiError(String(e));
-    } finally {
-      setDiCreating(false);
-    }
-  }
-
-  async function handleComputeFormation(e: FormEvent) {
-    e.preventDefault();
-    setMfError("");
-    setMfComputing(true);
-    try {
-      const result = await api.computeMarketFormation({
-        name: mfName,
-        households_engaged: parseInt(mfHouseholds, 10),
-        annual_output_pence: parseInt(mfOutput, 10),
-        expropriated: parseInt(mfExpropriated, 10),
-      });
-      setMfResult(result);
-    } catch (e) {
-      setMfError(String(e));
-    } finally {
-      setMfComputing(false);
-    }
-  }
-
-  const reunieOut = parseInt(reunieOutput, 10) || 0;
-  const separeeOut = parseInt(separeeOutput, 10) || 0;
+  const households   = Math.round(released / Math.max(householdSize, 1));
+  const proletarians = Math.round(released * absorb);
+  const lostSubsist  = households * annualSubsist;
+  const newDemand    = households * factorySpend;
+  const sourceShare  = newDemand / Math.max(lostSubsist, 1);
 
   return (
-    <div className="chapter-panel">
-      <section className="panel-section">
-        <h2>Home Market Size</h2>
-        <p className="muted small">
-          Select a historical stage to see the aggregate home market created by
-          proletarianisation of its domestic industries.
+    <>
+      <section className="card">
+        <h2>One Process, Two Inputs</h2>
+        <p className="description">
+          The expropriation that supplied the towns with proletarians simultaneously created the
+          market into which those proletarians&#8217; product could be sold. The peasant who used
+          to spin her own yarn now buys factory cloth out of a wage paid by the spinning-mill.
         </p>
-        <label>
-          Historical Stage
-          <select
-            value={selectedStageId}
-            onChange={(e) => setSelectedStageId(e.target.value)}
-          >
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {homeMarketError && <p className="error-msg">{homeMarketError}</p>}
-        {homeMarket && (
-          <dl className="result-list">
-            <dt>Commoditised Output</dt>
-            <dd>{fmt(homeMarket.commoditised_output_pence)}</dd>
-            <dt>Wage Labourers Created</dt>
-            <dd>{homeMarket.wage_labourers.toLocaleString()}</dd>
-          </dl>
-        )}
-      </section>
-
-      <section className="panel-section">
-        <h2>Register Domestic Industry</h2>
-        <p className="muted small">
-          Record a pre-capitalist household industry for the selected stage.
-          Each household registered will be counted as a potential wage worker
-          once expropriated, and its annual output becomes a commodity.
-        </p>
-        <form onSubmit={handleCreateDomesticIndustry} className="form-grid">
+        <form className="form-grid" onSubmit={(e) => e.preventDefault()}>
           <label>
-            Name
-            <input
-              value={diName}
-              onChange={(e) => setDiName(e.target.value)}
-              required
-            />
+            <span>Persons released from the soil</span>
+            <input type="number" min={1} value={released} onChange={(e) => setReleased(+e.target.value)} />
           </label>
           <label>
-            Households Engaged
-            <input
-              type="number"
-              min="1"
-              value={diHouseholds}
-              onChange={(e) => setDiHouseholds(e.target.value)}
-              required
-            />
+            <span>Household size</span>
+            <input type="number" min={1} step={0.1} value={householdSize} onChange={(e) => setHH(+e.target.value)} />
           </label>
           <label>
-            Annual Output (halfpennies)
-            <input
-              type="number"
-              min="1"
-              value={diOutput}
-              onChange={(e) => setDiOutput(e.target.value)}
-              required
-            />
+            <span>Share absorbed by industry</span>
+            <input type="number" min={0} max={1} step={0.05} value={absorb} onChange={(e) => setAbsorb(+e.target.value)} />
           </label>
-          {diError && <p className="error-msg">{diError}</p>}
-          <button type="submit" className="btn-primary" disabled={diCreating || !selectedStageId}>
-            {diCreating ? "Registering…" : "Register Industry"}
-          </button>
+          <label>
+            <span>Annual subsistence value forgone (&#163; / household)</span>
+            <input type="number" min={0} value={annualSubsist} onChange={(e) => setSubsist(+e.target.value)} />
+          </label>
+          <label className="span2">
+            <span>Annual industrial spend per household (&#163;)</span>
+            <input type="number" min={0} value={factorySpend} onChange={(e) => setSpend(+e.target.value)} />
+          </label>
         </form>
-        {industries.length > 0 && (
-          <ul className="result-list" style={{ marginTop: "0.75rem" }}>
-            {industries.map((d) => (
-              <li key={d.id}>
-                <strong>{d.name}</strong> — {d.households_engaged.toLocaleString()} households,{" "}
-                {fmt(d.annual_output_pence)} annual output
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
-      <section className="panel-section">
-        <h2>Home Market Formation (Stateless)</h2>
-        <p className="muted small">
-          Compute how the expropriation of a domestic industry creates new wage
-          workers and commoditises their output. The proletarianised are the new
-          wage workers: every displaced household must now buy what it once made.
+      <section className="card">
+        <h2>The Fork</h2>
+        <p className="description">
+          The single rural pool feeds both halves of the industrial mode at once. Each arrow carries
+          a quantity computed from the inputs above.
         </p>
-        <form onSubmit={handleComputeFormation} className="form-grid">
-          <label>
-            Industry Name
-            <input
-              value={mfName}
-              onChange={(e) => setMfName(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Households Engaged
-            <input
-              type="number"
-              min="1"
-              value={mfHouseholds}
-              onChange={(e) => setMfHouseholds(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Annual Output (halfpennies)
-            <input
-              type="number"
-              min="1"
-              value={mfOutput}
-              onChange={(e) => setMfOutput(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Households Expropriated
-            <input
-              type="number"
-              min="0"
-              value={mfExpropriated}
-              onChange={(e) => setMfExpropriated(e.target.value)}
-              required
-            />
-          </label>
-          {mfError && <p className="error-msg">{mfError}</p>}
-          <button type="submit" className="btn-primary" disabled={mfComputing}>
-            {mfComputing ? "Computing…" : "Compute Formation"}
-          </button>
-        </form>
-        {mfResult && (
-          <dl className="result-list">
-            <dt>Period</dt>
-            <dd>{mfResult.period}</dd>
-            <dt>Labourers Proletarianised</dt>
-            <dd>{mfResult.labourers_proletarianised.toLocaleString()}</dd>
-            <dt>New Wage Labourers</dt>
-            <dd>{mfResult.new_wage_labourers.toLocaleString()}</dd>
-            <dt>Market Size</dt>
-            <dd>{fmt(mfResult.market_size_pence)}</dd>
-            <dt>Domestic Industry Destroyed</dt>
-            <dd
-              style={{
-                color: mfResult.domestic_industry_destroyed
-                  ? "var(--color-error, #c0392b)"
-                  : "inherit",
-              }}
-            >
-              {mfResult.domestic_industry_destroyed ? "Yes" : "No"}
-            </dd>
-          </dl>
-        )}
-      </section>
-
-      <section className="panel-section">
-        <h2>Manufacture Réunie vs. Manufacture Séparée</h2>
-        <p className="muted small">
-          Mirabeau's distinction: the "grand manufactory" (réunie) concentrates
-          workers under one direction and outproduces the scattered discrete
-          workshop (séparée) at equal headcount. His preference for séparée is
-          political, not economic.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-          <div>
-            <h3 style={{ marginBottom: "0.5rem" }}>Réunie (concentrated)</h3>
-            <label>
-              Workers
-              <input
-                type="number"
-                min="1"
-                value={reunieWorkers}
-                onChange={(e) => setReunie(e.target.value)}
-              />
-            </label>
-            <label style={{ marginTop: "0.5rem" }}>
-              Output (halfpennies)
-              <input
-                type="number"
-                min="0"
-                value={reunieOutput}
-                onChange={(e) => setReuniedOutput(e.target.value)}
-              />
-            </label>
+        <div className="ch30-diagram">
+          <div className="ch30-pool ch30-pool--source">
+            <div className="ch30-pool-tag">released · rural surplus</div>
+            <div className="ch30-pool-value mono">{released.toLocaleString()}</div>
+            <p className="ch30-pool-sub">
+              {households.toLocaleString()} households · expropriated by enclosure, Reformation
+              seizure or parliamentary act
+            </p>
           </div>
-          <div>
-            <h3 style={{ marginBottom: "0.5rem" }}>Séparée (scattered)</h3>
-            <label>
-              Independent Producers
-              <input
-                type="number"
-                min="1"
-                value={separeeProducers}
-                onChange={(e) => setSeparee(e.target.value)}
-              />
-            </label>
-            <label style={{ marginTop: "0.5rem" }}>
-              Output (halfpennies)
-              <input
-                type="number"
-                min="0"
-                value={separeeOutput}
-                onChange={(e) => setSepareeOutput(e.target.value)}
-              />
-            </label>
+          <div className="ch30-fork">
+            <span>supply</span>
+            <span className="ch30-fork-arrow">&#x27F6;</span>
+            <span>demand</span>
+          </div>
+          <div className="ch30-destinations">
+            <div className="ch30-pool">
+              <div className="ch30-pool-tag">industrial proletariat</div>
+              <div className="ch30-pool-value mono">{proletarians.toLocaleString()}</div>
+              <p className="ch30-pool-sub">
+                absorbed into the manufactories; selling labour-power at the going wage
+              </p>
+            </div>
+            <div className="ch30-pool ch30-pool--demand">
+              <div className="ch30-pool-tag">home market · annual demand</div>
+              <div className="ch30-pool-value mono">&#163;{newDemand.toLocaleString()}</div>
+              <p className="ch30-pool-sub">
+                cloth, boots, candles, beer formerly produced at home, now purchased from manufacture
+              </p>
+            </div>
           </div>
         </div>
-        {reunieOut > 0 && separeeOut > 0 && (
-          <p className="muted small" style={{ marginTop: "0.75rem" }}>
-            Output ratio (réunie / séparée):{" "}
-            <strong
-              style={{
-                color:
-                  reunieOut > separeeOut
-                    ? "var(--color-success, #27ae60)"
-                    : "var(--color-error, #c0392b)",
-              }}
-            >
-              {(reunieOut / separeeOut).toFixed(2)}×
-            </strong>
-            {reunieOut > separeeOut
-              ? " — concentration outproduces dispersal"
-              : " — dispersal equals or exceeds concentration (unusual)"}
-          </p>
-        )}
+
+        <div className="ch30-stats">
+          <Stat label="Households expropriated" value={households.toLocaleString()}              tone="red" />
+          <Stat label="Proletarianised"          value={proletarians.toLocaleString()}           tone="lead" />
+          <Stat label="Subsistence extinguished" value={`£${lostSubsist.toLocaleString()}/yr`}  tone="muted" />
+          <Stat label="Demand transferred"       value={`£${newDemand.toLocaleString()}/yr`}    tone="gold" />
+        </div>
+
+        <p className="note" style={{ marginTop: "1.25rem", maxWidth: "62ch" }}>
+          &#8220;The expropriation and expulsion of the agricultural population, intermittent but
+          renewed again and again, supplied the town industries with a mass of proletarians entirely
+          unconnected with the corporate guilds and unfettered by them; a fortunate circumstance
+          that makes old A. Anderson believe in direct intervention of providence.&#8221;
+        </p>
       </section>
-    </div>
+
+      <section className="card">
+        <h2>Self-Provision &#x27F6; Commodity</h2>
+        <p className="description">
+          The labourer&#8217;s diet, cloth and tools do not vanish: they change hands. What was
+          previously a use-value produced by the household becomes a commodity, bought back from
+          the master who sets the household to work.
+        </p>
+        <table className="commodity-table">
+          <thead>
+            <tr>
+              <th>Article</th>
+              <th>Pre-expropriation source</th>
+              <th>Post-expropriation source</th>
+              <th style={{ textAlign: "right" }}>Annual value (&#163;)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="snlt-cell">Yarn &amp; cloth</td>
+              <td>Household spinning · loom</td>
+              <td>Manchester spinning-mill</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#163;{Math.round(annualSubsist * 0.32).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Beer</td>
+              <td>Domestic brewing</td>
+              <td>Commercial brewery</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#163;{Math.round(annualSubsist * 0.18).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Boots</td>
+              <td>Village cordwainer</td>
+              <td>Northampton factory</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#163;{Math.round(annualSubsist * 0.12).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Candles · soap</td>
+              <td>Tallow rendered at home</td>
+              <td>Provincial chandler</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#163;{Math.round(annualSubsist * 0.10).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Implements</td>
+              <td>Smith on commission</td>
+              <td>Wholesale ironmonger</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#163;{Math.round(annualSubsist * 0.15).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Misc.</td>
+              <td>Barter · common right</td>
+              <td>Cash market</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#163;{Math.round(annualSubsist * 0.13).toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p className="note" style={{ marginTop: "1rem", maxWidth: "62ch" }}>
+          Each row is the same use-value before and after. The transfer is what makes the
+          manufactory&#8217;s product saleable in the first place: a market is created by the very
+          dispossession that supplies its workforce. The proportion of demand recovered by industry
+          at our default inputs is&#160;
+          <span className="mono" style={{ color: "var(--gold-bright)" }}>
+            {(sourceShare * 100).toFixed(0)}%
+          </span>
+          &#160;of the value extinguished &#8212; the residual is monetised savings, taxation, and
+          a permanent reduction in the standard of living.
+        </p>
+      </section>
+
+      <section className="card">
+        <h2>What Lloyd &amp; Anderson Saw</h2>
+        <p className="description">
+          The contemporary witnesses Marx quotes were not, in the main, hostile to the process. They
+          observed the same fork and found it providential.
+        </p>
+        <ul className="ch33-list">
+          <li className="ch33-row">
+            <div className="ch33-row-main">
+              <div className="ch33-row-name">A. Anderson · 1764</div>
+              <div className="ch33-row-meta muted small">
+                Origin of Commerce &#8212; &#8220;direct interposition of providence&#8221;
+              </div>
+            </div>
+            <span className="ch33-pill ch33-pill--free">apologetic</span>
+          </li>
+          <li className="ch33-row">
+            <div className="ch33-row-main">
+              <div className="ch33-row-name">Sir F. M. Eden · 1797</div>
+              <div className="ch33-row-meta muted small">
+                State of the Poor &#8212; &#8220;increased manufactures must absorb the rural surplus&#8221;
+              </div>
+            </div>
+            <span className="ch33-pill ch33-pill--free">apologetic</span>
+          </li>
+          <li className="ch33-row">
+            <div className="ch33-row-main">
+              <div className="ch33-row-name">Sir T. More · 1516</div>
+              <div className="ch33-row-meta muted small">
+                Utopia &#8212; &#8220;sheep devour men&#8221;
+              </div>
+            </div>
+            <span className="ch33-pill ch33-pill--dep">opposed</span>
+          </li>
+          <li className="ch33-row">
+            <div className="ch33-row-main">
+              <div className="ch33-row-name">Dr. Price · 1780</div>
+              <div className="ch33-row-meta muted small">
+                Observations &#8212; &#8220;the kingdom is wasting away&#8221;
+              </div>
+            </div>
+            <span className="ch33-pill ch33-pill--dep">opposed</span>
+          </li>
+        </ul>
+      </section>
+    </>
   );
 }

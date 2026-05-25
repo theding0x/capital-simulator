@@ -1,366 +1,260 @@
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
-import { api } from "../../api";
-import { usePounds } from "../../CurrencyContext";
-import type {
-  HistoricalStage,
-  CapitalOrigin,
-  ColonialTransfer,
-  NationalDebt,
-  IndustrialCapitalGenesis,
-} from "../../types";
+import { useState } from "react";
+import "./Ch31IndustrialCapitalist.css";
+
+const PILLARS: {
+  id: string;
+  name: string;
+  idx: string;
+  gloss: string;
+  pence: number;
+}[] = [
+  {
+    id: "colony",
+    name: "Colonial system",
+    idx: "I",
+    gloss: "Conquest, plunder, slave trade. The treasures captured outside Europe by undisguised looting, enslavement and murder, floated back to the mother country and were turned there into capital.",
+    pence: 230,
+  },
+  {
+    id: "debt",
+    name: "Public debt",
+    idx: "II",
+    gloss: "The State's deficit-financing endows banks with bullion, and the bonds with which the State pays the rentier circulate as money — capital fallen from the sky.",
+    pence: 180,
+  },
+  {
+    id: "tax",
+    name: "Modern taxation",
+    idx: "III",
+    gloss: "Taxes on necessaries fall on the labourer; they finance the public debt and provide a continuous compulsion to wage-labour by raising the floor of subsistence.",
+    pence: 120,
+  },
+  {
+    id: "tariff",
+    name: "Protection",
+    idx: "IV",
+    gloss: "The protectionist system was an artificial means for manufacturing manufacturers, expropriating independent labourers, and forcibly accelerating capital concentration.",
+    pence: 95,
+  },
+];
 
 export function Ch31IndustrialCapitalist() {
-  const fmt = usePounds();
+  const [vals, setVals] = useState<number[]>(PILLARS.map((p) => p.pence));
+  const total  = vals.reduce((a, b) => a + b, 0);
+  const widths = vals.map((v) => (v / Math.max(total, 1)) * 100);
 
-  const [stages, setStages] = useState<HistoricalStage[]>([]);
-  const [selectedStageId, setSelectedStageId] = useState("");
-  const [genesis, setGenesis] = useState<IndustrialCapitalGenesis | null>(null);
-  const [genesisError, setGenesisError] = useState("");
-
-  // capital origin form
-  const [coSource, setCoSource] = useState("Liverpool slave trade");
-  const [coAmount, setCoAmount] = useState("15000");
-  const [coPeriod, setCoPeriod] = useState("1730");
-  const [coError, setCoError] = useState("");
-  const [coCreating, setCoCreating] = useState(false);
-  const [capitalOrigins, setCapitalOrigins] = useState<CapitalOrigin[]>([]);
-
-  // colonial transfer form
-  const [ctFrom, setCtFrom] = useState("Americas");
-  const [ctTo, setCtTo] = useState("England");
-  const [ctValue, setCtValue] = useState("96000");
-  const [ctMethod, setCtMethod] = useState("plunder");
-  const [ctError, setCtError] = useState("");
-  const [ctCreating, setCtCreating] = useState(false);
-  const [transfers, setTransfers] = useState<ColonialTransfer[]>([]);
-
-  // national debt form
-  const [ndAmount, setNdAmount] = useState("2400000");
-  const [ndRate, setNdRate] = useState("800");
-  const [ndCreditor, setNdCreditor] = useState("private-bankers");
-  const [ndError, setNdError] = useState("");
-  const [ndCreating, setNdCreating] = useState(false);
-  const [debts, setDebts] = useState<NationalDebt[]>([]);
-
-  useEffect(() => {
-    api.listHistoricalStages().then((list) => {
-      setStages(list);
-      if (list.length > 0) {
-        setSelectedStageId(list[0].id);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!selectedStageId) return;
-    loadGenesis(selectedStageId);
-    setCapitalOrigins([]);
-    setTransfers([]);
-    setDebts([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStageId]);
-
-  async function loadGenesis(id: string) {
-    setGenesisError("");
-    try {
-      const g = await api.getIndustrialCapitalGenesis(id);
-      setGenesis(g);
-    } catch (e) {
-      setGenesisError(String(e));
-    }
-  }
-
-  async function handleCreateCapitalOrigin(e: FormEvent) {
-    e.preventDefault();
-    if (!selectedStageId) return;
-    setCoError("");
-    setCoCreating(true);
-    try {
-      const co = await api.createCapitalOrigin(selectedStageId, {
-        source: coSource,
-        amount_pence: parseInt(coAmount, 10),
-        period: coPeriod,
-      });
-      setCapitalOrigins((prev) => [...prev, co]);
-      await loadGenesis(selectedStageId);
-    } catch (e) {
-      setCoError(String(e));
-    } finally {
-      setCoCreating(false);
-    }
-  }
-
-  async function handleCreateColonialTransfer(e: FormEvent) {
-    e.preventDefault();
-    if (!selectedStageId) return;
-    setCtError("");
-    setCtCreating(true);
-    try {
-      const ct = await api.createColonialTransfer(selectedStageId, {
-        from: ctFrom,
-        to: ctTo,
-        value_pence: parseInt(ctValue, 10),
-        method: ctMethod,
-      });
-      setTransfers((prev) => [...prev, ct]);
-      await loadGenesis(selectedStageId);
-    } catch (e) {
-      setCtError(String(e));
-    } finally {
-      setCtCreating(false);
-    }
-  }
-
-  async function handleCreateNationalDebt(e: FormEvent) {
-    e.preventDefault();
-    if (!selectedStageId) return;
-    setNdError("");
-    setNdCreating(true);
-    try {
-      const nd = await api.createNationalDebt(selectedStageId, {
-        amount_pence: parseInt(ndAmount, 10),
-        interest_rate_bps: parseInt(ndRate, 10),
-        creditor_class: ndCreditor,
-      });
-      setDebts((prev) => [...prev, nd]);
-      await loadGenesis(selectedStageId);
-    } catch (e) {
-      setNdError(String(e));
-    } finally {
-      setNdCreating(false);
-    }
+  function setAt(i: number, n: number) {
+    setVals((vs) => vs.map((v, j) => (j === i ? Math.max(0, n) : v)));
   }
 
   return (
-    <div className="chapter-panel">
-      <section className="panel-section">
-        <h2>Industrial Capital Genesis</h2>
-        <p className="muted small">
-          Select a historical stage to see the aggregate capital formed through
-          slave trade profits, colonial plunder, and similar primitive
-          accumulation. National debts and protection systems are structural
-          levers and are listed separately but excluded from the capital total.
+    <>
+      <section className="card">
+        <h2>The Four Pillars</h2>
+        <p className="description">
+          Marx enumerates four sources of the founding capital of the manufactories. Each is a
+          separate institution; together they form the financial counterpart of the expropriation
+          in the countryside. The values below are in millions of pounds and roughly trace
+          17th&#8211;18th century England.
         </p>
-        <label>
-          Historical Stage
-          <select
-            value={selectedStageId}
-            onChange={(e) => setSelectedStageId(e.target.value)}
+        <div className="ch31-pillars">
+          {PILLARS.map((p, i) => (
+            <div key={p.id} className="ch31-pillar">
+              <div className="ch31-pillar-idx">{p.idx}</div>
+              <div className="ch31-pillar-name">{p.name}</div>
+              <p className="ch31-pillar-gloss">{p.gloss}</p>
+              <label style={{ marginTop: "0.5rem" }}>
+                <span style={{ fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--ink-dim)" }}>
+                  &#163; millions contributed
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  value={vals[i]}
+                  onChange={(e) => setAt(i, +e.target.value)}
+                />
+              </label>
+              <div className="ch31-pillar-value">&#163;{vals[i].toLocaleString()} M</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: "1.5rem" }}>
+          <div
+            className="muted small"
+            style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.2em", textTransform: "uppercase", fontSize: "0.6rem", color: "var(--ink-dim)" }}
           >
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {genesisError && <p className="error-msg">{genesisError}</p>}
-        {genesis && (
-          <dl className="result-list">
-            <dt>Total Capital Formed</dt>
-            <dd>{fmt(genesis.total_capital_formed_pence)}</dd>
-            <dt>Capital Origins</dt>
-            <dd>{genesis.origins.length}</dd>
-            <dt>Colonial Transfers</dt>
-            <dd>{genesis.colonial_transfers.length}</dd>
-            <dt>National Debts</dt>
-            <dd>{genesis.national_debts.length}</dd>
-            <dt>Protection Systems</dt>
-            <dd>{genesis.protection_systems.length}</dd>
-          </dl>
-        )}
-        {genesis && genesis.protection_systems.length > 0 && (
-          <div style={{ marginTop: "0.75rem" }}>
-            <strong>Protection Systems</strong>
-            <ul className="result-list" style={{ marginTop: "0.25rem" }}>
-              {genesis.protection_systems.map((ps) => (
-                <li key={ps.id}>
-                  {ps.beneficiary} — {(ps.tariff_rate_bps / 100).toFixed(1)}% tariff
-                  ({ps.period_start}&#8211;{ps.period_end})
-                </li>
-              ))}
-            </ul>
+            composition · &#163;{total.toLocaleString()} M founded
           </div>
-        )}
+          <div className="ch31-stack">
+            <div className="ch31-stack-band ch31-stack-band--colony" style={{ width: widths[0] + "%" }}>
+              colony · {widths[0].toFixed(0)}%
+            </div>
+            <div className="ch31-stack-band ch31-stack-band--debt" style={{ width: widths[1] + "%" }}>
+              debt · {widths[1].toFixed(0)}%
+            </div>
+            <div className="ch31-stack-band ch31-stack-band--tax" style={{ width: widths[2] + "%" }}>
+              tax · {widths[2].toFixed(0)}%
+            </div>
+            <div className="ch31-stack-band ch31-stack-band--tariff" style={{ width: widths[3] + "%" }}>
+              tariff · {widths[3].toFixed(0)}%
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section className="panel-section">
-        <h2>Register Capital Origin</h2>
-        <p className="muted small">
-          Record a source of capital formation: slave trade profits, state
-          monopoly revenues, prize money from colonial wars, etc. Marx&apos;s
-          fixture: Liverpool slave trade 1730&#8211;1792.
+      <section className="card">
+        <h2>Colonial Receipts &#8212; East Indies, West Indies, Africa</h2>
+        <p className="description">
+          The chapter cites figures that, by today&#8217;s accounting, are conservative. The
+          right-hand column converts each line into the share of national capital formation it
+          represented over the period.
         </p>
-        <form onSubmit={handleCreateCapitalOrigin} className="form-grid">
-          <label>
-            Source
-            <input
-              value={coSource}
-              onChange={(e) => setCoSource(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Amount (halfpennies)
-            <input
-              type="number"
-              min="1"
-              value={coAmount}
-              onChange={(e) => setCoAmount(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Period
-            <input
-              value={coPeriod}
-              onChange={(e) => setCoPeriod(e.target.value)}
-              placeholder="e.g. 1730"
-              required
-            />
-          </label>
-          {coError && <p className="error-msg">{coError}</p>}
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={coCreating || !selectedStageId}
-          >
-            {coCreating ? "Registering…" : "Register Origin"}
-          </button>
-        </form>
-        {capitalOrigins.length > 0 && (
-          <ul className="result-list" style={{ marginTop: "0.75rem" }}>
-            {capitalOrigins.map((co) => (
-              <li key={co.id}>
-                <strong>{co.source}</strong> ({co.period}) &#8212; {fmt(co.amount_pence)}
-              </li>
-            ))}
-          </ul>
-        )}
+        <table className="commodity-table">
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Period</th>
+              <th>Mechanism</th>
+              <th style={{ textAlign: "right" }}>&#163; extracted</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="snlt-cell">Spanish America</td>
+              <td>1503–1660</td>
+              <td>Silver remitted via Seville</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#8776; 180 M</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">East India Company</td>
+              <td>1757–1815</td>
+              <td>Bengal land revenue + bullion drain</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#8776; 120 M</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">West Indian plantations</td>
+              <td>1660–1807</td>
+              <td>Sugar &amp; rum on enslaved labour</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#8776; 90 M</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Trans-Atlantic slave trade</td>
+              <td>1680–1807</td>
+              <td>Liverpool · Bristol · London</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#8776; 60 M</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Royal African Company</td>
+              <td>1672–1752</td>
+              <td>Forts at Cape Coast · Gambia</td>
+              <td className="snlt-cell" style={{ textAlign: "right" }}>&#8776; 15 M</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
-      <section className="panel-section">
-        <h2>Record Colonial Transfer</h2>
-        <p className="muted small">
-          Record wealth extracted from a colony and transferred to the
-          metropolis. Marx&apos;s fixture: colonial plunder from the Americas
-          funding English industrial capital.
+      <section className="card">
+        <h2>Public Debt, in Sketch</h2>
+        <p className="description">
+          The Bank of England (1694) is the moment the State&#8217;s deficit becomes the
+          rentier&#8217;s annuity. The bond is itself a commodity, and its existence multiplies the
+          money capital available to industry.
         </p>
-        <form onSubmit={handleCreateColonialTransfer} className="form-grid">
-          <label>
-            From (colony/region)
-            <input
-              value={ctFrom}
-              onChange={(e) => setCtFrom(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            To (metropolis)
-            <input
-              value={ctTo}
-              onChange={(e) => setCtTo(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Value (halfpennies)
-            <input
-              type="number"
-              min="1"
-              value={ctValue}
-              onChange={(e) => setCtValue(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Method
-            <input
-              value={ctMethod}
-              onChange={(e) => setCtMethod(e.target.value)}
-              placeholder="e.g. plunder, tribute, monopoly"
-              required
-            />
-          </label>
-          {ctError && <p className="error-msg">{ctError}</p>}
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={ctCreating || !selectedStageId}
-          >
-            {ctCreating ? "Recording…" : "Record Transfer"}
-          </button>
-        </form>
-        {transfers.length > 0 && (
-          <ul className="result-list" style={{ marginTop: "0.75rem" }}>
-            {transfers.map((ct) => (
-              <li key={ct.id}>
-                {ct.from} &#8594; {ct.to} via <em>{ct.method}</em> &#8212; {fmt(ct.value_pence)}
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="ch33-list">
+          <li className="ch33-row">
+            <div className="ch33-row-main">
+              <div className="ch33-row-name">Bank of England · 1694</div>
+              <div className="ch33-row-meta muted small">
+                &#163;1.2 M lent to the Crown at 8% · banknotes issued against the debt &middot; convertible into specie
+              </div>
+            </div>
+            <span className="ch33-pill ch33-pill--dep">&#163; 1.2 M</span>
+          </li>
+          <li className="ch33-row">
+            <div className="ch33-row-main">
+              <div className="ch33-row-name">Funded debt · post-Anne</div>
+              <div className="ch33-row-meta muted small">
+                South Sea Company · East India bonds · Exchequer bills &middot; the rentier class is born
+              </div>
+            </div>
+            <span className="ch33-pill ch33-pill--dep">&#163; 50 M</span>
+          </li>
+          <li className="ch33-row">
+            <div className="ch33-row-main">
+              <div className="ch33-row-name">Napoleonic wars</div>
+              <div className="ch33-row-meta muted small">
+                Debt rises from &#163;243 M (1793) to &#163;834 M (1815) &middot; financed by indirect taxes on necessaries
+              </div>
+            </div>
+            <span className="ch33-pill ch33-pill--dep">&#163; 834 M</span>
+          </li>
+          <li className="ch33-row">
+            <div className="ch33-row-main">
+              <div className="ch33-row-name">Stamp Act &middot; Tea Act</div>
+              <div className="ch33-row-meta muted small">
+                Colonial taxation extends the metropolitan fiscal apparatus across the Atlantic &middot; revolt in 1776
+              </div>
+            </div>
+            <span className="ch33-pill ch33-pill--free">contested</span>
+          </li>
+        </ul>
       </section>
 
-      <section className="panel-section">
-        <h2>Record National Debt</h2>
-        <p className="muted small">
-          National debt as a weapon of primitive accumulation: the state borrows
-          from private bankers and services the debt by taxing workers.
-          Marx&apos;s fixture: Bank of England founding 1694 &#8212; &#163;1.2 million at 8%.
+      <section className="card">
+        <h2>Protection: Tariff as Compulsion</h2>
+        <p className="description">
+          The protectionist tariff is the mirror image of the colonial system: instead of importing
+          the surplus of an enslaved population, it manufactures domestic capitalists by sealing off
+          competitors. Marx treats it as a tool of capital concentration, not as a national virtue.
         </p>
-        <form onSubmit={handleCreateNationalDebt} className="form-grid">
-          <label>
-            Amount (halfpennies)
-            <input
-              type="number"
-              min="1"
-              value={ndAmount}
-              onChange={(e) => setNdAmount(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            Interest Rate (basis points)
-            <input
-              type="number"
-              min="1"
-              value={ndRate}
-              onChange={(e) => setNdRate(e.target.value)}
-              placeholder="e.g. 800 = 8%"
-              required
-            />
-          </label>
-          <label>
-            Creditor Class
-            <input
-              value={ndCreditor}
-              onChange={(e) => setNdCreditor(e.target.value)}
-              placeholder="e.g. private-bankers"
-              required
-            />
-          </label>
-          {ndError && <p className="error-msg">{ndError}</p>}
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={ndCreating || !selectedStageId}
-          >
-            {ndCreating ? "Recording…" : "Record National Debt"}
-          </button>
-        </form>
-        {debts.length > 0 && (
-          <ul className="result-list" style={{ marginTop: "0.75rem" }}>
-            {debts.map((nd) => (
-              <li key={nd.id}>
-                {fmt(nd.amount_pence)} at {(nd.interest_rate_bps / 100).toFixed(1)}% &#8212;{" "}
-                {nd.creditor_class}
-              </li>
-            ))}
-          </ul>
-        )}
+        <table className="commodity-table">
+          <thead>
+            <tr>
+              <th>Measure</th>
+              <th>Year</th>
+              <th>Effect on the labourer</th>
+              <th style={{ textAlign: "right" }}>Effect on capital</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="snlt-cell">Navigation Acts</td>
+              <td>1651&#183;1660</td>
+              <td>Higher freight passed to consumer</td>
+              <td className="snlt-cell" style={{ textAlign: "right", color: "var(--gold-bright)" }}>Merchant marine</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Calico Acts</td>
+              <td>1700&#183;1721</td>
+              <td>Indian cloth banned · domestic price rises</td>
+              <td className="snlt-cell" style={{ textAlign: "right", color: "var(--gold-bright)" }}>Manchester emerges</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Corn Laws</td>
+              <td>1815</td>
+              <td>Bread price floored above world market</td>
+              <td className="snlt-cell" style={{ textAlign: "right", color: "var(--gold-bright)" }}>Landed capital</td>
+            </tr>
+            <tr>
+              <td className="snlt-cell">Combination Acts</td>
+              <td>1799&#183;1800</td>
+              <td>Wage-bargaining criminalised</td>
+              <td className="snlt-cell" style={{ textAlign: "right", color: "var(--gold-bright)" }}>Labour discipline</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
-    </div>
+
+      <div className="ch31-coda">
+        <p>
+          &#8220;If money, according to Augier, &#8216;comes into the world with a congenital
+          blood-stain on one cheek,&#8217;{" "}
+          <span className="blood">
+            capital comes dripping from head to foot, from every pore, with blood and dirt.
+          </span>&#8221;
+        </p>
+      </div>
+    </>
   );
 }
