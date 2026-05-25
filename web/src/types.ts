@@ -1943,3 +1943,115 @@ export interface ActiveFractionResponse {
   total_nanos: number;
   active_fraction_basis_points: number;
 }
+
+// Vol. II Ch. 4 — The Three Formulas of the Circuit
+
+export type CapitalStage = "money" | "production" | "commodity";
+export type IndustrialCapitalStatus = "active" | "halted";
+export type EconomyMode = "natural" | "money" | "credit";
+export type StageBlockReason = "unsold_commodity" | "missing_means_of_production" | "delayed_money_return";
+export type ValueRevolutionAffecting = "means_of_production" | "labour_power" | "output";
+
+export interface StageDistribution {
+  id: string;
+  industrial_capital_id: string;
+  at: string;
+  money_pence: number;
+  production_pence: number;
+  commodity_pence: number;
+}
+
+export interface StageBlock {
+  id: string;
+  industrial_capital_id: string;
+  stage: CapitalStage;
+  reason: StageBlockReason;
+  opened_at: string;
+  closed_at?: string;
+}
+
+export interface IndustrialCapital {
+  id: string;
+  agent_id?: string;
+  money_circuit_id?: string;
+  productive_circuit_id?: string;
+  commodity_circuit_id?: string;
+  total_pence: number;
+  economy_mode: EconomyMode;
+  stagnation_tolerance_ticks: number;
+  status: IndustrialCapitalStatus;
+  latest_distribution?: StageDistribution;
+  open_blocks: StageBlock[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CapitalPart {
+  id: string;
+  industrial_capital_id: string;
+  pence: number;
+  stage: CapitalStage;
+  entered_stage_at: string;
+}
+
+export interface ValueRevolutionEvent {
+  id: string;
+  industrial_capital_id: string;
+  affecting: ValueRevolutionAffecting;
+  direction_pence: number;
+  occurred_at: string;
+}
+
+export interface MoneyCapitalSetFree {
+  id: string;
+  value_revolution_event_id: string;
+  industrial_capital_id: string;
+  amount_pence: number;
+}
+
+export interface MoneyCapitalTiedUp {
+  id: string;
+  value_revolution_event_id: string;
+  industrial_capital_id: string;
+  amount_pence: number;
+}
+
+export interface ValueRevolutionResult {
+  event: ValueRevolutionEvent;
+  set_free?: MoneyCapitalSetFree;
+  tied_up?: MoneyCapitalTiedUp;
+}
+
+export interface MetamorphosisInterlock {
+  id: string;
+  buyer_industrial_capital_id: string;
+  seller_industrial_capital_id: string;
+  seller_mp_source_origin: string;
+  pence: number;
+  occurred_at: string;
+}
+
+export interface SupplyDemandImbalance {
+  id: string;
+  industrial_capital_id: string;
+  period: string;
+  demand_pence: number;
+  supply_pence: number;
+  excess_pence: number;
+}
+
+export interface AggregateSupplyDemand {
+  period: string;
+  demand_pence: number;
+  supply_pence: number;
+  excess_pence: number;
+}
+
+export interface SinkingFund {
+  id: string;
+  industrial_capital_id: string;
+  fixed_capital_pence: number;
+  lifetime_years: number;
+  annual_payment_pence: number;
+  accumulated_pence: number;
+}

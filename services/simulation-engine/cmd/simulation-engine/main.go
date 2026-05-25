@@ -42,6 +42,7 @@ type machineryStore interface {
 	store.ProductiveCircuitStore
 	store.CommodityCircuitStore
 	store.MoneyCircuitStore
+	store.IndustrialCapitalStore
 }
 
 func main() {
@@ -88,6 +89,7 @@ func main() {
 		ProductiveCircuits: st,
 		CommodityCircuits:  st,
 		MoneyCircuits:      st,
+		IndustrialCapitals: st,
 	})
 	httpapi.Register(srv, h)
 

@@ -198,3 +198,22 @@ type MoneyCircuitStore interface {
 	RecordCommodity(ctx context.Context, id circulation.MoneyCircuitID, cc circulation.CommodityCapital) (circulation.MoneyCircuit, error)
 	RecordRealisation(ctx context.Context, id circulation.MoneyCircuitID, r circulation.Realisation) (circulation.MoneyCircuit, error)
 }
+
+// IndustrialCapitalStore is the persistence contract for Vol. II Ch. 4
+// IndustrialCapital records and their satellite tables.
+type IndustrialCapitalStore interface {
+	CreateIndustrialCapital(ctx context.Context, ic circulation.IndustrialCapital) (circulation.IndustrialCapital, error)
+	GetIndustrialCapital(ctx context.Context, id circulation.IndustrialCapitalID) (circulation.IndustrialCapital, error)
+	ListIndustrialCapitals(ctx context.Context, agentID, status, economyMode string) ([]circulation.IndustrialCapital, error)
+	RecordCapitalPart(ctx context.Context, id circulation.IndustrialCapitalID, part circulation.CapitalPart) (circulation.CapitalPart, error)
+	Snapshot(ctx context.Context, id circulation.IndustrialCapitalID, sd circulation.StageDistribution) (circulation.StageDistribution, error)
+	OpenBlock(ctx context.Context, id circulation.IndustrialCapitalID, b circulation.StageBlock) (circulation.StageBlock, error)
+	CloseBlock(ctx context.Context, id circulation.IndustrialCapitalID, blockID circulation.StageBlockID) (circulation.StageBlock, error)
+	RecordValueRevolution(ctx context.Context, res circulation.ValueRevolutionResult) (circulation.ValueRevolutionResult, error)
+	RecordInterlock(ctx context.Context, id circulation.IndustrialCapitalID, mi circulation.MetamorphosisInterlock) (circulation.MetamorphosisInterlock, error)
+	RecordSupplyDemand(ctx context.Context, sdi circulation.SupplyDemandImbalance) (circulation.SupplyDemandImbalance, error)
+	GetSupplyDemand(ctx context.Context, id circulation.IndustrialCapitalID, period string) (circulation.SupplyDemandImbalance, error)
+	AggregateSupplyDemand(ctx context.Context, period string) (circulation.AggregateSupplyDemandImbalance, error)
+	SetSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID, sf circulation.SinkingFund) (circulation.SinkingFund, error)
+	TickSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID) (circulation.SinkingFund, error)
+}

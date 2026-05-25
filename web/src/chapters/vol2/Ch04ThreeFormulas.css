@@ -1,0 +1,209 @@
+/* Ch. 4 — The Three Formulas of the Circuit */
+
+.ch04-panel {
+  padding: 1rem;
+}
+
+.ch04-loading,
+.ch04-error {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted, #6c757d);
+}
+
+.ch04-error {
+  color: #dc3545;
+}
+
+/* Header */
+.ch04-header {
+  margin-bottom: 1.25rem;
+}
+
+.ch04-header h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.ch04-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted, #6c757d);
+}
+
+/* The three circuit formulas */
+.ch04-formulas {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.ch04-formula {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface-2, #f8f9fa);
+  border: 1px solid var(--border, #dee2e6);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+}
+
+.ch04-formula__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #6c757d);
+  min-width: 1.25rem;
+}
+
+.ch04-formula code {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--accent, #0d6efd);
+}
+
+/* Capital cards */
+.ch04-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.ch04-card {
+  background: var(--surface-2, #f8f9fa);
+  border: 1px solid var(--border, #dee2e6);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+}
+
+/* Status tints */
+.ch04-card--money_capital     { border-left: 3px solid #0d6efd; }
+.ch04-card--production        { border-left: 3px solid #198754; }
+.ch04-card--commodity_capital { border-left: 3px solid #fd7e14; }
+.ch04-card--blocked           { border-left: 3px solid #dc3545; }
+
+.ch04-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ch04-card__agent {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted, #6c757d);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ch04-card__status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 3px;
+  padding: 0.1rem 0.35rem;
+}
+
+.ch04-card__status--money_capital     { background: #e7f0ff; color: #0d6efd; }
+.ch04-card__status--production        { background: #d1f0dd; color: #198754; }
+.ch04-card__status--commodity_capital { background: #fff3e0; color: #fd7e14; }
+.ch04-card__status--blocked           { background: #fde8ea; color: #dc3545; }
+
+.ch04-card__mode {
+  font-size: 0.7rem;
+  color: var(--text-muted, #6c757d);
+  text-transform: capitalize;
+}
+
+.ch04-card__total {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Stage bar */
+.ch04-stage-bar {
+  display: flex;
+  height: 1.4rem;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.ch04-stage-bar--empty {
+  background: var(--border, #dee2e6);
+  font-size: 0.75rem;
+  color: var(--text-muted, #6c757d);
+  display: flex;
+  align-items: center;
+  padding-left: 0.5rem;
+  border-radius: 4px;
+}
+
+.ch04-stage-bar__segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  min-width: 1.5rem;
+  overflow: hidden;
+  transition: width 0.3s ease;
+}
+
+.ch04-stage-bar__segment--money     { background: #0d6efd; }
+.ch04-stage-bar__segment--prod      { background: #198754; }
+.ch04-stage-bar__segment--commodity { background: #fd7e14; }
+
+/* Distribution detail */
+.ch04-card__dist {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #6c757d);
+  margin-bottom: 0.4rem;
+}
+
+/* Block badges */
+.ch04-card__blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.ch04-block-badge {
+  font-size: 0.7rem;
+  background: #fde8ea;
+  color: #dc3545;
+  border-radius: 3px;
+  padding: 0.15rem 0.4rem;
+}
+
+/* Empty state */
+.ch04-empty {
+  color: var(--text-muted, #6c757d);
+  font-size: 0.875rem;
+  padding: 1rem 0;
+}
+
+@media (max-width: 600px) {
+  .ch04-formulas {
+    flex-direction: column;
+  }
+
+  .ch04-list {
+    grid-template-columns: 1fr;
+  }
+}
