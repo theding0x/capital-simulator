@@ -60,6 +60,10 @@ func main() {
 	srv.Handle("/v1/money-commodity", marketProxy)
 	srv.Handle("/v1/prices", marketProxy)
 	srv.Handle("/v1/prices/{rest...}", marketProxy)
+	srv.Handle("/v1/turnover-time", marketProxy)
+	srv.Handle("/v1/turnover-time/{rest...}", marketProxy)
+	srv.Handle("/v1/perishability", marketProxy)
+	srv.Handle("/v1/market-separation", marketProxy)
 
 	// Reverse-proxy routes to agent-service.
 	agentURL := getenv("AGENT_SERVICE_URL", "http://agent-service:8082")
