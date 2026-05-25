@@ -1362,3 +1362,67 @@ export const turnoversApi = {
 
   getNumber: (id: string) => http<import("./types").TurnoverNumber>(`/v1/turnovers/${id}/number`),
 };
+
+
+// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
+export const compositionApi = {
+  createComponent: (c: Omit<import("./types").CapitalComponent, "id" | "entered_at">) =>
+    http<import("./types").CapitalComponent>("/v1/capital-components", {
+      method: "POST",
+      body: JSON.stringify(c),
+    }),
+
+  getComponent: (id: string) =>
+    http<import("./types").CapitalComponent>(`/v1/capital-components/${id}`),
+
+  listComponents: (params?: { industrial_capital_id?: string; kind?: string; role?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.industrial_capital_id) q.set("industrial_capital_id", params.industrial_capital_id);
+    if (params?.kind) q.set("kind", params.kind);
+    if (params?.role) q.set("role", params.role);
+    const qs = q.toString();
+    return http<import("./types").CapitalComponent[]>(`/v1/capital-components${qs ? "?" + qs : ""}`);
+  },
+
+  registerFixedItem: (item: Omit<import("./types").FixedCapitalItem, "id" | "purchased_at">) =>
+    http<import("./types").FixedCapitalItem>("/v1/fixed-items", {
+      method: "POST",
+      body: JSON.stringify(item),
+    }),
+
+  getFixedItem: (id: string) =>
+    http<import("./types").FixedCapitalItem>(`/v1/fixed-items/${id}`),
+
+  recordSubcomponent: (itemId: string, sub: Omit<import("./types").FixedCapitalSubcomponent, "id" | "fixed_capital_item_id">) =>
+    http<import("./types").FixedCapitalSubcomponent>(`/v1/fixed-items/${itemId}/subcomponents`, {
+      method: "POST",
+      body: JSON.stringify(sub),
+    }),
+
+  recordWear: (itemId: string, wear: Omit<import("./types").WearAndTear, "id" | "fixed_capital_item_id" | "calculated_at">) =>
+    http<import("./types").WearAndTear>(`/v1/fixed-items/${itemId}/wear`, {
+      method: "POST",
+      body: JSON.stringify(wear),
+    }),
+
+  getSinkingFund: (itemId: string) =>
+    http<import("./types").SinkingFundForItem>(`/v1/fixed-items/${itemId}/sinking-fund`),
+
+  recordRepair: (itemId: string, repair: Omit<import("./types").Repair, "id" | "fixed_capital_item_id">) =>
+    http<import("./types").Repair>(`/v1/fixed-items/${itemId}/repairs`, {
+      method: "POST",
+      body: JSON.stringify(repair),
+    }),
+
+  recordReinvestment: (itemId: string, r: Omit<import("./types").SinkingFundReinvestment, "id" | "fixed_capital_item_id" | "occurred_at">) =>
+    http<import("./types").SinkingFundReinvestment>(`/v1/fixed-items/${itemId}/reinvestments`, {
+      method: "POST",
+      body: JSON.stringify(r),
+    }),
+
+  recordCirculatingCycle: (c: Omit<import("./types").CirculatingCycle, "id">) =>
+    http<import("./types").CirculatingCycle>("/v1/circulating-cycles", {
+      method: "POST",
+      body: JSON.stringify(c),
+    }),
+};

@@ -49,6 +49,7 @@ type Memory struct {
 	turnovers           map[tv.TurnoverID]tv.Turnover
 	turnoverCycles      map[tv.TurnoverID][]tv.TurnoverCycle
 	turnoverNumbers     map[tv.TurnoverID]tv.TurnoverNumber
+	composition         *memoryComposition
 	now                 func() time.Time
 }
 
@@ -77,6 +78,7 @@ func NewMemory() *Memory {
 		turnovers:          make(map[tv.TurnoverID]tv.Turnover),
 		turnoverCycles:     make(map[tv.TurnoverID][]tv.TurnoverCycle),
 		turnoverNumbers:    make(map[tv.TurnoverID]tv.TurnoverNumber),
+		composition:        newMemoryComposition(),
 		now:                time.Now,
 	}
 }
