@@ -4,10 +4,21 @@
 package circulation
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
 )
+
+// newHexID returns a 96-bit (12-byte) random identifier as a hex string.
+func newHexID() string {
+	b := make([]byte, 12)
+	if _, err := rand.Read(b); err != nil {
+		panic("crypto/rand unavailable: " + err.Error())
+	}
+	return hex.EncodeToString(b)
+}
 
 // --- Sentinel errors --------------------------------------------------------
 

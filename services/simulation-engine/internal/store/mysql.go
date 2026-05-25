@@ -2248,3 +2248,527 @@ func scanMoneyCircuit(scan func(...any) error) (circulation.MoneyCircuit, error)
 	}
 	return mc, nil
 }
+
+// --- IndustrialCapitalStore (Vol. II Ch. 4) ----------------------------------
+
+func (m *MySQL) CreateIndustrialCapital(ctx context.Context, ic circulation.IndustrialCapital) (circulation.IndustrialCapital, error) {
+	if err := ic.Validate(); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	if ic.ID.IsZero() {
+		ic.ID = circulation.NewIndustrialCapitalID()
+	}
+	now := m.now().UTC()
+	ic.CreatedAt = now
+	ic.UpdatedAt = now
+	if ic.Status == "" {
+		ic.Status = circulation.StatusActive
+	}
+	const q = `INSERT INTO industrial_capitals
+		(id, agent_id, money_circuit_id, productive_circuit_id, commodity_circuit_id,
+		 total_pence, economy_mode, stagnation_tolerance_ticks, status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(ic.ID), ic.AgentID,
+		string(ic.MoneyCircuitID), string(ic.ProductiveCircuitID), string(ic.CommodityCircuitID),
+		int64(ic.TotalPence), string(ic.EconomyMode), ic.StagnationToleranceTicks,
+		string(ic.Status), ic.CreatedAt, ic.UpdatedAt,
+	)
+	if err != nil {
+		if isDuplicateKey(err) {
+			return circulation.IndustrialCapital{}, ErrAlreadyExists
+		}
+		return circulation.IndustrialCapital{}, err
+	}
+	return ic, nil
+}
+
+func (m *MySQL) GetIndustrialCapital(ctx context.Context, id circulation.IndustrialCapitalID) (circulation.IndustrialCapital, error) {
+	const q = `SELECT id, agent_id, money_circuit_id, productive_circuit_id, commodity_circuit_id,
+		total_pence, economy_mode, stagnation_tolerance_ticks, status, created_at, updated_at
+		FROM industrial_capitals WHERE id = ?`
+	row := m.db.QueryRowContext(ctx, q, string(id))
+	ic, err := scanIndustrialCapital(row.Scan)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.IndustrialCapital{}, ErrNotFound
+		}
+		return circulation.IndustrialCapital{}, err
+	}
+	// Populate latest StageDistribution.
+	const sdQ = `SELECT id, industrial_capital_id, at_time, money_pence, production_pence, commodity_pence
+		FROM stage_distributions WHERE industrial_capital_id = ?
+		ORDER BY at_time DESC LIMIT 1`
+	sdRow := m.db.QueryRowContext(ctx, sdQ, string(id))
+	sd, sdErr := scanStageDistribution(sdRow.Scan)
+	if sdErr == nil {
+		ic.Latest = &sd
+	}
+	// Populate open StageBlocks.
+	const sbQ = `SELECT id, industrial_capital_id, stage, reason, opened_at, closed_at
+		FROM stage_blocks WHERE industrial_capital_id = ? AND closed_at IS NULL`
+	sbRows, err := m.db.QueryContext(ctx, sbQ, string(id))
+	if err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	defer sbRows.Close()
+	ic.OpenBlocks = []circulation.StageBlock{}
+	for sbRows.Next() {
+		b, err := scanStageBlock(sbRows.Scan)
+		if err != nil {
+			return circulation.IndustrialCapital{}, err
+		}
+		ic.OpenBlocks = append(ic.OpenBlocks, b)
+	}
+	return ic, sbRows.Err()
+}
+
+func (m *MySQL) ListIndustrialCapitals(ctx context.Context, agentID, status, economyMode string) ([]circulation.IndustrialCapital, error) {
+	q := `SELECT id, agent_id, money_circuit_id, productive_circuit_id, commodity_circuit_id,
+		total_pence, economy_mode, stagnation_tolerance_ticks, status, created_at, updated_at
+		FROM industrial_capitals WHERE 1=1`
+	args := []any{}
+	if agentID != "" {
+		q += " AND agent_id = ?"
+		args = append(args, agentID)
+	}
+	if status != "" {
+		q += " AND status = ?"
+		args = append(args, status)
+	}
+	if economyMode != "" {
+		q += " AND economy_mode = ?"
+		args = append(args, economyMode)
+	}
+	q += " ORDER BY created_at ASC"
+	rows, err := m.db.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []circulation.IndustrialCapital{}
+	for rows.Next() {
+		ic, err := scanIndustrialCapital(rows.Scan)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, ic)
+	}
+	return out, rows.Err()
+}
+
+func (m *MySQL) RecordCapitalPart(ctx context.Context, id circulation.IndustrialCapitalID, part circulation.CapitalPart) (circulation.CapitalPart, error) {
+	if _, err := m.GetIndustrialCapital(ctx, id); err != nil {
+		return circulation.CapitalPart{}, err
+	}
+	if part.ID.IsZero() {
+		part.ID = circulation.NewCapitalPartID()
+	}
+	part.IndustrialCapitalID = id
+	if part.EnteredStageAt.IsZero() {
+		part.EnteredStageAt = m.now().UTC()
+	}
+	const q = `INSERT INTO capital_parts (id, industrial_capital_id, pence, stage, entered_stage_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(part.ID), string(id), int64(part.Pence),
+		string(part.Stage), part.EnteredStageAt,
+	)
+	if err != nil {
+		if isDuplicateKey(err) {
+			return circulation.CapitalPart{}, ErrAlreadyExists
+		}
+		return circulation.CapitalPart{}, err
+	}
+	return part, nil
+}
+
+func (m *MySQL) Snapshot(ctx context.Context, id circulation.IndustrialCapitalID, sd circulation.StageDistribution) (circulation.StageDistribution, error) {
+	ic, err := m.GetIndustrialCapital(ctx, id)
+	if err != nil {
+		return circulation.StageDistribution{}, err
+	}
+	if err := sd.Validate(ic.TotalPence); err != nil {
+		return circulation.StageDistribution{}, err
+	}
+	if sd.ID.IsZero() {
+		sd.ID = circulation.NewStageDistributionID()
+	}
+	sd.IndustrialCapitalID = id
+	if sd.At.IsZero() {
+		sd.At = m.now().UTC()
+	}
+	const q = `INSERT INTO stage_distributions
+		(id, industrial_capital_id, at_time, money_pence, production_pence, commodity_pence)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(sd.ID), string(id), sd.At,
+		int64(sd.MoneyPence), int64(sd.ProductionPence), int64(sd.CommodityPence),
+	)
+	if err != nil {
+		return circulation.StageDistribution{}, err
+	}
+	return sd, nil
+}
+
+func (m *MySQL) OpenBlock(ctx context.Context, id circulation.IndustrialCapitalID, b circulation.StageBlock) (circulation.StageBlock, error) {
+	ic, err := m.GetIndustrialCapital(ctx, id)
+	if err != nil {
+		return circulation.StageBlock{}, err
+	}
+	if b.ID.IsZero() {
+		b.ID = circulation.NewStageBlockID()
+	}
+	b.IndustrialCapitalID = id
+	if b.OpenedAt.IsZero() {
+		b.OpenedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO stage_blocks (id, industrial_capital_id, stage, reason, opened_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(b.ID), string(id), string(b.Stage), string(b.Reason), b.OpenedAt,
+	)
+	if err != nil {
+		return circulation.StageBlock{}, err
+	}
+	// Check if open block count exceeds tolerance → halt the capital.
+	const countQ = `SELECT COUNT(*) FROM stage_blocks
+		WHERE industrial_capital_id = ? AND closed_at IS NULL`
+	var openCount int64
+	if err := m.db.QueryRowContext(ctx, countQ, string(id)).Scan(&openCount); err != nil {
+		return b, nil // non-fatal — block was inserted
+	}
+	if ic.StagnationToleranceTicks > 0 && openCount > ic.StagnationToleranceTicks {
+		_, _ = m.db.ExecContext(ctx,
+			`UPDATE industrial_capitals SET status = ?, updated_at = ? WHERE id = ?`,
+			string(circulation.StatusHalted), m.now().UTC(), string(id),
+		)
+	}
+	return b, nil
+}
+
+func (m *MySQL) CloseBlock(ctx context.Context, id circulation.IndustrialCapitalID, blockID circulation.StageBlockID) (circulation.StageBlock, error) {
+	if _, err := m.GetIndustrialCapital(ctx, id); err != nil {
+		return circulation.StageBlock{}, err
+	}
+	now := m.now().UTC()
+	const q = `UPDATE stage_blocks SET closed_at = ? WHERE id = ? AND industrial_capital_id = ? AND closed_at IS NULL`
+	res, err := m.db.ExecContext(ctx, q, now, string(blockID), string(id))
+	if err != nil {
+		return circulation.StageBlock{}, err
+	}
+	n, _ := res.RowsAffected()
+	const selQ = `SELECT id, industrial_capital_id, stage, reason, opened_at, closed_at
+		FROM stage_blocks WHERE id = ? AND industrial_capital_id = ?`
+	row := m.db.QueryRowContext(ctx, selQ, string(blockID), string(id))
+	b, err := scanStageBlock(row.Scan)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) || n == 0 {
+			return circulation.StageBlock{}, ErrNotFound
+		}
+		return circulation.StageBlock{}, err
+	}
+	return b, nil
+}
+
+func (m *MySQL) RecordValueRevolution(ctx context.Context, res circulation.ValueRevolutionResult) (circulation.ValueRevolutionResult, error) {
+	id := res.Event.IndustrialCapitalID
+	if _, err := m.GetIndustrialCapital(ctx, id); err != nil {
+		return circulation.ValueRevolutionResult{}, err
+	}
+	if res.Event.ID.IsZero() {
+		res.Event.ID = circulation.NewValueRevolutionEventID()
+	}
+	if res.Event.OccurredAt.IsZero() {
+		res.Event.OccurredAt = m.now().UTC()
+	}
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.ValueRevolutionResult{}, err
+	}
+	const evtQ = `INSERT INTO value_revolution_events
+		(id, industrial_capital_id, affecting, direction_pence, occurred_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err = tx.ExecContext(ctx, evtQ,
+		string(res.Event.ID), string(id),
+		string(res.Event.Affecting), int64(res.Event.DirectionPence), res.Event.OccurredAt,
+	)
+	if err != nil {
+		_ = tx.Rollback()
+		return circulation.ValueRevolutionResult{}, err
+	}
+	if res.SetFree != nil {
+		if res.SetFree.ID.IsZero() {
+			res.SetFree.ID = circulation.NewMoneyCapitalSetFreeID()
+		}
+		const sfQ = `INSERT INTO money_capital_set_free
+			(id, value_revolution_event_id, industrial_capital_id, amount_pence)
+			VALUES (?, ?, ?, ?)`
+		_, err = tx.ExecContext(ctx, sfQ,
+			string(res.SetFree.ID), string(res.Event.ID), string(id), int64(res.SetFree.AmountPence),
+		)
+		if err != nil {
+			_ = tx.Rollback()
+			return circulation.ValueRevolutionResult{}, err
+		}
+	}
+	if res.TiedUp != nil {
+		if res.TiedUp.ID.IsZero() {
+			res.TiedUp.ID = circulation.NewMoneyCapitalTiedUpID()
+		}
+		const tuQ = `INSERT INTO money_capital_tied_up
+			(id, value_revolution_event_id, industrial_capital_id, amount_pence)
+			VALUES (?, ?, ?, ?)`
+		_, err = tx.ExecContext(ctx, tuQ,
+			string(res.TiedUp.ID), string(res.Event.ID), string(id), int64(res.TiedUp.AmountPence),
+		)
+		if err != nil {
+			_ = tx.Rollback()
+			return circulation.ValueRevolutionResult{}, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return circulation.ValueRevolutionResult{}, err
+	}
+	return res, nil
+}
+
+func (m *MySQL) RecordInterlock(ctx context.Context, id circulation.IndustrialCapitalID, mi circulation.MetamorphosisInterlock) (circulation.MetamorphosisInterlock, error) {
+	if err := mi.Validate(); err != nil {
+		return circulation.MetamorphosisInterlock{}, err
+	}
+	if _, err := m.GetIndustrialCapital(ctx, id); err != nil {
+		return circulation.MetamorphosisInterlock{}, err
+	}
+	if mi.ID.IsZero() {
+		mi.ID = circulation.NewMetamorphosisInterlockID()
+	}
+	mi.BuyerIndustrialCapitalID = id
+	if mi.OccurredAt.IsZero() {
+		mi.OccurredAt = m.now().UTC()
+	}
+	const q = `INSERT INTO metamorphosis_interlocks
+		(id, buyer_industrial_capital_id, seller_industrial_capital_id, seller_mp_source_origin, pence, occurred_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(mi.ID), string(id), string(mi.SellerIndustrialCapitalID),
+		string(mi.SellerMPSourceOrigin), int64(mi.Pence), mi.OccurredAt,
+	)
+	if err != nil {
+		return circulation.MetamorphosisInterlock{}, err
+	}
+	return mi, nil
+}
+
+func (m *MySQL) RecordSupplyDemand(ctx context.Context, sdi circulation.SupplyDemandImbalance) (circulation.SupplyDemandImbalance, error) {
+	if _, err := m.GetIndustrialCapital(ctx, sdi.IndustrialCapitalID); err != nil {
+		return circulation.SupplyDemandImbalance{}, err
+	}
+	if sdi.ID.IsZero() {
+		sdi.ID = circulation.NewSupplyDemandImbalanceID()
+	}
+	const q = `INSERT INTO supply_demand_imbalances
+		(id, industrial_capital_id, period, demand_pence, supply_pence, excess_pence)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(sdi.ID), string(sdi.IndustrialCapitalID), sdi.Period,
+		int64(sdi.DemandPence), int64(sdi.SupplyPence), int64(sdi.ExcessPence),
+	)
+	if err != nil {
+		if isDuplicateKey(err) {
+			return circulation.SupplyDemandImbalance{}, ErrAlreadyExists
+		}
+		return circulation.SupplyDemandImbalance{}, err
+	}
+	return sdi, nil
+}
+
+func (m *MySQL) GetSupplyDemand(ctx context.Context, id circulation.IndustrialCapitalID, period string) (circulation.SupplyDemandImbalance, error) {
+	const q = `SELECT id, industrial_capital_id, period, demand_pence, supply_pence, excess_pence
+		FROM supply_demand_imbalances WHERE industrial_capital_id = ? AND period = ? LIMIT 1`
+	row := m.db.QueryRowContext(ctx, q, string(id), period)
+	var (
+		rawID  string
+		rawCap string
+		per    string
+		demand int64
+		supply int64
+		excess int64
+	)
+	err := row.Scan(&rawID, &rawCap, &per, &demand, &supply, &excess)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.SupplyDemandImbalance{}, ErrNotFound
+		}
+		return circulation.SupplyDemandImbalance{}, err
+	}
+	return circulation.SupplyDemandImbalance{
+		ID:                  circulation.SupplyDemandImbalanceID(rawID),
+		IndustrialCapitalID: circulation.IndustrialCapitalID(rawCap),
+		Period:              period,
+		DemandPence:         circulation.Pence(demand),
+		SupplyPence:         circulation.Pence(supply),
+		ExcessPence:         circulation.Pence(excess),
+	}, nil
+}
+
+func (m *MySQL) AggregateSupplyDemand(ctx context.Context, period string) (circulation.AggregateSupplyDemandImbalance, error) {
+	const q = `SELECT COALESCE(SUM(demand_pence),0), COALESCE(SUM(supply_pence),0), COALESCE(SUM(excess_pence),0)
+		FROM supply_demand_imbalances WHERE period = ?`
+	row := m.db.QueryRowContext(ctx, q, period)
+	var demand, supply, excess int64
+	if err := row.Scan(&demand, &supply, &excess); err != nil {
+		return circulation.AggregateSupplyDemandImbalance{}, err
+	}
+	return circulation.AggregateSupplyDemandImbalance{
+		Period:      period,
+		DemandPence: circulation.Pence(demand),
+		SupplyPence: circulation.Pence(supply),
+		ExcessPence: circulation.Pence(excess),
+	}, nil
+}
+
+func (m *MySQL) SetSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID, sf circulation.SinkingFund) (circulation.SinkingFund, error) {
+	if err := sf.Validate(); err != nil {
+		return circulation.SinkingFund{}, err
+	}
+	if _, err := m.GetIndustrialCapital(ctx, id); err != nil {
+		return circulation.SinkingFund{}, err
+	}
+	if sf.ID.IsZero() {
+		sf.ID = circulation.NewSinkingFundID()
+	}
+	sf.IndustrialCapitalID = id
+	const q = `INSERT INTO sinking_funds
+		(id, industrial_capital_id, fixed_capital_pence, lifetime_years, annual_payment_pence, accumulated_pence)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			fixed_capital_pence  = VALUES(fixed_capital_pence),
+			lifetime_years       = VALUES(lifetime_years),
+			annual_payment_pence = VALUES(annual_payment_pence),
+			accumulated_pence    = VALUES(accumulated_pence)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(sf.ID), string(id),
+		int64(sf.FixedCapitalPence), sf.LifetimeYears,
+		int64(sf.AnnualPaymentPence), int64(sf.AccumulatedPence),
+	)
+	if err != nil {
+		return circulation.SinkingFund{}, err
+	}
+	return sf, nil
+}
+
+func (m *MySQL) TickSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID) (circulation.SinkingFund, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.SinkingFund{}, err
+	}
+	const selQ = `SELECT id, industrial_capital_id, fixed_capital_pence, lifetime_years,
+		annual_payment_pence, accumulated_pence
+		FROM sinking_funds WHERE industrial_capital_id = ? FOR UPDATE`
+	row := tx.QueryRowContext(ctx, selQ, string(id))
+	var (
+		rawID, rawCap              string
+		fixed, annual, accumulated int64
+		lifetime                   int64
+	)
+	if err := row.Scan(&rawID, &rawCap, &fixed, &lifetime, &annual, &accumulated); err != nil {
+		_ = tx.Rollback()
+		if errors.Is(err, sql.ErrNoRows) {
+			return circulation.SinkingFund{}, ErrNotFound
+		}
+		return circulation.SinkingFund{}, err
+	}
+	accumulated += annual
+	const upQ = `UPDATE sinking_funds SET accumulated_pence = ? WHERE id = ?`
+	if _, err := tx.ExecContext(ctx, upQ, accumulated, rawID); err != nil {
+		_ = tx.Rollback()
+		return circulation.SinkingFund{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return circulation.SinkingFund{}, err
+	}
+	return circulation.SinkingFund{
+		ID:                  circulation.SinkingFundID(rawID),
+		IndustrialCapitalID: circulation.IndustrialCapitalID(rawCap),
+		FixedCapitalPence:   circulation.Pence(fixed),
+		LifetimeYears:       lifetime,
+		AnnualPaymentPence:  circulation.Pence(annual),
+		AccumulatedPence:    circulation.Pence(accumulated),
+	}, nil
+}
+
+// scan helpers for IndustrialCapital tables
+
+func scanIndustrialCapital(scan func(...any) error) (circulation.IndustrialCapital, error) {
+	var (
+		rawID, agentID                                            string
+		moneyCircuitID, productiveCircuitID, commodityCircuitID string
+		totalPence                                                int64
+		economyMode, status                                       string
+		stagnationTolerance                                       int64
+		createdAt, updatedAt                                      time.Time
+	)
+	if err := scan(
+		&rawID, &agentID, &moneyCircuitID, &productiveCircuitID, &commodityCircuitID,
+		&totalPence, &economyMode, &stagnationTolerance, &status, &createdAt, &updatedAt,
+	); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	return circulation.IndustrialCapital{
+		ID:                       circulation.IndustrialCapitalID(rawID),
+		AgentID:                  agentID,
+		MoneyCircuitID:           circulation.MoneyCircuitID(moneyCircuitID),
+		ProductiveCircuitID:      circulation.ProductiveCircuitID(productiveCircuitID),
+		CommodityCircuitID:       circulation.CommodityCircuitID(commodityCircuitID),
+		TotalPence:               circulation.Pence(totalPence),
+		EconomyMode:              circulation.EconomyMode(economyMode),
+		StagnationToleranceTicks: stagnationTolerance,
+		Status:                   circulation.IndustrialCapitalStatus(status),
+		CreatedAt:                createdAt,
+		UpdatedAt:                updatedAt,
+	}, nil
+}
+
+func scanStageDistribution(scan func(...any) error) (circulation.StageDistribution, error) {
+	var (
+		rawID, rawCap          string
+		atTime                 time.Time
+		money, prod, commodity int64
+	)
+	if err := scan(&rawID, &rawCap, &atTime, &money, &prod, &commodity); err != nil {
+		return circulation.StageDistribution{}, err
+	}
+	return circulation.StageDistribution{
+		ID:                  circulation.StageDistributionID(rawID),
+		IndustrialCapitalID: circulation.IndustrialCapitalID(rawCap),
+		At:                  atTime,
+		MoneyPence:          circulation.Pence(money),
+		ProductionPence:     circulation.Pence(prod),
+		CommodityPence:      circulation.Pence(commodity),
+	}, nil
+}
+
+func scanStageBlock(scan func(...any) error) (circulation.StageBlock, error) {
+	var (
+		rawID, rawCap string
+		stage, reason string
+		openedAt      time.Time
+		closedAt      sql.NullTime
+	)
+	if err := scan(&rawID, &rawCap, &stage, &reason, &openedAt, &closedAt); err != nil {
+		return circulation.StageBlock{}, err
+	}
+	b := circulation.StageBlock{
+		ID:                  circulation.StageBlockID(rawID),
+		IndustrialCapitalID: circulation.IndustrialCapitalID(rawCap),
+		Stage:               circulation.CapitalStage(stage),
+		Reason:              circulation.StageBlockReason(reason),
+		OpenedAt:            openedAt,
+	}
+	if closedAt.Valid {
+		t := closedAt.Time
+		b.ClosedAt = &t
+	}
+	return b, nil
+}

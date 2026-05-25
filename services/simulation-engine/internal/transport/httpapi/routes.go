@@ -21,6 +21,22 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/commodity-circuits/{id}/mp-source", h.LinkCommodityMPSource)
 	s.HandleFunc("POST /v1/commodity-circuits/{id}/close", h.CloseCommodityCircuit)
 
+	// Vol. II Ch. 4 — The Three Formulas of the Circuit
+	s.HandleFunc("POST /v1/industrial-capitals", h.CreateIndustrialCapital)
+	s.HandleFunc("GET /v1/industrial-capitals", h.ListIndustrialCapitals)
+	s.HandleFunc("GET /v1/industrial-capitals/supply-demand/aggregate", h.AggregateSupplyDemand)
+	s.HandleFunc("GET /v1/industrial-capitals/{id}", h.GetIndustrialCapital)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/parts", h.RecordCapitalPart)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/snapshot", h.SnapshotStageDistribution)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/blocks", h.OpenStageBlock)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/blocks/{block_id}/close", h.CloseStageBlock)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/value-revolution", h.RecordValueRevolution)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/interlocks", h.RecordInterlock)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/supply-demand", h.ComputeAndRecordSupplyDemand)
+	s.HandleFunc("GET /v1/industrial-capitals/{id}/supply-demand", h.GetSupplyDemand)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/sinking-fund", h.SetSinkingFund)
+	s.HandleFunc("POST /v1/industrial-capitals/{id}/sinking-fund/tick", h.TickSinkingFund)
+
 	// Vol. II Ch. 2 — The Circuit of Productive Capital
 	s.HandleFunc("POST /v1/productive-circuits", h.CreateProductiveCircuit)
 	s.HandleFunc("GET /v1/productive-circuits", h.ListProductiveCircuits)

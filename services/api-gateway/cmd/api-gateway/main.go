@@ -209,6 +209,10 @@ func main() {
 	srv.Handle("/v1/productive-circuits", simProxy)
 	srv.Handle("/v1/productive-circuits/{rest...}", simProxy)
 
+	// Vol. II Ch. 4 — The Three Formulas of the Circuit → simulation-engine
+	srv.Handle("/v1/industrial-capitals", simProxy)
+	srv.Handle("/v1/industrial-capitals/{rest...}", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III

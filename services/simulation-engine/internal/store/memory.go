@@ -62,6 +62,14 @@ func NewMemory() *Memory {
 		productiveCircuits: make(map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit),
 		commodityCircuits:  make(map[circulation.CommodityCircuitID]circulation.CommodityCircuit),
 		moneyCircuits:      make(map[circulation.MoneyCircuitID]circulation.MoneyCircuit),
+		industrialCapitals: make(map[circulation.IndustrialCapitalID]circulation.IndustrialCapital),
+		capitalParts:       make(map[circulation.IndustrialCapitalID][]circulation.CapitalPart),
+		stageDistributions: make(map[circulation.IndustrialCapitalID][]circulation.StageDistribution),
+		stageBlocks:        make(map[circulation.IndustrialCapitalID][]circulation.StageBlock),
+		valueRevolutions:   make(map[circulation.IndustrialCapitalID][]circulation.ValueRevolutionResult),
+		interlocks:         make(map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock),
+		supplyDemand:       make(map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance),
+		sinkingFunds:       make(map[circulation.IndustrialCapitalID]circulation.SinkingFund),
 		now:                time.Now,
 	}
 }
@@ -1271,6 +1279,19 @@ func (m *Memory) RecordInterlock(_ context.Context, id circulation.IndustrialCap
 	}
 	m.interlocks[id] = append(m.interlocks[id], mi)
 	return mi, nil
+}
+
+func (m *Memory) RecordSupplyDemand(_ context.Context, sdi circulation.SupplyDemandImbalance) (circulation.SupplyDemandImbalance, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.industrialCapitals[sdi.IndustrialCapitalID]; !ok {
+		return circulation.SupplyDemandImbalance{}, ErrNotFound
+	}
+	if sdi.ID.IsZero() {
+		sdi.ID = circulation.NewSupplyDemandImbalanceID()
+	}
+	m.supplyDemand[sdi.IndustrialCapitalID] = append(m.supplyDemand[sdi.IndustrialCapitalID], sdi)
+	return sdi, nil
 }
 
 func (m *Memory) GetSupplyDemand(_ context.Context, id circulation.IndustrialCapitalID, period string) (circulation.SupplyDemandImbalance, error) {
