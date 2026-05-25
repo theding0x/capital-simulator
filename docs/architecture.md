@@ -523,6 +523,18 @@ Marx's Part VII ("The Accumulation of Capital") covers Ch. 23–25 as a single c
 - **HTTP endpoints.** `POST /v1/circulation-costs` (201), `GET /v1/circulation-costs` (200 list with filters), `GET /v1/circulation-costs/{id}` (200/404), `GET /v1/circulation-costs/aggregate` (200), `GET /v1/circulation-costs/system-faux-frais` (200), `POST /v1/circulation-agents` (201), `POST /v1/money-as-faux-frais` (201), `POST /v1/commodity-supplies` (201 + Location), `POST /v1/commodity-supplies/{id}/storage-cost` (201/404), `POST /v1/transport-tariffs` (201, upsert by commodity), `POST /v1/transport-legs` (201 + Location).
 - **React UI.** "Vol. II Ch. 6 — The Costs of Circulation" panel: (1) circulation costs list with nature pills (faux frais / value-adding), (2) 3-card aggregate (value-preserving / value-adding / total), (3) system faux-frais money-reserve block, (4) transport tariff cards showing effective rate with multiplier, (5) transport leg cards showing route, weight, distance, and added value.
 
+### Vol. II Ch. 7 — what was built
+
+`simulation-engine` adds `internal/turnover/turnover.go` — Marx's analysis of the *turnover time* (u) and the *number of turnovers* (n = U/u, where U = 525,600 min = 1 year). Turnover is always measured on the productive or money circuit form; the commodity-capital form (Form III) is explicitly rejected for this analysis.
+
+- **Domain types.** `Turnover{ID, IndustrialCapitalID, Lens, TurnoverTimeMinutes, Cycles}`. `TurnoverCycle{ID, TurnoverID, StartedAt, EndedAt, AdvancePence, ReturnedPence, ProductionMinutes, CirculationMinutes}` with `.Validate()` (invariant: `returned >= advance`). `TurnoverNumber{ID, TurnoverID, YearReferenceMinutes, TurnoverTimeMinutes, BasisPoints}` where `BasisPoints = 10000 × YearReferenceMinutes / TurnoverTimeMinutes` (integer, no float64). `CircuitLens` (`"money"` | `"productive"`) — `"commodity"` is rejected with `ErrLensNotApplicableForTurnover`.
+- **Sentinel errors.** `ErrLensNotApplicableForTurnover`, `ErrCycleNotComplete`, `ErrNoCompletedCycles`.
+- **Pure functions.** `ValidateLens(l)`, `ComputeTurnoverNumber(turnoverID, avgMinutes)`, `AverageTurnoverTime(cycles)`.
+- **Store.** `TurnoverStore` interface with `CreateTurnover`, `GetTurnover`, `ListTurnovers`, `RecordCycle`, `RecomputeNumber`, `GetNumber`. Memory and MySQL implementations. `RecomputeNumber` averages `production_minutes + circulation_minutes` across all recorded cycles and upserts `turnover_numbers`.
+- **Migrations.** `00035_v2_ch07_turnover.sql` (tables: `turnovers`, `turnover_cycles`, `turnover_numbers` with `UNIQUE KEY uq_tn_turnover`). `00036_v2_ch07_seed.sql`: SpinningMill (productive, 10,080 min, BP=521,428 ≈ 52/year), LocomotiveMaker (money, 777,600 min, BP=6,759 ≈ 2/3/year), WineMaturer (productive, 2,102,400 min, BP=2,500 = 1/4/year).
+- **HTTP.** `POST /v1/turnovers`, `GET /v1/turnovers`, `GET /v1/turnovers/{id}`, `POST /v1/turnovers/{id}/cycles`, `POST /v1/turnovers/{id}/recompute-number`, `GET /v1/turnovers/{id}/number`. Gateway proxies `/v1/turnovers` and `/v1/turnovers/{rest...}` to simulation-engine.
+- **React UI.** "Vol. II Ch. 7 — The Turnover Time" panel: one card per turnover showing lens, turnover time (formatted as weeks/years), cycle count, n expressed as `BasisPoints / 10000` per year.
+
 ### Vol. II Ch. 4 — what was built
 
 `simulation-engine` adds `internal/circulation/industrial_capital.go` to synthesise the three circuit-forms into a single object: `IndustrialCapital`. Where Chs. 1–3 each presented one uninterrupted circuit form in isolation, Ch. 4 shows that every real industrial capital is permanently divided across all three stages simultaneously — Marx's *Nebeneinander* ("co-existence"). A stoppage at any one stage ripples as disorder into the co-existence of the other two.
@@ -546,7 +558,7 @@ Spec sweep pending; titles below are drawn from the vault filenames and will be 
 | Ch. 4     | ✅ Done     | The Three Formulas of the Circuit — interruption, continuity, the unity of all three forms        | simulation-engine                 |
 | Ch. 5     | ✅ Done     | The Time of Circulation — selling time, buying time, capital tied up in metamorphosis              | market-service                    |
 | Ch. 6     | ✅ Done     | The Costs of Circulation — faux frais (purchase/sale time, book-keeping, money reserve) vs value-adding transport costs | market-service |
-| Ch. 7     | ⏳ Pending  | The Turnover Time and the Number of Turnovers                                                       | simulation-engine                 |
+| Ch. 7     | ✅ Done     | The Turnover Time and the Number of Turnovers — turnover time, number of turnovers, basis-points    | simulation-engine                 |
 | Ch. 8     | ⏳ Pending  | Fixed Capital and Circulating Capital                                                               | simulation-engine                 |
 | Ch. 9     | ⏳ Pending  | The Aggregate Turnover of Advanced Capital — cycles of turnover                                     | simulation-engine                 |
 | Ch. 10    | ⏳ Pending  | Theories of Fixed and Circulating Capital — Physiocrats and Adam Smith                              | simulation-engine                 |

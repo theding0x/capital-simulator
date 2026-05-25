@@ -224,6 +224,10 @@ func main() {
 	srv.Handle("/v1/industrial-capitals", simProxy)
 	srv.Handle("/v1/industrial-capitals/{rest...}", simProxy)
 
+	// Vol. II Ch. 7 — The Turnover Time and the Number of Turnovers → simulation-engine
+	srv.Handle("/v1/turnovers", simProxy)
+	srv.Handle("/v1/turnovers/{rest...}", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III

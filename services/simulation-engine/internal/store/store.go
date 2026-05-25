@@ -12,6 +12,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
+	tv "github.com/theding0x/capital-simulator/services/simulation-engine/internal/turnover"
 )
 
 var (
@@ -216,4 +217,15 @@ type IndustrialCapitalStore interface {
 	AggregateSupplyDemand(ctx context.Context, period string) (circulation.AggregateSupplyDemandImbalance, error)
 	SetSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID, sf circulation.SinkingFund) (circulation.SinkingFund, error)
 	TickSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID) (circulation.SinkingFund, error)
+}
+
+// TurnoverStore is the persistence contract for Vol. II Ch. 7 —
+// The Turnover Time and the Number of Turnovers.
+type TurnoverStore interface {
+	CreateTurnover(ctx context.Context, t tv.Turnover) (tv.Turnover, error)
+	GetTurnover(ctx context.Context, id tv.TurnoverID) (tv.Turnover, error)
+	ListTurnovers(ctx context.Context, industrialCapitalID string, lens tv.CircuitLens) ([]tv.Turnover, error)
+	RecordCycle(ctx context.Context, id tv.TurnoverID, c tv.TurnoverCycle) (tv.TurnoverCycle, error)
+	RecomputeNumber(ctx context.Context, id tv.TurnoverID) (tv.TurnoverNumber, error)
+	GetNumber(ctx context.Context, id tv.TurnoverID) (tv.TurnoverNumber, error)
 }

@@ -40,6 +40,7 @@ import { Ch03CircuitCommodityCapital } from "../chapters/vol2/Ch03CircuitCommodi
 import { Ch04ThreeFormulas } from "../chapters/vol2/Ch04ThreeFormulas";
 import { Ch05TimeOfCirculation } from "../chapters/vol2/Ch05TimeOfCirculation";
 import { Ch06CostsOfCirculation } from "../chapters/vol2/Ch06CostsOfCirculation";
+import { Ch07TurnoverTime } from "../chapters/vol2/Ch07TurnoverTime";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -98,6 +99,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v2-ch04": Ch04ThreeFormulas as AnyPanel,
   "v2-ch05": Ch05TimeOfCirculation as AnyPanel,
   "v2-ch06": Ch06CostsOfCirculation as AnyPanel,
+  "v2-ch07": Ch07TurnoverTime as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -140,6 +142,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v2-ch04": "The circuit of industrial capital … encompasses within its cycle all three circuits … by the side of one another, i.e., simultaneously.",
   "v2-ch05": "The time of circulation of capital limits its time of production and hence the creation of surplus-value.",
   "v2-ch06": "The costs of circulation which we are considering here are not costs out of which surplus-value grows, but costs which limit it, pure deductions from surplus-value.",
+  "v2-ch07": "The turnover of capital has, therefore, a definite periodicity … the number of turnovers of a given capital in a given period … is equal to the length of the working period divided into the unit of time.",
 };
 
 export function ChapterShell({

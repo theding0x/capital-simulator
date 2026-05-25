@@ -1320,3 +1320,45 @@ export const circulationCostsApi = {
       body: JSON.stringify(leg),
     }),
 };
+
+// Vol. II Ch. 7 — The Turnover Time and the Number of Turnovers
+export const turnoversApi = {
+  create: (t: { industrial_capital_id?: string; lens: string; turnover_time_minutes: number }) =>
+    http<import("./types").Turnover>("/v1/turnovers", {
+      method: "POST",
+      body: JSON.stringify(t),
+    }),
+
+  get: (id: string) => http<import("./types").Turnover>(`/v1/turnovers/${id}`),
+
+  list: (params?: { industrial_capital_id?: string; lens?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.industrial_capital_id) qs.set("industrial_capital_id", params.industrial_capital_id);
+    if (params?.lens) qs.set("lens", params.lens);
+    const q = qs.toString();
+    return http<{ items: import("./types").Turnover[] }>(`/v1/turnovers${q ? "?" + q : ""}`);
+  },
+
+  recordCycle: (
+    id: string,
+    cycle: {
+      started_at: string;
+      ended_at: string;
+      advance_pence: number;
+      returned_pence: number;
+      production_minutes: number;
+      circulation_minutes: number;
+    },
+  ) =>
+    http<import("./types").TurnoverCycle>(`/v1/turnovers/${id}/cycles`, {
+      method: "POST",
+      body: JSON.stringify(cycle),
+    }),
+
+  recomputeNumber: (id: string) =>
+    http<import("./types").TurnoverNumber>(`/v1/turnovers/${id}/recompute-number`, {
+      method: "POST",
+    }),
+
+  getNumber: (id: string) => http<import("./types").TurnoverNumber>(`/v1/turnovers/${id}/number`),
+};
