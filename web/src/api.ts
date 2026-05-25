@@ -1226,3 +1226,81 @@ export const turnoverTimeApi = {
       body: JSON.stringify({ industrial_capital_id, selling_market_id, buying_market_id }),
     }),
 };
+
+// Vol. II Ch. 5 — The Time of Circulation
+export const turnoverTimeApi = {
+  list: () =>
+    http<TurnoverTime[]>("/v1/turnover-time"),
+
+  create: (input: CreateTurnoverTimeInput) =>
+    http<TurnoverTime>("/v1/turnover-time", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  get: (id: string) =>
+    http<TurnoverTime>(`/v1/turnover-time/${id}`),
+
+  addLabourTime: (id: string, nanos: number) =>
+    http<TurnoverTime>(`/v1/turnover-time/${id}/labour-time`, {
+      method: "POST",
+      body: JSON.stringify({ nanos }),
+    }),
+
+  addLabourInterruption: (id: string, nanos: number) =>
+    http<TurnoverTime>(`/v1/turnover-time/${id}/labour-interruption`, {
+      method: "POST",
+      body: JSON.stringify({ nanos }),
+    }),
+
+  recordLatentMP: (id: string, pence: number, industrial_capital_id: string) =>
+    http<LatentProductiveCapital>(`/v1/turnover-time/${id}/latent-mp`, {
+      method: "POST",
+      body: JSON.stringify({ industrial_capital_id, pence, held_at: new Date().toISOString() }),
+    }),
+
+  recordNaturalProcess: (id: string, industrial_capital_id: string, process: NaturalProcessSpan["process"], duration_nanos: number) =>
+    http<NaturalProcessSpan>(`/v1/turnover-time/${id}/natural-process`, {
+      method: "POST",
+      body: JSON.stringify({ industrial_capital_id, process, duration_nanos, started_at: new Date().toISOString() }),
+    }),
+
+  openSellingPhase: (id: string, industrial_capital_id: string, commodity_circuit_id: string) =>
+    http<SellingPhase>(`/v1/turnover-time/${id}/selling-phase`, {
+      method: "POST",
+      body: JSON.stringify({ industrial_capital_id, commodity_circuit_id, opened_at: new Date().toISOString() }),
+    }),
+
+  closeSellingPhase: (id: string, selling_phase_id: string, outcome: SellingPhase["outcome"]) =>
+    http<SellingPhase>(`/v1/turnover-time/${id}/selling-phase`, {
+      method: "POST",
+      body: JSON.stringify({ selling_phase_id, outcome }),
+    }),
+
+  openBuyingPhase: (id: string, industrial_capital_id: string, money_circuit_id: string, market_location: string) =>
+    http<BuyingPhase>(`/v1/turnover-time/${id}/buying-phase`, {
+      method: "POST",
+      body: JSON.stringify({ industrial_capital_id, money_circuit_id, market_location, opened_at: new Date().toISOString() }),
+    }),
+
+  closeBuyingPhase: (id: string, buying_phase_id: string) =>
+    http<BuyingPhase>(`/v1/turnover-time/${id}/buying-phase`, {
+      method: "POST",
+      body: JSON.stringify({ buying_phase_id }),
+    }),
+
+  getActiveFraction: (id: string) =>
+    http<ActiveFractionResponse>(`/v1/turnover-time/${id}/active-fraction`),
+
+  setPerishability: (commodity_id: string, window_nanos: number) =>
+    http<Perishability>("/v1/perishability", {
+      method: "POST",
+      body: JSON.stringify({ commodity_id, window_nanos }),
+    }),
+
+  setMarketSeparation: (industrial_capital_id: string, selling_market_id: string, buying_market_id: string) =>
+    http<MarketSeparation>("/v1/market-separation", {
+      method: "POST",
+      body: JSON.stringify({ industrial_capital_id, selling_market_id, buying_market_id }),
+    }),
+};
