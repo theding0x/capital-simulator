@@ -1,0 +1,62 @@
+/* ─── Ch.27 · Enclosure registry ────────────────────────────────────────── */
+.ch27-timeline {
+  position: relative;
+  padding: 1rem 0 1.5rem 1.25rem;
+  border-left: 1px solid var(--rule);
+}
+.ch27-event {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.65rem 0;
+  position: relative;
+}
+.ch27-event::before {
+  content: "";
+  position: absolute;
+  left: -1.31rem;
+  top: 1.1rem;
+  width: 7px;
+  height: 7px;
+  background: var(--ink-dim);
+  border-radius: 50%;
+}
+.ch27-event--major::before { background: var(--gold-bright); box-shadow: 0 0 0 3px var(--gold-bg); }
+.ch27-event-year {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--gold-bright);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.ch27-event-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+.ch27-event-meta {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ch27-acreage-bar {
+  position: relative;
+  height: 18px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 1px;
+  overflow: hidden;
+  min-width: 9rem;
+}
+.ch27-acreage-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--gold-bg);
+  border-right: 1px solid var(--gold-border);
+  transition: width 0.4s ease;
+}

@@ -462,6 +462,8 @@ td.reveal {
 /* ─── Utility ──────────────────────────────────────────────────────────────── */
 .muted    { color: var(--ink-muted); }
 .small    { font-size: 0.82rem; }
+.mono     { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.note     { font-size: 0.85rem; color: var(--ink-muted); line-height: 1.55; margin: 0; }
 .error    { color: #d44040; font-size: 0.82rem; font-family: 'IBM Plex Mono', monospace; }
 .positive { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; color: var(--gold-bright); }
 .negative { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; color: var(--red); }

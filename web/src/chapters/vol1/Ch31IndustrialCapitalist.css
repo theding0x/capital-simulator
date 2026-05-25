@@ -1,0 +1,22 @@
+/* ─── Ch.31 · Genesis of the Industrial Capitalist ──────────────────────── */
+.ch31-pillars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.ch31-pillar { padding: 1.5rem 1.25rem 1.5rem 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.ch31-pillar + .ch31-pillar { padding-left: 1.25rem; border-left: 1px solid var(--rule); }
+.ch31-pillar-idx { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.6rem; color: var(--red); line-height: 1; }
+.ch31-pillar-name { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; color: var(--ink); letter-spacing: -0.01em; }
+.ch31-pillar-gloss { font-size: 0.78rem; color: var(--ink-muted); line-height: 1.5; margin: 0.2rem 0 0.5rem; }
+.ch31-pillar-value { font-family: var(--font-mono); font-size: 0.95rem; color: var(--gold-bright); font-variant-numeric: tabular-nums; margin-top: auto; }
+.ch31-stack { margin-top: 1rem; display: flex; height: 40px; border: 1px solid var(--border-subtle); border-radius: 2px; overflow: hidden; background: rgba(0,0,0,0.25); }
+.ch31-stack-band { display: flex; align-items: center; padding: 0 0.8rem; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; transition: width 0.4s ease; overflow: hidden; }
+.ch31-stack-band--colony  { background: repeating-linear-gradient(135deg, var(--red-dim) 0 6px, rgba(192,57,43,0.32) 6px 12px); color: var(--red); }
+.ch31-stack-band--debt    { background: var(--gold-bg); color: var(--gold-bright); border-left: 1px solid var(--gold-border); }
+.ch31-stack-band--tax     { background: var(--lead-dim); color: var(--lead-hover); border-left: 1px solid var(--lead); }
+.ch31-stack-band--tariff  { background: rgba(192,57,43,0.18); color: var(--red); border-left: 1px solid var(--red); }
+.ch31-coda { margin-top: 1.5rem; padding: 1.25rem 1.5rem; background: linear-gradient(180deg, rgba(192,57,43,0.08), transparent 70%); border-left: 2px solid var(--red); }
+.ch31-coda p { font-family: var(--font-display); font-style: italic; font-size: 1.05rem; color: var(--ink); line-height: 1.55; margin: 0; max-width: 60ch; }
+.ch31-coda p .blood { color: var(--red); }
+
+@media (max-width: 880px) {
+  .ch31-pillars { grid-template-columns: 1fr 1fr; }
+  .ch31-pillar + .ch31-pillar:nth-child(3) { border-left: none; border-top: 1px solid var(--rule); padding-left: 0; padding-top: 1.5rem; }
+}
