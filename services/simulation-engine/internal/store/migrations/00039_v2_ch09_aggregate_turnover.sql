@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS crisis_cycle_phase_records (
     lifetime_cycle_id           VARCHAR(24)  NOT NULL,
     phase                       VARCHAR(32)  NOT NULL,
     observed_at                 DATETIME(6)  NOT NULL,
-    notes                       TEXT         NOT NULL DEFAULT '',
+    notes                       TEXT         NOT NULL,
     CONSTRAINT fk_ccpr_lc FOREIGN KEY (lifetime_cycle_id) REFERENCES lifetime_cycles(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
