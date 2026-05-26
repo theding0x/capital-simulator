@@ -158,6 +158,16 @@ func Register(s *httpx.Server, h *Handler) {
 	// Vol. II Ch. 10 — Theories of Fixed and Circulating Capital: Physiocrats and Adam Smith
 	s.HandleFunc("GET /v1/circulation/economist-attributions", h.ListEconomistAttributions)
 
+	// Vol. II Ch. 12 — The Working Period
+	s.HandleFunc("POST /v1/working-periods", h.CreateWorkingPeriod)
+	s.HandleFunc("GET /v1/working-periods", h.ListWorkingPeriods)
+	s.HandleFunc("GET /v1/working-periods/{id}", h.GetWorkingPeriod)
+	s.HandleFunc("POST /v1/working-periods/{id}/interruptions", h.RecordWorkingPeriodInterruption)
+	s.HandleFunc("POST /v1/working-periods/{id}/shortenings", h.RecordWorkingPeriodShortening)
+	s.HandleFunc("POST /v1/working-periods/{id}/credit-financing", h.RecordWorkingPeriodCreditFinancing)
+	s.HandleFunc("POST /v1/natural-constraints", h.CreateNaturalConstraint)
+	s.HandleFunc("GET /v1/natural-constraints", h.ListNaturalConstraints)
+
 	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
 	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
 	s.HandleFunc("GET /v1/capital-components", h.ListComponents)

@@ -1054,6 +1054,72 @@ export const api = {
       : "/v1/circulation/economist-attributions";
     return http<import("./types").EconomistAttribution[]>(url);
   },
+
+  // Vol. II Ch. 12 — The Working Period
+  createWorkingPeriod: (input: import("./types").CreateWorkingPeriodInput) =>
+    http<import("./types").WorkingPeriod>("/v1/working-periods", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listWorkingPeriods: (params?: {
+    industrial_capital_id?: string;
+    mode?: string;
+    commodity_id?: string;
+  }) => {
+    const q = new URLSearchParams();
+    if (params?.industrial_capital_id)
+      q.set("industrial_capital_id", params.industrial_capital_id);
+    if (params?.mode) q.set("mode", params.mode);
+    if (params?.commodity_id) q.set("commodity_id", params.commodity_id);
+    const qs = q.toString();
+    return http<import("./types").WorkingPeriod[]>(
+      qs ? `/v1/working-periods?${qs}` : "/v1/working-periods"
+    );
+  },
+
+  getWorkingPeriod: (id: string) =>
+    http<import("./types").WorkingPeriod>(`/v1/working-periods/${id}`),
+
+  recordWorkingPeriodInterruption: (
+    id: string,
+    input: import("./types").CreateWorkingPeriodInterruptionInput
+  ) =>
+    http<import("./types").WorkingPeriodInterruption>(
+      `/v1/working-periods/${id}/interruptions`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  recordWorkingPeriodShortening: (
+    id: string,
+    input: import("./types").CreateWorkingPeriodShorteningInput
+  ) =>
+    http<import("./types").WorkingPeriodShortening>(
+      `/v1/working-periods/${id}/shortenings`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  recordWorkingPeriodCreditFinancing: (
+    id: string,
+    input: import("./types").CreateWorkingPeriodCreditFinancingInput
+  ) =>
+    http<import("./types").WorkingPeriodCreditFinancing>(
+      `/v1/working-periods/${id}/credit-financing`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  createNaturalConstraint: (
+    input: import("./types").CreateNaturalConstraintInput
+  ) =>
+    http<import("./types").NaturalWorkingPeriodConstraint>(
+      "/v1/natural-constraints",
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  listNaturalConstraints: () =>
+    http<import("./types").NaturalWorkingPeriodConstraint[]>(
+      "/v1/natural-constraints"
+    ),
 };
 
 // Vol. II Ch. 3 — The Circuit of Commodity-Capital

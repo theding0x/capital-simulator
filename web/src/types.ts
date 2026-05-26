@@ -2345,3 +2345,94 @@ export interface EconomistAttribution {
   anticipates: string;
   errors: KnownEconomistError[];
 }
+
+// Vol. II Ch. 12 — The Working Period
+export type WorkingPeriodMode = "discrete" | "connected";
+export type WorkingPeriodShorteningKind =
+  | "cooperation"
+  | "machinery"
+  | "parallel_labour"
+  | "bakewell_breeding";
+
+export interface WorkingPeriodInterruption {
+  id: string;
+  working_period_id: string;
+  interrupted_at: string;
+  resumed_at?: string;
+  deterioration_pence: number;
+  waste_of_means_of_production_pence: number;
+}
+
+export interface WorkingPeriodShortening {
+  id: string;
+  working_period_id: string;
+  kind: WorkingPeriodShorteningKind;
+  old_working_day_count: number;
+  new_working_day_count: number;
+  additional_fixed_capital_pence: number;
+  additional_labour_count: number;
+  occurred_at: string;
+}
+
+export interface WorkingPeriodCreditFinancing {
+  id: string;
+  working_period_id: string;
+  own_capital_pence: number;
+  borrowed_capital_pence: number;
+  mortgage_provider_id?: string;
+  created_at: string;
+}
+
+export interface WorkingPeriod {
+  id: string;
+  industrial_capital_id: string;
+  commodity_id: string;
+  working_day_count: number;
+  mode: WorkingPeriodMode;
+  working_day_length_minutes: number;
+  created_at: string;
+  interruptions: WorkingPeriodInterruption[];
+  shortenings: WorkingPeriodShortening[];
+  credit_financing?: WorkingPeriodCreditFinancing;
+}
+
+export interface NaturalWorkingPeriodConstraint {
+  id: string;
+  commodity_id: string;
+  min_working_days: number;
+  reason: string;
+  created_at: string;
+}
+
+export interface CreateWorkingPeriodInput {
+  industrial_capital_id: string;
+  commodity_id: string;
+  working_day_count: number;
+  mode: WorkingPeriodMode;
+  working_day_length_minutes: number;
+}
+
+export interface CreateWorkingPeriodInterruptionInput {
+  deterioration_pence: number;
+  waste_of_means_of_production_pence: number;
+}
+
+export interface CreateWorkingPeriodShorteningInput {
+  kind: WorkingPeriodShorteningKind;
+  old_working_day_count: number;
+  new_working_day_count: number;
+  additional_fixed_capital_pence: number;
+  additional_labour_count: number;
+}
+
+export interface CreateWorkingPeriodCreditFinancingInput {
+  own_capital_pence: number;
+  borrowed_capital_pence: number;
+  mortgage_provider_id?: string;
+}
+
+export interface CreateNaturalConstraintInput {
+  commodity_id: string;
+  min_working_days: number;
+  reason: string;
+}
