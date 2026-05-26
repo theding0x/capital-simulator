@@ -49,9 +49,10 @@ type Memory struct {
 	turnovers            map[tv.TurnoverID]tv.Turnover
 	turnoverCycles       map[tv.TurnoverID][]tv.TurnoverCycle
 	turnoverNumbers      map[tv.TurnoverID]tv.TurnoverNumber
-	composition          *memoryComposition
-	aggregateTurnovers   *memoryAggregateTurnover
-	now                  func() time.Time
+	composition           *memoryComposition
+	aggregateTurnovers    *memoryAggregateTurnover
+	economistAttributions []circulation.EconomistAttribution
+	now                   func() time.Time
 }
 
 func NewMemory() *Memory {
@@ -79,9 +80,39 @@ func NewMemory() *Memory {
 		turnovers:           make(map[tv.TurnoverID]tv.Turnover),
 		turnoverCycles:      make(map[tv.TurnoverID][]tv.TurnoverCycle),
 		turnoverNumbers:     make(map[tv.TurnoverID]tv.TurnoverNumber),
-		composition:         newMemoryComposition(),
-		aggregateTurnovers:  newMemoryAggregateTurnover(),
-		now:                 time.Now,
+		composition:        newMemoryComposition(),
+		aggregateTurnovers: newMemoryAggregateTurnover(),
+		economistAttributions: []circulation.EconomistAttribution{
+			{
+				ID:          "5eed000000000000001001",
+				Concept:     "avances primitives",
+				Theorist:    "Quesnay",
+				EditionYear: 1758,
+				Anticipates: "fixed_capital_item",
+				Errors:      nil,
+			},
+			{
+				ID:          "5eed000000000000001002",
+				Concept:     "avances annuelles",
+				Theorist:    "Quesnay",
+				EditionYear: 1758,
+				Anticipates: "circulating",
+				Errors:      nil,
+			},
+			{
+				ID:          "5eed000000000000001003",
+				Concept:     "fixed and circulating stock",
+				Theorist:    "Smith",
+				EditionYear: 1776,
+				Anticipates: "fixed_capital_item",
+				Errors: []circulation.KnownEconomistError{
+					circulation.ErrorSmithConflation,
+					circulation.ErrorSmithCirculationCapitalConflation,
+					circulation.ErrorSmithRevenueInCapital,
+				},
+			},
+		},
+		now: time.Now,
 	}
 }
 
@@ -1359,4 +1390,30 @@ func (m *Memory) TickSinkingFund(_ context.Context, id circulation.IndustrialCap
 	sf = sf.Tick()
 	m.sinkingFunds[id] = sf
 	return sf, nil
+}
+
+// Vol. II Ch. 10 — Theories of Fixed and Circulating Capital.
+
+// ListEconomistAttributions returns the pre-seeded attribution records,
+// optionally filtered by theorist (case-insensitive). An empty theorist
+// string returns all records.
+func (m *Memory) ListEconomistAttributions(_ context.Context, theorist string) ([]circulation.EconomistAttribution, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if theorist == "" {
+		out := make([]circulation.EconomistAttribution, len(m.economistAttributions))
+		copy(out, m.economistAttributions)
+		return out, nil
+	}
+	upper := strings.ToUpper(theorist)
+	var out []circulation.EconomistAttribution
+	for _, a := range m.economistAttributions {
+		if strings.ToUpper(a.Theorist) == upper {
+			out = append(out, a)
+		}
+	}
+	if out == nil {
+		out = []circulation.EconomistAttribution{}
+	}
+	return out, nil
 }

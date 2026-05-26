@@ -1046,6 +1046,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ amount, reason }),
     }),
+
+  // Vol. II Ch. 10 — Theories of Fixed and Circulating Capital: Physiocrats and Adam Smith.
+  listEconomistAttributions: (theorist?: string) => {
+    const url = theorist
+      ? `/v1/circulation/economist-attributions?theorist=${encodeURIComponent(theorist)}`
+      : "/v1/circulation/economist-attributions";
+    return http<import("./types").EconomistAttribution[]>(url);
+  },
 };
 
 // Vol. II Ch. 3 — The Circuit of Commodity-Capital

@@ -46,6 +46,7 @@ type machineryStore interface {
 	store.TurnoverStore
 	store.CompositionStore
 	store.AggregateTurnoverStore
+	store.EconomistAttributionStore
 }
 
 func main() {
@@ -93,9 +94,10 @@ func main() {
 		CommodityCircuits:  st,
 		MoneyCircuits:      st,
 		IndustrialCapitals: st,
-		Turnovers:          st,
-		Composition:        st,
-		AggregateTurnovers: st,
+		Turnovers:             st,
+		Composition:           st,
+		AggregateTurnovers:    st,
+		EconomistAttributions: st,
 	})
 	httpapi.Register(srv, h)
 

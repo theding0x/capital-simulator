@@ -80,3 +80,4 @@ web/ruvector.db-wal
 # Design handoff artefacts (not source, not tracked)
 design/
 
+simulation-engine

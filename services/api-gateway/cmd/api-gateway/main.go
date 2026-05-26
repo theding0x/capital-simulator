@@ -239,6 +239,9 @@ func main() {
 	srv.Handle("/v1/aggregate-turnovers", simProxy)
 	srv.Handle("/v1/aggregate-turnovers/{rest...}", simProxy)
 
+	// Vol. II Ch. 10 — Theories of Fixed and Circulating Capital: Physiocrats and Adam Smith → simulation-engine
+	srv.Handle("/v1/circulation/economist-attributions", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III

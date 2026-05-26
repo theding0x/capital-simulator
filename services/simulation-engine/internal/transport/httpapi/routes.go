@@ -155,6 +155,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/aggregate-turnovers/{id}/lifetime-cycle", h.RecordAggregateTurnoverLifetimeCycle)
 	s.HandleFunc("POST /v1/aggregate-turnovers/{id}/crisis-phase", h.RecordCrisisPhase)
 
+	// Vol. II Ch. 10 — Theories of Fixed and Circulating Capital: Physiocrats and Adam Smith
+	s.HandleFunc("GET /v1/circulation/economist-attributions", h.ListEconomistAttributions)
+
 	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
 	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
 	s.HandleFunc("GET /v1/capital-components", h.ListComponents)
