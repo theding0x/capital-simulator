@@ -44,6 +44,7 @@ import { Ch07TurnoverTime } from "../chapters/vol2/Ch07TurnoverTime";
 import { Ch08FixedAndCirculatingCapital } from "../chapters/vol2/Ch08FixedAndCirculatingCapital";
 import { Ch09AggregateTurnover } from "../chapters/vol2/Ch09AggregateTurnover";
 import { Ch10TheoriesPhysiocratsSmith } from "../chapters/vol2/Ch10TheoriesPhysiocratsSmith";
+import { Ch11TheoriesRicardo } from "../chapters/vol2/Ch11TheoriesRicardo";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -106,6 +107,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v2-ch08": Ch08FixedAndCirculatingCapital as AnyPanel,
   "v2-ch09": Ch09AggregateTurnover as AnyPanel,
   "v2-ch10": Ch10TheoriesPhysiocratsSmith as AnyPanel,
+  "v2-ch11": Ch11TheoriesRicardo as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -152,6 +154,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v2-ch08": "Fixed capital and circulating capital are … not two independent categories of capital, but merely two special forms assumed by the same capital.",
   "v2-ch09": "The aggregate turnover of the advanced productive capital is the mean average of the turnover of its different component parts.",
   "v2-ch10": "Quesnay had already distinguished avances primitives … from avances annuelles … The former … correspond roughly to fixed capital; the latter … to circulating capital.",
+  "v2-ch11": "Ricardo confuses fixed and circulating capital with constant and variable capital … Ricardo's mistake arises from the fact that he never distinguished between constant and variable capital.",
 };
 
 export function ChapterShell({

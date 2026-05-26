@@ -2324,12 +2324,18 @@ export interface AggregateTurnover {
   latest_crisis_phase?: CrisisCyclePhaseRecord;
 }
 
-// Vol. II Ch. 10 — Theories of Fixed and Circulating Capital: Physiocrats and Adam Smith.
+// Vol. II Ch. 10–11 — Theories of Fixed and Circulating Capital:
+// Physiocrats, Adam Smith, and Ricardo.
 
 export type KnownEconomistError =
   | "error_smith_conflation"
   | "error_smith_circulation_capital_conflation"
-  | "error_smith_revenue_in_capital";
+  | "error_smith_revenue_in_capital"
+  | "error_ricardo_durability_collapse"
+  | "error_ricardo_conflation"
+  | "error_ricardo_fixed_capital_price_explanation"
+  | "error_ricardo_no_aggregate_turnover"
+  | "error_ricardo_no_value_revolution";
 
 export interface EconomistAttribution {
   id: string;

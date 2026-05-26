@@ -7,8 +7,8 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 )
 
-// Vol. II Ch. 10 — Theories of Fixed and Circulating Capital:
-// The Physiocrats and Adam Smith.
+// Vol. II Ch. 10–11 — Theories of Fixed and Circulating Capital:
+// The Physiocrats, Adam Smith, and Ricardo.
 
 func TestNewEconomistAttributionID_Format(t *testing.T) {
 	t.Parallel()
@@ -36,12 +36,12 @@ func TestNewEconomistAttributionID_Unique(t *testing.T) {
 	}
 }
 
-// TestAllKnownEconomistErrors_Count verifies the enum is complete (three entries
-// matching the three conflations Marx identifies in Ch. 10).
+// TestAllKnownEconomistErrors_Count verifies the enum is complete (eight entries:
+// three from Ch. 10 — Smith — and five from Ch. 11 — Ricardo).
 func TestAllKnownEconomistErrors_Count(t *testing.T) {
 	t.Parallel()
-	if len(circulation.AllKnownEconomistErrors) != 3 {
-		t.Fatalf("expected 3 KnownEconomistError values, got %d", len(circulation.AllKnownEconomistErrors))
+	if len(circulation.AllKnownEconomistErrors) != 8 {
+		t.Fatalf("expected 8 KnownEconomistError values, got %d", len(circulation.AllKnownEconomistErrors))
 	}
 }
 
@@ -102,31 +102,72 @@ func TestEconomistAttribution_Quesnay_AvancesAnnuelles(t *testing.T) {
 }
 
 // TestEconomistAttribution_Smith verifies that Adam Smith's Wealth of Nations
-// (1776) carries all three KnownEconomistError entries.
+// (1776) carries exactly the three Ch. 10 KnownEconomistError entries.
 func TestEconomistAttribution_Smith(t *testing.T) {
 	t.Parallel()
+	smithErrors := []circulation.KnownEconomistError{
+		circulation.ErrorSmithConflation,
+		circulation.ErrorSmithCirculationCapitalConflation,
+		circulation.ErrorSmithRevenueInCapital,
+	}
 	attr := circulation.EconomistAttribution{
 		ID:          circulation.EconomistAttributionID("5eed000000000000001003"),
 		Concept:     "fixed and circulating stock",
 		Theorist:    "Smith",
 		EditionYear: 1776,
 		Anticipates: "fixed_capital_item",
-		Errors: []circulation.KnownEconomistError{
-			circulation.ErrorSmithConflation,
-			circulation.ErrorSmithCirculationCapitalConflation,
-			circulation.ErrorSmithRevenueInCapital,
-		},
+		Errors:      smithErrors,
 	}
 	if len(attr.Errors) != 3 {
-		t.Fatalf("Smith attribution must carry all 3 errors, got %d", len(attr.Errors))
+		t.Fatalf("Smith attribution must carry 3 errors, got %d", len(attr.Errors))
 	}
 	present := make(map[circulation.KnownEconomistError]bool)
 	for _, e := range attr.Errors {
 		present[e] = true
 	}
-	for _, e := range circulation.AllKnownEconomistErrors {
+	for _, e := range smithErrors {
 		if !present[e] {
 			t.Errorf("Smith attribution missing error %q", e)
+		}
+	}
+}
+
+// TestEconomistAttribution_Ricardo verifies that Ricardo's Principles of
+// Political Economy and Taxation (1817) carries all five Ch. 11
+// KnownEconomistError entries.
+func TestEconomistAttribution_Ricardo(t *testing.T) {
+	t.Parallel()
+	ricardoErrors := []circulation.KnownEconomistError{
+		circulation.ErrorRicardoDurabilityCollapse,
+		circulation.ErrorRicardoConflation,
+		circulation.ErrorRicardoFixedCapitalPriceExplanation,
+		circulation.ErrorRicardoNoAggregateTurnover,
+		circulation.ErrorRicardoNoValueRevolution,
+	}
+	attr := circulation.EconomistAttribution{
+		ID:          circulation.EconomistAttributionID("5eed000000000000001101"),
+		Concept:     "fixed and circulating capital",
+		Theorist:    "Ricardo",
+		EditionYear: 1817,
+		Anticipates: "prices_of_production",
+		Errors:      ricardoErrors,
+	}
+	if attr.Theorist != "Ricardo" {
+		t.Errorf("expected theorist Ricardo, got %q", attr.Theorist)
+	}
+	if attr.EditionYear != 1817 {
+		t.Errorf("expected edition year 1817, got %d", attr.EditionYear)
+	}
+	if len(attr.Errors) != 5 {
+		t.Fatalf("Ricardo attribution must carry 5 errors, got %d", len(attr.Errors))
+	}
+	present := make(map[circulation.KnownEconomistError]bool)
+	for _, e := range attr.Errors {
+		present[e] = true
+	}
+	for _, e := range ricardoErrors {
+		if !present[e] {
+			t.Errorf("Ricardo attribution missing error %q", e)
 		}
 	}
 }
@@ -165,6 +206,20 @@ func TestEconomistAttribution_EveryErrorHasAttribution(t *testing.T) {
 				circulation.ErrorSmithConflation,
 				circulation.ErrorSmithCirculationCapitalConflation,
 				circulation.ErrorSmithRevenueInCapital,
+			},
+		},
+		{
+			ID:          "5eed000000000000001101",
+			Concept:     "fixed and circulating capital",
+			Theorist:    "Ricardo",
+			EditionYear: 1817,
+			Anticipates: "prices_of_production",
+			Errors: []circulation.KnownEconomistError{
+				circulation.ErrorRicardoDurabilityCollapse,
+				circulation.ErrorRicardoConflation,
+				circulation.ErrorRicardoFixedCapitalPriceExplanation,
+				circulation.ErrorRicardoNoAggregateTurnover,
+				circulation.ErrorRicardoNoValueRevolution,
 			},
 		},
 	}
