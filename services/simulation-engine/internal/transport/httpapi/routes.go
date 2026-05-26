@@ -147,6 +147,14 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/colonial-markets/{id}/regulate", h.RegulateColonialMarket)
 	s.HandleFunc("POST /v1/colonial-markets/{id}/independence", h.ComputeIndependence)
 
+	// Vol. II Ch. 9 — The Aggregate Turnover of Advanced Capital. Cycles of Turnover.
+	s.HandleFunc("POST /v1/aggregate-turnovers", h.CreateAggregateTurnover)
+	s.HandleFunc("GET /v1/aggregate-turnovers", h.ListAggregateTurnovers)
+	s.HandleFunc("GET /v1/aggregate-turnovers/{id}", h.GetAggregateTurnover)
+	s.HandleFunc("POST /v1/aggregate-turnovers/{id}/recompute", h.RecomputeAggregateTurnover)
+	s.HandleFunc("POST /v1/aggregate-turnovers/{id}/lifetime-cycle", h.RecordAggregateTurnoverLifetimeCycle)
+	s.HandleFunc("POST /v1/aggregate-turnovers/{id}/crisis-phase", h.RecordCrisisPhase)
+
 	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
 	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
 	s.HandleFunc("GET /v1/capital-components", h.ListComponents)

@@ -1,0 +1,223 @@
+.ch09 {
+  padding: 1rem;
+}
+
+.ch09-epigraph {
+  font-style: italic;
+  color: var(--color-muted, #666);
+  margin-bottom: 1.5rem;
+  border-left: 3px solid var(--color-accent, #c00);
+  padding-left: 0.75rem;
+}
+
+.ch09-error {
+  color: #c00;
+  padding: 0.5rem;
+  background: #fff0f0;
+  border-radius: 4px;
+}
+
+.ch09-empty {
+  color: var(--color-muted, #666);
+}
+
+.ch09-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 1.25rem;
+}
+
+/* --- Card ------------------------------------------------------------------ */
+
+.ch09-card {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 6px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ch09-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.ch09-card__id {
+  font-size: 0.85rem;
+  color: var(--color-muted, #555);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+.ch09-card__n {
+  font-weight: 600;
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.ch09-card__bp {
+  font-size: 0.75rem;
+  color: var(--color-muted, #777);
+  font-weight: 400;
+}
+
+/* --- Summary stats --------------------------------------------------------- */
+
+.ch09-card__totals {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ch09-stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 100px;
+}
+
+.ch09-stat__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted, #888);
+}
+
+.ch09-stat__value {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* --- Contribution table ---------------------------------------------------- */
+
+.ch09-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.ch09-table th {
+  text-align: left;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--color-border, #ddd);
+  color: var(--color-muted, #666);
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ch09-contrib-row td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--color-border, #f0f0f0);
+  vertical-align: middle;
+}
+
+/* --- Kind badge ------------------------------------------------------------ */
+
+.ch09-kind {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ch09-kind--fixed {
+  background: #e8f0fe;
+  color: #1a56b0;
+}
+
+.ch09-kind--circulating {
+  background: #fef3e8;
+  color: #b05a1a;
+}
+
+/* --- Difference badge ------------------------------------------------------- */
+
+.ch09-diff {
+  font-size: 0.72rem;
+  color: var(--color-muted, #666);
+  font-style: italic;
+}
+
+.ch09-diff--real {
+  color: #2a7a2a;
+}
+
+.ch09-diff--apparent {
+  color: #888;
+}
+
+/* --- Lifetime cycle --------------------------------------------------------- */
+
+.ch09-cycle {
+  background: var(--color-surface-alt, #f9f9f9);
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 4px;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ch09-cycle__header {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ch09-cycle__latest {
+  font-size: 0.82rem;
+}
+
+.ch09-cycle__notes {
+  color: var(--color-muted, #666);
+  font-style: italic;
+}
+
+.ch09-cycle__history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+/* --- Crisis phase badge ----------------------------------------------------- */
+
+.ch09-phase {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ch09-phase--depression {
+  background: #f5e6e6;
+  color: #8b1a1a;
+}
+
+.ch09-phase--medium_activity {
+  background: #e8f5e8;
+  color: #1a6b1a;
+}
+
+.ch09-phase--precipitancy {
+  background: #fff4e0;
+  color: #8b5e00;
+}
+
+.ch09-phase--crisis {
+  background: #fde8e8;
+  color: #b00;
+  border: 1px solid #f5c0c0;
+}

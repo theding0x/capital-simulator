@@ -568,7 +568,7 @@ Spec sweep pending; titles below are drawn from the vault filenames and will be 
 | Ch. 6     | ✅ Done     | The Costs of Circulation — faux frais (purchase/sale time, book-keeping, money reserve) vs value-adding transport costs | market-service |
 | Ch. 7     | ✅ Done     | The Turnover Time and the Number of Turnovers — turnover time, number of turnovers, basis-points    | simulation-engine                 |
 | Ch. 8     | ✅ Done     | Fixed Capital and Circulating Capital — fixed/circulating distinction, KindForRole, ComputeLinearWear, sinking fund, repairs, subcomponents | simulation-engine |
-| Ch. 9     | ⏳ Pending  | The Aggregate Turnover of Advanced Capital — cycles of turnover                                     | simulation-engine                 |
+| Ch. 9     | ✅ Done     | The Aggregate Turnover of Advanced Capital — aggregate n (bp), mean term, lifetime cycle, crisis phases | simulation-engine             |
 | Ch. 10    | ⏳ Pending  | Theories of Fixed and Circulating Capital — Physiocrats and Adam Smith                              | simulation-engine                 |
 | Ch. 11    | ⏳ Pending  | Theories of Fixed and Circulating Capital — Ricardo                                                 | simulation-engine                 |
 | Ch. 12    | ⏳ Pending  | The Working Period                                                                                  | simulation-engine                 |

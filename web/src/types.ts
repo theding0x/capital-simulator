@@ -2273,3 +2273,53 @@ export interface SinkingFundReinvestment {
   kind: ReinvestmentKind;
   occurred_at: string;
 }
+
+// --- Vol. II Ch. 9 — The Aggregate Turnover of Advanced Capital --------------
+
+export type TurnoverDifferenceKind = "real" | "apparent";
+
+export type CrisisCyclePhase =
+  | "depression"
+  | "medium_activity"
+  | "precipitancy"
+  | "crisis";
+
+export interface ComponentTurnoverContribution {
+  id: string;
+  aggregate_turnover_id: string;
+  capital_component_id: string;
+  kind: CapitalKind;
+  advanced_pence: number;
+  turnover_number_basis_points: number;
+  annual_return_pence: number;
+  difference_kind: TurnoverDifferenceKind;
+}
+
+export interface CrisisCyclePhaseRecord {
+  id: string;
+  lifetime_cycle_id: string;
+  phase: CrisisCyclePhase;
+  observed_at: string;
+  notes?: string;
+}
+
+export interface LifetimeCycle {
+  id: string;
+  aggregate_turnover_id: string;
+  duration_minutes: number;
+  started_at: string;
+  completed_cycles: number;
+  crisis_phases?: CrisisCyclePhaseRecord[];
+}
+
+export interface AggregateTurnover {
+  id: string;
+  industrial_capital_id: string;
+  lens: CircuitLens;
+  advanced_total_pence: number;
+  annual_turned_over_pence: number;
+  aggregate_number_basis_points: number;
+  contributions: ComponentTurnoverContribution[];
+  lifetime_cycle?: LifetimeCycle;
+  latest_crisis_phase?: CrisisCyclePhaseRecord;
+}

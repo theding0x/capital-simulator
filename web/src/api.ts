@@ -1426,3 +1426,52 @@ export const compositionApi = {
       body: JSON.stringify(c),
     }),
 };
+
+// Vol. II Ch. 9 — The Aggregate Turnover of Advanced Capital
+export const aggregateTurnoverApi = {
+  create: (body: {
+    industrial_capital_id: string;
+    contributions: Array<{
+      capital_component_id?: string;
+      kind: string;
+      advanced_pence: number;
+      turnover_number_basis_points: number;
+      difference_kind?: string;
+    }>;
+  }) =>
+    http<import("./types").AggregateTurnover>("/v1/aggregate-turnovers", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  list: (industrial_capital_id?: string) => {
+    const qs = industrial_capital_id
+      ? `?industrial_capital_id=${encodeURIComponent(industrial_capital_id)}`
+      : "";
+    return http<import("./types").AggregateTurnover[]>(`/v1/aggregate-turnovers${qs}`);
+  },
+
+  get: (id: string) =>
+    http<import("./types").AggregateTurnover>(`/v1/aggregate-turnovers/${id}`),
+
+  recompute: (id: string) =>
+    http<import("./types").AggregateTurnover>(`/v1/aggregate-turnovers/${id}/recompute`, {
+      method: "POST",
+      body: "{}",
+    }),
+
+  recordLifetimeCycle: (id: string, duration_minutes: number) =>
+    http<import("./types").LifetimeCycle>(`/v1/aggregate-turnovers/${id}/lifetime-cycle`, {
+      method: "POST",
+      body: JSON.stringify({ duration_minutes }),
+    }),
+
+  recordCrisisPhase: (id: string, phase: string, notes?: string) =>
+    http<import("./types").CrisisCyclePhaseRecord>(
+      `/v1/aggregate-turnovers/${id}/crisis-phase`,
+      {
+        method: "POST",
+        body: JSON.stringify({ phase, notes }),
+      }
+    ),
+};
