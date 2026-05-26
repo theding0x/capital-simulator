@@ -2323,3 +2323,19 @@ export interface AggregateTurnover {
   lifetime_cycle?: LifetimeCycle;
   latest_crisis_phase?: CrisisCyclePhaseRecord;
 }
+
+// Vol. II Ch. 10 — Theories of Fixed and Circulating Capital: Physiocrats and Adam Smith.
+
+export type KnownEconomistError =
+  | "error_smith_conflation"
+  | "error_smith_circulation_capital_conflation"
+  | "error_smith_revenue_in_capital";
+
+export interface EconomistAttribution {
+  id: string;
+  concept: string;
+  theorist: string;
+  edition_year: number;
+  anticipates: string;
+  errors: KnownEconomistError[];
+}

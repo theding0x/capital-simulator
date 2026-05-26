@@ -244,6 +244,14 @@ type AggregateTurnoverStore interface {
 	RecordCrisisPhase(ctx context.Context, cycleID tv.LifetimeCycleID, phase tv.CrisisCyclePhaseRecord) (tv.CrisisCyclePhaseRecord, error)
 }
 
+// EconomistAttributionStore is the persistence contract for Vol. II Ch. 10
+// economist-attribution reference records (Quesnay and Smith). Records are
+// static reference data; the store only exposes List with an optional theorist
+// filter.
+type EconomistAttributionStore interface {
+	ListEconomistAttributions(ctx context.Context, theorist string) ([]circulation.EconomistAttribution, error)
+}
+
 // CompositionStore is the persistence contract for Vol. II Ch. 8 fixed and
 // circulating capital composition records.
 type CompositionStore interface {
