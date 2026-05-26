@@ -11,9 +11,8 @@ const ANTICIPATES_LABEL: Record<string, string> = {
   circulating: "Circulating Capital",
 };
 
-const ERROR_DESC: Record<
-  KnownEconomistError,
-  { label: string; desc: string; refutation: string }
+const ERROR_DESC: Partial<
+  Record<KnownEconomistError, { label: string; desc: string; refutation: string }>
 > = {
   error_smith_conflation: {
     label: "Fixed/Circulating ≠ Constant/Variable",

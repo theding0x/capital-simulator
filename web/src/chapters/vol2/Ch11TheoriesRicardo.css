@@ -1,0 +1,152 @@
+/* Vol. II Ch. 11 — Theories of Fixed and Circulating Capital: Ricardo */
+
+.ch11-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Two-column durability vs role table */
+.ch11-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.ch11-col-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted, #888);
+  margin-bottom: 0.75rem;
+}
+
+.ch11-concept-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ch11-concept-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ch11-concept-term {
+  font-style: italic;
+  font-size: 0.9rem;
+  min-width: 9rem;
+}
+
+.ch11-arrow {
+  color: var(--color-muted, #888);
+  font-size: 1rem;
+}
+
+.ch11-concept-target {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-accent, #4a9eff);
+}
+
+.ch11-concept-target.conflation {
+  color: var(--color-warning, #f0a500);
+}
+
+/* "Where Ricardo goes wrong" section */
+.ch11-errors-section {
+  border-top: 1px solid var(--color-border, #333);
+  padding-top: 1.5rem;
+}
+
+.ch11-errors-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.ch11-error-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ch11-error-item {
+  background: var(--color-surface, #1a1a1a);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 6px;
+  padding: 0.875rem 1rem;
+}
+
+.ch11-error-code {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--color-warning, #f0a500);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.ch11-error-desc {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text, #ddd);
+}
+
+.ch11-error-refutation {
+  font-size: 0.75rem;
+  color: var(--color-muted, #888);
+  margin-top: 0.35rem;
+}
+
+/* Forward-looking Vol. III placeholder */
+.ch11-deferred-section {
+  border-top: 1px solid var(--color-border, #333);
+  padding-top: 1.5rem;
+}
+
+.ch11-deferred-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.ch11-deferred-box {
+  background: var(--color-surface, #1a1a1a);
+  border: 1px dashed var(--color-border, #555);
+  border-radius: 6px;
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-muted, #888);
+  line-height: 1.6;
+}
+
+.ch11-deferred-box p {
+  margin: 0 0 0.5rem;
+}
+
+.ch11-deferred-box p:last-child {
+  margin: 0;
+}
+
+.ch11-deferred-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted, #666);
+  margin-bottom: 0.5rem;
+}
+
+.ch11-loading,
+.ch11-error {
+  font-size: 0.875rem;
+  color: var(--color-muted, #888);
+  padding: 1rem 0;
+}
+
+.ch11-error {
+  color: var(--color-error, #e05555);
+}
