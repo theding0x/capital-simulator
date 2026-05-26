@@ -231,6 +231,19 @@ type TurnoverStore interface {
 	GetNumber(ctx context.Context, id tv.TurnoverID) (tv.TurnoverNumber, error)
 }
 
+// AggregateTurnoverStore is the persistence contract for Vol. II Ch. 9
+// aggregate-turnover records and their satellite tables (contributions,
+// lifetime cycle, crisis-phase annotations).
+type AggregateTurnoverStore interface {
+	CreateAggregateTurnover(ctx context.Context, at tv.AggregateTurnover) (tv.AggregateTurnover, error)
+	GetAggregateTurnover(ctx context.Context, id tv.AggregateTurnoverID) (tv.AggregateTurnover, error)
+	ListAggregateTurnovers(ctx context.Context, industrialCapitalID string) ([]tv.AggregateTurnover, error)
+	RecordContribution(ctx context.Context, id tv.AggregateTurnoverID, c tv.ComponentTurnoverContribution) (tv.ComponentTurnoverContribution, error)
+	RecomputeAggregate(ctx context.Context, id tv.AggregateTurnoverID) (tv.AggregateTurnover, error)
+	RecordLifetimeCycle(ctx context.Context, id tv.AggregateTurnoverID, lc tv.LifetimeCycle) (tv.LifetimeCycle, error)
+	RecordCrisisPhase(ctx context.Context, cycleID tv.LifetimeCycleID, phase tv.CrisisCyclePhaseRecord) (tv.CrisisCyclePhaseRecord, error)
+}
+
 // CompositionStore is the persistence contract for Vol. II Ch. 8 fixed and
 // circulating capital composition records.
 type CompositionStore interface {

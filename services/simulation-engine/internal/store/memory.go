@@ -46,11 +46,12 @@ type Memory struct {
 	interlocks          map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock
 	supplyDemand        map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance
 	sinkingFunds        map[circulation.IndustrialCapitalID]circulation.SinkingFund
-	turnovers           map[tv.TurnoverID]tv.Turnover
-	turnoverCycles      map[tv.TurnoverID][]tv.TurnoverCycle
-	turnoverNumbers     map[tv.TurnoverID]tv.TurnoverNumber
-	composition         *memoryComposition
-	now                 func() time.Time
+	turnovers            map[tv.TurnoverID]tv.Turnover
+	turnoverCycles       map[tv.TurnoverID][]tv.TurnoverCycle
+	turnoverNumbers      map[tv.TurnoverID]tv.TurnoverNumber
+	composition          *memoryComposition
+	aggregateTurnovers   *memoryAggregateTurnover
+	now                  func() time.Time
 }
 
 func NewMemory() *Memory {
@@ -75,11 +76,12 @@ func NewMemory() *Memory {
 		interlocks:         make(map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock),
 		supplyDemand:       make(map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance),
 		sinkingFunds:       make(map[circulation.IndustrialCapitalID]circulation.SinkingFund),
-		turnovers:          make(map[tv.TurnoverID]tv.Turnover),
-		turnoverCycles:     make(map[tv.TurnoverID][]tv.TurnoverCycle),
-		turnoverNumbers:    make(map[tv.TurnoverID]tv.TurnoverNumber),
-		composition:        newMemoryComposition(),
-		now:                time.Now,
+		turnovers:           make(map[tv.TurnoverID]tv.Turnover),
+		turnoverCycles:      make(map[tv.TurnoverID][]tv.TurnoverCycle),
+		turnoverNumbers:     make(map[tv.TurnoverID]tv.TurnoverNumber),
+		composition:         newMemoryComposition(),
+		aggregateTurnovers:  newMemoryAggregateTurnover(),
+		now:                 time.Now,
 	}
 }
 

@@ -235,6 +235,10 @@ func main() {
 	srv.Handle("/v1/fixed-items/{rest...}", simProxy)
 	srv.Handle("/v1/circulating-cycles", simProxy)
 
+	// Vol. II Ch. 9 — The Aggregate Turnover of Advanced Capital → simulation-engine
+	srv.Handle("/v1/aggregate-turnovers", simProxy)
+	srv.Handle("/v1/aggregate-turnovers/{rest...}", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III
