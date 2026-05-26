@@ -1,6 +1,6 @@
 -- +goose Up
 -- Vol. II Ch. 9 — The Aggregate Turnover of Advanced Capital. Cycles of Turnover.
-CREATE TABLE aggregate_turnovers (
+CREATE TABLE IF NOT EXISTS aggregate_turnovers (
     id                          VARCHAR(24)  NOT NULL PRIMARY KEY,
     industrial_capital_id       VARCHAR(24)  NOT NULL,
     lens                        VARCHAR(16)  NOT NULL DEFAULT 'money',
@@ -10,7 +10,7 @@ CREATE TABLE aggregate_turnovers (
     created_at                  DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE component_turnover_contributions (
+CREATE TABLE IF NOT EXISTS component_turnover_contributions (
     id                          VARCHAR(24)  NOT NULL PRIMARY KEY,
     aggregate_turnover_id       VARCHAR(24)  NOT NULL,
     capital_component_id        VARCHAR(24)  NOT NULL DEFAULT '',
@@ -23,7 +23,7 @@ CREATE TABLE component_turnover_contributions (
     CONSTRAINT fk_ctc_at FOREIGN KEY (aggregate_turnover_id) REFERENCES aggregate_turnovers(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE lifetime_cycles (
+CREATE TABLE IF NOT EXISTS lifetime_cycles (
     id                          VARCHAR(24)  NOT NULL PRIMARY KEY,
     aggregate_turnover_id       VARCHAR(24)  NOT NULL UNIQUE,
     duration_minutes            BIGINT       NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE lifetime_cycles (
     CONSTRAINT fk_lc_at FOREIGN KEY (aggregate_turnover_id) REFERENCES aggregate_turnovers(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE crisis_cycle_phase_records (
+CREATE TABLE IF NOT EXISTS crisis_cycle_phase_records (
     id                          VARCHAR(24)  NOT NULL PRIMARY KEY,
     lifetime_cycle_id           VARCHAR(24)  NOT NULL,
     phase                       VARCHAR(32)  NOT NULL,
