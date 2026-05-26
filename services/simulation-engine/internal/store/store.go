@@ -14,6 +14,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	tv "github.com/theding0x/capital-simulator/services/simulation-engine/internal/turnover"
+	wp "github.com/theding0x/capital-simulator/services/simulation-engine/internal/workperiod"
 )
 
 var (
@@ -250,6 +251,20 @@ type AggregateTurnoverStore interface {
 // filter.
 type EconomistAttributionStore interface {
 	ListEconomistAttributions(ctx context.Context, theorist string) ([]circulation.EconomistAttribution, error)
+}
+
+// WorkingPeriodStore is the persistence contract for Vol. II Ch. 12 —
+// The Working Period. CreateWorkingPeriod checks any NaturalWorkingPeriodConstraint
+// for the commodity and returns wp.ErrPrematureDelivery if the count is too low.
+type WorkingPeriodStore interface {
+	CreateWorkingPeriod(ctx context.Context, w wp.WorkingPeriod) (wp.WorkingPeriod, error)
+	GetWorkingPeriod(ctx context.Context, id wp.WorkingPeriodID) (wp.WorkingPeriod, error)
+	ListWorkingPeriods(ctx context.Context, industrialCapitalID, mode, commodityID string) ([]wp.WorkingPeriod, error)
+	RecordInterruption(ctx context.Context, id wp.WorkingPeriodID, intr wp.WorkingPeriodInterruption) (wp.WorkingPeriodInterruption, error)
+	RecordShortening(ctx context.Context, id wp.WorkingPeriodID, s wp.WorkingPeriodShortening) (wp.WorkingPeriodShortening, error)
+	RecordCreditFinancing(ctx context.Context, id wp.WorkingPeriodID, cf wp.WorkingPeriodCreditFinancing) (wp.WorkingPeriodCreditFinancing, error)
+	CreateNaturalConstraint(ctx context.Context, nc wp.NaturalWorkingPeriodConstraint) (wp.NaturalWorkingPeriodConstraint, error)
+	ListNaturalConstraints(ctx context.Context) ([]wp.NaturalWorkingPeriodConstraint, error)
 }
 
 // CompositionStore is the persistence contract for Vol. II Ch. 8 fixed and

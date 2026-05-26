@@ -1,0 +1,200 @@
+/* Vol. II Ch. 12 — The Working Period */
+
+.ch12-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Side-by-side working-period comparison */
+.ch12-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.ch12-period-card {
+  background: var(--color-surface, #1a1a1a);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.ch12-period-card h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.ch12-period-card.connected {
+  border-color: var(--color-accent, #4a9eff);
+}
+
+.ch12-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--color-border, #2a2a2a);
+  font-size: 0.875rem;
+}
+
+.ch12-stat-row:last-child {
+  border-bottom: none;
+}
+
+.ch12-stat-label {
+  color: var(--color-muted, #888);
+}
+
+.ch12-stat-value {
+  font-weight: 600;
+  color: var(--color-text, #ddd);
+}
+
+.ch12-stat-value.accent {
+  color: var(--color-accent, #4a9eff);
+}
+
+.ch12-multiplier-badge {
+  display: inline-block;
+  background: var(--color-accent, #4a9eff);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-left: 0.4rem;
+}
+
+/* Natural constraints table */
+.ch12-constraints-section {
+  border-top: 1px solid var(--color-border, #333);
+  padding-top: 1.5rem;
+}
+
+.ch12-constraints-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.ch12-constraint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ch12-constraint-row {
+  display: grid;
+  grid-template-columns: 1fr 5rem 2fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  background: var(--color-surface, #1a1a1a);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 5px;
+  padding: 0.6rem 0.875rem;
+  font-size: 0.875rem;
+}
+
+.ch12-constraint-reason {
+  color: var(--color-muted, #888);
+  font-style: italic;
+}
+
+.ch12-constraint-days {
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Empty / loading / error states */
+.ch12-loading,
+.ch12-error,
+.ch12-empty {
+  font-size: 0.875rem;
+  color: var(--color-muted, #888);
+  padding: 1rem 0;
+}
+
+.ch12-error {
+  color: var(--color-error, #e05555);
+}
+
+/* Interruptions / shortenings section */
+.ch12-events-section {
+  border-top: 1px solid var(--color-border, #333);
+  padding-top: 1.5rem;
+}
+
+.ch12-events-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.ch12-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ch12-event-item {
+  background: var(--color-surface, #1a1a1a);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 5px;
+  padding: 0.6rem 0.875rem;
+  font-size: 0.875rem;
+}
+
+.ch12-event-kind {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-warning, #f0a500);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+/* Forward-reference (Vol. III) */
+.ch12-deferred-section {
+  border-top: 1px solid var(--color-border, #333);
+  padding-top: 1.5rem;
+}
+
+.ch12-deferred-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.ch12-deferred-box {
+  background: var(--color-surface, #1a1a1a);
+  border: 1px dashed var(--color-border, #555);
+  border-radius: 6px;
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-muted, #888);
+  line-height: 1.6;
+}
+
+.ch12-deferred-box p {
+  margin: 0 0 0.5rem;
+}
+
+.ch12-deferred-box p:last-child {
+  margin: 0;
+}
+
+.ch12-deferred-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted, #666);
+  margin-bottom: 0.5rem;
+}

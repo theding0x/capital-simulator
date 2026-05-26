@@ -47,6 +47,7 @@ type machineryStore interface {
 	store.CompositionStore
 	store.AggregateTurnoverStore
 	store.EconomistAttributionStore
+	store.WorkingPeriodStore
 }
 
 func main() {
@@ -98,6 +99,7 @@ func main() {
 		Composition:           st,
 		AggregateTurnovers:    st,
 		EconomistAttributions: st,
+		WorkingPeriods:        st,
 	})
 	httpapi.Register(srv, h)
 
