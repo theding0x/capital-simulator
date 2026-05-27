@@ -11,6 +11,13 @@ const (
 	NaturalTanning      NaturalProcessKind = "tanning"
 	NaturalDrying       NaturalProcessKind = "drying"
 	NaturalOther        NaturalProcessKind = "other"
+
+	// Ch. 13 (Vol. II) additions — extend the enum with the five long-production-time kinds.
+	NaturalAgriculturalGrowth NaturalProcessKind = "agricultural_growth" // corn: seeding → harvest (~280 days)
+	NaturalForestGrowth       NaturalProcessKind = "forest_growth"       // timber: 12–100 years
+	NaturalAnimalMaturation   NaturalProcessKind = "animal_maturation"   // cattle / horses / wine ageing
+	NaturalChemical           NaturalProcessKind = "chemical"            // porcelain firing, bleaching
+	NaturalSeasonalRest       NaturalProcessKind = "seasonal_rest"       // winter fallow
 )
 
 // NaturalProcessSpanID is a 96-bit hex identifier.

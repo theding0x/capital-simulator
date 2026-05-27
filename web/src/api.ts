@@ -1120,6 +1120,62 @@ export const api = {
     http<import("./types").NaturalWorkingPeriodConstraint[]>(
       "/v1/natural-constraints"
     ),
+
+  // Vol. II Ch. 13 — The Time of Production
+  recordProductionLabourGap: (
+    id: string,
+    input: import("./types").CreateProductionLabourGapInput
+  ) =>
+    http<import("./types").ProductionLabourGap>(
+      `/v1/working-periods/${id}/production-labour-gap`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  getProductionLabourGap: (id: string) =>
+    http<import("./types").ProductionLabourGap>(
+      `/v1/working-periods/${id}/production-labour-gap`
+    ),
+
+  recordNaturalProcessActivation: (
+    id: string,
+    input: import("./types").CreateNaturalProcessActivationInput
+  ) =>
+    http<import("./types").NaturalProcessActivation>(
+      `/v1/working-periods/${id}/natural-activations`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  listNaturalProcessActivations: (id: string) =>
+    http<import("./types").NaturalProcessActivation[]>(
+      `/v1/working-periods/${id}/natural-activations`
+    ),
+
+  recordNaturalSubject: (
+    id: string,
+    input: import("./types").CreateNaturalSubjectInput
+  ) =>
+    http<import("./types").NaturalSubject>(
+      `/v1/working-periods/${id}/natural-subject`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  getNaturalSubject: (id: string) =>
+    http<import("./types").NaturalSubject>(
+      `/v1/working-periods/${id}/natural-subject`
+    ),
+
+  createIndustryBenchmark: (
+    input: import("./types").CreateIndustryBenchmarkInput
+  ) =>
+    http<import("./types").NaturalProcessIndustry>(
+      "/v1/industry-benchmarks",
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  listIndustryBenchmarks: () =>
+    http<import("./types").NaturalProcessIndustry[]>(
+      "/v1/industry-benchmarks"
+    ),
 };
 
 // Vol. II Ch. 3 — The Circuit of Commodity-Capital

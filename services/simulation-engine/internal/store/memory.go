@@ -53,6 +53,7 @@ type Memory struct {
 	aggregateTurnovers    *memoryAggregateTurnover
 	economistAttributions []circulation.EconomistAttribution
 	workingPeriod         *memoryWorkingPeriod
+	productionTime        *memoryProductionTime
 	now                   func() time.Time
 }
 
@@ -84,6 +85,7 @@ func NewMemory() *Memory {
 		composition:        newMemoryComposition(),
 		aggregateTurnovers: newMemoryAggregateTurnover(),
 		workingPeriod:      newMemoryWorkingPeriod(),
+		productionTime:     newMemoryProductionTime(),
 		economistAttributions: []circulation.EconomistAttribution{
 			{
 				ID:          "5eed000000000000001001",

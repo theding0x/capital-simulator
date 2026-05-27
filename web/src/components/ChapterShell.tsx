@@ -46,6 +46,7 @@ import { Ch09AggregateTurnover } from "../chapters/vol2/Ch09AggregateTurnover";
 import { Ch10TheoriesPhysiocratsSmith } from "../chapters/vol2/Ch10TheoriesPhysiocratsSmith";
 import { Ch11TheoriesRicardo } from "../chapters/vol2/Ch11TheoriesRicardo";
 import { Ch12WorkingPeriod } from "../chapters/vol2/Ch12WorkingPeriod";
+import { Ch13TimeOfProduction } from "../chapters/vol2/Ch13TimeOfProduction";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -110,6 +111,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v2-ch10": Ch10TheoriesPhysiocratsSmith as AnyPanel,
   "v2-ch11": Ch11TheoriesRicardo as AnyPanel,
   "v2-ch12": Ch12WorkingPeriod as AnyPanel,
+  "v2-ch13": Ch13TimeOfProduction as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -158,6 +160,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v2-ch10": "Quesnay had already distinguished avances primitives … from avances annuelles … The former … correspond roughly to fixed capital; the latter … to circulating capital.",
   "v2-ch11": "Ricardo confuses fixed and circulating capital with constant and variable capital … Ricardo's mistake arises from the fact that he never distinguished between constant and variable capital.",
   "v2-ch12": "The length of the working period differs in different branches of production. In agriculture … the working period amounts to several months. In manufacture … it varies according to the articles produced.",
+  "v2-ch13": "In some branches of industry the product requires a relatively long period of production-time, but a relatively short working-period. The greater the excess of the production-time over the working-period, the greater is the portion of the capital that is continuously tied up in the production process, and not available for other employment.",
 };
 
 export function ChapterShell({

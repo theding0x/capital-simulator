@@ -1,0 +1,222 @@
+/* Vol. II Ch. 13 — The Time of Production */
+
+.ch13-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ---- Key-result insight box ---- */
+
+.ch13-insight-box {
+  background: var(--color-surface, #1a1a1a);
+  border-left: 3px solid var(--color-accent, #4a9eff);
+  padding: 1rem 1.25rem;
+  border-radius: 0 6px 6px 0;
+}
+
+.ch13-insight-formula {
+  font-family: monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.ch13-gap-accent {
+  color: var(--color-warning, #f0a500);
+}
+
+.ch13-insight-note {
+  font-size: 0.875rem;
+  color: var(--color-muted, #888);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ---- Production-labour gap grid ---- */
+
+.ch13-periods-section {
+  border-top: 1px solid var(--color-border, #333);
+  padding-top: 1.5rem;
+}
+
+.ch13-periods-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.ch13-periods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1rem;
+}
+
+.ch13-period-card {
+  background: var(--color-surface, #1a1a1a);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.ch13-period-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.ch13-period-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.ch13-stat-label {
+  color: var(--color-muted, #888);
+}
+
+.ch13-stat-value {
+  font-weight: 600;
+}
+
+/* Stacked gap bar */
+.ch13-gap-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ch13-gap-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--color-border, #333);
+}
+
+.ch13-gap-bar-labour {
+  background: var(--color-accent, #4a9eff);
+  min-width: 1px;
+}
+
+.ch13-gap-bar-gap {
+  background: var(--color-warning, #f0a500);
+  opacity: 0.4;
+}
+
+.ch13-gap-bar-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  gap: 0.5rem;
+}
+
+.ch13-labour-label {
+  color: var(--color-accent, #4a9eff);
+}
+
+.ch13-gap-label {
+  color: var(--color-warning, #f0a500);
+  opacity: 0.85;
+}
+
+.ch13-empty-gap {
+  font-size: 0.8rem;
+  color: var(--color-muted, #888);
+  margin: 0;
+}
+
+/* ---- Industry benchmarks table ---- */
+
+.ch13-benchmarks-section {
+  border-top: 1px solid var(--color-border, #333);
+  padding-top: 1.5rem;
+}
+
+.ch13-benchmarks-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.ch13-bench-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-muted, #888);
+  margin: 0 0 1rem;
+}
+
+.ch13-benchmark-header {
+  display: grid;
+  grid-template-columns: 2fr 5rem 4rem 6rem 4rem;
+  gap: 0.5rem;
+  padding: 0.4rem 0.875rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-muted, #888);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ch13-benchmark-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ch13-benchmark-row {
+  display: grid;
+  grid-template-columns: 2fr 5rem 4rem 6rem 4rem;
+  gap: 0.5rem;
+  align-items: center;
+  background: var(--color-surface, #1a1a1a);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 5px;
+  padding: 0.6rem 0.875rem;
+  font-size: 0.875rem;
+}
+
+.ch13-bench-name {
+  font-weight: 500;
+}
+
+.ch13-bench-days,
+.ch13-bench-labour {
+  text-align: right;
+  color: var(--color-muted, #888);
+  font-size: 0.8rem;
+}
+
+.ch13-bench-bar {
+  height: 8px;
+  background: var(--color-border, #333);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ch13-bench-bar-fill {
+  height: 100%;
+  background: var(--color-accent, #4a9eff);
+  min-width: 1px;
+}
+
+.ch13-bench-ratio {
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--color-accent, #4a9eff);
+}
+
+/* ---- Empty / loading / error states ---- */
+
+.ch13-loading,
+.ch13-error,
+.ch13-empty {
+  font-size: 0.875rem;
+  color: var(--color-muted, #888);
+  padding: 1rem 0;
+}
+
+.ch13-error {
+  color: var(--color-error, #e05555);
+}
