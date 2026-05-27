@@ -10,6 +10,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
+	repro "github.com/theding0x/capital-simulator/services/simulation-engine/internal/reproduction"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	tv "github.com/theding0x/capital-simulator/services/simulation-engine/internal/turnover"
 )
@@ -56,6 +57,7 @@ type Memory struct {
 	productionTime        *memoryProductionTime
 	priceRevolution       *memoryPriceRevolution
 	valorisation          *memoryValorisation
+	reproduction          *memoryReproduction
 	now                   func() time.Time
 }
 
@@ -90,6 +92,43 @@ func NewMemory() *Memory {
 		productionTime:     newMemoryProductionTime(),
 		priceRevolution:    newMemoryPriceRevolution(),
 		valorisation:       newMemoryValorisation(),
+		reproduction: func() *memoryReproduction {
+			r := newMemoryReproduction()
+			// Seed the canonical Ch. 17 realisation puzzle and 100-spinning-mill fixture.
+			seedID := repro.SurplusCirculationID("5eed0000000000001701")
+			r.circulations[seedID] = repro.SurplusCirculation{
+				ID:                     seedID,
+				Period:                 "1871",
+				TotalSurplusPence:      50000000,
+				RealisedSurplusPence:   50000000,
+				UnrealisedSurplusPence: 0,
+				RealisationSources:     []repro.RealisationSourceEntry{},
+			}
+			r.createdAt[seedID] = time.Now().UTC()
+			r.realisationSources[seedID] = []repro.RealisationSourceEntry{
+				{SurplusCirculationID: seedID, Source: repro.SourceCapitalistConsumption, Pence: 40000000},
+				{SurplusCirculationID: seedID, Source: repro.SourceCapitalisedSurplus, Pence: 9500000},
+				{SurplusCirculationID: seedID, Source: repro.SourceGoldProduction, Pence: 500000},
+			}
+			r.aggregates = []repro.SocialCapitalAggregate{
+				{
+					Period:                  "1871",
+					TotalAdvancedPence:      500000000,
+					TotalAnnualOutputPence:  550000000,
+					TotalAnnualSurplusPence: 50000000,
+					DepartmentIShareBP:      0,
+					DepartmentIIShareBP:     0,
+				},
+			}
+			r.realisationPuzzles = []repro.RealisationPuzzle{
+				{
+					SurplusCirculationID: seedID,
+					PuzzleStatement:      "Where does the money come from to realise the aggregate surplus-value of all capitalists? Each individual capitalist can identify buyers for their own output, but at the social level the total money required to purchase C' seems to exceed what was advanced as M. The puzzle dissolves only when we treat total social capital as a whole — formally resolved in the reproduction schemes of Chs. 20-21.",
+					ResolvedInChapter:    20,
+				},
+			}
+			return r
+		}(),
 		economistAttributions: []circulation.EconomistAttribution{
 			{
 				ID:          "5eed000000000000001001",

@@ -2738,3 +2738,35 @@ export interface CreateVariableCapitalAdvanceInput {
   turnover_period_minutes: number;
   turnovers_per_year_basis_points: number;
 }
+
+// Vol. II Ch. 17 — The Circulation of Surplus-Value
+export interface RealisationSourceEntry {
+  surplus_circulation_id: string;
+  source: string;
+  pence: number;
+  deferred_realisation_pence: number;
+}
+
+export interface SurplusCirculation {
+  id: string;
+  period: string;
+  total_surplus_pence: number;
+  realised_surplus_pence: number;
+  unrealised_surplus_pence: number;
+  realisation_sources: RealisationSourceEntry[];
+}
+
+export interface SocialCapitalAggregate {
+  period: string;
+  total_advanced_pence: number;
+  total_annual_output_pence: number;
+  total_annual_surplus_pence: number;
+  department_i_share_bp: number;
+  department_ii_share_bp: number;
+}
+
+export interface RealisationPuzzle {
+  surplus_circulation_id: string;
+  puzzle_statement: string;
+  resolved_in_chapter: number;
+}

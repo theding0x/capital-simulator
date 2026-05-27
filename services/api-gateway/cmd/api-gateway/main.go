@@ -265,6 +265,12 @@ func main() {
 	srv.Handle("/v1/annual-surplus-rate-contrasts", simProxy)
 	srv.Handle("/v1/variable-capital-reproductions/{rest...}", simProxy)
 
+	// Vol. II Ch. 17 — The Circulation of Surplus-Value → simulation-engine
+	srv.Handle("/v1/reproduction/surplus-circulations", simProxy)
+	srv.Handle("/v1/reproduction/surplus-circulations/{rest...}", simProxy)
+	srv.Handle("/v1/reproduction/social-aggregate", simProxy)
+	srv.Handle("/v1/reproduction/realisation-puzzles", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III
