@@ -1,7 +1,7 @@
 // Package store is the persistence layer for simulation-engine. As of Ch. 15
 // it persists Machine and Factory records and the tick log produced by
 // advancing a Factory one period at a time. Ch. 25 adds GeneralLawScenario.
-// Vol. II Ch. 2 adds ProductiveCircuit.
+// Vol. II Ch. 2 adds ProductiveCircuit. Vol. II Ch. 16 adds AnnualSurplusRate.
 package store
 
 import (
@@ -14,6 +14,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	tv "github.com/theding0x/capital-simulator/services/simulation-engine/internal/turnover"
+	val "github.com/theding0x/capital-simulator/services/simulation-engine/internal/valorisation"
 	wp "github.com/theding0x/capital-simulator/services/simulation-engine/internal/workperiod"
 )
 
@@ -317,4 +318,29 @@ type PriceRevolutionStore interface {
 	// AggregateCompound computes the compound capital adjustment for one
 	// industrial capital over one period, summing all delta streams.
 	AggregateCompound(ctx context.Context, industrialCapitalID circulation.IndustrialCapitalID, period string) (circulation.CompoundCapitalAdjustment, error)
+}
+
+// AnnualSurplusRateStore is the persistence contract for Vol. II Ch. 16 —
+// The Turnover of Variable Capital. It manages VariableCapitalAdvance records
+// and their derived rates (per-circuit and annual) and the canonical contrast.
+type AnnualSurplusRateStore interface {
+	// CreateAdvance persists a new VariableCapitalAdvance after validation.
+	CreateAdvance(ctx context.Context, a val.VariableCapitalAdvance) (val.VariableCapitalAdvance, error)
+	// GetAdvance returns a VariableCapitalAdvance by ID.
+	GetAdvance(ctx context.Context, id val.VariableCapitalAdvanceID) (val.VariableCapitalAdvance, error)
+	// ListAdvances returns all advances for an industrial capital.
+	// An empty industrialCapitalID returns all advances.
+	ListAdvances(ctx context.Context, industrialCapitalID string) ([]val.VariableCapitalAdvance, error)
+	// RecordPerCircuitRate persists the per-circuit surplus rate for an advance.
+	// A second call replaces the prior rate (one rate per advance).
+	RecordPerCircuitRate(ctx context.Context, rate val.PerCircuitSurplusRate) (val.PerCircuitSurplusRate, error)
+	// GetPerCircuitRate returns the per-circuit surplus rate for an advance.
+	GetPerCircuitRate(ctx context.Context, advanceID val.VariableCapitalAdvanceID) (val.PerCircuitSurplusRate, error)
+	// RecordAnnualRate persists a computed AnnualSurplusRate snapshot.
+	RecordAnnualRate(ctx context.Context, rate val.AnnualSurplusRate) (val.AnnualSurplusRate, error)
+	// ListAnnualRates returns annual-rate snapshots, optionally filtered by
+	// industrialCapitalID (via advance lookup) and/or period string.
+	ListAnnualRates(ctx context.Context, industrialCapitalID, period string) ([]val.AnnualSurplusRate, error)
+	// RecordContrast persists a canonical AnnualSurplusRateContrast.
+	RecordContrast(ctx context.Context, c val.AnnualSurplusRateContrast) (val.AnnualSurplusRateContrast, error)
 }

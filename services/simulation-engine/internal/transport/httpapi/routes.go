@@ -186,6 +186,16 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/speculative-holds", h.RecordSpeculativeHold)
 	s.HandleFunc("GET /v1/price-revolutions/compound", h.GetCompoundCapitalAdjustment)
 
+	// Vol. II Ch. 16 — The Turnover of Variable Capital
+	s.HandleFunc("POST /v1/variable-capital-advances", h.CreateVariableCapitalAdvance)
+	s.HandleFunc("GET /v1/variable-capital-advances", h.ListVariableCapitalAdvances)
+	s.HandleFunc("GET /v1/variable-capital-advances/{id}", h.GetVariableCapitalAdvance)
+	s.HandleFunc("POST /v1/variable-capital-advances/{id}/per-circuit-rate", h.RecordPerCircuitSurplusRate)
+	s.HandleFunc("POST /v1/variable-capital-advances/{id}/compute-annual-rate", h.ComputeAnnualSurplusRateHandler)
+	s.HandleFunc("GET /v1/annual-surplus-rates", h.ListAnnualSurplusRates)
+	s.HandleFunc("POST /v1/annual-surplus-rate-contrasts", h.CreateAnnualSurplusRateContrast)
+	s.HandleFunc("GET /v1/variable-capital-reproductions/{id}", h.GetVariableCapitalReproduction)
+
 	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
 	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
 	s.HandleFunc("GET /v1/capital-components", h.ListComponents)
