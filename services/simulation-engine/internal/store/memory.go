@@ -55,6 +55,7 @@ type Memory struct {
 	workingPeriod         *memoryWorkingPeriod
 	productionTime        *memoryProductionTime
 	priceRevolution       *memoryPriceRevolution
+	valorisation          *memoryValorisation
 	now                   func() time.Time
 }
 
@@ -88,6 +89,7 @@ func NewMemory() *Memory {
 		workingPeriod:      newMemoryWorkingPeriod(),
 		productionTime:     newMemoryProductionTime(),
 		priceRevolution:    newMemoryPriceRevolution(),
+		valorisation:       newMemoryValorisation(),
 		economistAttributions: []circulation.EconomistAttribution{
 			{
 				ID:          "5eed000000000000001001",

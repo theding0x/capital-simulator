@@ -1,0 +1,236 @@
+/* Vol. II Ch. 16 — The Turnover of Variable Capital */
+
+.ch16-root {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.ch16-quote {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--accent, #8b5cf6);
+  background: var(--surface-raised, #1e1e2e);
+  border-radius: 0 6px 6px 0;
+  font-style: italic;
+  color: var(--text-muted, #aaa);
+  font-size: 0.85rem;
+}
+
+.ch16-quote cite {
+  display: block;
+  margin-top: 0.4rem;
+  font-style: normal;
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+
+.ch16-section-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #888);
+  margin: 0 0 0.75rem 0;
+}
+
+/* ── A vs B comparison ── */
+
+.ch16-ab-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 560px) {
+  .ch16-ab-grid { grid-template-columns: 1fr; }
+}
+
+.ch16-capital-card {
+  background: var(--surface-raised, #1e1e2e);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid var(--border, #333);
+}
+
+.ch16-capital-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.ch16-capital-label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.ch16-annual-rate {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent, #8b5cf6);
+}
+
+.ch16-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--border-faint, #2a2a3a);
+}
+
+.ch16-detail-row:last-child { border-bottom: none; }
+
+.ch16-detail-row span:last-child {
+  font-weight: 500;
+}
+
+/* ── Formula slider ── */
+
+.ch16-formula-box {
+  background: var(--surface-raised, #1e1e2e);
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid var(--border, #333);
+}
+
+.ch16-formula-display {
+  text-align: center;
+  font-size: 1.1rem;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary, #eee);
+}
+
+.ch16-formula-display strong {
+  color: var(--accent, #8b5cf6);
+  font-size: 1.5rem;
+}
+
+.ch16-slider-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 480px) {
+  .ch16-slider-grid { grid-template-columns: 1fr; }
+}
+
+.ch16-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ch16-slider-label {
+  font-size: 0.8rem;
+  color: var(--text-muted, #aaa);
+}
+
+.ch16-slider-value {
+  font-weight: 600;
+  color: var(--text-primary, #eee);
+}
+
+.ch16-slider-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent, #8b5cf6);
+}
+
+.ch16-quadruple-note {
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+  text-align: center;
+  font-style: italic;
+}
+
+/* ── Industry comparison ── */
+
+.ch16-industry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 560px) {
+  .ch16-industry-grid { grid-template-columns: 1fr; }
+}
+
+.ch16-industry-card {
+  background: var(--surface-raised, #1e1e2e);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid var(--border, #333);
+}
+
+.ch16-industry-name {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.ch16-industry-rate {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent, #8b5cf6);
+  margin-bottom: 0.5rem;
+}
+
+/* ── Interruption widget ── */
+
+.ch16-interruption-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.ch16-interruption-table th {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border, #333);
+  color: var(--text-muted, #aaa);
+  font-weight: 500;
+}
+
+.ch16-interruption-table td {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-faint, #2a2a3a);
+}
+
+.ch16-interruption-table tr.ch16-base td {
+  color: var(--accent, #8b5cf6);
+  font-weight: 600;
+}
+
+/* ── SpinMill card ── */
+
+.ch16-spinmill-card {
+  background: var(--surface-raised, #1e1e2e);
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid var(--border, #333);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ch16-spinmill-calc {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  flex-wrap: wrap;
+}
+
+.ch16-spinmill-calc .ch16-val {
+  font-weight: 700;
+  color: var(--accent, #8b5cf6);
+}
+
+.ch16-spinmill-result {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent, #8b5cf6);
+  text-align: center;
+}

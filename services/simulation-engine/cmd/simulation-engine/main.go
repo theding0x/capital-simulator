@@ -50,6 +50,7 @@ type machineryStore interface {
 	store.WorkingPeriodStore
 	store.ProductionTimeStore
 	store.PriceRevolutionStore
+	store.AnnualSurplusRateStore
 }
 
 func main() {
@@ -104,6 +105,7 @@ func main() {
 		WorkingPeriods:        st,
 		ProductionTime:        st,
 		PriceRevolutions:      st,
+		AnnualSurplusRates:    st,
 	})
 	httpapi.Register(srv, h)
 
@@ -145,8 +147,8 @@ func openStore(ctx context.Context, logger *slog.Logger) (machineryStore, *pmysq
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-15-machinery-and-modern-industry",
-		"description": "Drives the simulated economy forward one period at a time; persists machinery and factory state.",
+		"status":      "ch-16-turnover-variable-capital",
+		"description": "Drives the simulated economy forward one period at a time; persists machinery, factory, and annual surplus-rate state.",
 		"tick":        0,
 		"running":     false,
 	}

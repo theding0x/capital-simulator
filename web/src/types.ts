@@ -2688,3 +2688,53 @@ export interface RecordSpeculativeHoldInput {
   held_since?: string;
   anticipated_direction: number;
 }
+
+// Vol. II Ch. 16 — The Turnover of Variable Capital
+
+export interface VariableCapitalAdvance {
+  id: string;
+  industrial_capital_id: string;
+  pence: number;
+  turnover_period_minutes: number;
+  turnovers_per_year_basis_points: number;
+}
+
+export interface PerCircuitSurplusRate {
+  id: string;
+  variable_capital_advance_id: string;
+  surplus_pence: number;
+  variable_pence: number;
+  basis_points: number;
+}
+
+export interface AnnualSurplusRate {
+  id: string;
+  variable_capital_advance_id: string;
+  period: string;
+  n_basis_points: number;
+  per_circuit_basis_points: number;
+  annual_basis_points: number;
+}
+
+export interface AnnualSurplusRateContrast {
+  id: string;
+  capital_a_id: string;
+  capital_b_id: string;
+  capital_a_annual_basis_points: number;
+  capital_b_annual_basis_points: number;
+  ratio_basis_points: number;
+}
+
+export interface VariableCapitalReproduction {
+  variable_capital_advance_id: string;
+  year_reference_minutes: number;
+  total_variable_paid_annual_pence: number;
+  total_surplus_annual_pence: number;
+}
+
+export interface CreateVariableCapitalAdvanceInput {
+  industrial_capital_id: string;
+  pence: number;
+  turnover_period_minutes: number;
+  turnovers_per_year_basis_points: number;
+}

@@ -1677,3 +1677,62 @@ export const priceRevolutionApi = {
       `/v1/price-revolutions/compound?industrial_capital_id=${encodeURIComponent(industrialCapitalId)}&period=${encodeURIComponent(period)}`
     ),
 };
+
+// Vol. II Ch. 16 — The Turnover of Variable Capital
+export const annualSurplusRateApi = {
+  createAdvance: (input: import("./types").CreateVariableCapitalAdvanceInput) =>
+    http<import("./types").VariableCapitalAdvance>("/v1/variable-capital-advances", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getAdvance: (id: string) =>
+    http<import("./types").VariableCapitalAdvance>(`/v1/variable-capital-advances/${id}`),
+
+  listAdvances: (industrialCapitalId?: string) =>
+    http<{ items: import("./types").VariableCapitalAdvance[] }>(
+      `/v1/variable-capital-advances${industrialCapitalId ? `?industrial_capital_id=${encodeURIComponent(industrialCapitalId)}` : ""}`
+    ),
+
+  recordPerCircuitRate: (
+    id: string,
+    input: { surplus_pence: number; variable_pence: number }
+  ) =>
+    http<import("./types").PerCircuitSurplusRate>(
+      `/v1/variable-capital-advances/${id}/per-circuit-rate`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  computeAnnualRate: (id: string, period: string) =>
+    http<import("./types").AnnualSurplusRate>(
+      `/v1/variable-capital-advances/${id}/compute-annual-rate?period=${encodeURIComponent(period)}`,
+      { method: "POST", body: "{}" }
+    ),
+
+  listAnnualRates: (industrialCapitalId?: string, period?: string) => {
+    const params = new URLSearchParams();
+    if (industrialCapitalId) params.set("industrial_capital_id", industrialCapitalId);
+    if (period) params.set("period", period);
+    const qs = params.toString();
+    return http<{ items: import("./types").AnnualSurplusRate[] }>(
+      `/v1/annual-surplus-rates${qs ? `?${qs}` : ""}`
+    );
+  },
+
+  createContrast: (input: {
+    capital_a_id: string;
+    capital_b_id: string;
+    period: string;
+  }) =>
+    http<import("./types").AnnualSurplusRateContrast>(
+      "/v1/annual-surplus-rate-contrasts",
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  getReproduction: (id: string, yearMinutes?: number) => {
+    const qs = yearMinutes ? `?year_minutes=${yearMinutes}` : "";
+    return http<import("./types").VariableCapitalReproduction>(
+      `/v1/variable-capital-reproductions/${id}${qs}`
+    );
+  },
+};

@@ -258,6 +258,13 @@ func main() {
 	srv.Handle("/v1/inventory-revaluations", simProxy)
 	srv.Handle("/v1/speculative-holds", simProxy)
 
+	// Vol. II Ch. 16 — The Turnover of Variable Capital → simulation-engine
+	srv.Handle("/v1/variable-capital-advances", simProxy)
+	srv.Handle("/v1/variable-capital-advances/{rest...}", simProxy)
+	srv.Handle("/v1/annual-surplus-rates", simProxy)
+	srv.Handle("/v1/annual-surplus-rate-contrasts", simProxy)
+	srv.Handle("/v1/variable-capital-reproductions/{rest...}", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III
