@@ -35,6 +35,14 @@ type Memory struct {
 	// openBuyingPhase tracks the currently open buying phase per TurnoverTimeID.
 	openBuyingPhase map[circulation.TurnoverTimeID]circulation.BuyingPhaseID
 
+	// Vol. II Ch. 14 — circulation-time refinements.
+	sellingPhaseDetails          map[circulation.SellingPhaseDetailedID]circulation.SellingPhaseDetailed
+	buyingPhaseDetails           map[circulation.BuyingPhaseDetailedID]circulation.BuyingPhaseDetailed
+	distanceLagRelations         map[circulation.DistanceLagRelationID]circulation.DistanceLagRelation
+	circulationSpeedImprovements map[circulation.CirculationSpeedImprovementID]circulation.CirculationSpeedImprovement
+	// annualSurplusPenalties keyed by IndustrialCapitalID+":"+Period.
+	annualSurplusPenalties map[string]circulation.AnnualSurplusPenalty
+
 	// Vol. II Ch. 6 — costs of circulation.
 	circulationCosts    map[costs.CirculationCostID]costs.CirculationCost
 	circulationAgents   map[costs.CirculationAgentID]costs.CirculationAgent
@@ -62,6 +70,12 @@ func NewMemory() *Memory {
 		openSellingPhase:    make(map[circulation.TurnoverTimeID]circulation.SellingPhaseID),
 		openBuyingPhase:     make(map[circulation.TurnoverTimeID]circulation.BuyingPhaseID),
 		now:                 time.Now,
+		// Vol. II Ch. 14
+		sellingPhaseDetails:          make(map[circulation.SellingPhaseDetailedID]circulation.SellingPhaseDetailed),
+		buyingPhaseDetails:           make(map[circulation.BuyingPhaseDetailedID]circulation.BuyingPhaseDetailed),
+		distanceLagRelations:         make(map[circulation.DistanceLagRelationID]circulation.DistanceLagRelation),
+		circulationSpeedImprovements: make(map[circulation.CirculationSpeedImprovementID]circulation.CirculationSpeedImprovement),
+		annualSurplusPenalties:       make(map[string]circulation.AnnualSurplusPenalty),
 		// Vol. II Ch. 6
 		circulationCosts:  make(map[costs.CirculationCostID]costs.CirculationCost),
 		circulationAgents: make(map[costs.CirculationAgentID]costs.CirculationAgent),
@@ -743,4 +757,127 @@ func (m *Memory) SystemFauxFrais(_ context.Context, period string) (costs.System
 		res.TotalAnnualReplacementPence += mf.AnnualReplacementPence
 	}
 	return res, nil
+}
+
+// --- Vol. II Ch. 14 — circulation-time refinements -------------------------
+
+func (m *Memory) CreateSellingPhaseDetailed(_ context.Context, d circulation.SellingPhaseDetailed) (circulation.SellingPhaseDetailed, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if d.ID.IsZero() {
+		d.ID = circulation.NewSellingPhaseDetailedID()
+	}
+	d.CreatedAt = m.now()
+	m.sellingPhaseDetails[d.ID] = d
+	return d, nil
+}
+
+func (m *Memory) GetSellingPhaseDetailed(_ context.Context, id circulation.SellingPhaseDetailedID) (circulation.SellingPhaseDetailed, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	d, ok := m.sellingPhaseDetails[id]
+	if !ok {
+		return circulation.SellingPhaseDetailed{}, ErrNotFound
+	}
+	return d, nil
+}
+
+func (m *Memory) CreateBuyingPhaseDetailed(_ context.Context, d circulation.BuyingPhaseDetailed) (circulation.BuyingPhaseDetailed, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if d.ID.IsZero() {
+		d.ID = circulation.NewBuyingPhaseDetailedID()
+	}
+	d.CreatedAt = m.now()
+	m.buyingPhaseDetails[d.ID] = d
+	return d, nil
+}
+
+func (m *Memory) GetBuyingPhaseDetailed(_ context.Context, id circulation.BuyingPhaseDetailedID) (circulation.BuyingPhaseDetailed, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	d, ok := m.buyingPhaseDetails[id]
+	if !ok {
+		return circulation.BuyingPhaseDetailed{}, ErrNotFound
+	}
+	return d, nil
+}
+
+func (m *Memory) CreateDistanceLagRelation(_ context.Context, r circulation.DistanceLagRelation) (circulation.DistanceLagRelation, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if r.ID.IsZero() {
+		r.ID = circulation.NewDistanceLagRelationID()
+	}
+	r.CreatedAt = m.now()
+	m.distanceLagRelations[r.ID] = r
+	return r, nil
+}
+
+func (m *Memory) GetDistanceLagRelation(_ context.Context, id circulation.DistanceLagRelationID) (circulation.DistanceLagRelation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	r, ok := m.distanceLagRelations[id]
+	if !ok {
+		return circulation.DistanceLagRelation{}, ErrNotFound
+	}
+	return r, nil
+}
+
+func (m *Memory) ListDistanceLagRelations(_ context.Context) ([]circulation.DistanceLagRelation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]circulation.DistanceLagRelation, 0, len(m.distanceLagRelations))
+	for _, r := range m.distanceLagRelations {
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt.Before(out[j].CreatedAt) })
+	return out, nil
+}
+
+func (m *Memory) CreateCirculationSpeedImprovement(_ context.Context, csi circulation.CirculationSpeedImprovement) (circulation.CirculationSpeedImprovement, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if csi.ID.IsZero() {
+		csi.ID = circulation.NewCirculationSpeedImprovementID()
+	}
+	csi.CreatedAt = m.now()
+	m.circulationSpeedImprovements[csi.ID] = csi
+	return csi, nil
+}
+
+func (m *Memory) ListCirculationSpeedImprovements(_ context.Context, marketID circulation.MarketID) ([]circulation.CirculationSpeedImprovement, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]circulation.CirculationSpeedImprovement, 0)
+	for _, csi := range m.circulationSpeedImprovements {
+		if marketID == "" || csi.MarketID == marketID {
+			out = append(out, csi)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].EffectiveAt.Before(out[j].EffectiveAt) })
+	return out, nil
+}
+
+func (m *Memory) CreateAnnualSurplusPenalty(_ context.Context, asp circulation.AnnualSurplusPenalty) (circulation.AnnualSurplusPenalty, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if asp.ID.IsZero() {
+		asp.ID = circulation.NewAnnualSurplusPenaltyID()
+	}
+	asp.PenaltyBasisPoints = asp.ComputePenalty()
+	key := string(asp.IndustrialCapitalID) + ":" + asp.Period
+	m.annualSurplusPenalties[key] = asp
+	return asp, nil
+}
+
+func (m *Memory) GetAnnualSurplusPenalty(_ context.Context, icID circulation.IndustrialCapitalID, period string) (circulation.AnnualSurplusPenalty, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	key := string(icID) + ":" + period
+	asp, ok := m.annualSurplusPenalties[key]
+	if !ok {
+		return circulation.AnnualSurplusPenalty{}, ErrNotFound
+	}
+	return asp, nil
 }

@@ -2500,3 +2500,92 @@ export interface CreateIndustryBenchmarkInput {
   typical_labour_days_count: number;
   ratio_basis_points: number;
 }
+
+
+// Vol. II Ch. 14 — The Time of Circulation (refined)
+
+export type CirculationSpeedReason = "telegraph" | "steamship" | "telephone" | "railway" | "other";
+
+export interface SellingPhaseDetailed {
+  id: string;
+  selling_phase_id: string;
+  turnover_time_id: string;
+  industrial_capital_id: string;
+  market_id: string;
+  market_distance_meters: number;
+  communication_lag_minutes: number;
+  buyer_search_minutes: number;
+  bargaining_minutes: number;
+  legal_settlement_minutes: number;
+  total_minutes: number;
+  created_at: string;
+}
+
+export interface BuyingPhaseDetailed {
+  id: string;
+  buying_phase_id: string;
+  turnover_time_id: string;
+  industrial_capital_id: string;
+  market_id: string;
+  market_distance_meters: number;
+  communication_lag_minutes: number;
+  supplier_search_minutes: number;
+  order_processing_minutes: number;
+  legal_settlement_minutes: number;
+  total_minutes: number;
+  created_at: string;
+}
+
+export interface DistanceLagRelation {
+  id: string;
+  market_id: string;
+  distance_meters: number;
+  lag_minutes_per_km: number;
+  created_at: string;
+}
+
+export interface CirculationSpeedImprovement {
+  id: string;
+  market_id: string;
+  old_lag_minutes_per_km: number;
+  new_lag_minutes_per_km: number;
+  reason: CirculationSpeedReason;
+  effective_at: string;
+  created_at: string;
+}
+
+export interface AnnualSurplusPenalty {
+  id?: string;
+  industrial_capital_id: string;
+  period: string;
+  ideal_annual_rate_basis_points: number;
+  actual_annual_rate_basis_points: number;
+  penalty_basis_points: number;
+}
+
+export interface CreateSellingPhaseDetailedInput {
+  selling_phase_id: string;
+  industrial_capital_id: string;
+  market_id: string;
+  market_distance_meters: number;
+  communication_lag_minutes: number;
+  buyer_search_minutes: number;
+  bargaining_minutes: number;
+  legal_settlement_minutes: number;
+  total_minutes: number;
+  distance_lag_relation_id?: string;
+}
+
+export interface CreateDistanceLagRelationInput {
+  market_id: string;
+  distance_meters: number;
+  lag_minutes_per_km: number;
+}
+
+export interface CreateCirculationSpeedImprovementInput {
+  market_id: string;
+  old_lag_minutes_per_km: number;
+  new_lag_minutes_per_km: number;
+  reason: CirculationSpeedReason;
+  effective_at: string;
+}

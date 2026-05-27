@@ -1,0 +1,44 @@
+.ch14-root { padding: 1.5rem; max-width: 900px; }
+.ch14-section { margin-bottom: 2rem; }
+.ch14-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.4rem; }
+
+/* England-India telegraph slider */
+.ch14-slider-wrapper { display: flex; flex-direction: column; gap: 0.75rem; }
+.ch14-slider { width: 100%; accent-color: #4f46e5; }
+.ch14-era-label { font-size: 0.8rem; color: #64748b; display: flex; justify-content: space-between; }
+.ch14-bars { display: flex; gap: 1rem; }
+.ch14-bar-group { flex: 1; }
+.ch14-bar-group label { font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 0.25rem; }
+.ch14-bar-outer { background: #e2e8f0; border-radius: 4px; height: 18px; overflow: hidden; }
+.ch14-bar-inner { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.ch14-bar-comm { background: #ef4444; }
+.ch14-bar-search { background: #f59e0b; }
+.ch14-bar-bargain { background: #3b82f6; }
+.ch14-bar-legal { background: #10b981; }
+.ch14-bar-val { font-size: 0.7rem; margin-top: 2px; color: #475569; }
+
+/* Phase breakdown widget */
+.ch14-breakdown { display: flex; border-radius: 4px; overflow: hidden; height: 28px; }
+.ch14-seg { display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #fff; font-weight: 600; transition: flex 0.4s ease; white-space: nowrap; overflow: hidden; }
+
+/* Speed timeline */
+.ch14-timeline { border-left: 2px solid #c7d2fe; padding-left: 1rem; }
+.ch14-event { margin-bottom: 0.75rem; position: relative; }
+.ch14-event::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #4f46e5; position: absolute; left: -1.4rem; top: 3px; }
+.ch14-event-year { font-size: 0.75rem; font-weight: 600; color: #4f46e5; }
+.ch14-event-desc { font-size: 0.8rem; color: #374151; }
+.ch14-event-lag { font-size: 0.7rem; color: #64748b; }
+
+/* Penalty calculator */
+.ch14-calc { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.ch14-calc-input { display: flex; flex-direction: column; gap: 0.4rem; }
+.ch14-calc-input label { font-size: 0.75rem; color: #64748b; }
+.ch14-calc-input input[type="range"] { accent-color: #4f46e5; }
+.ch14-penalty-display { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 1rem; text-align: center; }
+.ch14-penalty-bp { font-size: 2rem; font-weight: 700; color: #dc2626; }
+.ch14-penalty-label { font-size: 0.75rem; color: #991b1b; }
+
+/* Table */
+.ch14-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.ch14-table th { text-align: left; padding: 0.4rem 0.6rem; background: #f8fafc; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+.ch14-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #f1f5f9; }

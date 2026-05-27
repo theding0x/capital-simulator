@@ -46,6 +46,15 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/transport-tariffs", h.SetTransportTariff)
 	s.HandleFunc("POST /v1/transport-legs", h.CreateTransportLeg)
 
+	// Vol. II Ch. 14 — Circulation-time refinements (sub-spans, distance-lag, speed improvements)
+	s.HandleFunc("POST /v1/turnover-time/{id}/selling-phase/{phaseId}/detail", h.UpgradeSellingPhase)
+	s.HandleFunc("POST /v1/turnover-time/{id}/buying-phase/{phaseId}/detail", h.UpgradeBuyingPhase)
+	s.HandleFunc("POST /v1/distance-lag", h.CreateDistanceLagRelation)
+	s.HandleFunc("GET /v1/distance-lag", h.ListDistanceLagRelations)
+	s.HandleFunc("POST /v1/circulation-speed-improvements", h.CreateCirculationSpeedImprovement)
+	s.HandleFunc("GET /v1/circulation-speed-improvements", h.ListCirculationSpeedImprovements)
+	s.HandleFunc("GET /v1/turnover-time/{id}/annual-surplus-penalty", h.GetAnnualSurplusPenalty)
+
 	// Vol. II Ch. 5 — Turnover time and circulation phases
 	s.HandleFunc("POST /v1/turnover-time", h.CreateTurnoverTime)
 	s.HandleFunc("GET /v1/turnover-time", h.ListTurnoverTimes)
