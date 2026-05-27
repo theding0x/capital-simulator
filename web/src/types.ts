@@ -2589,3 +2589,102 @@ export interface CreateCirculationSpeedImprovementInput {
   reason: CirculationSpeedReason;
   effective_at: string;
 }
+
+// ── Vol. II Ch. 15 — The Effects of a Change of Prices ──────────────────────
+
+export interface ValueRevolutionEventV2 {
+  id: string;
+  industrial_capital_id: string;
+  affecting: ValueRevolutionAffecting;
+  direction_pence: number;
+  occurred_at: string;
+  basis_points_change: number;
+  revalued_capital_pence: number;
+}
+
+export interface RevaluedCapital {
+  id: string;
+  value_revolution_event_id: string;
+  industrial_capital_id: string;
+  old_advance_pence: number;
+  new_advance_pence: number;
+  delta_pence: number;
+}
+
+export interface RealisedValueDelta {
+  id: string;
+  value_revolution_event_id: string;
+  industrial_capital_id: string;
+  expected_realisation_pence: number;
+  actual_realisation_pence: number;
+  delta_pence: number;
+}
+
+export interface InventoryRevaluation {
+  id: string;
+  industrial_capital_id: string;
+  commodity_id: string;
+  quantity_held: number;
+  old_unit_pence: number;
+  new_unit_pence: number;
+  delta_pence: number;
+}
+
+export interface SpeculativeHold {
+  id: string;
+  industrial_capital_id: string;
+  commodity_id: string;
+  held_since: string;
+  anticipated_direction: number;
+}
+
+export interface PriceCaseRecord {
+  value_revolution_event_id: string;
+  fall_case?: string;
+  rise_case?: string;
+}
+
+export interface PriceRevolutionRecord {
+  event: ValueRevolutionEventV2;
+  revalued_capital?: RevaluedCapital;
+  realised_delta?: RealisedValueDelta;
+  inventory_revaluations: InventoryRevaluation[];
+  fall_case?: string;
+  rise_case?: string;
+}
+
+export interface CompoundCapitalAdjustment {
+  id: string;
+  industrial_capital_id: string;
+  period: string;
+  revaluation_delta_pence: number;
+  realisation_delta_pence: number;
+  inventory_delta_pence: number;
+  net_effect_pence: number;
+}
+
+export interface CreatePriceRevolutionInput {
+  industrial_capital_id: string;
+  affecting: ValueRevolutionAffecting;
+  direction_pence: number;
+  occurred_at?: string;
+  basis_points_change: number;
+  old_advance_pence?: number;
+  expected_realisation_pence?: number;
+  actual_realisation_pence?: number;
+}
+
+export interface RecordInventoryRevaluationInput {
+  industrial_capital_id: string;
+  commodity_id: string;
+  quantity_held: number;
+  old_unit_pence: number;
+  new_unit_pence: number;
+}
+
+export interface RecordSpeculativeHoldInput {
+  industrial_capital_id: string;
+  commodity_id: string;
+  held_since?: string;
+  anticipated_direction: number;
+}

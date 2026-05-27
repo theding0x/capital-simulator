@@ -1634,3 +1634,46 @@ export const circulationTimeV2Api = {
       `/v1/turnover-time/${turnoverID}/annual-surplus-penalty?period=${encodeURIComponent(period)}`
     ),
 };
+
+// ── Vol. II Ch. 15 — The Effects of a Change of Prices ──────────────────────
+
+export const priceRevolutionApi = {
+  create: (input: import("./types").CreatePriceRevolutionInput) =>
+    http<import("./types").PriceRevolutionRecord>("/v1/price-revolutions", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  get: (id: string) =>
+    http<import("./types").PriceRevolutionRecord>(`/v1/price-revolutions/${id}`),
+
+  recordPriceCase: (
+    id: string,
+    input: { fall_case?: string; rise_case?: string }
+  ) =>
+    http<import("./types").PriceCaseRecord>(
+      `/v1/price-revolutions/${id}/price-case`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  recordInventoryRevaluation: (
+    input: import("./types").RecordInventoryRevaluationInput
+  ) =>
+    http<import("./types").InventoryRevaluation>("/v1/inventory-revaluations", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  recordSpeculativeHold: (
+    input: import("./types").RecordSpeculativeHoldInput
+  ) =>
+    http<import("./types").SpeculativeHold>("/v1/speculative-holds", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getCompound: (industrialCapitalId: string, period: string) =>
+    http<import("./types").CompoundCapitalAdjustment>(
+      `/v1/price-revolutions/compound?industrial_capital_id=${encodeURIComponent(industrialCapitalId)}&period=${encodeURIComponent(period)}`
+    ),
+};

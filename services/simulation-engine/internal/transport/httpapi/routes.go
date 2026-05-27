@@ -178,6 +178,14 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/natural-constraints", h.CreateNaturalConstraint)
 	s.HandleFunc("GET /v1/natural-constraints", h.ListNaturalConstraints)
 
+	// Vol. II Ch. 15 — The Effects of a Change of Prices
+	s.HandleFunc("POST /v1/price-revolutions", h.CreatePriceRevolution)
+	s.HandleFunc("GET /v1/price-revolutions/{id}", h.GetPriceRevolution)
+	s.HandleFunc("POST /v1/price-revolutions/{id}/price-case", h.RecordPriceRevolutionCase)
+	s.HandleFunc("POST /v1/inventory-revaluations", h.RecordInventoryRevaluation)
+	s.HandleFunc("POST /v1/speculative-holds", h.RecordSpeculativeHold)
+	s.HandleFunc("GET /v1/price-revolutions/compound", h.GetCompoundCapitalAdjustment)
+
 	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
 	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
 	s.HandleFunc("GET /v1/capital-components", h.ListComponents)

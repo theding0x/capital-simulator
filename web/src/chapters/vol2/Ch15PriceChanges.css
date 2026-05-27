@@ -1,0 +1,287 @@
+/* Vol. II Ch. 15 — The Effects of a Change of Prices */
+
+.ch15-root {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.ch15-quote {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--accent, #8b5cf6);
+  background: var(--surface-raised, #1e1e2e);
+  border-radius: 0 6px 6px 0;
+  font-style: italic;
+  color: var(--text-muted, #aaa);
+  font-size: 0.85rem;
+}
+
+.ch15-quote cite {
+  display: block;
+  margin-top: 0.4rem;
+  font-style: normal;
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+
+.ch15-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 860px) {
+  .ch15-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Form ─────────────────────────────────────────────────────────── */
+
+.ch15-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ch15-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--text-muted, #aaa);
+}
+
+.ch15-form input,
+.ch15-form select {
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--border, #333);
+  background: var(--input-bg, #111);
+  color: var(--text, #e0e0e0);
+  font-size: 0.87rem;
+}
+
+.ch15-fixture-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.ch15-fixture-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--accent, #8b5cf6);
+  background: transparent;
+  color: var(--accent, #8b5cf6);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.ch15-fixture-btn:hover {
+  background: color-mix(in srgb, var(--accent, #8b5cf6) 12%, transparent);
+}
+
+.ch15-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted, #aaa);
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.ch15-submit {
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  border: none;
+  background: var(--accent, #8b5cf6);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.87rem;
+  margin-top: 0.25rem;
+}
+
+.ch15-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ch15-error {
+  color: var(--red, #f87171);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+/* ── Event cards ──────────────────────────────────────────────────── */
+
+.ch15-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ch15-event-card {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border-left: 4px solid transparent;
+  background: var(--surface-raised, #1e1e2e);
+}
+
+.ch15-positive {
+  border-left-color: var(--green, #4ade80);
+}
+
+.ch15-negative {
+  border-left-color: var(--red, #f87171);
+}
+
+.ch15-event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.ch15-affecting {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.ch15-delta {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.ch15-gain { color: var(--green, #4ade80); }
+.ch15-loss { color: var(--red, #f87171); }
+
+.ch15-event-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+  margin-bottom: 0.4rem;
+}
+
+.ch15-bp {
+  font-family: monospace;
+}
+
+.ch15-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-muted, #aaa);
+  padding: 0.2rem 0;
+}
+
+.ch15-case-tag {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.78rem;
+}
+
+.ch15-case-fall {
+  background: color-mix(in srgb, var(--green, #4ade80) 12%, transparent);
+  color: var(--green, #4ade80);
+}
+
+.ch15-case-rise {
+  background: color-mix(in srgb, var(--red, #f87171) 12%, transparent);
+  color: var(--red, #f87171);
+}
+
+/* Inventory table */
+
+.ch15-inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.ch15-inv-table th,
+.ch15-inv-table td {
+  padding: 0.25rem 0.4rem;
+  border-bottom: 1px solid var(--border, #333);
+  text-align: left;
+}
+
+.ch15-inv-table th {
+  color: var(--text-muted, #aaa);
+  font-weight: 500;
+}
+
+.ch15-empty {
+  font-size: 0.82rem;
+  color: var(--text-muted, #aaa);
+}
+
+/* ── Case reference ───────────────────────────────────────────────── */
+
+.ch15-cases {
+  padding-top: 0.5rem;
+}
+
+.ch15-cases-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 680px) {
+  .ch15-cases-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ch15-case-block {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: var(--surface-raised, #1e1e2e);
+}
+
+.ch15-case-block h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.88rem;
+}
+
+.ch15-case-fall-block {
+  border-top: 3px solid var(--green, #4ade80);
+}
+
+.ch15-case-rise-block {
+  border-top: 3px solid var(--red, #f87171);
+}
+
+.ch15-case-block dl {
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.ch15-case-block dt {
+  font-size: 0.82rem;
+  margin-top: 0.3rem;
+}
+
+.ch15-case-block dd {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #aaa);
+  line-height: 1.4;
+}
+
+.ch15-case-block code {
+  font-family: monospace;
+  font-size: 0.8em;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  background: var(--code-bg, rgba(255, 255, 255, 0.06));
+}
