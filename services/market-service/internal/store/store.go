@@ -44,6 +44,32 @@ type TurnoverTimeStore interface {
 	SetMarketSeparation(ctx context.Context, ms circulation.MarketSeparation) (circulation.MarketSeparation, error)
 }
 
+// CirculationTimeV2Store is the persistence contract for Vol. II Ch. 14
+// circulation-time refinements: phase sub-spans, distance-lag relations,
+// speed-improvement events, and the annual-surplus-penalty stub.
+type CirculationTimeV2Store interface {
+	// Selling phase details — decomposes a SellingPhase into sub-spans.
+	CreateSellingPhaseDetailed(ctx context.Context, d circulation.SellingPhaseDetailed) (circulation.SellingPhaseDetailed, error)
+	GetSellingPhaseDetailed(ctx context.Context, id circulation.SellingPhaseDetailedID) (circulation.SellingPhaseDetailed, error)
+
+	// Buying phase details — decomposes a BuyingPhase into sub-spans.
+	CreateBuyingPhaseDetailed(ctx context.Context, d circulation.BuyingPhaseDetailed) (circulation.BuyingPhaseDetailed, error)
+	GetBuyingPhaseDetailed(ctx context.Context, id circulation.BuyingPhaseDetailedID) (circulation.BuyingPhaseDetailed, error)
+
+	// Distance-lag relations — median lag per km for a market route.
+	CreateDistanceLagRelation(ctx context.Context, r circulation.DistanceLagRelation) (circulation.DistanceLagRelation, error)
+	GetDistanceLagRelation(ctx context.Context, id circulation.DistanceLagRelationID) (circulation.DistanceLagRelation, error)
+	ListDistanceLagRelations(ctx context.Context) ([]circulation.DistanceLagRelation, error)
+
+	// Circulation speed improvements — events that changed lag per km.
+	CreateCirculationSpeedImprovement(ctx context.Context, csi circulation.CirculationSpeedImprovement) (circulation.CirculationSpeedImprovement, error)
+	ListCirculationSpeedImprovements(ctx context.Context, marketID circulation.MarketID) ([]circulation.CirculationSpeedImprovement, error)
+
+	// Annual surplus penalty — stub, full calculation deferred to Ch. 16.
+	CreateAnnualSurplusPenalty(ctx context.Context, asp circulation.AnnualSurplusPenalty) (circulation.AnnualSurplusPenalty, error)
+	GetAnnualSurplusPenalty(ctx context.Context, icID circulation.IndustrialCapitalID, period string) (circulation.AnnualSurplusPenalty, error)
+}
+
 // CirculationCostStore is the persistence contract for Vol. II Ch. 6
 // costs-of-circulation records. It is embedded in Store.
 type CirculationCostStore interface {
@@ -77,6 +103,7 @@ type CirculationCostStore interface {
 // Store is the persistence contract for market-service domain records.
 type Store interface {
 	TurnoverTimeStore
+	CirculationTimeV2Store
 	CirculationCostStore
 	// Owner operations.
 	CreateOwner(ctx context.Context, o market.Owner) (market.Owner, error)

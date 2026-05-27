@@ -1605,3 +1605,32 @@ export const aggregateTurnoverApi = {
       }
     ),
 };
+
+// Vol. II Ch. 14 — The Time of Circulation (refined)
+export const circulationTimeV2Api = {
+  listDistanceLagRelations: () =>
+    http<{ items: import("./types").DistanceLagRelation[] }>("/v1/distance-lag"),
+  createDistanceLagRelation: (input: import("./types").CreateDistanceLagRelationInput) =>
+    http<import("./types").DistanceLagRelation>("/v1/distance-lag", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  listSpeedImprovements: (market_id?: string) => {
+    const qs = market_id ? `?market_id=${encodeURIComponent(market_id)}` : "";
+    return http<{ items: import("./types").CirculationSpeedImprovement[] }>(`/v1/circulation-speed-improvements${qs}`);
+  },
+  createSpeedImprovement: (input: import("./types").CreateCirculationSpeedImprovementInput) =>
+    http<import("./types").CirculationSpeedImprovement>("/v1/circulation-speed-improvements", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  upgradeSellingPhase: (turnoverID: string, phaseID: string, input: import("./types").CreateSellingPhaseDetailedInput) =>
+    http<import("./types").SellingPhaseDetailed>(
+      `/v1/turnover-time/${turnoverID}/selling-phase/${phaseID}/detail`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+  getAnnualSurplusPenalty: (turnoverID: string, period: string) =>
+    http<import("./types").AnnualSurplusPenalty>(
+      `/v1/turnover-time/${turnoverID}/annual-surplus-penalty?period=${encodeURIComponent(period)}`
+    ),
+};

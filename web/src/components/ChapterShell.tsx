@@ -47,6 +47,7 @@ import { Ch10TheoriesPhysiocratsSmith } from "../chapters/vol2/Ch10TheoriesPhysi
 import { Ch11TheoriesRicardo } from "../chapters/vol2/Ch11TheoriesRicardo";
 import { Ch12WorkingPeriod } from "../chapters/vol2/Ch12WorkingPeriod";
 import { Ch13TimeOfProduction } from "../chapters/vol2/Ch13TimeOfProduction";
+import Ch14TimeOfCirculation from "../chapters/vol2/Ch14TimeOfCirculation";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -112,6 +113,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v2-ch11": Ch11TheoriesRicardo as AnyPanel,
   "v2-ch12": Ch12WorkingPeriod as AnyPanel,
   "v2-ch13": Ch13TimeOfProduction as AnyPanel,
+  "v2-ch14": Ch14TimeOfCirculation as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -161,6 +163,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v2-ch11": "Ricardo confuses fixed and circulating capital with constant and variable capital … Ricardo's mistake arises from the fact that he never distinguished between constant and variable capital.",
   "v2-ch12": "The length of the working period differs in different branches of production. In agriculture … the working period amounts to several months. In manufacture … it varies according to the articles produced.",
   "v2-ch13": "In some branches of industry the product requires a relatively long period of production-time, but a relatively short working-period. The greater the excess of the production-time over the working-period, the greater is the portion of the capital that is continuously tied up in the production process, and not available for other employment.",
+  "v2-ch14": "With the development of the means of communication and transport, the time of circulation of commodities, and therefore the time during which capital is tied up in the process of circulation, is shortened.",
 };
 
 export function ChapterShell({
