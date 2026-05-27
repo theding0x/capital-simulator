@@ -51,6 +51,7 @@ type machineryStore interface {
 	store.ProductionTimeStore
 	store.PriceRevolutionStore
 	store.AnnualSurplusRateStore
+	store.SurplusCirculationStore
 }
 
 func main() {
@@ -106,6 +107,7 @@ func main() {
 		ProductionTime:        st,
 		PriceRevolutions:      st,
 		AnnualSurplusRates:    st,
+		SurplusCirculations:   st,
 	})
 	httpapi.Register(srv, h)
 
@@ -147,8 +149,8 @@ func openStore(ctx context.Context, logger *slog.Logger) (machineryStore, *pmysq
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-16-turnover-variable-capital",
-		"description": "Drives the simulated economy forward one period at a time; persists machinery, factory, and annual surplus-rate state.",
+		"status":      "ch-17-circulation-surplus-value",
+		"description": "Drives the simulated economy forward one period at a time; persists machinery, factory, annual surplus-rate, and surplus-circulation state.",
 		"tick":        0,
 		"running":     false,
 	}

@@ -1736,3 +1736,32 @@ export const annualSurplusRateApi = {
     );
   },
 };
+
+// Vol. II Ch. 17 — The Circulation of Surplus-Value
+export const surplusCirculationApi = {
+  create: (input: { period: string; total_surplus_pence: number }) =>
+    http<import("./types").SurplusCirculation>("/v1/reproduction/surplus-circulations", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  get: (id: string) =>
+    http<import("./types").SurplusCirculation>(`/v1/reproduction/surplus-circulations/${id}`),
+
+  list: () =>
+    http<{ items: import("./types").SurplusCirculation[] }>("/v1/reproduction/surplus-circulations"),
+
+  recordSource: (id: string, input: { source: string; pence: number }) =>
+    http<import("./types").RealisationSourceEntry>(
+      `/v1/reproduction/surplus-circulations/${id}/realisation-source`,
+      { method: "POST", body: JSON.stringify(input) }
+    ),
+
+  socialAggregate: (period: string) =>
+    http<import("./types").SocialCapitalAggregate>(
+      `/v1/reproduction/social-aggregate?period=${encodeURIComponent(period)}`
+    ),
+
+  realisationPuzzles: () =>
+    http<{ items: import("./types").RealisationPuzzle[] }>("/v1/reproduction/realisation-puzzles"),
+};

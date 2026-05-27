@@ -196,6 +196,14 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/annual-surplus-rate-contrasts", h.CreateAnnualSurplusRateContrast)
 	s.HandleFunc("GET /v1/variable-capital-reproductions/{id}", h.GetVariableCapitalReproduction)
 
+	// Vol. II Ch. 17 — The Circulation of Surplus-Value
+	s.HandleFunc("POST /v1/reproduction/surplus-circulations", h.CreateSurplusCirculation)
+	s.HandleFunc("GET /v1/reproduction/surplus-circulations", h.ListSurplusCirculations)
+	s.HandleFunc("GET /v1/reproduction/surplus-circulations/{id}", h.GetSurplusCirculation)
+	s.HandleFunc("POST /v1/reproduction/surplus-circulations/{id}/realisation-source", h.RecordRealisationSource)
+	s.HandleFunc("GET /v1/reproduction/social-aggregate", h.GetSocialAggregate)
+	s.HandleFunc("GET /v1/reproduction/realisation-puzzles", h.ListRealisationPuzzles)
+
 	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
 	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
 	s.HandleFunc("GET /v1/capital-components", h.ListComponents)

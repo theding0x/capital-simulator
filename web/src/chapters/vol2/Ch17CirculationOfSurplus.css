@@ -1,0 +1,307 @@
+/* Vol. II Ch. 17 — The Circulation of Surplus-Value */
+
+.ch17-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── shared ──────────────────────────────────────────────────────────────── */
+
+.ch17-section-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0 0 0.75rem;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.ch17-loading {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666);
+}
+
+.ch17-error {
+  font-size: 0.85rem;
+  color: var(--color-error, #c0392b);
+}
+
+.ch17-empty {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+}
+
+/* ── Widget 1 — Puzzle box ────────────────────────────────────────────────── */
+
+.ch17-puzzle-box {
+  background: var(--surface-alt, #f9f5ee);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.ch17-quote {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--color-accent, #8b4513);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.ch17-quote cite {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  font-style: normal;
+  color: var(--text-secondary, #666);
+}
+
+.ch17-puzzle-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ch17-puzzle-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.ch17-puzzle-statement {
+  color: var(--text-primary, #1a1a1a);
+}
+
+.ch17-puzzle-resolution {
+  font-size: 0.78rem;
+  color: var(--color-success, #27ae60);
+  white-space: nowrap;
+}
+
+.ch17-puzzle-unresolved {
+  font-size: 0.78rem;
+  color: var(--color-warn, #e67e22);
+  white-space: nowrap;
+}
+
+/* ── Widget 2 — Flow diagram ─────────────────────────────────────────────── */
+
+.ch17-flow-box {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.ch17-flow-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #666);
+  margin: -0.5rem 0 0.75rem;
+}
+
+.ch17-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ch17-bar-row {
+  display: grid;
+  grid-template-columns: 11rem 1fr 3rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.83rem;
+}
+
+.ch17-bar-label {
+  color: var(--text-secondary, #555);
+  white-space: nowrap;
+}
+
+.ch17-bar-track {
+  height: 14px;
+  background: var(--surface-alt, #f0f0f0);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ch17-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.bar-revenue { background: var(--color-accent, #8b4513); }
+.bar-capital { background: var(--color-success, #27ae60); }
+.bar-gold    { background: var(--color-warn, #e6c619); }
+
+.ch17-bar-pct {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #555);
+  text-align: right;
+}
+
+.ch17-flow-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+}
+
+/* ── Widget 3 — SC rows ──────────────────────────────────────────────────── */
+
+.ch17-circulations-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ch17-sc-row {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+}
+
+.ch17-sc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.ch17-sc-period {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.ch17-sc-id {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #999);
+  font-family: monospace;
+}
+
+.ch17-sc-amounts {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.ch17-sc-amount {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.83rem;
+}
+
+.ch17-sc-amount-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #888);
+  margin-bottom: 0.1rem;
+}
+
+.ch17-amount-realised {
+  color: var(--color-success, #27ae60);
+  font-weight: 600;
+}
+
+.ch17-amount-unrealised {
+  color: var(--color-error, #c0392b);
+}
+
+.ch17-sc-progress-track {
+  height: 8px;
+  background: var(--surface-alt, #f0f0f0);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.2rem;
+}
+
+.ch17-sc-progress-fill {
+  height: 100%;
+  background: var(--color-success, #27ae60);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.ch17-sc-pct-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #888);
+  margin-bottom: 0.5rem;
+}
+
+.ch17-source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0 0;
+  border-top: 1px solid var(--border, #eee);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ch17-source-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.81rem;
+}
+
+.ch17-source-label {
+  flex: 1;
+  color: var(--text-secondary, #555);
+}
+
+.ch17-source-deferred {
+  font-size: 0.75rem;
+  color: var(--color-warn, #e67e22);
+}
+
+/* ── Widget 4 — Aggregate ────────────────────────────────────────────────── */
+
+.ch17-aggregate-box {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.ch17-aggregate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.ch17-agg-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ch17-agg-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #888);
+}
+
+.ch17-agg-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.ch17-agg-surplus {
+  color: var(--color-accent, #8b4513);
+}
+
+.ch17-agg-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #888);
+  font-style: italic;
+  margin: 0;
+}

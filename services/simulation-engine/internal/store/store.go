@@ -2,6 +2,7 @@
 // it persists Machine and Factory records and the tick log produced by
 // advancing a Factory one period at a time. Ch. 25 adds GeneralLawScenario.
 // Vol. II Ch. 2 adds ProductiveCircuit. Vol. II Ch. 16 adds AnnualSurplusRate.
+// Vol. II Ch. 17 adds SurplusCirculation.
 package store
 
 import (
@@ -12,6 +13,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
+	repro "github.com/theding0x/capital-simulator/services/simulation-engine/internal/reproduction"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 	tv "github.com/theding0x/capital-simulator/services/simulation-engine/internal/turnover"
 	val "github.com/theding0x/capital-simulator/services/simulation-engine/internal/valorisation"
@@ -343,4 +345,30 @@ type AnnualSurplusRateStore interface {
 	ListAnnualRates(ctx context.Context, industrialCapitalID, period string) ([]val.AnnualSurplusRate, error)
 	// RecordContrast persists a canonical AnnualSurplusRateContrast.
 	RecordContrast(ctx context.Context, c val.AnnualSurplusRateContrast) (val.AnnualSurplusRateContrast, error)
+}
+
+// SurplusCirculationStore is the persistence contract for Vol. II Ch. 17 —
+// The Circulation of Surplus-Value. It manages SurplusCirculation records,
+// their realisation-source mix rows, social-capital aggregate snapshots, and
+// the canonical realisation puzzle.
+type SurplusCirculationStore interface {
+	// CreateSurplusCirculation persists a new SurplusCirculation after
+	// validation. The RealisationSources slice is ignored on creation; use
+	// RecordRealisationSource to append entries.
+	CreateSurplusCirculation(ctx context.Context, sc repro.SurplusCirculation) (repro.SurplusCirculation, error)
+	// GetSurplusCirculation returns a SurplusCirculation with all
+	// RealisationSourceEntry rows assembled.
+	GetSurplusCirculation(ctx context.Context, id repro.SurplusCirculationID) (repro.SurplusCirculation, error)
+	// ListSurplusCirculations returns all SurplusCirculation records ordered by
+	// creation time ascending.
+	ListSurplusCirculations(ctx context.Context) ([]repro.SurplusCirculation, error)
+	// RecordRealisationSource appends a RealisationSourceEntry to the given
+	// SurplusCirculation, updating realised/unrealised pence atomically.
+	RecordRealisationSource(ctx context.Context, id repro.SurplusCirculationID, entry repro.RealisationSourceEntry) (repro.RealisationSourceEntry, error)
+	// SnapshotAggregate returns a SocialCapitalAggregate for the given period.
+	// If no explicit aggregate row exists, it derives total_annual_surplus_pence
+	// by summing all SurplusCirculations whose period matches.
+	SnapshotAggregate(ctx context.Context, period string) (repro.SocialCapitalAggregate, error)
+	// ListRealisationPuzzles returns all canonical RealisationPuzzle rows.
+	ListRealisationPuzzles(ctx context.Context) ([]repro.RealisationPuzzle, error)
 }
