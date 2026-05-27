@@ -282,3 +282,17 @@ type CompositionStore interface {
 	RecordCirculatingCycle(ctx context.Context, c comp.CirculatingCycle) (comp.CirculatingCycle, error)
 	RecordReinvestment(ctx context.Context, r comp.SinkingFundReinvestment) (comp.SinkingFundReinvestment, error)
 }
+
+// ProductionTimeStore is the persistence contract for Vol. II Ch. 13 —
+// The Time of Production. Manages the production-labour gap, natural-process
+// activations, natural subjects, and industry benchmarks tied to working periods.
+type ProductionTimeStore interface {
+	RecordProductionLabourGap(ctx context.Context, gap wp.ProductionLabourGap) (wp.ProductionLabourGap, error)
+	GetProductionLabourGap(ctx context.Context, wpID wp.WorkingPeriodID) (wp.ProductionLabourGap, error)
+	RecordNaturalProcessActivation(ctx context.Context, act wp.NaturalProcessActivation) (wp.NaturalProcessActivation, error)
+	ListNaturalProcessActivations(ctx context.Context, wpID wp.WorkingPeriodID) ([]wp.NaturalProcessActivation, error)
+	RecordNaturalSubject(ctx context.Context, sub wp.NaturalSubject) (wp.NaturalSubject, error)
+	GetNaturalSubject(ctx context.Context, wpID wp.WorkingPeriodID) (wp.NaturalSubject, error)
+	CreateIndustryBenchmark(ctx context.Context, ind wp.NaturalProcessIndustry) (wp.NaturalProcessIndustry, error)
+	ListIndustryBenchmarks(ctx context.Context) ([]wp.NaturalProcessIndustry, error)
+}

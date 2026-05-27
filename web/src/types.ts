@@ -2436,3 +2436,67 @@ export interface CreateNaturalConstraintInput {
   min_working_days: number;
   reason: string;
 }
+
+// --- simulation-engine types (Vol. II Ch. 13: Time of Production) ----------
+
+export interface ProductionLabourGap {
+  id: string;
+  working_period_id: string;
+  production_time_nanos: number;
+  labour_time_nanos: number;
+  gap_nanos: number;
+  created_at: string;
+}
+
+export interface NaturalProcessActivation {
+  id: string;
+  working_period_id: string;
+  kind: string;
+  started_at: string;
+  ended_at?: string;
+  requires_labour_maintenance: boolean;
+}
+
+export interface NaturalSubject {
+  id: string;
+  working_period_id: string;
+  commodity_id: string;
+  description: string;
+  is_living: boolean;
+  created_at: string;
+}
+
+export interface NaturalProcessIndustry {
+  id: string;
+  industry_name: string;
+  typical_production_days_count: number;
+  typical_labour_days_count: number;
+  ratio_basis_points: number;
+  created_at: string;
+}
+
+export interface CreateProductionLabourGapInput {
+  production_time_nanos: number;
+  labour_time_nanos: number;
+  gap_nanos: number;
+}
+
+export interface CreateNaturalProcessActivationInput {
+  kind: string;
+  started_at: string;
+  ended_at?: string;
+  requires_labour_maintenance: boolean;
+}
+
+export interface CreateNaturalSubjectInput {
+  commodity_id: string;
+  description: string;
+  is_living: boolean;
+}
+
+export interface CreateIndustryBenchmarkInput {
+  industry_name: string;
+  typical_production_days_count: number;
+  typical_labour_days_count: number;
+  ratio_basis_points: number;
+}

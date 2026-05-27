@@ -248,6 +248,10 @@ func main() {
 	srv.Handle("/v1/natural-constraints", simProxy)
 	srv.Handle("/v1/natural-constraints/{rest...}", simProxy)
 
+	// Vol. II Ch. 13 — The Time of Production → simulation-engine
+	srv.Handle("/v1/industry-benchmarks", simProxy)
+	srv.Handle("/v1/industry-benchmarks/{rest...}", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III
