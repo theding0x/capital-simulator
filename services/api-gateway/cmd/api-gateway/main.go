@@ -252,6 +252,12 @@ func main() {
 	srv.Handle("/v1/industry-benchmarks", simProxy)
 	srv.Handle("/v1/industry-benchmarks/{rest...}", simProxy)
 
+	// Vol. II Ch. 15 — The Effects of a Change of Prices → simulation-engine
+	srv.Handle("/v1/price-revolutions", simProxy)
+	srv.Handle("/v1/price-revolutions/{rest...}", simProxy)
+	srv.Handle("/v1/inventory-revaluations", simProxy)
+	srv.Handle("/v1/speculative-holds", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III

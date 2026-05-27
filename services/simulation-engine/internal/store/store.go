@@ -296,3 +296,25 @@ type ProductionTimeStore interface {
 	CreateIndustryBenchmark(ctx context.Context, ind wp.NaturalProcessIndustry) (wp.NaturalProcessIndustry, error)
 	ListIndustryBenchmarks(ctx context.Context) ([]wp.NaturalProcessIndustry, error)
 }
+
+// PriceRevolutionStore is the persistence contract for Vol. II Ch. 15 —
+// The Effects of a Change of Prices. It manages the derived satellite records
+// for ValueRevolutionEvent: RevaluedCapital, RealisedValueDelta,
+// InventoryRevaluation, SpeculativeHold, and CompoundCapitalAdjustment.
+type PriceRevolutionStore interface {
+	// CreatePriceRevolution persists a ValueRevolutionEvent together with its
+	// derived RevaluedCapital (for MP/LP events) or RealisedValueDelta (for
+	// output events). Returns the assembled record.
+	CreatePriceRevolution(ctx context.Context, rec circulation.PriceRevolutionRecord) (circulation.PriceRevolutionRecord, error)
+	// GetPriceRevolution returns a ValueRevolutionEvent with all derived rows.
+	GetPriceRevolution(ctx context.Context, id circulation.ValueRevolutionEventID) (circulation.PriceRevolutionRecord, error)
+	// RecordPriceCase attaches the operator-selected fall or rise case to an event.
+	RecordPriceCase(ctx context.Context, pc circulation.PriceCaseRecord) (circulation.PriceCaseRecord, error)
+	// RecordInventoryRevaluation persists a paper gain/loss on held stock.
+	RecordInventoryRevaluation(ctx context.Context, inv circulation.InventoryRevaluation) (circulation.InventoryRevaluation, error)
+	// RecordSpeculativeHold registers a commodity held speculatively.
+	RecordSpeculativeHold(ctx context.Context, sh circulation.SpeculativeHold) (circulation.SpeculativeHold, error)
+	// AggregateCompound computes the compound capital adjustment for one
+	// industrial capital over one period, summing all delta streams.
+	AggregateCompound(ctx context.Context, industrialCapitalID circulation.IndustrialCapitalID, period string) (circulation.CompoundCapitalAdjustment, error)
+}

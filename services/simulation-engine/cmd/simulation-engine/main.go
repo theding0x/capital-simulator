@@ -49,6 +49,7 @@ type machineryStore interface {
 	store.EconomistAttributionStore
 	store.WorkingPeriodStore
 	store.ProductionTimeStore
+	store.PriceRevolutionStore
 }
 
 func main() {
@@ -102,6 +103,7 @@ func main() {
 		EconomistAttributions: st,
 		WorkingPeriods:        st,
 		ProductionTime:        st,
+		PriceRevolutions:      st,
 	})
 	httpapi.Register(srv, h)
 

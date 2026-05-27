@@ -309,15 +309,22 @@ func (b StageBlock) IsOpen() bool { return b.ClosedAt == nil }
 // ValueRevolutionEvent records a price change on means of production, labour
 // power, or output. DirectionPence > 0 means prices rose (money tied up);
 // DirectionPence < 0 means prices fell (money set free).
+//
+// Ch. 15 extends the record with BasisPointsChange (the percentage change
+// expressed in basis points, e.g., -2000 for a 20% fall) and
+// RevaluedCapitalPence (the new advance required after the revolution, derived
+// by DeriveRevaluedCapital and stored here for quick reference).
 // §: "value (prices) fall — a part of the money-capital existing hitherto
 // is set free … The opposite occurs if the value of the elements of
 // replacement of a commodity-capital increases."
 type ValueRevolutionEvent struct {
-	ID                  ValueRevolutionEventID   `json:"id"`
-	IndustrialCapitalID IndustrialCapitalID      `json:"industrial_capital_id"`
-	Affecting           ValueRevolutionAffecting `json:"affecting"`
-	DirectionPence      Pence                    `json:"direction_pence"`
-	OccurredAt          time.Time                `json:"occurred_at"`
+	ID                   ValueRevolutionEventID   `json:"id"`
+	IndustrialCapitalID  IndustrialCapitalID      `json:"industrial_capital_id"`
+	Affecting            ValueRevolutionAffecting `json:"affecting"`
+	DirectionPence       Pence                    `json:"direction_pence"`
+	OccurredAt           time.Time                `json:"occurred_at"`
+	BasisPointsChange    int64                    `json:"basis_points_change"`
+	RevaluedCapitalPence Pence                    `json:"revalued_capital_pence"`
 }
 
 // Validate checks that DirectionPence is non-zero.
