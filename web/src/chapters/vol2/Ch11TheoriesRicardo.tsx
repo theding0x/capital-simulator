@@ -59,6 +59,14 @@ const ERROR_DESC: Record<
     refutation:
       "Refuted by Ch. 4 ValueRevolutionEvent: a DirectionPence > 0 event on a Means-of-Production component increases MoneyCapitalTiedUp independently of the labour-process — invisible to Ricardo's static value assumption.",
   },
+  // Ch. 19 errors — displayed in the Ch. 19 panel; listed here as undefined so
+  // this Record stays exhaustive when the KnownEconomistError union is widened.
+  error_quesnay_productive_sterile_division: undefined,
+  error_quesnay_missing_value_theory: undefined,
+  error_smith_revenue_dogma: undefined,
+  error_smith_missing_constant_replacement: undefined,
+  error_smith_labour_regress: undefined,
+  error_ricardo_incomplete_reproduction: undefined,
 };
 
 function DurabilityComparisonView() {

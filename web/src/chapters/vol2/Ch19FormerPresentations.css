@@ -1,0 +1,302 @@
+/* Vol. II Ch. 19 — Former Presentations of the Subject */
+
+.ch19-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── genealogy diagram ──────────────────────────────────────────────────────── */
+
+.ch19-genealogy {
+  background: var(--surface-2, #1e2130);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.ch19-genealogy h3 {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #8892aa);
+}
+
+.ch19-genealogy-row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ch19-genealogy-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ch19-genealogy-arrow {
+  font-size: 1.2rem;
+  color: var(--text-muted, #8892aa);
+  align-self: center;
+}
+
+.ch19-genealogy-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--surface-3, #262c3e);
+  border: 1px solid var(--border, #353d56);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  min-width: 140px;
+}
+
+.ch19-genealogy-node--marx {
+  border-color: var(--accent, #4f8ef7);
+  background: color-mix(in srgb, var(--accent, #4f8ef7) 10%, var(--surface-3, #262c3e));
+}
+
+.ch19-genealogy-theorist {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary, #e2e8f0);
+}
+
+.ch19-genealogy-year {
+  font-size: 0.75rem;
+  color: var(--text-muted, #8892aa);
+}
+
+.ch19-genealogy-work {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-secondary, #a8b4cc);
+}
+
+.ch19-genealogy-anticipates {
+  font-size: 0.75rem;
+  color: var(--green, #4ade80);
+  margin-top: 0.2rem;
+}
+
+.ch19-genealogy-errors {
+  font-size: 0.72rem;
+  color: var(--red, #f87171);
+  margin-top: 0.1rem;
+}
+
+/* ── smith dogma ────────────────────────────────────────────────────────────── */
+
+.ch19-smith-dogma {
+  background: var(--surface-2, #1e2130);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.ch19-smith-dogma h3 {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #8892aa);
+}
+
+.ch19-dogma-equation {
+  background: var(--surface-3, #262c3e);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.ch19-equation-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+}
+
+.ch19-eq-label {
+  font-size: 0.8rem;
+  color: var(--text-muted, #8892aa);
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.ch19-eq-formula {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9rem;
+  color: var(--text-primary, #e2e8f0);
+  flex: 1;
+}
+
+.ch19-eq-formula em {
+  font-style: italic;
+  color: var(--accent, #4f8ef7);
+}
+
+.ch19-eq-verdict {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.ch19-eq-verdict--wrong {
+  color: var(--red, #f87171);
+}
+
+.ch19-eq-verdict--right {
+  color: var(--green, #4ade80);
+}
+
+.ch19-dogma-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #a8b4cc);
+  margin: 0.75rem 0 0;
+  line-height: 1.5;
+}
+
+.ch19-dogma-note em {
+  font-style: italic;
+  color: var(--accent, #4f8ef7);
+}
+
+/* ── historical errors ──────────────────────────────────────────────────────── */
+
+.ch19-historical-errors {
+  background: var(--surface-2, #1e2130);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.ch19-historical-errors h3 {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #8892aa);
+}
+
+.ch19-attr-block {
+  margin-bottom: 1.5rem;
+}
+
+.ch19-attr-block:last-child {
+  margin-bottom: 0;
+}
+
+.ch19-attr-block h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary, #e2e8f0);
+  margin: 0 0 0.4rem;
+}
+
+.ch19-attr-anticipates {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #a8b4cc);
+  margin: 0 0 0.75rem;
+}
+
+.ch19-attr-anticipates code {
+  font-family: var(--font-mono, monospace);
+  background: var(--surface-3, #262c3e);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+}
+
+/* ── error list (shared by dogma and historical sections) ──────────────────── */
+
+.ch19-error-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.ch19-error-item {
+  background: var(--surface-3, #262c3e);
+  border-left: 3px solid var(--red, #f87171);
+  border-radius: 0 4px 4px 0;
+  padding: 0.75rem 1rem;
+}
+
+.ch19-error-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--text-muted, #8892aa);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.ch19-error-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #a8b4cc);
+  margin: 0 0 0.3rem;
+  line-height: 1.5;
+}
+
+.ch19-error-desc strong {
+  color: var(--text-primary, #e2e8f0);
+}
+
+.ch19-error-refutation {
+  font-size: 0.78rem;
+  color: var(--green, #4ade80);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── quotes ─────────────────────────────────────────────────────────────────── */
+
+.ch19-quotes {
+  background: var(--surface-2, #1e2130);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.ch19-quotes h3 {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #8892aa);
+}
+
+.ch19-quote {
+  border-left: 3px solid var(--accent, #4f8ef7);
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-3, #262c3e);
+  border-radius: 0 4px 4px 0;
+}
+
+.ch19-quote:last-child {
+  margin-bottom: 0;
+}
+
+.ch19-quote p {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #a8b4cc);
+  margin: 0 0 0.4rem;
+  line-height: 1.55;
+  font-style: italic;
+}
+
+.ch19-quote cite {
+  font-size: 0.75rem;
+  color: var(--text-muted, #8892aa);
+  font-style: normal;
+}
+
+/* ── states ─────────────────────────────────────────────────────────────────── */
+
+.ch19-loading,
+.ch19-error {
+  font-size: 0.85rem;
+  color: var(--text-muted, #8892aa);
+  padding: 1rem 0;
+}
+
+.ch19-error {
+  color: var(--red, #f87171);
+}
