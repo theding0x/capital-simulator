@@ -2,7 +2,8 @@
 // it persists Machine and Factory records and the tick log produced by
 // advancing a Factory one period at a time. Ch. 25 adds GeneralLawScenario.
 // Vol. II Ch. 2 adds ProductiveCircuit. Vol. II Ch. 16 adds AnnualSurplusRate.
-// Vol. II Ch. 17 adds SurplusCirculation.
+// Vol. II Ch. 17 adds SurplusCirculation. Vol. II Ch. 20 adds
+// SimpleReproductionScheme.
 package store
 
 import (
@@ -396,4 +397,37 @@ type MoneyCapitalStore interface {
 	// CheckApportionmentBalance returns true when the four parts of the given
 	// apportionment sum exactly to TotalSocialMoneyPence.
 	CheckApportionmentBalance(ctx context.Context, id repro.MoneySupplyApportionmentID) (bool, error)
+}
+
+// SimpleReproductionSchemeStore is the persistence contract for Vol. II Ch. 20
+// — Simple Reproduction. It manages the five entity types that model the
+// two-department reproduction scheme: SimpleReproductionScheme (root),
+// DepartmentalCapital (c+v+s composition per department), InterDepartmentExchange
+// (the three value flows), ReproductionTick (cycle advancement), and
+// MoneyClosedLoop (closure verification).
+type SimpleReproductionSchemeStore interface {
+	// CreateSimpleReproductionScheme persists a new scheme for a period.
+	CreateSimpleReproductionScheme(ctx context.Context, s repro.SimpleReproductionScheme) (repro.SimpleReproductionScheme, error)
+	// GetSimpleReproductionScheme returns the scheme with both departments
+	// assembled (when present) and IsBalanced recomputed.
+	GetSimpleReproductionScheme(ctx context.Context, id repro.SimpleReproductionSchemeID) (repro.SimpleReproductionScheme, error)
+	// ListSimpleReproductionSchemes returns all schemes. When period is non-empty
+	// the list is filtered to that period string.
+	ListSimpleReproductionSchemes(ctx context.Context, period string) ([]repro.SimpleReproductionScheme, error)
+	// AddDepartmentToScheme registers a DepartmentalCapital on the scheme and
+	// recomputes IsBalanced. Returns ErrDepartmentAlreadySet if the department
+	// slot is already occupied.
+	AddDepartmentToScheme(ctx context.Context, id repro.SimpleReproductionSchemeID, d repro.DepartmentalCapital) (repro.DepartmentalCapital, error)
+	// RecordInterDepartmentExchange persists one exchange flow linked to the scheme.
+	RecordInterDepartmentExchange(ctx context.Context, id repro.SimpleReproductionSchemeID, e repro.InterDepartmentExchange) (repro.InterDepartmentExchange, error)
+	// ListInterDepartmentExchanges returns all exchange flows for a scheme.
+	ListInterDepartmentExchanges(ctx context.Context, schemeID repro.SimpleReproductionSchemeID) ([]repro.InterDepartmentExchange, error)
+	// AdvanceReproductionTick increments TickCount on the scheme and persists
+	// a ReproductionTick record.
+	AdvanceReproductionTick(ctx context.Context, id repro.SimpleReproductionSchemeID) (repro.ReproductionTick, error)
+	// CheckSchemeBalance returns a BalanceCheckResult for the scheme, surfacing
+	// the keystone-equation components for diagnostic purposes.
+	CheckSchemeBalance(ctx context.Context, id repro.SimpleReproductionSchemeID) (repro.BalanceCheckResult, error)
+	// RecordMoneyClosedLoop persists a MoneyClosedLoop record for the scheme.
+	RecordMoneyClosedLoop(ctx context.Context, id repro.SimpleReproductionSchemeID, loop repro.MoneyClosedLoop) (repro.MoneyClosedLoop, error)
 }

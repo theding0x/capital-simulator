@@ -1,0 +1,299 @@
+/* Vol. II Ch. 20 — Simple Reproduction */
+
+.ch20-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ch20-widget {
+  background: var(--surface-2, #1a1a2e);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.ch20-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent, #a78bfa);
+  margin: 0 0 0.35rem 0;
+}
+
+.ch20-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  margin: 0 0 1rem 0;
+}
+
+.ch20-note {
+  font-size: 0.75rem;
+  color: var(--text-muted, #777);
+  margin: 0.75rem 0 0 0;
+  font-style: italic;
+}
+
+/* ── Widget 1 — Two-department table ─────────────────────────── */
+
+.ch20-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.ch20-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.ch20-table th,
+.ch20-table td {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border, #2a2a4a);
+  text-align: left;
+}
+
+.ch20-table th {
+  background: var(--surface-3, #111128);
+  color: var(--text-muted, #aaa);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.row-dept-i  { color: #818cf8; font-weight: 600; }
+.row-dept-ii { color: #34d399; font-weight: 600; }
+
+.col-c     { color: #94a3b8; }
+.col-v     { color: #fbbf24; }
+.col-s     { color: #f87171; }
+.col-total { color: #e0e0e0; font-weight: 700; }
+
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.ch20-balance-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.ch20-balance-badge.balanced {
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid #34d399;
+}
+
+.ch20-balance-badge.imbalanced {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid #f87171;
+}
+
+.ch20-balance-eq {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--text, #e0e0e0);
+}
+
+.ch20-balance-verdict {
+  font-weight: 600;
+  color: var(--text-muted, #aaa);
+}
+
+/* ── Widget 2 — Flow SVG ─────────────────────────────────────── */
+
+.ch20-flow-wrap {
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto 1rem;
+}
+
+.ch20-flow-svg { width: 100%; height: auto; }
+
+.ch20-svg-box-i  { fill: #1e1b4b; stroke: #818cf8; stroke-width: 1.5; }
+.ch20-svg-box-ii { fill: #064e3b; stroke: #34d399; stroke-width: 1.5; }
+
+.ch20-svg-label-main { font-size: 13px; font-weight: 700; fill: #e0e0e0; }
+.ch20-svg-label-sub  { font-size: 10px; fill: #a0a0b0; }
+.ch20-svg-flow-label { font-size: 10px; }
+.ch20-svg-eq-label   { font-size: 11px; font-weight: 600; fill: #fbbf24; }
+
+.ch20-purple { fill: #c4b5fd; }
+.ch20-indigo { fill: #818cf8; }
+.ch20-green  { fill: #34d399; }
+
+.ch20-exchange-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ch20-exchange-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  border: 1px solid transparent;
+}
+
+.ch20-exchange-row.ch20-purple { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.3); }
+.ch20-exchange-row.ch20-indigo { background: rgba(129,140,248,0.08); border-color: rgba(129,140,248,0.3); }
+.ch20-exchange-row.ch20-green  { background: rgba(52,211,153,0.08);  border-color: rgba(52,211,153,0.3); }
+
+.ch20-exch-num  { font-weight: 700; font-size: 0.9rem; min-width: 1.4rem; }
+.ch20-exch-body { color: var(--text, #ddd); line-height: 1.5; }
+
+/* ── Widget 3 — Tick demonstrator ───────────────────────────── */
+
+.ch20-tick-display {
+  background: var(--surface-3, #111128);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.ch20-tick-period {
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+  margin-bottom: 0.5rem;
+}
+
+.ch20-tick-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.3rem;
+}
+
+.dept-i-tag, .dept-ii-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.dept-i-tag  { background: rgba(129,140,248,0.2); color: #818cf8; border: 1px solid #818cf8; }
+.dept-ii-tag { background: rgba(52,211,153,0.2);  color: #34d399; border: 1px solid #34d399; }
+
+.ch20-tick-formula {
+  font-family: monospace;
+  font-size: 0.83rem;
+  color: var(--text, #e0e0e0);
+}
+
+.ch20-tick-note {
+  font-size: 0.75rem;
+  color: var(--text-muted, #888);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.ch20-tick-btn {
+  padding: 0.45rem 1.1rem;
+  background: rgba(129,140,248,0.15);
+  border: 1px solid #818cf8;
+  border-radius: 6px;
+  color: #818cf8;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ch20-tick-btn:hover { background: rgba(129,140,248,0.28); }
+
+.ch20-tick-confirm {
+  font-size: 0.78rem;
+  color: #34d399;
+  margin-top: 0.6rem;
+}
+
+/* ── Widget 4 — Imbalance toy ───────────────────────────────── */
+
+.ch20-imbal-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.ch20-imbal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+}
+
+.ch20-imbal-input {
+  width: 8rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--surface-3, #111128);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 4px;
+  color: var(--text, #e0e0e0);
+  font-size: 0.85rem;
+}
+
+.ch20-imbal-op {
+  font-size: 1.4rem;
+  color: var(--text-muted, #888);
+  padding-bottom: 0.15rem;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.ch20-imbal-result {
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.ch20-imbal-result.ok   { background: rgba(52,211,153,0.1);  border: 1px solid #34d399; color: #34d399; }
+.ch20-imbal-result.fail { background: rgba(248,113,113,0.1); border: 1px solid #f87171; color: #f87171; }
+
+/* ── Widget 5 — Money closed loop ───────────────────────────── */
+
+.ch20-loop-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.ch20-loop-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.45rem 0.75rem;
+  background: var(--surface-3, #111128);
+  border-radius: 5px;
+  font-size: 0.8rem;
+  color: var(--text, #ddd);
+}
+
+.ch20-loop-row.total {
+  border-top: 1px solid var(--border, #2a2a4a);
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+
+.ch20-loop-val {
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.ch20-loop-val.out     { color: #f87171; }
+.ch20-loop-val.in      { color: #34d399; }
+.ch20-loop-val.zero    { color: #fbbf24; font-weight: 700; }
+.ch20-loop-val.nonzero { color: #f87171; }

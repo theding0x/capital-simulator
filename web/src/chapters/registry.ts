@@ -105,7 +105,7 @@ export const CHAPTERS: ChapterDef[] = [
   // Part III — The Reproduction and Circulation of the Total Social Capital
   { id: "v2-ch18", volume: 2, number: 18, title: "The Role of Money-Capital in Reproduction",                 part: "Part III — The Reproduction and Circulation of the Total Social Capital", circuitNode: ["whole"],                    status: "done"    },
   { id: "v2-ch19", volume: 2, number: 19, title: "Former Presentations of the Subject",                       part: "Part III — The Reproduction and Circulation of the Total Social Capital", circuitNode: ["whole", "historical"],      status: "done"    },
-  { id: "v2-ch20", volume: 2, number: 20, title: "Simple Reproduction",                                       part: "Part III — The Reproduction and Circulation of the Total Social Capital", circuitNode: ["whole"],                    status: "pending" },
+  { id: "v2-ch20", volume: 2, number: 20, title: "Simple Reproduction",                                       part: "Part III — The Reproduction and Circulation of the Total Social Capital", circuitNode: ["whole"],                    status: "done"    },
   { id: "v2-ch21", volume: 2, number: 21, title: "Accumulation and Reproduction on an Extended Scale",        part: "Part III — The Reproduction and Circulation of the Total Social Capital", circuitNode: ["whole", "delta-M"],         status: "pending" },
 
   // Volume III — The Process of Capitalist Production as a Whole

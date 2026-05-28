@@ -53,6 +53,7 @@ type machineryStore interface {
 	store.AnnualSurplusRateStore
 	store.SurplusCirculationStore
 	store.MoneyCapitalStore
+	store.SimpleReproductionSchemeStore
 }
 
 func main() {
@@ -110,6 +111,7 @@ func main() {
 		AnnualSurplusRates:    st,
 		SurplusCirculations:   st,
 		MoneyCapital:          st,
+		SimpleReproduction:    st,
 	})
 	httpapi.Register(srv, h)
 
@@ -151,8 +153,8 @@ func openStore(ctx context.Context, logger *slog.Logger) (machineryStore, *pmysq
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	resp := map[string]any{
 		"service":     serviceName,
-		"status":      "ch-18-role-of-money-capital",
-		"description": "Drives the simulated economy forward one period at a time; persists machinery, factory, annual surplus-rate, surplus-circulation, and money-capital reproduction state.",
+		"status":      "ch-20-simple-reproduction",
+		"description": "Drives the simulated economy forward one period at a time; persists machinery, factory, annual surplus-rate, surplus-circulation, money-capital, and simple-reproduction scheme state.",
 		"tick":        0,
 		"running":     false,
 	}

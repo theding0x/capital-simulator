@@ -2828,3 +2828,58 @@ export interface ApportionmentBalanceCheck {
   balanced: boolean;
   apportionment_id: string;
 }
+
+// Vol. II Ch. 20 — Simple Reproduction
+
+export interface DepartmentalCapital {
+  id: string;
+  scheme_id: string;
+  department: string;
+  constant_pence: number;
+  variable_pence: number;
+  surplus_pence: number;
+  total_pence: number;
+}
+
+export interface SimpleReproductionScheme {
+  id: string;
+  period: string;
+  department_i?: DepartmentalCapital;
+  department_ii?: DepartmentalCapital;
+  is_balanced: boolean;
+  tick_count: number;
+}
+
+export interface InterDepartmentExchange {
+  id: string;
+  scheme_id: string;
+  from_department: string;
+  to_department: string;
+  pence: number;
+  kind: string;
+  description: string;
+}
+
+export interface ReproductionTick {
+  id: string;
+  scheme_id: string;
+  tick_number: number;
+  period: string;
+  is_balanced: boolean;
+}
+
+export interface BalanceCheckResult {
+  scheme_id: string;
+  is_balanced: boolean;
+  dept_i_v_plus_s_pence: number;
+  dept_ii_constant_pence: number;
+  deficit_pence: number;
+}
+
+export interface MoneyClosedLoop {
+  id: string;
+  scheme_id: string;
+  period: string;
+  is_closed: boolean;
+  net_flow_pence: number;
+}

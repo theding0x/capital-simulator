@@ -59,6 +59,7 @@ type Memory struct {
 	valorisation          *memoryValorisation
 	reproduction          *memoryReproduction
 	moneyCapital          *memoryMoneyCapital
+	simpleRepro           *memorySimpleReproduction
 	now                   func() time.Time
 }
 
@@ -94,6 +95,7 @@ func NewMemory() *Memory {
 		priceRevolution:    newMemoryPriceRevolution(),
 		valorisation:       newMemoryValorisation(),
 		moneyCapital: newMemoryMoneyCapital(),
+		simpleRepro:  newMemorySimpleReproduction(),
 		reproduction: func() *memoryReproduction {
 			r := newMemoryReproduction()
 			// Seed the canonical Ch. 17 realisation puzzle and 100-spinning-mill fixture.

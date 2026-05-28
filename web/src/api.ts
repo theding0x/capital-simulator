@@ -1830,3 +1830,42 @@ export const surplusCirculationApi = {
   realisationPuzzles: () =>
     http<{ items: import("./types").RealisationPuzzle[] }>("/v1/reproduction/realisation-puzzles"),
 };
+
+// Vol. II Ch. 20 — Simple Reproduction
+export const simpleReproductionApi = {
+  createScheme: (input: { period: string }) =>
+    http<import("./types").SimpleReproductionScheme>("/v1/reproduction/simple/schemes", {
+      method: "POST", body: JSON.stringify(input),
+    }),
+
+  getScheme: (id: string) =>
+    http<import("./types").SimpleReproductionScheme>(`/v1/reproduction/simple/schemes/${id}`),
+
+  listSchemes: (period?: string) =>
+    http<import("./types").SimpleReproductionScheme[]>(
+      `/v1/reproduction/simple/schemes${period ? `?period=${encodeURIComponent(period)}` : ""}`
+    ),
+
+  addDepartment: (id: string, input: { department: string; constant_pence: number; variable_pence: number; surplus_pence: number; total_pence: number }) =>
+    http<import("./types").DepartmentalCapital>(`/v1/reproduction/simple/schemes/${id}/departments`, {
+      method: "POST", body: JSON.stringify(input),
+    }),
+
+  recordExchange: (id: string, input: { from_department: string; to_department: string; pence: number; kind: string; description: string }) =>
+    http<import("./types").InterDepartmentExchange>(`/v1/reproduction/simple/schemes/${id}/exchanges`, {
+      method: "POST", body: JSON.stringify(input),
+    }),
+
+  advanceTick: (id: string) =>
+    http<import("./types").ReproductionTick>(`/v1/reproduction/simple/schemes/${id}/tick`, {
+      method: "POST", body: "{}",
+    }),
+
+  balanceCheck: (id: string) =>
+    http<import("./types").BalanceCheckResult>(`/v1/reproduction/simple/schemes/${id}/balance-check`),
+
+  recordMoneyLoop: (id: string, input: { period: string; is_closed: boolean; net_flow_pence: number }) =>
+    http<import("./types").MoneyClosedLoop>(`/v1/reproduction/simple/schemes/${id}/money-loop`, {
+      method: "POST", body: JSON.stringify(input),
+    }),
+};
