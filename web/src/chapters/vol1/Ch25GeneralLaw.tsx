@@ -145,137 +145,258 @@ export function Ch25GeneralLaw() {
   }
 
   return (
-    <div className="chapter-panel">
-      <h2>Ch. 25 — The General Law of Capitalist Accumulation</h2>
-      <p className="chapter-blurb">
-        As capital accumulates and the organic composition rises (more machinery relative to labour),
-        the demand for workers grows more slowly than total capital — and may fall absolutely.
-        The industrial reserve army expands, depressing wages and enabling renewed accumulation.
+    <div className="ch-panel">
+      <p className="ch-description">
+        As capital accumulates and the organic composition rises (more machinery
+        relative to labour), the demand for workers grows more slowly than total
+        capital — and may fall absolutely. The industrial reserve army expands,
+        depressing wages and enabling renewed accumulation.
       </p>
 
       {/* Organic Composition */}
-      <section className="sim-section">
-        <h3>Organic Composition of Capital (§2)</h3>
-        <p>c/(c+v) — the ratio of constant to total capital.</p>
-        <form onSubmit={handleOcSubmit} className="sim-form">
-          <label>
-            Constant Capital (£)
-            <input type="number" value={ocConstant} onChange={e => setOcConstant(Number(e.target.value))} min={0} />
-          </label>
-          <label>
-            Variable Capital (£)
-            <input type="number" value={ocVariable} onChange={e => setOcVariable(Number(e.target.value))} min={1} />
-          </label>
-          <button type="submit" disabled={ocLoading}>{ocLoading ? "Computing…" : "Compute"}</button>
+      <section className="ch-section">
+        <h2 className="ch-section-title">Organic Composition of Capital (§2)</h2>
+        <p className="ch-description">
+          c/(c+v) — the ratio of constant to total capital.
+        </p>
+        <form onSubmit={handleOcSubmit} className="ch-form">
+          <div className="form-row">
+            <label className="form-label">
+              Constant Capital (£)
+              <input
+                type="number"
+                className="form-input"
+                value={ocConstant}
+                onChange={e => setOcConstant(Number(e.target.value))}
+                min={0}
+              />
+            </label>
+            <label className="form-label">
+              Variable Capital (£)
+              <input
+                type="number"
+                className="form-input"
+                value={ocVariable}
+                onChange={e => setOcVariable(Number(e.target.value))}
+                min={1}
+              />
+            </label>
+          </div>
+          <button type="submit" className="ch-btn" disabled={ocLoading}>
+            {ocLoading ? "Computing…" : "Compute"}
+          </button>
         </form>
-        {ocError && <p className="error">{ocError}</p>}
+        {ocError && <p className="ch-error">{ocError}</p>}
         {ocResult && (
-          <table className="result-table">
+          <table className="ch-table" style={{ marginTop: "1.5rem" }}>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr><th>Constant Capital</th><td>{fmt(ocResult.constant_capital)}</td></tr>
-              <tr><th>Variable Capital</th><td>{fmt(ocResult.variable_capital)}</td></tr>
-              <tr><th>Organic Composition Ratio</th><td>{ocResult.ratio.toFixed(4)}</td></tr>
+              <tr><td>Constant Capital</td><td>{fmt(ocResult.constant_capital)}</td></tr>
+              <tr><td>Variable Capital</td><td>{fmt(ocResult.variable_capital)}</td></tr>
+              <tr><td>Organic Composition Ratio</td><td>{ocResult.ratio.toFixed(4)}</td></tr>
             </tbody>
           </table>
         )}
       </section>
 
       {/* Labour Demand */}
-      <section className="sim-section">
-        <h3>Labour Demand (§1)</h3>
-        <p>Workers absorbed = total_capital × (1 − OC) ÷ wage</p>
-        <form onSubmit={handleLdSubmit} className="sim-form">
-          <label>
-            Total Capital (£)
-            <input type="number" value={ldTotalCapital} onChange={e => setLdTotalCapital(Number(e.target.value))} min={1} />
-          </label>
-          <label>
-            Organic Composition Ratio
-            <input type="number" step="0.01" value={ldOcRatio} onChange={e => setLdOcRatio(Number(e.target.value))} min={0} max={0.99} />
-          </label>
-          <label>
-            Wage (pence)
-            <input type="number" value={ldWage} onChange={e => setLdWage(Number(e.target.value))} min={1} />
-          </label>
-          <button type="submit" disabled={ldLoading}>{ldLoading ? "Computing…" : "Compute"}</button>
+      <section className="ch-section">
+        <h2 className="ch-section-title">Labour Demand (§1)</h2>
+        <p className="ch-description">
+          Workers absorbed = total_capital &times; (1 &minus; OC) &divide; wage
+        </p>
+        <form onSubmit={handleLdSubmit} className="ch-form">
+          <div className="form-row">
+            <label className="form-label">
+              Total Capital (£)
+              <input
+                type="number"
+                className="form-input"
+                value={ldTotalCapital}
+                onChange={e => setLdTotalCapital(Number(e.target.value))}
+                min={1}
+              />
+            </label>
+            <label className="form-label">
+              Organic Composition Ratio
+              <input
+                type="number"
+                className="form-input"
+                step="0.01"
+                value={ldOcRatio}
+                onChange={e => setLdOcRatio(Number(e.target.value))}
+                min={0}
+                max={0.99}
+              />
+            </label>
+            <label className="form-label">
+              Wage (pence)
+              <input
+                type="number"
+                className="form-input"
+                value={ldWage}
+                onChange={e => setLdWage(Number(e.target.value))}
+                min={1}
+              />
+            </label>
+          </div>
+          <button type="submit" className="ch-btn" disabled={ldLoading}>
+            {ldLoading ? "Computing…" : "Compute"}
+          </button>
         </form>
-        {ldError && <p className="error">{ldError}</p>}
+        {ldError && <p className="ch-error">{ldError}</p>}
         {ldResult && (
-          <table className="result-table">
+          <table className="ch-table" style={{ marginTop: "1.5rem" }}>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr><th>Workers Demanded</th><td>{ldResult.workers.toLocaleString()}</td></tr>
+              <tr><td>Workers Demanded</td><td>{ldResult.workers.toLocaleString()}</td></tr>
             </tbody>
           </table>
         )}
       </section>
 
       {/* Reserve Army */}
-      <section className="sim-section">
-        <h3>Industrial Reserve Army (§3)</h3>
-        <p>Relative surplus population = supply − demanded.</p>
-        <form onSubmit={handleRaSubmit} className="sim-form">
-          <label>
-            Worker Supply
-            <input type="number" value={raSupply} onChange={e => setRaSupply(Number(e.target.value))} min={0} />
-          </label>
-          <label>
-            Workers Demanded
-            <input type="number" value={raDemanded} onChange={e => setRaDemanded(Number(e.target.value))} min={0} />
-          </label>
-          <button type="submit" disabled={raLoading}>{raLoading ? "Computing…" : "Compute"}</button>
+      <section className="ch-section">
+        <h2 className="ch-section-title">Industrial Reserve Army (§3)</h2>
+        <p className="ch-description">
+          Relative surplus population = supply &minus; demanded.
+        </p>
+        <form onSubmit={handleRaSubmit} className="ch-form">
+          <div className="form-row">
+            <label className="form-label">
+              Worker Supply
+              <input
+                type="number"
+                className="form-input"
+                value={raSupply}
+                onChange={e => setRaSupply(Number(e.target.value))}
+                min={0}
+              />
+            </label>
+            <label className="form-label">
+              Workers Demanded
+              <input
+                type="number"
+                className="form-input"
+                value={raDemanded}
+                onChange={e => setRaDemanded(Number(e.target.value))}
+                min={0}
+              />
+            </label>
+          </div>
+          <button type="submit" className="ch-btn" disabled={raLoading}>
+            {raLoading ? "Computing…" : "Compute"}
+          </button>
         </form>
-        {raError && <p className="error">{raError}</p>}
+        {raError && <p className="ch-error">{raError}</p>}
         {raResult && (
-          <table className="result-table">
-            <tbody>
-              <tr><th>Reserve Army Size</th><td>{raResult.reserve_army_size.toLocaleString()}</td></tr>
-              <tr><th>Relative Proportion</th><td>{(raResult.relative_proportion * 100).toFixed(1)}%</td></tr>
-            </tbody>
-          </table>
+          <div className="rates-grid" style={{ marginTop: "1rem" }}>
+            <div className="rates-card">
+              <div className="rates-label">Reserve Army Size</div>
+              <div className="rates-value">{raResult.reserve_army_size.toLocaleString()}</div>
+            </div>
+            <div className="rates-card">
+              <div className="rates-label">Relative Proportion</div>
+              <div className="rates-value">{(raResult.relative_proportion * 100).toFixed(1)}%</div>
+            </div>
+          </div>
         )}
       </section>
 
       {/* Scenario Simulation */}
-      <section className="sim-section">
-        <h3>Multi-Period Simulation</h3>
-        <p>Simulate accumulation over time with fixed or rising organic composition.</p>
+      <section className="ch-section">
+        <h2 className="ch-section-title">Multi-Period Simulation</h2>
+        <p className="ch-description">
+          Simulate accumulation over time with fixed or rising organic composition.
+        </p>
         <div className="preset-row">
-          <button type="button" onClick={applySection1}>§1 Unchanged OC</button>
-          <button type="button" onClick={applySection2}>§2 Rising OC</button>
+          <button type="button" className="preset-btn" onClick={applySection1}>§1 Unchanged OC</button>
+          <button type="button" className="preset-btn" onClick={applySection2}>§2 Rising OC</button>
         </div>
-        <form onSubmit={handleScenSubmit} className="sim-form">
-          <label>
-            Scenario Name
-            <input type="text" value={scenName} onChange={e => setScenName(e.target.value)} />
-          </label>
+        <form onSubmit={handleScenSubmit} className="ch-form">
+          <div className="form-row">
+            <label className="form-label">
+              Scenario Name
+              <input
+                type="text"
+                className="form-input"
+                value={scenName}
+                onChange={e => setScenName(e.target.value)}
+              />
+            </label>
+          </div>
           <CapitalCompositionForm
             values={scenCv}
             presets={[]}
             onChange={(next) => { setScenCv(next); setScenResult(null); setScenError(""); }}
           />
-          <label>
-            Accumulation Rate
-            <input type="number" step="0.01" value={scenAccumRate} onChange={e => setScenAccumRate(Number(e.target.value))} min={0} max={1} />
-          </label>
-          <label>
-            Productivity Growth (per period)
-            <input type="number" step="0.01" value={scenProductivity} onChange={e => setScenProductivity(Number(e.target.value))} min={0} />
-          </label>
-          <label>
-            Wage (pence)
-            <input type="number" value={scenWage} onChange={e => setScenWage(Number(e.target.value))} min={1} />
-          </label>
-          <label>
-            Worker Supply
-            <input type="number" value={scenSupply} onChange={e => setScenSupply(Number(e.target.value))} min={1} />
-          </label>
-          <button type="submit" disabled={scenLoading}>{scenLoading ? "Running…" : "Run Simulation"}</button>
+          <div className="form-row">
+            <label className="form-label">
+              Accumulation Rate
+              <input
+                type="number"
+                className="form-input"
+                step="0.01"
+                value={scenAccumRate}
+                onChange={e => setScenAccumRate(Number(e.target.value))}
+                min={0}
+                max={1}
+              />
+            </label>
+            <label className="form-label">
+              Productivity Growth (per period)
+              <input
+                type="number"
+                className="form-input"
+                step="0.01"
+                value={scenProductivity}
+                onChange={e => setScenProductivity(Number(e.target.value))}
+                min={0}
+              />
+            </label>
+            <label className="form-label">
+              Wage (pence)
+              <input
+                type="number"
+                className="form-input"
+                value={scenWage}
+                onChange={e => setScenWage(Number(e.target.value))}
+                min={1}
+              />
+            </label>
+            <label className="form-label">
+              Worker Supply
+              <input
+                type="number"
+                className="form-input"
+                value={scenSupply}
+                onChange={e => setScenSupply(Number(e.target.value))}
+                min={1}
+              />
+            </label>
+          </div>
+          <button type="submit" className="ch-btn" disabled={scenLoading}>
+            {scenLoading ? "Running…" : "Run Simulation"}
+          </button>
         </form>
-        {scenError && <p className="error">{scenError}</p>}
+        {scenError && <p className="ch-error">{scenError}</p>}
         {scenResult && (
           <div>
-            <p><strong>Scenario:</strong> {scenResult.name}</p>
-            <table className="result-table">
+            <p className="ch-description" style={{ marginTop: "1rem" }}>
+              <strong style={{ color: "var(--ink)", fontStyle: "normal" }}>Scenario:</strong>{" "}
+              {scenResult.name}
+            </p>
+            <table className="ch-table">
               <thead>
                 <tr>
                   <th>Period</th>
