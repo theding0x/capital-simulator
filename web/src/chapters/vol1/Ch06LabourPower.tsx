@@ -7,6 +7,7 @@ import type {
   LabourPowerOffering,
   LabourPowerPurchase,
 } from "../../types";
+import "./Ch06LabourPower.css";
 
 interface Ch06Props {
   onSharedChanged: () => void;
@@ -17,6 +18,11 @@ function minutesToHours(m: number): string {
   const min = m % 60;
   return min === 0 ? `${h}h` : `${h}h ${min}m`;
 }
+
+// 19th-century working-class budget proportions Marx invokes throughout §5:
+// food (means of subsistence proper), shelter, clothing. These sum to the
+// daily SNLT to reproduce labour-power.
+const BASKET_SPLIT = { food: 0.55, shelter: 0.25, clothing: 0.20 } as const;
 
 export function Ch06LabourPower({ onSharedChanged: _onSharedChanged }: Ch06Props) {
   const [workers, setWorkers] = useState<LabourWorker[]>([]);
@@ -46,6 +52,8 @@ export function Ch06LabourPower({ onSharedChanged: _onSharedChanged }: Ch06Props
 
   return (
     <>
+      <Prelude />
+      <DoubleFreedomInsight workers={workers} />
       {loadErr && <p className="error">{loadErr}</p>}
       <RegisterWorkerPanel onCreated={refresh} />
       <RegisterCapitalistPanel onCreated={refresh} />
@@ -59,7 +67,102 @@ export function Ch06LabourPower({ onSharedChanged: _onSharedChanged }: Ch06Props
         onCreated={refresh}
       />
       <PurchaseHistoryPanel purchases={purchases} workers={workers} capitalists={capitalists} />
+      <Coda />
     </>
+  );
+}
+
+function Prelude() {
+  return (
+    <aside className="v1-ch06-prelude">
+      <p className="v1-ch06-prelude-quote">
+        “We must therefore find on the market … a very peculiar commodity, the
+        consumption of which is itself an objectification of labour, hence a
+        creation of value. The possessor of money does find such a special
+        commodity: the capacity for labour, labour-power.”
+        <span className="v1-ch06-prelude-cite">
+          — Marx, Capital Vol. I, Ch. 6
+        </span>
+      </p>
+    </aside>
+  );
+}
+
+function DoubleFreedomInsight({ workers }: { workers: LabourWorker[] }) {
+  const sellsLP = workers.filter((w) => w.owns_labour_power).length;
+  const freeFromMP = workers.filter((w) => !w.owns_commodities_to_sell).length;
+  const doubleFree = workers.filter(
+    (w) => w.owns_labour_power && !w.owns_commodities_to_sell,
+  ).length;
+  return (
+    <section className="v1-ch06-insight">
+      <h2 className="v1-ch06-insight-h2">The double freedom of the wage-worker</h2>
+      <p className="v1-ch06-insight-prose">
+        For labour-power to appear on the market as a commodity, its bearer
+        must be free in a double sense: free to dispose of their own
+        labour-power as their property, <em>and</em> free of any commodity
+        whose sale could otherwise reproduce them.
+      </p>
+      <div className="v1-ch06-freedom-cells">
+        <div
+          className={
+            "v1-ch06-freedom-cell" +
+            (sellsLP > 0 ? " v1-ch06-freedom-cell--checked" : "")
+          }
+        >
+          <span className="v1-ch06-freedom-check" aria-hidden="true">
+            {sellsLP > 0 ? "✓" : "·"}
+          </span>
+          <span>
+            <span className="v1-ch06-freedom-label">Free to sell labour-power</span>
+            <span className="v1-ch06-freedom-gloss">
+              Owns their own capacity for labour. <code>OwnsLabourPower</code>.
+            </span>
+            <span className="v1-ch06-freedom-count">
+              {sellsLP} / {workers.length || 0} workers
+            </span>
+          </span>
+        </div>
+        <div
+          className={
+            "v1-ch06-freedom-cell" +
+            (freeFromMP > 0 ? " v1-ch06-freedom-cell--checked" : "")
+          }
+        >
+          <span className="v1-ch06-freedom-check" aria-hidden="true">
+            {freeFromMP > 0 ? "✓" : "·"}
+          </span>
+          <span>
+            <span className="v1-ch06-freedom-label">Free from means of production</span>
+            <span className="v1-ch06-freedom-gloss">
+              No commodities to sell instead. <code>!OwnsCommoditiesToSell</code>.
+            </span>
+            <span className="v1-ch06-freedom-count">
+              {freeFromMP} / {workers.length || 0} workers
+            </span>
+          </span>
+        </div>
+      </div>
+      <p className="v1-ch06-freedom-count" style={{ marginTop: "0.85rem" }}>
+        Both conditions satisfied:{" "}
+        <strong>{doubleFree}</strong> free labourer(s) on the market.
+      </p>
+    </section>
+  );
+}
+
+function Coda() {
+  return (
+    <aside className="v1-ch06-coda">
+      <p className="v1-ch06-coda-quote">
+        “Accompanied by Mr. Moneybags and by the possessor of labour-power, we
+        therefore take leave for a time of this noisy sphere … and follow them
+        both into the hidden abode of production.”
+        <span className="v1-ch06-coda-cite">
+          — Marx, Capital Vol. I, Ch. 6 (closing)
+        </span>
+      </p>
+    </aside>
   );
 }
 
@@ -166,6 +269,29 @@ function WorkerListPanel({ workers }: { workers: LabourWorker[] }) {
   return (
     <section className="card">
       <h2>Workers</h2>
+      <p className="v1-ch06-basket-legend">
+        <span>
+          <span
+            className="v1-ch06-basket-legend-swatch"
+            style={{ background: "var(--gold-bright)" }}
+          />
+          Food
+        </span>
+        <span>
+          <span
+            className="v1-ch06-basket-legend-swatch"
+            style={{ background: "var(--lead-hover)" }}
+          />
+          Shelter
+        </span>
+        <span>
+          <span
+            className="v1-ch06-basket-legend-swatch"
+            style={{ background: "var(--red)" }}
+          />
+          Clothing
+        </span>
+      </p>
       <div className="item-list">
         {workers.map((w) => (
           <div key={w.id} className="item-card">
@@ -175,17 +301,49 @@ function WorkerListPanel({ workers }: { workers: LabourWorker[] }) {
                 {minutesToHours(w.labour_power.capacity_minutes_per_day)} / day
               </span>
               {w.owns_labour_power && !w.owns_commodities_to_sell && (
-                <span className="item-tag">free labourer</span>
+                <span className="v1-ch06-free-tag">free labourer</span>
               )}
             </div>
             <p className="small muted">
               Owns LP: {w.owns_labour_power ? "yes" : "no"} &middot;
               Owns commodities: {w.owns_commodities_to_sell ? "yes" : "no"}
             </p>
+            <SubsistenceBasketBar valueMinutes={w.labour_power_value_minutes} />
           </div>
         ))}
       </div>
     </section>
+  );
+}
+
+function SubsistenceBasketBar({ valueMinutes }: { valueMinutes: number }) {
+  const food = Math.round(valueMinutes * BASKET_SPLIT.food);
+  const shelter = Math.round(valueMinutes * BASKET_SPLIT.shelter);
+  const clothing = valueMinutes - food - shelter;
+  const pct = (n: number) =>
+    valueMinutes > 0 ? `${(n / valueMinutes) * 100}%` : "0%";
+  return (
+    <div className="v1-ch06-worker-basket" role="img" aria-label="Subsistence basket composition">
+      <span className="v1-ch06-basket-label">Basket</span>
+      <div className="v1-ch06-basket-track">
+        <div
+          className="v1-ch06-basket-seg v1-ch06-basket-seg--food"
+          style={{ flexBasis: pct(food) }}
+          title={`Food: ${minutesToHours(food)}`}
+        />
+        <div
+          className="v1-ch06-basket-seg v1-ch06-basket-seg--shelter"
+          style={{ flexBasis: pct(shelter) }}
+          title={`Shelter: ${minutesToHours(shelter)}`}
+        />
+        <div
+          className="v1-ch06-basket-seg v1-ch06-basket-seg--clothing"
+          style={{ flexBasis: pct(clothing) }}
+          title={`Clothing: ${minutesToHours(clothing)}`}
+        />
+      </div>
+      <span className="v1-ch06-basket-total">{minutesToHours(valueMinutes)} / day</span>
+    </div>
   );
 }
 
