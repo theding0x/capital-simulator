@@ -1,0 +1,263 @@
+/* Ch. 7 — The Labour-Process and Valorization Process
+   Scoped under .v1-ch07-* to avoid collisions.
+   The chapter's central act is the partition of the working day
+   (necessary | surplus) and of value (c | v | s). */
+
+/* ── Insight (two-process identity) ─────────────────────────────────────── */
+.v1-ch07-insight {
+  background: var(--surface-raised);
+  border-left: 3px solid var(--red);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 1.5rem;
+}
+
+.v1-ch07-insight-h2 {
+  margin: 0 0 0.65rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.v1-ch07-insight-faces {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 0 0 1rem;
+}
+
+.v1-ch07-face {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.v1-ch07-face-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.v1-ch07-face-h3 {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.v1-ch07-face-gloss {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.v1-ch07-insight-prose {
+  margin: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  max-width: 72ch;
+}
+
+/* ── Marx fixture preset row ────────────────────────────────────────────── */
+.v1-ch07-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.v1-ch07-presets-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  align-self: center;
+}
+
+.v1-ch07-preset-button {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  padding: 0.32rem 0.7rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.v1-ch07-preset-button:hover {
+  border-color: var(--gold-border);
+  color: var(--gold-bright);
+}
+
+/* ── Partition bars (working day, value composition) ────────────────────── */
+.v1-ch07-result-h3 {
+  margin: 1.25rem 0 0.4rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.v1-ch07-partition {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr 5.5rem;
+  align-items: center;
+  column-gap: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.v1-ch07-partition-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.v1-ch07-partition-track {
+  display: flex;
+  height: 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.v1-ch07-partition-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: flex-basis 240ms ease;
+}
+
+.v1-ch07-partition-seg--necessary {
+  background: var(--lead);
+  color: var(--ink);
+}
+
+.v1-ch07-partition-seg--surplus {
+  background: var(--gold-bright);
+  color: #15171d;
+  font-weight: 500;
+}
+
+.v1-ch07-partition-seg--constant {
+  background: var(--lead-hover);
+  color: var(--ink);
+}
+
+.v1-ch07-partition-total {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  color: var(--ink);
+  text-align: right;
+}
+
+.v1-ch07-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  margin: 0.25rem 0 0.85rem 9.35rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
+.v1-ch07-legend-swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.v1-ch07-surplus-rate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  border-radius: 3px;
+  margin-top: 0.65rem;
+}
+
+.v1-ch07-surplus-rate-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.v1-ch07-surplus-rate-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+/* ── Coda ───────────────────────────────────────────────────────────────── */
+.v1-ch07-coda {
+  margin: 2.25rem 0 0.5rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.v1-ch07-coda-quote {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 64ch;
+}
+
+.v1-ch07-coda-cite {
+  display: block;
+  margin-top: 0.6rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-style: normal;
+}
+
+@media (max-width: 720px) {
+  .v1-ch07-insight-faces { grid-template-columns: 1fr; }
+  .v1-ch07-partition { grid-template-columns: 6rem 1fr 4.5rem; }
+  .v1-ch07-legend { margin-left: 6.85rem; }
+}
