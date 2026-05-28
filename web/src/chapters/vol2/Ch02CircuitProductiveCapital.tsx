@@ -116,7 +116,7 @@ export function Ch02CircuitProductiveCapital() {
           <span className="arrow">…</span>
           <span className="node active">P</span>
         </div>
-        <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #6c757d)", margin: 0 }}>
+        <p style={{ fontSize: "0.8rem", color: "var(--ink-muted)", margin: 0 }}>
           Starts and ends in production. Circulation is the connecting link between two functionings of
           productive capital. Compare Ch. 1&apos;s M-form: both describe the same circuit from a different
           starting-point.
@@ -139,7 +139,7 @@ export function Ch02CircuitProductiveCapital() {
               </li>
             ))}
             {circuits.length === 0 && (
-              <li style={{ color: "var(--text-muted, #6c757d)", cursor: "default" }}>No circuits yet</li>
+              <li style={{ color: "var(--ink-muted)", cursor: "default" }}>No circuits yet</li>
             )}
           </ul>
 

@@ -24,20 +24,20 @@
 }
 .ch27-event--major::before { background: var(--gold-bright); box-shadow: 0 0 0 3px var(--gold-bg); }
 .ch27-event-year {
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.78rem;
   color: var(--gold-bright);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
 }
 .ch27-event-name {
-  font-family: var(--font-display);
+  font-family: 'Playfair Display', serif;
   font-style: italic;
   font-size: 0.98rem;
   color: var(--ink);
 }
 .ch27-event-meta {
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   color: var(--ink-muted);

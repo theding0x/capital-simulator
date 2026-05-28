@@ -299,7 +299,7 @@ function ManufacturesListPanel({
           </thead>
           <tbody>
             {manufactures.map((m) => (
-              <tr key={m.id} style={selectedId === m.id ? { background: "var(--surface-2, #f4f4ee)" } : undefined}>
+              <tr key={m.id} style={selectedId === m.id ? { background: "var(--surface-raised)" } : undefined}>
                 <td>{m.name || m.id.slice(0, 8)}</td>
                 <td>{m.form}</td>
                 <td>{m.origin}</td>
@@ -333,7 +333,7 @@ function ManufacturesListPanel({
 
 function HierarchyTable({ m }: { m: Manufacture }) {
   return (
-    <div style={{ padding: "0.75rem", background: "var(--surface-2, #f4f4ee)" }}>
+    <div style={{ padding: "0.75rem", background: "var(--surface-raised)" }}>
       <h3 style={{ marginTop: 0 }}>Labour Hierarchy — {m.name}</h3>
       <p className="small muted">
         §5: manufacture begets a skill hierarchy; unskilled labour-power costs less because
@@ -400,7 +400,7 @@ function ProportionalGroupPanel({ m }: { m: Manufacture }) {
   }
 
   return (
-    <div style={{ padding: "0.75rem", background: "var(--surface-2, #f4f4ee)" }}>
+    <div style={{ padding: "0.75rem", background: "var(--surface-raised)" }}>
       <h3 style={{ marginTop: 0 }}>Proportional Group Size — {m.name}</h3>
       <p className="small muted">
         §2: required headcount per role so partial products flow without bottlenecks. Marx:
@@ -450,7 +450,7 @@ function ScalePanel({ m, onScaled }: { m: Manufacture; onScaled: () => void }) {
   }
 
   return (
-    <div style={{ padding: "0.75rem", background: "var(--surface-2, #f4f4ee)" }}>
+    <div style={{ padding: "0.75rem", background: "var(--surface-raised)" }}>
       <h3 style={{ marginTop: 0 }}>Scale — {m.name}</h3>
       <p className="small muted">
         §3: once the proportion is set, scale extends only by integer multiples of every group.
@@ -500,7 +500,7 @@ function MinimumCapitalPanel({ m }: { m: Manufacture }) {
   }
 
   return (
-    <div style={{ padding: "0.75rem", background: "var(--surface-2, #f4f4ee)" }}>
+    <div style={{ padding: "0.75rem", background: "var(--surface-raised)" }}>
       <h3 style={{ marginTop: 0 }}>Minimum Capital — {m.name}</h3>
       <p className="small muted">
         §5: "the minimum amount of capital ... must keep increasing" because raw material is

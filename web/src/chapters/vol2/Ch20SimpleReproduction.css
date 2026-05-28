@@ -7,7 +7,7 @@
 }
 
 .ch20-widget {
-  background: var(--surface-2, #1a1a2e);
+  background: var(--surface-raised);
   border: 1px solid var(--border, #2a2a4a);
   border-radius: 8px;
   padding: 1.25rem 1.5rem;
@@ -18,19 +18,19 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--accent, #a78bfa);
+  color: var(--red);
   margin: 0 0 0.35rem 0;
 }
 
 .ch20-subtitle {
   font-size: 0.8rem;
-  color: var(--text-muted, #888);
+  color: var(--ink-muted);
   margin: 0 0 1rem 0;
 }
 
 .ch20-note {
   font-size: 0.75rem;
-  color: var(--text-muted, #777);
+  color: var(--ink-muted);
   margin: 0.75rem 0 0 0;
   font-style: italic;
 }
@@ -57,7 +57,7 @@
 
 .ch20-table th {
   background: var(--surface-3, #111128);
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   font-weight: 600;
   font-size: 0.78rem;
 }
@@ -99,7 +99,7 @@
 
 .ch20-balance-verdict {
   font-weight: 600;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
 }
 
 /* ── Widget 2 — Flow SVG ─────────────────────────────────────── */
@@ -159,7 +159,7 @@
 
 .ch20-tick-period {
   font-size: 0.78rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   margin-bottom: 0.5rem;
 }
 
@@ -190,7 +190,7 @@
 
 .ch20-tick-note {
   font-size: 0.75rem;
-  color: var(--text-muted, #888);
+  color: var(--ink-muted);
   margin-top: 0.5rem;
   font-style: italic;
 }
@@ -229,7 +229,7 @@
   flex-direction: column;
   gap: 0.3rem;
   font-size: 0.78rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
 }
 
 .ch20-imbal-input {
@@ -244,7 +244,7 @@
 
 .ch20-imbal-op {
   font-size: 1.4rem;
-  color: var(--text-muted, #888);
+  color: var(--ink-muted);
   padding-bottom: 0.15rem;
   min-width: 2rem;
   text-align: center;

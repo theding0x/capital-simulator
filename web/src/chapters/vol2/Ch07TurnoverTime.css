@@ -1,27 +1,27 @@
 .ch07-turnover {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 1.5rem;
 }
 
 .ch07-fixtures {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: var(--space-4);
+  gap: 1rem;
 }
 
 .ch07-fixture-card {
-  background: var(--surface-2);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
+  border-radius: var(--radius);
+  padding: 1rem;
 }
 
 .ch07-fixture-card h4 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-sm);
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -30,9 +30,9 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: var(--space-1) 0;
+  padding: 0.25rem 0;
   border-bottom: 1px solid var(--border-subtle);
-  font-size: var(--text-sm);
+  font-size: 0.85rem;
 }
 
 .ch07-stat:last-child {
@@ -40,15 +40,15 @@
 }
 
 .ch07-stat-label {
-  color: var(--text-secondary);
+  color: var(--ink-muted);
 }
 
 .ch07-stat-value {
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--ink);
 }
 
 .ch07-number-highlight {
-  color: var(--accent);
+  color: var(--red);
 }

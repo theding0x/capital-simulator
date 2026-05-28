@@ -19,7 +19,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-muted, #888);
+  color: var(--ink-muted);
   margin-bottom: 0.75rem;
 }
 
@@ -42,23 +42,23 @@
 }
 
 .ch11-arrow {
-  color: var(--color-muted, #888);
+  color: var(--ink-muted);
   font-size: 1rem;
 }
 
 .ch11-concept-target {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-accent, #4a9eff);
+  color: var(--red);
 }
 
 .ch11-concept-target.conflation {
-  color: var(--color-warning, #f0a500);
+  color: var(--gold-bright);
 }
 
 /* "Where Ricardo goes wrong" section */
 .ch11-errors-section {
-  border-top: 1px solid var(--color-border, #333);
+  border-top: 1px solid var(--border);
   padding-top: 1.5rem;
 }
 
@@ -75,8 +75,8 @@
 }
 
 .ch11-error-item {
-  background: var(--color-surface, #1a1a1a);
-  border: 1px solid var(--color-border, #333);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.875rem 1rem;
 }
@@ -84,7 +84,7 @@
 .ch11-error-code {
   font-family: monospace;
   font-size: 0.75rem;
-  color: var(--color-warning, #f0a500);
+  color: var(--gold-bright);
   display: block;
   margin-bottom: 0.35rem;
 }
@@ -92,18 +92,18 @@
 .ch11-error-desc {
   font-size: 0.875rem;
   line-height: 1.5;
-  color: var(--color-text, #ddd);
+  color: var(--ink);
 }
 
 .ch11-error-refutation {
   font-size: 0.75rem;
-  color: var(--color-muted, #888);
+  color: var(--ink-muted);
   margin-top: 0.35rem;
 }
 
 /* Forward-looking Vol. III placeholder */
 .ch11-deferred-section {
-  border-top: 1px solid var(--color-border, #333);
+  border-top: 1px solid var(--border);
   padding-top: 1.5rem;
 }
 
@@ -114,12 +114,12 @@
 }
 
 .ch11-deferred-box {
-  background: var(--color-surface, #1a1a1a);
-  border: 1px dashed var(--color-border, #555);
+  background: var(--surface-raised);
+  border: 1px dashed var(--border);
   border-radius: 6px;
   padding: 1rem;
   font-size: 0.875rem;
-  color: var(--color-muted, #888);
+  color: var(--ink-muted);
   line-height: 1.6;
 }
 
@@ -136,17 +136,17 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-muted, #666);
+  color: var(--ink-muted);
   margin-bottom: 0.5rem;
 }
 
 .ch11-loading,
 .ch11-error {
   font-size: 0.875rem;
-  color: var(--color-muted, #888);
+  color: var(--ink-muted);
   padding: 1rem 0;
 }
 
 .ch11-error {
-  color: var(--color-error, #e05555);
+  color: var(--red);
 }

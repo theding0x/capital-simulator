@@ -9,7 +9,7 @@
 /* ── genealogy diagram ──────────────────────────────────────────────────────── */
 
 .ch19-genealogy {
-  background: var(--surface-2, #1e2130);
+  background: var(--surface-raised);
   border-radius: 8px;
   padding: 1.25rem 1.5rem;
 }
@@ -19,7 +19,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
 }
 
 .ch19-genealogy-row {
@@ -37,7 +37,7 @@
 
 .ch19-genealogy-arrow {
   font-size: 1.2rem;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
   align-self: center;
 }
 
@@ -53,25 +53,25 @@
 }
 
 .ch19-genealogy-node--marx {
-  border-color: var(--accent, #4f8ef7);
-  background: color-mix(in srgb, var(--accent, #4f8ef7) 10%, var(--surface-3, #262c3e));
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 10%, var(--surface-3, #262c3e));
 }
 
 .ch19-genealogy-theorist {
   font-weight: 600;
   font-size: 0.95rem;
-  color: var(--text-primary, #e2e8f0);
+  color: var(--ink);
 }
 
 .ch19-genealogy-year {
   font-size: 0.75rem;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
 }
 
 .ch19-genealogy-work {
   font-size: 0.78rem;
   font-style: italic;
-  color: var(--text-secondary, #a8b4cc);
+  color: var(--ink-muted);
 }
 
 .ch19-genealogy-anticipates {
@@ -89,7 +89,7 @@
 /* ── smith dogma ────────────────────────────────────────────────────────────── */
 
 .ch19-smith-dogma {
-  background: var(--surface-2, #1e2130);
+  background: var(--surface-raised);
   border-radius: 8px;
   padding: 1.25rem 1.5rem;
 }
@@ -99,7 +99,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
 }
 
 .ch19-dogma-equation {
@@ -118,21 +118,21 @@
 
 .ch19-eq-label {
   font-size: 0.8rem;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
   width: 50px;
   flex-shrink: 0;
 }
 
 .ch19-eq-formula {
-  font-family: var(--font-mono, monospace);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.9rem;
-  color: var(--text-primary, #e2e8f0);
+  color: var(--ink);
   flex: 1;
 }
 
 .ch19-eq-formula em {
   font-style: italic;
-  color: var(--accent, #4f8ef7);
+  color: var(--red);
 }
 
 .ch19-eq-verdict {
@@ -150,20 +150,20 @@
 
 .ch19-dogma-note {
   font-size: 0.8rem;
-  color: var(--text-secondary, #a8b4cc);
+  color: var(--ink-muted);
   margin: 0.75rem 0 0;
   line-height: 1.5;
 }
 
 .ch19-dogma-note em {
   font-style: italic;
-  color: var(--accent, #4f8ef7);
+  color: var(--red);
 }
 
 /* ── historical errors ──────────────────────────────────────────────────────── */
 
 .ch19-historical-errors {
-  background: var(--surface-2, #1e2130);
+  background: var(--surface-raised);
   border-radius: 8px;
   padding: 1.25rem 1.5rem;
 }
@@ -173,7 +173,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
 }
 
 .ch19-attr-block {
@@ -187,18 +187,18 @@
 .ch19-attr-block h4 {
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-primary, #e2e8f0);
+  color: var(--ink);
   margin: 0 0 0.4rem;
 }
 
 .ch19-attr-anticipates {
   font-size: 0.78rem;
-  color: var(--text-secondary, #a8b4cc);
+  color: var(--ink-muted);
   margin: 0 0 0.75rem;
 }
 
 .ch19-attr-anticipates code {
-  font-family: var(--font-mono, monospace);
+  font-family: 'IBM Plex Mono', monospace;
   background: var(--surface-3, #262c3e);
   padding: 0.1rem 0.35rem;
   border-radius: 3px;
@@ -221,22 +221,22 @@
 }
 
 .ch19-error-code {
-  font-family: var(--font-mono, monospace);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.72rem;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
   display: block;
   margin-bottom: 0.35rem;
 }
 
 .ch19-error-desc {
   font-size: 0.82rem;
-  color: var(--text-secondary, #a8b4cc);
+  color: var(--ink-muted);
   margin: 0 0 0.3rem;
   line-height: 1.5;
 }
 
 .ch19-error-desc strong {
-  color: var(--text-primary, #e2e8f0);
+  color: var(--ink);
 }
 
 .ch19-error-refutation {
@@ -249,7 +249,7 @@
 /* ── quotes ─────────────────────────────────────────────────────────────────── */
 
 .ch19-quotes {
-  background: var(--surface-2, #1e2130);
+  background: var(--surface-raised);
   border-radius: 8px;
   padding: 1.25rem 1.5rem;
 }
@@ -259,11 +259,11 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
 }
 
 .ch19-quote {
-  border-left: 3px solid var(--accent, #4f8ef7);
+  border-left: 3px solid var(--red);
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;
   background: var(--surface-3, #262c3e);
@@ -276,7 +276,7 @@
 
 .ch19-quote p {
   font-size: 0.85rem;
-  color: var(--text-secondary, #a8b4cc);
+  color: var(--ink-muted);
   margin: 0 0 0.4rem;
   line-height: 1.55;
   font-style: italic;
@@ -284,7 +284,7 @@
 
 .ch19-quote cite {
   font-size: 0.75rem;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
   font-style: normal;
 }
 
@@ -293,7 +293,7 @@
 .ch19-loading,
 .ch19-error {
   font-size: 0.85rem;
-  color: var(--text-muted, #8892aa);
+  color: var(--ink-muted);
   padding: 1rem 0;
 }
 

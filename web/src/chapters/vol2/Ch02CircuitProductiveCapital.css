@@ -6,7 +6,7 @@
 }
 
 .pc-card {
-  background: var(--surface-2, #f8f9fa);
+  background: var(--surface-raised);
   border: 1px solid var(--border, #dee2e6);
   border-radius: 6px;
   padding: 1rem;
@@ -17,7 +17,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 .pc-diagram {
@@ -33,18 +33,18 @@
 .pc-diagram .node {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  background: var(--accent-bg, #e7f3ff);
-  border: 1px solid var(--accent, #0d6efd);
+  background: var(--lead-dim);
+  border: 1px solid var(--red);
   font-weight: 600;
 }
 
 .pc-diagram .node.active {
-  background: var(--accent, #0d6efd);
+  background: var(--red);
   color: #fff;
 }
 
 .pc-diagram .arrow {
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 .pc-balance {
@@ -55,7 +55,7 @@
 }
 
 .pc-balance dt {
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 .pc-balance dd {
@@ -93,7 +93,7 @@
 
 .latent-gauge-threshold {
   font-size: 0.75rem;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 .reserve-history {
@@ -103,7 +103,7 @@
 .reserve-history h4 {
   font-size: 0.8rem;
   text-transform: uppercase;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
   margin: 0 0 0.5rem;
 }
 
@@ -136,7 +136,7 @@
 
 .pc-form label {
   font-size: 0.8rem;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -154,7 +154,7 @@
 
 .pc-form button {
   padding: 0.35rem 0.9rem;
-  background: var(--accent, #0d6efd);
+  background: var(--red);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -184,9 +184,9 @@
 }
 
 .pc-toggle button.active {
-  background: var(--accent, #0d6efd);
+  background: var(--red);
   color: #fff;
-  border-color: var(--accent, #0d6efd);
+  border-color: var(--red);
 }
 
 .pc-error {
@@ -211,8 +211,8 @@
 }
 
 .pc-list li.selected {
-  border-color: var(--accent, #0d6efd);
-  background: var(--accent-bg, #e7f3ff);
+  border-color: var(--red);
+  background: var(--lead-dim);
 }
 
 @media (max-width: 700px) {

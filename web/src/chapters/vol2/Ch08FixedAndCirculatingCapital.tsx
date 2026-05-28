@@ -112,7 +112,7 @@ export function Ch08FixedAndCirculatingCapital() {
       {error && <p style={{ color: "var(--red, #f38ba8)" }}>{error}</p>}
 
       <h3>Fixed Capital</h3>
-      <p style={{ color: "var(--muted, #6c7086)", fontSize: "0.85rem" }}>
+      <p style={{ color: "var(--ink-muted)", fontSize: "0.85rem" }}>
         Instruments of labour — value transfers piecemeal to the product through
         wear over the item's service life.
       </p>
@@ -130,7 +130,7 @@ export function Ch08FixedAndCirculatingCapital() {
       )}
 
       <h3 style={{ marginTop: "2rem" }}>Circulating Capital</h3>
-      <p style={{ color: "var(--muted, #6c7086)", fontSize: "0.85rem" }}>
+      <p style={{ color: "var(--ink-muted)", fontSize: "0.85rem" }}>
         Raw materials, auxiliary materials, and labour-power — value passes
         entirely into the product in each cycle.
       </p>

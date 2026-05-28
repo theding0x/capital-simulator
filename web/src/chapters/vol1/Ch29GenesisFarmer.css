@@ -9,8 +9,8 @@
   align-items: baseline;
 }
 .ch29-step:first-child { border-top: none; }
-.ch29-step-era { font-family: var(--font-mono); font-size: 0.7rem; color: var(--gold-bright); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
-.ch29-step-figure { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1rem; color: var(--ink); letter-spacing: -0.01em; }
+.ch29-step-era { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--gold-bright); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+.ch29-step-figure { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 600; font-size: 1rem; color: var(--ink); letter-spacing: -0.01em; }
 .ch29-step-note { font-size: 0.85rem; color: var(--ink-muted); line-height: 1.5; max-width: 56ch; }
 .ch29-step--final .ch29-step-figure { color: var(--gold-bright); }
 .ch29-step--final { background: linear-gradient(180deg, var(--gold-bg), transparent 70%); }
@@ -19,7 +19,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.1em;
   color: var(--ink-muted);

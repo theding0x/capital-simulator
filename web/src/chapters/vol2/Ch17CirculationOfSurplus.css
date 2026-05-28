@@ -12,22 +12,22 @@
   font-weight: 600;
   font-size: 0.95rem;
   margin: 0 0 0.75rem;
-  color: var(--text-primary, #1a1a1a);
+  color: var(--ink);
 }
 
 .ch17-loading {
   font-size: 0.85rem;
-  color: var(--text-secondary, #666);
+  color: var(--ink-muted);
 }
 
 .ch17-error {
   font-size: 0.85rem;
-  color: var(--color-error, #c0392b);
+  color: var(--red);
 }
 
 .ch17-empty {
   font-size: 0.85rem;
-  color: var(--text-secondary, #666);
+  color: var(--ink-muted);
   font-style: italic;
 }
 
@@ -43,10 +43,10 @@
 .ch17-quote {
   margin: 0 0 0.75rem;
   padding: 0.5rem 0.75rem;
-  border-left: 3px solid var(--color-accent, #8b4513);
+  border-left: 3px solid var(--red);
   font-style: italic;
   font-size: 0.88rem;
-  color: var(--text-primary, #1a1a1a);
+  color: var(--ink);
 }
 
 .ch17-quote cite {
@@ -54,7 +54,7 @@
   margin-top: 0.35rem;
   font-size: 0.78rem;
   font-style: normal;
-  color: var(--text-secondary, #666);
+  color: var(--ink-muted);
 }
 
 .ch17-puzzle-list {
@@ -74,18 +74,18 @@
 }
 
 .ch17-puzzle-statement {
-  color: var(--text-primary, #1a1a1a);
+  color: var(--ink);
 }
 
 .ch17-puzzle-resolution {
   font-size: 0.78rem;
-  color: var(--color-success, #27ae60);
+  color: var(--gold-bright);
   white-space: nowrap;
 }
 
 .ch17-puzzle-unresolved {
   font-size: 0.78rem;
-  color: var(--color-warn, #e67e22);
+  color: var(--gold-bright);
   white-space: nowrap;
 }
 
@@ -100,7 +100,7 @@
 
 .ch17-flow-subtitle {
   font-size: 0.82rem;
-  color: var(--text-secondary, #666);
+  color: var(--ink-muted);
   margin: -0.5rem 0 0.75rem;
 }
 
@@ -119,7 +119,7 @@
 }
 
 .ch17-bar-label {
-  color: var(--text-secondary, #555);
+  color: var(--ink-muted);
   white-space: nowrap;
 }
 
@@ -136,20 +136,20 @@
   transition: width 0.4s ease;
 }
 
-.bar-revenue { background: var(--color-accent, #8b4513); }
-.bar-capital { background: var(--color-success, #27ae60); }
-.bar-gold    { background: var(--color-warn, #e6c619); }
+.bar-revenue { background: var(--red); }
+.bar-capital { background: var(--gold-bright); }
+.bar-gold    { background: var(--gold-bright); }
 
 .ch17-bar-pct {
   font-size: 0.8rem;
-  color: var(--text-secondary, #555);
+  color: var(--ink-muted);
   text-align: right;
 }
 
 .ch17-flow-note {
   margin: 0.75rem 0 0;
   font-size: 0.78rem;
-  color: var(--text-secondary, #666);
+  color: var(--ink-muted);
   font-style: italic;
 }
 
@@ -178,12 +178,12 @@
 .ch17-sc-period {
   font-weight: 600;
   font-size: 0.9rem;
-  color: var(--text-primary, #1a1a1a);
+  color: var(--ink);
 }
 
 .ch17-sc-id {
   font-size: 0.75rem;
-  color: var(--text-secondary, #999);
+  color: var(--ink-muted);
   font-family: monospace;
 }
 
@@ -201,17 +201,17 @@
 
 .ch17-sc-amount-label {
   font-size: 0.72rem;
-  color: var(--text-secondary, #888);
+  color: var(--ink-muted);
   margin-bottom: 0.1rem;
 }
 
 .ch17-amount-realised {
-  color: var(--color-success, #27ae60);
+  color: var(--gold-bright);
   font-weight: 600;
 }
 
 .ch17-amount-unrealised {
-  color: var(--color-error, #c0392b);
+  color: var(--red);
 }
 
 .ch17-sc-progress-track {
@@ -224,14 +224,14 @@
 
 .ch17-sc-progress-fill {
   height: 100%;
-  background: var(--color-success, #27ae60);
+  background: var(--gold-bright);
   border-radius: 4px;
   transition: width 0.4s ease;
 }
 
 .ch17-sc-pct-label {
   font-size: 0.72rem;
-  color: var(--text-secondary, #888);
+  color: var(--ink-muted);
   margin-bottom: 0.5rem;
 }
 
@@ -254,12 +254,12 @@
 
 .ch17-source-label {
   flex: 1;
-  color: var(--text-secondary, #555);
+  color: var(--ink-muted);
 }
 
 .ch17-source-deferred {
   font-size: 0.75rem;
-  color: var(--color-warn, #e67e22);
+  color: var(--gold-bright);
 }
 
 /* ── Widget 4 — Aggregate ────────────────────────────────────────────────── */
@@ -286,22 +286,22 @@
 
 .ch17-agg-label {
   font-size: 0.72rem;
-  color: var(--text-secondary, #888);
+  color: var(--ink-muted);
 }
 
 .ch17-agg-value {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary, #1a1a1a);
+  color: var(--ink);
 }
 
 .ch17-agg-surplus {
-  color: var(--color-accent, #8b4513);
+  color: var(--red);
 }
 
 .ch17-agg-note {
   font-size: 0.75rem;
-  color: var(--text-secondary, #888);
+  color: var(--ink-muted);
   font-style: italic;
   margin: 0;
 }

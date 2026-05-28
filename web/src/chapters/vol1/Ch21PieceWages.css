@@ -12,7 +12,7 @@
 }
 
 .ch21-explainer {
-  color: var(--text-muted, #999);
+  color: var(--ink-muted);
   font-size: 0.9rem;
   margin-bottom: 1rem;
   line-height: 1.6;
@@ -24,7 +24,7 @@
   border-radius: 4px;
   padding: 0.6rem 1rem;
   font-size: 0.85rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   margin-bottom: 1.25rem;
 }
 
@@ -42,7 +42,7 @@
   flex-direction: column;
   gap: 0.35rem;
   font-size: 0.9rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
 }
 
 .ch21-form input,
@@ -57,7 +57,7 @@
 
 .ch21-form button {
   align-self: flex-start;
-  background: var(--accent, #4a9eff);
+  background: var(--red);
   border: none;
   border-radius: 4px;
   color: #fff;
@@ -91,7 +91,7 @@
 }
 
 .ch21-card-earnings {
-  border-color: var(--accent-dim, #2d5c99);
+  border-color: var(--lead-dim);
 }
 
 .ch21-card h3 {
@@ -102,7 +102,7 @@
 
 .ch21-card-subtitle {
   font-size: 0.8rem;
-  color: var(--text-muted, #888);
+  color: var(--ink-muted);
   margin: 0 0 1rem;
 }
 
@@ -114,7 +114,7 @@
 }
 
 .ch21-card dt {
-  color: var(--text-muted, #888);
+  color: var(--ink-muted);
   font-size: 0.85rem;
 }
 
@@ -126,17 +126,17 @@
 }
 
 .ch21-surplus {
-  color: var(--accent, #4a9eff);
+  color: var(--red);
 }
 
 .ch21-total {
-  color: var(--accent, #4a9eff);
+  color: var(--red);
   font-size: 1rem !important;
 }
 
 .ch21-note {
   font-size: 0.8rem;
-  color: var(--text-muted, #777);
+  color: var(--ink-muted);
   line-height: 1.5;
   margin: 0;
   border-top: 1px solid var(--border, #333);

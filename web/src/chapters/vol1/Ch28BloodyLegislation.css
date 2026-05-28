@@ -10,7 +10,7 @@
 }
 .ch28-statute:first-child { border-top: none; }
 .ch28-statute-cite {
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.68rem;
   letter-spacing: 0.06em;
   color: var(--gold-bright);
@@ -25,7 +25,7 @@
   margin-top: 0.25rem;
 }
 .ch28-statute-name {
-  font-family: var(--font-display);
+  font-family: 'Playfair Display', serif;
   font-style: italic;
   font-weight: 600;
   font-size: 1.05rem;
@@ -46,7 +46,7 @@
   gap: 0.3rem;
 }
 .ch28-severity-label {
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -65,7 +65,7 @@
 .ch28-severity-marks > span.on { background: var(--red); }
 .ch28-severity-marks > span.on.gold { background: var(--gold-bright); }
 .ch28-severity-punish {
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;

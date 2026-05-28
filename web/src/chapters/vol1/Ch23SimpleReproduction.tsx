@@ -122,7 +122,7 @@ export function Ch23SimpleReproduction() {
                 return (
                   <tr
                     key={c.period}
-                    style={repaid ? { background: "var(--color-success-bg, #e6f4ea)" } : undefined}
+                    style={repaid ? { background: "var(--gold-bg)" } : undefined}
                   >
                     <td>{c.period}</td>
                     <td>{fmt(c.constant_capital)}</td>

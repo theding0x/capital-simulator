@@ -83,7 +83,7 @@ export function Ch07TurnoverTime() {
         ))}
       </div>
 
-      <p style={{ fontSize: "var(--text-xs)", color: "var(--text-secondary)", margin: 0 }}>
+      <p style={{ fontSize: "0.72rem", color: "var(--ink-muted)", margin: 0 }}>
         n&nbsp;=&nbsp;U&nbsp;/&nbsp;u, where U&nbsp;=&nbsp;525,600 min (1 year) and u&nbsp;= average turnover time.
         BasisPoints&nbsp;=&nbsp;10,000&nbsp;×&nbsp;n.
       </p>

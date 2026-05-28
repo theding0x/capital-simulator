@@ -86,7 +86,7 @@ function WorkingDayPanel() {
               <div
                 style={{
                   width: `${necessaryPct}%`,
-                  background: "var(--color-accent)",
+                  background: "var(--red)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -99,7 +99,7 @@ function WorkingDayPanel() {
               <div
                 style={{
                   width: `${surplusPct}%`,
-                  background: "var(--color-muted)",
+                  background: "var(--ink-muted)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
