@@ -212,6 +212,16 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/reproduction/wage-rotation-funds", h.CreateWageRotationFund)
 	s.HandleFunc("POST /v1/reproduction/inter-department-settlements", h.CreateInterDepartmentSettlement)
 
+	// Vol. II Ch. 20 — Simple Reproduction
+	s.HandleFunc("POST /v1/reproduction/simple/schemes", h.CreateSimpleReproductionScheme)
+	s.HandleFunc("GET /v1/reproduction/simple/schemes", h.ListSimpleReproductionSchemes)
+	s.HandleFunc("GET /v1/reproduction/simple/schemes/{id}", h.GetSimpleReproductionScheme)
+	s.HandleFunc("POST /v1/reproduction/simple/schemes/{id}/departments", h.AddDepartmentToScheme)
+	s.HandleFunc("POST /v1/reproduction/simple/schemes/{id}/exchanges", h.RecordInterDepartmentExchange)
+	s.HandleFunc("POST /v1/reproduction/simple/schemes/{id}/tick", h.AdvanceReproductionTick)
+	s.HandleFunc("GET /v1/reproduction/simple/schemes/{id}/balance-check", h.GetSchemeBalanceCheck)
+	s.HandleFunc("POST /v1/reproduction/simple/schemes/{id}/money-loop", h.RecordMoneyClosedLoop)
+
 	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
 	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
 	s.HandleFunc("GET /v1/capital-components", h.ListComponents)

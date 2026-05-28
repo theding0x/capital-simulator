@@ -48,6 +48,7 @@ type Handler struct {
 	AnnualSurplusRates    store.AnnualSurplusRateStore
 	SurplusCirculations   store.SurplusCirculationStore
 	MoneyCapital          store.MoneyCapitalStore
+	SimpleReproduction    store.SimpleReproductionSchemeStore
 }
 
 // Deps is the dependency bag passed to New. Each field maps to the
@@ -86,6 +87,7 @@ type Deps struct {
 	AnnualSurplusRates    store.AnnualSurplusRateStore
 	SurplusCirculations   store.SurplusCirculationStore
 	MoneyCapital          store.MoneyCapitalStore
+	SimpleReproduction    store.SimpleReproductionSchemeStore
 }
 
 func New(logger *slog.Logger, d Deps) *Handler {
@@ -124,6 +126,7 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		AnnualSurplusRates:    d.AnnualSurplusRates,
 		SurplusCirculations:   d.SurplusCirculations,
 		MoneyCapital:          d.MoneyCapital,
+		SimpleReproduction:    d.SimpleReproduction,
 	}
 }
 
