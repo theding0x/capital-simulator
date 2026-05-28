@@ -135,6 +135,11 @@
   background: var(--lead-dim);
 }
 
+.mc-list li:focus-visible {
+  outline: 2px solid var(--lead-hover);
+  outline-offset: -2px;
+}
+
 .mc-list-moment {
   font-family: monospace;
   font-size: 0.8rem;

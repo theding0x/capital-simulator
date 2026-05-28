@@ -212,6 +212,11 @@
   background: var(--lead-dim);
 }
 
+.cc-list li:focus-visible {
+  outline: 2px solid var(--lead-hover);
+  outline-offset: -2px;
+}
+
 @media (max-width: 700px) {
   .cc-grid {
     grid-template-columns: 1fr;
