@@ -167,7 +167,7 @@ export function Ch01CircuitMoneyCapital() {
             </span>
           ))}
         </div>
-        <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #6c757d)", margin: 0 }}>
+        <p style={{ fontSize: "0.8rem", color: "var(--ink-muted)", margin: 0 }}>
           Money-capital advanced (M) buys labour-power and means of production (M—C). Production
           consumes them (…P…). Output is commodity-capital bearing surplus-value (C′). Sale
           realises the expanded money-capital (C′—M′). The highlighted node shows the current
@@ -192,7 +192,7 @@ export function Ch01CircuitMoneyCapital() {
               </li>
             ))}
             {circuits.length === 0 && (
-              <li style={{ color: "var(--text-muted, #6c757d)", cursor: "default" }}>
+              <li style={{ color: "var(--ink-muted)", cursor: "default" }}>
                 No circuits yet
               </li>
             )}
@@ -424,7 +424,7 @@ export function Ch01CircuitMoneyCapital() {
             {(selected.moment === "C-M-prime" || selected.moment === "M-prime") && (
               <div className="mc-card">
                 <h3>Circuit complete — M′</h3>
-                <p style={{ fontSize: "0.875rem", color: "var(--text-muted, #6c757d)" }}>
+                <p style={{ fontSize: "0.875rem", color: "var(--ink-muted)" }}>
                   The circuit M—C(Lp+Mp)…P…C′—M′ has completed its full rotation. The expanded
                   money-capital M′ is available for a new circuit.
                 </p>

@@ -11,11 +11,11 @@
 .ch15-quote {
   margin: 0;
   padding: 0.75rem 1rem;
-  border-left: 3px solid var(--accent, #8b5cf6);
+  border-left: 3px solid var(--red);
   background: var(--surface-raised, #1e1e2e);
   border-radius: 0 6px 6px 0;
   font-style: italic;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   font-size: 0.85rem;
 }
 
@@ -52,7 +52,7 @@
   flex-direction: column;
   gap: 0.3rem;
   font-size: 0.82rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
 }
 
 .ch15-form input,
@@ -75,20 +75,20 @@
 .ch15-fixture-btn {
   padding: 0.35rem 0.75rem;
   border-radius: 4px;
-  border: 1px solid var(--accent, #8b5cf6);
+  border: 1px solid var(--red);
   background: transparent;
-  color: var(--accent, #8b5cf6);
+  color: var(--red);
   cursor: pointer;
   font-size: 0.8rem;
 }
 
 .ch15-fixture-btn:hover {
-  background: color-mix(in srgb, var(--accent, #8b5cf6) 12%, transparent);
+  background: color-mix(in srgb, var(--red) 12%, transparent);
 }
 
 .ch15-hint {
   font-size: 0.8rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   line-height: 1.5;
   margin: 0 0 0.75rem;
 }
@@ -97,7 +97,7 @@
   padding: 0.5rem 1rem;
   border-radius: 5px;
   border: none;
-  background: var(--accent, #8b5cf6);
+  background: var(--red);
   color: #fff;
   cursor: pointer;
   font-size: 0.87rem;
@@ -162,7 +162,7 @@
   display: flex;
   gap: 1rem;
   font-size: 0.78rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   margin-bottom: 0.4rem;
 }
 
@@ -174,7 +174,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.82rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   padding: 0.2rem 0;
 }
 
@@ -213,13 +213,13 @@
 }
 
 .ch15-inv-table th {
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   font-weight: 500;
 }
 
 .ch15-empty {
   font-size: 0.82rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
 }
 
 /* ── Case reference ───────────────────────────────────────────────── */
@@ -274,7 +274,7 @@
 .ch15-case-block dd {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   line-height: 1.4;
 }
 

@@ -114,7 +114,7 @@ export function Ch03CircuitCommodityCapital() {
           <span className="arrow">…</span>
           <span className="node active">C&prime;</span>
         </div>
-        <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #6c757d)", margin: 0 }}>
+        <p style={{ fontSize: "0.8rem", color: "var(--ink-muted)", margin: 0 }}>
           The third form of the capital circuit. Starts and ends in commodity-form.
           Unlike Forms I and II, surplus-value is already present in the opening C&prime; (c+v+s).
           Exposes the reproduction of social capital and the external origin of Means of Production.
@@ -155,7 +155,7 @@ export function Ch03CircuitCommodityCapital() {
               </li>
             ))}
             {circuits.length === 0 && (
-              <li style={{ color: "var(--text-muted, #6c757d)", cursor: "default" }}>No circuits yet</li>
+              <li style={{ color: "var(--ink-muted)", cursor: "default" }}>No circuits yet</li>
             )}
           </ul>
 
@@ -270,7 +270,7 @@ export function Ch03CircuitCommodityCapital() {
                   </tbody>
                 </table>
               ) : (
-                <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #6c757d)", margin: 0 }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--ink-muted)", margin: 0 }}>
                   No sales recorded yet.
                 </p>
               )}
@@ -317,7 +317,7 @@ export function Ch03CircuitCommodityCapital() {
                   ))}
                 </ul>
               ) : (
-                <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #6c757d)", margin: 0 }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--ink-muted)", margin: 0 }}>
                   No MP sources linked.
                 </p>
               )}

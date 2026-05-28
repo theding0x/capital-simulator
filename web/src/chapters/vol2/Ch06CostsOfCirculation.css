@@ -56,7 +56,7 @@
 }
 
 .cost-ic {
-  color: var(--muted, #888);
+  color: var(--ink-muted);
   font-size: 0.78rem;
   white-space: nowrap;
   overflow: hidden;
@@ -69,7 +69,7 @@
 }
 
 .cost-empty {
-  color: var(--muted, #888);
+  color: var(--ink-muted);
   font-size: 0.85rem;
 }
 
@@ -91,7 +91,7 @@
 
 .agg-label {
   font-size: 0.78rem;
-  color: var(--muted, #888);
+  color: var(--ink-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -99,7 +99,7 @@
 .agg-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--accent, #e2b96e);
+  color: var(--red);
 }
 
 /* ── System faux-frais ── */
@@ -123,14 +123,14 @@
 .ff-ic {
   font-family: monospace;
   font-size: 0.78rem;
-  color: var(--muted, #888);
+  color: var(--ink-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .ff-pence { text-align: right; font-weight: 600; }
-.ff-annual { text-align: right; color: var(--muted, #888); font-size: 0.78rem; }
+.ff-annual { text-align: right; color: var(--ink-muted); font-size: 0.78rem; }
 
 /* ── Transport section ── */
 .transport-grid {
@@ -154,7 +154,7 @@
 }
 
 .tariff-rate {
-  color: var(--accent, #e2b96e);
+  color: var(--red);
   font-weight: 700;
 }
 
@@ -165,11 +165,11 @@
 }
 
 .leg-muted {
-  color: var(--muted, #888);
+  color: var(--ink-muted);
   font-size: 0.78rem;
 }
 
 /* ── Shared utilities ── */
 .error-msg { color: #c44; font-size: 0.85rem; }
-.muted { color: var(--muted, #888); }
+.muted { color: var(--ink-muted); }
 .small { font-size: 0.8rem; }

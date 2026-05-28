@@ -40,14 +40,14 @@
 }
 
 .tt-list-item.selected {
-  border-color: var(--accent, #e2b96e);
+  border-color: var(--red);
   background: rgba(226, 185, 110, 0.06);
 }
 
 .tt-id {
   font-family: monospace;
   font-size: 0.75rem;
-  color: var(--muted, #888);
+  color: var(--ink-muted);
 }
 
 .tt-total {
@@ -55,7 +55,7 @@
 }
 
 .tt-empty {
-  color: var(--muted, #888);
+  color: var(--ink-muted);
   font-size: 0.85rem;
 }
 
@@ -116,7 +116,7 @@
 /* ── Active fraction badge ── */
 .active-fraction-badge {
   padding: 0.5rem 0.75rem;
-  border-left: 3px solid var(--accent, #e2b96e);
+  border-left: 3px solid var(--red);
   background: rgba(226, 185, 110, 0.05);
   font-size: 0.9rem;
 }
@@ -148,13 +148,13 @@
 
 .zero-circ-label {
   font-size: 0.85rem;
-  color: var(--muted, #888);
+  color: var(--ink-muted);
 }
 
 .zero-circ-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--accent, #e2b96e);
+  color: var(--red);
 }
 
 /* ── Natural process grid ── */
@@ -182,7 +182,7 @@
 .np-duration {
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--accent, #e2b96e);
+  color: var(--red);
 }
 
 .np-quote {
@@ -205,7 +205,7 @@
 
 .cliff-elapsed {
   font-size: 0.85rem;
-  color: var(--muted, #888);
+  color: var(--ink-muted);
 }
 
 .cliff-rows {
@@ -236,7 +236,7 @@
 }
 
 .cliff-window {
-  color: var(--muted, #888);
+  color: var(--ink-muted);
   font-size: 0.8rem;
 }
 
@@ -249,7 +249,7 @@
 
 .cliff-bar-fill {
   height: 100%;
-  background: var(--accent, #e2b96e);
+  background: var(--red);
   border-radius: 5px;
   transition: width 0.2s ease;
 }
@@ -280,7 +280,7 @@
   font-size: 0.85rem;
 }
 
-.muted { color: var(--muted, #888); }
+.muted { color: var(--ink-muted); }
 .small { font-size: 0.8rem; }
 
 .btn-secondary {
@@ -294,6 +294,6 @@
 }
 
 .btn-secondary:hover {
-  border-color: var(--accent, #e2b96e);
-  color: var(--accent, #e2b96e);
+  border-color: var(--red);
+  color: var(--red);
 }

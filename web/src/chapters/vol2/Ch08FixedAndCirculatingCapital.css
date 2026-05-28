@@ -36,7 +36,7 @@
 
 .ch08-card__role {
   font-size: 0.8rem;
-  color: var(--muted, #6c7086);
+  color: var(--ink-muted);
   margin-bottom: 0.5rem;
 }
 
@@ -49,7 +49,7 @@
 .ch08-sf {
   margin-top: 0.75rem;
   font-size: 0.8rem;
-  color: var(--muted, #6c7086);
+  color: var(--ink-muted);
 }
 
 .ch08-sf__bar {
@@ -68,7 +68,7 @@
 }
 
 .ch08-empty {
-  color: var(--muted, #6c7086);
+  color: var(--ink-muted);
   font-style: italic;
   margin-top: 1rem;
 }

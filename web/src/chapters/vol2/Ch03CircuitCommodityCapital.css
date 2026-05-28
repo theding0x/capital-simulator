@@ -6,7 +6,7 @@
 }
 
 .cc-card {
-  background: var(--surface-2, #f8f9fa);
+  background: var(--surface-raised);
   border: 1px solid var(--border, #dee2e6);
   border-radius: 6px;
   padding: 1rem;
@@ -17,11 +17,11 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 .cc-aggregate {
-  border-color: var(--accent, #0d6efd);
+  border-color: var(--red);
 }
 
 .cc-diagram {
@@ -37,18 +37,18 @@
 .cc-diagram .node {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  background: var(--accent-bg, #e7f3ff);
-  border: 1px solid var(--accent, #0d6efd);
+  background: var(--lead-dim);
+  border: 1px solid var(--red);
   font-weight: 600;
 }
 
 .cc-diagram .node.active {
-  background: var(--accent, #0d6efd);
+  background: var(--red);
   color: #fff;
 }
 
 .cc-diagram .arrow {
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 .cc-balance {
@@ -59,7 +59,7 @@
 }
 
 .cc-balance dt {
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 .cc-balance dd {
@@ -95,7 +95,7 @@
   text-align: left;
   padding: 0.25rem 0.4rem;
   border-bottom: 1px solid var(--border, #dee2e6);
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
   font-weight: 600;
 }
 
@@ -124,7 +124,7 @@
 }
 
 .cc-mp-id {
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
   font-family: monospace;
   font-size: 0.75rem;
 }
@@ -154,7 +154,7 @@
 
 .cc-form label {
   font-size: 0.8rem;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -172,7 +172,7 @@
 
 .cc-form button {
   padding: 0.35rem 0.9rem;
-  background: var(--accent, #0d6efd);
+  background: var(--red);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -208,8 +208,8 @@
 }
 
 .cc-list li.selected {
-  border-color: var(--accent, #0d6efd);
-  background: var(--accent-bg, #e7f3ff);
+  border-color: var(--red);
+  background: var(--lead-dim);
 }
 
 @media (max-width: 700px) {

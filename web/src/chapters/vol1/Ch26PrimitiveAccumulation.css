@@ -16,7 +16,7 @@
 }
 .ch26-myth-side + .ch26-myth-side { border-left: 1px solid var(--rule); padding-left: 1.5rem; padding-right: 0; }
 .ch26-myth-tag {
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -25,7 +25,7 @@
 .ch26-myth-side--idyll .ch26-myth-tag { color: var(--lead-hover); }
 .ch26-myth-side--record .ch26-myth-tag { color: var(--red); }
 .ch26-myth-claim {
-  font-family: var(--font-display);
+  font-family: 'Playfair Display', serif;
   font-style: italic;
   font-size: 0.98rem;
   line-height: 1.5;
@@ -35,7 +35,7 @@
 }
 .ch26-myth-side--idyll .ch26-myth-claim { color: var(--ink-muted); }
 .ch26-myth-evidence {
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
   color: var(--ink-muted);
@@ -45,7 +45,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-mono);
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -60,7 +60,7 @@
   border-left: 2px solid var(--red);
 }
 .ch26-coda p {
-  font-family: var(--font-display);
+  font-family: 'Playfair Display', serif;
   font-style: italic;
   font-size: 0.98rem;
   color: var(--ink);

@@ -82,7 +82,7 @@ export function Ch31IndustrialCapitalist() {
         <div style={{ marginTop: "1.5rem" }}>
           <div
             className="muted small"
-            style={{ fontFamily: "var(--font-mono)", letterSpacing: "0.2em", textTransform: "uppercase", fontSize: "0.6rem", color: "var(--ink-dim)" }}
+            style={{ fontFamily: "'IBM Plex Mono', monospace", letterSpacing: "0.2em", textTransform: "uppercase", fontSize: "0.6rem", color: "var(--ink-dim)" }}
           >
             composition · &#163;{total.toLocaleString()} M founded
           </div>

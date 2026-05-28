@@ -6,7 +6,7 @@
 }
 
 .mc-card {
-  background: var(--surface-2, #f8f9fa);
+  background: var(--surface-raised);
   border: 1px solid var(--border, #dee2e6);
   border-radius: 6px;
   padding: 1rem;
@@ -17,7 +17,7 @@
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 /* Circuit diagram */
@@ -40,18 +40,18 @@
 .mc-diagram .node {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  background: var(--accent-bg, #e7f3ff);
-  border: 1px solid var(--accent, #0d6efd);
+  background: var(--lead-dim);
+  border: 1px solid var(--red);
   font-weight: 600;
 }
 
 .mc-diagram .node.active {
-  background: var(--accent, #0d6efd);
+  background: var(--red);
   color: #fff;
 }
 
 .mc-diagram .arrow {
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 /* Moment progress chips */
@@ -67,7 +67,7 @@
   font-size: 0.75rem;
   font-family: monospace;
   background: var(--surface-3, #e9ecef);
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
   border: 1px solid transparent;
 }
 
@@ -77,9 +77,9 @@
 }
 
 .mc-moment-chip.current {
-  background: var(--accent, #0d6efd);
+  background: var(--red);
   color: #fff;
-  border-color: var(--accent, #0d6efd);
+  border-color: var(--red);
 }
 
 /* Balance sheet */
@@ -91,7 +91,7 @@
 }
 
 .mc-balance dt {
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 .mc-balance dt.sub {
@@ -107,7 +107,7 @@
 
 .mc-balance dd.sub {
   font-size: 0.8rem;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
 }
 
 /* Circuit list */
@@ -131,8 +131,8 @@
 }
 
 .mc-list li.selected {
-  border-color: var(--accent, #0d6efd);
-  background: var(--accent-bg, #e7f3ff);
+  border-color: var(--red);
+  background: var(--lead-dim);
 }
 
 .mc-list-moment {
@@ -159,7 +159,7 @@
 
 .mc-form label {
   font-size: 0.8rem;
-  color: var(--text-muted, #6c757d);
+  color: var(--ink-muted);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -176,7 +176,7 @@
 
 .mc-form button {
   padding: 0.35rem 0.9rem;
-  background: var(--accent, #0d6efd);
+  background: var(--red);
   color: #fff;
   border: none;
   border-radius: 4px;

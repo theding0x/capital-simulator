@@ -11,11 +11,11 @@
 .ch16-quote {
   margin: 0;
   padding: 0.75rem 1rem;
-  border-left: 3px solid var(--accent, #8b5cf6);
+  border-left: 3px solid var(--red);
   background: var(--surface-raised, #1e1e2e);
   border-radius: 0 6px 6px 0;
   font-style: italic;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   font-size: 0.85rem;
 }
 
@@ -31,7 +31,7 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted, #888);
+  color: var(--ink-muted);
   margin: 0 0 0.75rem 0;
 }
 
@@ -69,7 +69,7 @@
 .ch16-annual-rate {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--accent, #8b5cf6);
+  color: var(--red);
 }
 
 .ch16-detail-row {
@@ -99,11 +99,11 @@
   text-align: center;
   font-size: 1.1rem;
   margin-bottom: 1.25rem;
-  color: var(--text-primary, #eee);
+  color: var(--ink);
 }
 
 .ch16-formula-display strong {
-  color: var(--accent, #8b5cf6);
+  color: var(--red);
   font-size: 1.5rem;
 }
 
@@ -126,22 +126,22 @@
 
 .ch16-slider-label {
   font-size: 0.8rem;
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
 }
 
 .ch16-slider-value {
   font-weight: 600;
-  color: var(--text-primary, #eee);
+  color: var(--ink);
 }
 
 .ch16-slider-row input[type="range"] {
   width: 100%;
-  accent-color: var(--accent, #8b5cf6);
+  accent-color: var(--red);
 }
 
 .ch16-quadruple-note {
   font-size: 0.78rem;
-  color: var(--text-muted, #888);
+  color: var(--ink-muted);
   text-align: center;
   font-style: italic;
 }
@@ -173,7 +173,7 @@
 .ch16-industry-rate {
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--accent, #8b5cf6);
+  color: var(--red);
   margin-bottom: 0.5rem;
 }
 
@@ -189,7 +189,7 @@
   text-align: left;
   padding: 0.4rem 0.6rem;
   border-bottom: 1px solid var(--border, #333);
-  color: var(--text-muted, #aaa);
+  color: var(--ink-muted);
   font-weight: 500;
 }
 
@@ -199,7 +199,7 @@
 }
 
 .ch16-interruption-table tr.ch16-base td {
-  color: var(--accent, #8b5cf6);
+  color: var(--red);
   font-weight: 600;
 }
 
@@ -225,12 +225,12 @@
 
 .ch16-spinmill-calc .ch16-val {
   font-weight: 700;
-  color: var(--accent, #8b5cf6);
+  color: var(--red);
 }
 
 .ch16-spinmill-result {
   font-size: 1.8rem;
   font-weight: 700;
-  color: var(--accent, #8b5cf6);
+  color: var(--red);
   text-align: center;
 }

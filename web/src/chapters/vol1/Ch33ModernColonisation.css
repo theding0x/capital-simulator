@@ -15,7 +15,7 @@
 }
 
 .ch33-card {
-  background: var(--bg-panel, #fff);
+  background: var(--surface-raised);
   border: 1px solid var(--border, #e2e2e2);
   border-radius: 8px;
   padding: 1rem 1.25rem;
@@ -28,10 +28,10 @@
 
 .ch33-quote {
   font-style: italic;
-  color: var(--text-muted, #555);
+  color: var(--ink-muted);
   margin: 0 0 1rem 0;
   padding-left: 0.75rem;
-  border-left: 3px solid var(--accent, #8a2b2b);
+  border-left: 3px solid var(--red);
 }
 
 .ch33-list {
@@ -54,13 +54,13 @@
   cursor: pointer;
 }
 .ch33-row:focus-visible {
-  outline: 2px solid var(--accent, #8a2b2b);
+  outline: 2px solid var(--red);
   outline-offset: 2px;
 }
 
 .ch33-row.selected {
   background: rgba(138, 43, 43, 0.08);
-  border-left: 3px solid var(--accent, #8a2b2b);
+  border-left: 3px solid var(--red);
 }
 
 .ch33-row-title {
@@ -69,7 +69,7 @@
 
 .ch33-row-meta {
   font-size: 0.85rem;
-  color: var(--text-muted, #666);
+  color: var(--ink-muted);
 }
 
 .ch33-pill {
@@ -81,7 +81,7 @@
 
 .ch33-pill.extract {
   background: rgba(138, 43, 43, 0.12);
-  color: var(--accent, #8a2b2b);
+  color: var(--red);
 }
 
 .ch33-pill.free {
@@ -109,7 +109,7 @@
 
 .ch33-field label {
   font-size: 0.8rem;
-  color: var(--text-muted, #555);
+  color: var(--ink-muted);
 }
 
 .ch33-field input {
@@ -126,7 +126,7 @@
 }
 
 .ch33-actions button {
-  background: var(--accent, #8a2b2b);
+  background: var(--red);
   color: #fff;
   border: none;
   padding: 0.45rem 0.9rem;
@@ -136,12 +136,12 @@
 }
 
 .ch33-actions button:disabled {
-  background: var(--text-muted, #888);
+  background: var(--ink-muted);
   cursor: not-allowed;
 }
 
 .ch33-error {
-  color: var(--accent, #8a2b2b);
+  color: var(--red);
   margin-top: 0.5rem;
   font-size: 0.9rem;
 }
@@ -162,7 +162,7 @@
 .ch33-comparison .ch33-side h3 {
   margin: 0 0 0.4rem 0;
   font-size: 0.9rem;
-  color: var(--text-muted, #555);
+  color: var(--ink-muted);
 }
 
 .ch33-comparison .ch33-side .ch33-stat {
@@ -177,5 +177,5 @@
 }
 
 .ch33-readout strong {
-  color: var(--accent, #8a2b2b);
+  color: var(--red);
 }
