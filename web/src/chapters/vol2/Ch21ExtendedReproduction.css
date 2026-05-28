@@ -319,3 +319,31 @@
   color: #a78bfa;
   margin: 0 0 0.4rem 0;
 }
+
+/* ── Loading / empty / backend-wiring helpers ──────────────────── */
+
+.ch21-loading, .ch21-empty {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  padding: 0.5rem 0;
+}
+
+.ch21-tick-btn {
+  margin-top: 0.75rem;
+  padding: 0.45rem 1.1rem;
+  background: rgba(129,140,248,0.15);
+  border: 1px solid #818cf8;
+  border-radius: 6px;
+  color: #818cf8;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ch21-tick-btn:hover   { background: rgba(129,140,248,0.28); }
+.ch21-tick-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ch21-tick-error {
+  font-size: 0.78rem;
+  color: #f87171;
+  margin-top: 0.5rem;
+}

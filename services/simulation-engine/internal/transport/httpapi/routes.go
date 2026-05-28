@@ -205,14 +205,17 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/reproduction/realisation-puzzles", h.ListRealisationPuzzles)
 
 	// Vol. II Ch. 18 — The Role of Money-Capital in Reproduction
+	s.HandleFunc("GET /v1/reproduction/apportionments", h.ListApportionments)
 	s.HandleFunc("POST /v1/reproduction/apportionments", h.CreateApportionment)
 	s.HandleFunc("GET /v1/reproduction/apportionments/{id}/balance-check", h.GetApportionmentBalanceCheck)
 	s.HandleFunc("POST /v1/reproduction/department-reserves", h.CreateDepartmentReserve)
 	s.HandleFunc("POST /v1/reproduction/circulating-money-masses", h.CreateCirculatingMoneyMass)
 	s.HandleFunc("POST /v1/reproduction/wage-rotation-funds", h.CreateWageRotationFund)
+	s.HandleFunc("GET /v1/reproduction/inter-department-settlements", h.ListInterDepartmentSettlements)
 	s.HandleFunc("POST /v1/reproduction/inter-department-settlements", h.CreateInterDepartmentSettlement)
 
 	// Vol. II Ch. 21 — Accumulation and Reproduction on an Extended Scale
+	s.HandleFunc("GET /v1/reproduction/extended/schemes", h.handleListExtendedReproductionSchemes)
 	s.HandleFunc("POST /v1/reproduction/extended/schemes", h.handleCreateExtendedReproductionScheme)
 	s.HandleFunc("GET /v1/reproduction/extended/schemes/{id}", h.handleGetExtendedReproductionScheme)
 	s.HandleFunc("POST /v1/reproduction/extended/schemes/{id}/departments", h.handleAddExtendedDepartmentToScheme)

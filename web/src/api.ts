@@ -1739,6 +1739,12 @@ export const annualSurplusRateApi = {
 
 // Vol. II Ch. 18 — The Role of Money-Capital in Reproduction
 export const moneyCapitalApi = {
+  listApportionments: () =>
+    http<import("./types").MoneySupplyApportionment[]>("/v1/reproduction/apportionments"),
+
+  listInterDepartmentSettlements: () =>
+    http<import("./types").InterDepartmentSettlement[]>("/v1/reproduction/inter-department-settlements"),
+
   createApportionment: (input: {
     total_circulating_money_pence: number;
     department_i_reserve_pence: number;
@@ -1872,6 +1878,11 @@ export const simpleReproductionApi = {
 
 // Vol. II Ch. 21 — Extended Reproduction
 export const extendedReproductionApi = {
+  listSchemes: (period?: string) =>
+    http<import("./types").ExtendedReproductionScheme[]>(
+      `/v1/reproduction/extended/schemes${period ? `?period=${encodeURIComponent(period)}` : ""}`
+    ),
+
   createScheme: (input: { period: string; accumulation_rate_i_bps: number; accumulation_rate_ii_bps: number }) =>
     http<import("./types").ExtendedReproductionScheme>("/v1/reproduction/extended/schemes", {
       method: "POST", body: JSON.stringify(input),

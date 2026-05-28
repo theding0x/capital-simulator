@@ -283,6 +283,16 @@ func main() {
 	srv.Handle("/v1/reproduction/inter-department-settlements", simProxy)
 	srv.Handle("/v1/reproduction/inter-department-settlements/{rest...}", simProxy)
 
+	// Vol. II Ch. 20 — Simple Reproduction (two-department scheme) → simulation-engine
+	srv.Handle("/v1/reproduction/simple/schemes", simProxy)
+	srv.Handle("/v1/reproduction/simple/schemes/{rest...}", simProxy)
+
+	// Vol. II Ch. 21 — Accumulation and Reproduction on an Extended Scale → simulation-engine
+	srv.Handle("/v1/reproduction/extended/schemes", simProxy)
+	srv.Handle("/v1/reproduction/extended/schemes/{rest...}", simProxy)
+	srv.Handle("/v1/reproduction/extended/multi-period", simProxy)
+	srv.Handle("/v1/reproduction/extended/multi-period/{rest...}", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III

@@ -165,6 +165,21 @@ func (h *Handler) handleCreateExtendedReproductionScheme(w http.ResponseWriter, 
 	writeJSON(w, http.StatusCreated, extendedSchemeToResponse(created))
 }
 
+// handleListExtendedReproductionSchemes handles GET /v1/reproduction/extended/schemes.
+func (h *Handler) handleListExtendedReproductionSchemes(w http.ResponseWriter, r *http.Request) {
+	period := r.URL.Query().Get("period")
+	list, err := h.ExtendedReproduction.ListExtendedReproductionSchemes(r.Context(), period)
+	if err != nil {
+		h.writeServerError(w, err)
+		return
+	}
+	resp := make([]extendedReproductionSchemeResponse, len(list))
+	for i, s := range list {
+		resp[i] = extendedSchemeToResponse(s)
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
 // handleGetExtendedReproductionScheme handles GET /v1/reproduction/extended/schemes/{id}.
 func (h *Handler) handleGetExtendedReproductionScheme(w http.ResponseWriter, r *http.Request) {
 	id := repro.ExtendedReproductionSchemeID(r.PathValue("id"))

@@ -73,6 +73,58 @@ func (m *MySQL) GetExtendedReproductionScheme(ctx context.Context, id repro.Exte
 	return s, nil
 }
 
+func (m *MySQL) ListExtendedReproductionSchemes(ctx context.Context, period string) ([]repro.ExtendedReproductionScheme, error) {
+	var (
+		rows *sql.Rows
+		err  error
+	)
+	if period != "" {
+		rows, err = m.db.QueryContext(ctx,
+			`SELECT id, period, accumulation_rate_i_bps, accumulation_rate_ii_bps, tick_count
+			FROM extended_reproduction_schemes WHERE period = ? ORDER BY id`, period)
+	} else {
+		rows, err = m.db.QueryContext(ctx,
+			`SELECT id, period, accumulation_rate_i_bps, accumulation_rate_ii_bps, tick_count
+			FROM extended_reproduction_schemes ORDER BY id`)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []repro.ExtendedReproductionScheme
+	for rows.Next() {
+		var s repro.ExtendedReproductionScheme
+		var sid string
+		if err2 := rows.Scan(&sid, &s.Period, &s.AccumulationRateIBps, &s.AccumulationRateIIBps, &s.TickCount); err2 != nil {
+			return nil, err2
+		}
+		s.ID = repro.ExtendedReproductionSchemeID(sid)
+		id := s.ID
+		deptI, e := m.getExtendedDepartmentalCapital(ctx, id, repro.DepartmentI)
+		if e == nil {
+			s.DepartmentI = &deptI
+		} else if e != ErrNotFound {
+			return nil, e
+		}
+		deptII, e := m.getExtendedDepartmentalCapital(ctx, id, repro.DepartmentII)
+		if e == nil {
+			s.DepartmentII = &deptII
+		} else if e != ErrNotFound {
+			return nil, e
+		}
+		if s.DepartmentI != nil && s.DepartmentII != nil {
+			rI := repro.Reinvestment{}
+			rII := repro.Reinvestment{}
+			s.IsBalanced = repro.ComputeExtendedBalance(*s.DepartmentI, *s.DepartmentII, rI, rII)
+		}
+		out = append(out, s)
+	}
+	if out == nil {
+		out = []repro.ExtendedReproductionScheme{}
+	}
+	return out, rows.Err()
+}
+
 // getExtendedDepartmentalCapital loads a single DepartmentalCapital from the
 // extended_departmental_capitals table for a given scheme + department.
 func (m *MySQL) getExtendedDepartmentalCapital(ctx context.Context, schemeID repro.ExtendedReproductionSchemeID, dept repro.CapitalDepartment) (repro.DepartmentalCapital, error) {

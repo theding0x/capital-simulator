@@ -348,6 +348,34 @@ func (h *Handler) CreateInterDepartmentSettlement(w http.ResponseWriter, r *http
 	writeJSON(w, http.StatusCreated, settlementToResponse(created))
 }
 
+// ListApportionments handles GET /v1/reproduction/apportionments.
+func (h *Handler) ListApportionments(w http.ResponseWriter, r *http.Request) {
+	list, err := h.MoneyCapital.ListMoneySupplyApportionments(r.Context())
+	if err != nil {
+		h.writeServerError(w, err)
+		return
+	}
+	resp := make([]moneySupplyApportionmentResponse, len(list))
+	for i, a := range list {
+		resp[i] = apportionmentToResponse(a)
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ListInterDepartmentSettlements handles GET /v1/reproduction/inter-department-settlements.
+func (h *Handler) ListInterDepartmentSettlements(w http.ResponseWriter, r *http.Request) {
+	list, err := h.MoneyCapital.ListInterDepartmentSettlements(r.Context())
+	if err != nil {
+		h.writeServerError(w, err)
+		return
+	}
+	resp := make([]interDepartmentSettlementResponse, len(list))
+	for i, s := range list {
+		resp[i] = settlementToResponse(s)
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
 // GetApportionmentBalanceCheck handles GET /v1/reproduction/apportionments/{id}/balance-check.
 func (h *Handler) GetApportionmentBalanceCheck(w http.ResponseWriter, r *http.Request) {
 	id := repro.MoneySupplyApportionmentID(r.PathValue("id"))

@@ -1,4 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { extendedReproductionApi } from "../../api";
+import type {
+  ExtendedReproductionScheme,
+  DepartmentalCapital,
+  ExtendedMoneyRequirement,
+} from "../../types";
 import "./Ch21ExtendedReproduction.css";
 
 // Vol. II Ch. 21 — Accumulation and Reproduction on an Extended Scale.
@@ -9,21 +15,43 @@ import "./Ch21ExtendedReproduction.css";
 //
 // Marx's canonical fixture (period "Year I"):
 //   Dept I:  4000c + 1000v + 1000s = 6000  AccRate = 50% (5000 bps)
-//   Dept II: 1500c +  750v +  750s = 3000  AccRate = 0%
+//   Dept II: 1500c +  750v +  750s = 3000  AccRate = 20% (2000 bps)
 //
-// Reinvestment I: Δc = 0, Δv = 500, consumed_I = 500
-//   (all reinvestment goes to v to satisfy balance equation)
+// Reinvestment split uses organic-composition ratio c/(c+v):
+//   Dept I:  reinvested=500 → Δc=400, Δv=100, consumed=500
+//   Dept II: reinvested=150 → Δc=100, Δv=50,  consumed=600
 //
-// Extended balance: I.v(1000) + ΔvI(500) + consumed_I(0) = 1500
-//                                        == II.c(1500) + ΔcII(0)  ✓
+// Balance: I.v(1000) + ΔvI(100) + consumed_I(500) = 1600 = II.c(1500) + ΔcII(100) ✓
 //
 // Dept I grows faster than Dept II — means of production must expand ahead
 // of consumption goods; that lead is Marx's thesis throughout Ch. 21.
+//
+// NOTE: the backend seed stores values in abstract units (not pence × 1 000).
 
-// ── canonical fixture ─────────────────────────────────────────────────────────
+// ── canonical fixture (fallback) ──────────────────────────────────────────────
 
-const YEAR_I_I  = { c: 4000, v: 1000, s: 1000, total: 6000, rate: 0.5 };
-const YEAR_I_II = { c: 1500, v: 750,  s: 750,  total: 3000, rate: 0.0 };
+const YEAR_I_I_FB  = { c: 4000, v: 1000, s: 1000, total: 6000, rate: 0.5 };
+const YEAR_I_II_FB = { c: 1500, v: 750,  s: 750,  total: 3000, rate: 0.2 };
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+function fmt(n: number): string {
+  return Math.round(n).toLocaleString();
+}
+
+function bpsToPercent(bps: number): string {
+  return (bps / 100).toFixed(0) + "%";
+}
+
+// Backend seed stores abstract units directly; no conversion needed.
+function deptUnits(d: DepartmentalCapital) {
+  return {
+    c: d.constant_pence,
+    v: d.variable_pence,
+    s: d.surplus_pence,
+    total: d.total_pence,
+  };
+}
 
 type DeptState = { c: number; v: number; s: number; total: number };
 
@@ -39,44 +67,42 @@ function advance(d: DeptState, rateBps: number): { next: DeptState; deltaC: numb
   return { next: { c: newC, v: newV, s: newS, total: newC + newV + newS }, deltaC, deltaV, consumed };
 }
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-
-function fmt(n: number): string {
-  return Math.round(n).toLocaleString();
-}
-
-function bpsToPercent(bps: number): string {
-  return (bps / 100).toFixed(0) + "%";
-}
-
 // ── Widget 1 — Canonical Two-Department Table with Accumulation ───────────────
 
-function CanonicalFixture() {
-  const dI = YEAR_I_I;
-  const dII = YEAR_I_II;
+interface CanonicalFixtureProps {
+  scheme: ExtendedReproductionScheme | null;
+}
 
-  // Reinvestment at 50% for Dept I, 0% for Dept II:
-  // All reinvested amount in Dept I goes to v (deltaC=0) to satisfy balance.
-  const reinvestedI = Math.floor(dI.s * 5000 / 10000); // 500
-  const deltaCI = 0;
-  const deltaVI = reinvestedI - deltaCI; // 500
-  const consumedI = dI.s - reinvestedI; // 500
+function CanonicalFixture({ scheme }: CanonicalFixtureProps) {
+  const dI  = scheme?.department_i  ? deptUnits(scheme.department_i)  : YEAR_I_I_FB;
+  const dII = scheme?.department_ii ? deptUnits(scheme.department_ii) : YEAR_I_II_FB;
+  const rateIBps  = scheme?.accumulation_rate_i_bps  ?? 5000;
+  const rateIIBps = scheme?.accumulation_rate_ii_bps ?? 0;
 
-  const deltaCII = 0;
-  const deltaVII = 0;
-  const consumedII = dII.s;
+  // Reinvestment split via c/(c+v) organic-composition ratio.
+  const reinvestedI = Math.floor(dI.s * rateIBps / 10000);
+  const deltaCI     = dI.total > 0 ? Math.floor(reinvestedI * dI.c / dI.total) : 0;
+  const deltaVI     = reinvestedI - deltaCI;
+  const consumedI   = dI.s - reinvestedI;
 
-  // Balance: I.v + deltav_I + consumed_I == II.c + deltac_II
+  const reinvestedII = Math.floor(dII.s * rateIIBps / 10000);
+  const deltaCII     = dII.total > 0 ? Math.floor(reinvestedII * dII.c / dII.total) : 0;
+  const deltaVII     = reinvestedII - deltaCII;
+  const consumedII   = dII.s - reinvestedII;
+
+  // Balance: I.v + ΔvI + consumed_I == II.c + ΔcII
   const balanceLHS = dI.v + deltaVI + consumedI;
   const balanceRHS = dII.c + deltaCII;
-  const balanced = balanceLHS === balanceRHS;
+  const balanced   = balanceLHS === balanceRHS;
 
   return (
     <div className="ch21-widget">
-      <p className="ch21-section-title">Marx's Canonical Extended Reproduction Fixture — Year I</p>
+      <p className="ch21-section-title">
+        Marx's Canonical Extended Reproduction Fixture — {scheme?.period ?? "Year I"}
+      </p>
       <p className="ch21-subtitle">
-        50% accumulation in Dept I. The Δv seed funds next-period variable capital.
-        Dept I excess drives the growth of social production.
+        {bpsToPercent(rateIBps)} accumulation in Dept I, {bpsToPercent(rateIIBps)} in Dept II.
+        {!scheme && " (displaying local fixture — connect to backend to load seed data)"}
       </p>
       <div className="ch21-table-wrap">
         <table className="ch21-table">
@@ -99,7 +125,7 @@ function CanonicalFixture() {
               <td className="num">{fmt(dI.c)}</td>
               <td className="num">{fmt(dI.v)}</td>
               <td className="num">{fmt(dI.s)}</td>
-              <td className="num">50%</td>
+              <td className="num">{bpsToPercent(rateIBps)}</td>
               <td className="num col-delta">{fmt(deltaCI)}</td>
               <td className="num col-delta">{fmt(deltaVI)}</td>
               <td className="num col-consumed">{fmt(consumedI)}</td>
@@ -110,7 +136,7 @@ function CanonicalFixture() {
               <td className="num">{fmt(dII.c)}</td>
               <td className="num">{fmt(dII.v)}</td>
               <td className="num">{fmt(dII.s)}</td>
-              <td className="num">0%</td>
+              <td className="num">{bpsToPercent(rateIIBps)}</td>
               <td className="num col-delta">{fmt(deltaCII)}</td>
               <td className="num col-delta">{fmt(deltaVII)}</td>
               <td className="num col-consumed">{fmt(consumedII)}</td>
@@ -135,19 +161,46 @@ function CanonicalFixture() {
 
 // ── Widget 2 — Reinvestment Split ────────────────────────────────────────────
 
-function ReinvestmentSplitWidget() {
-  const [rateIBps, setRateIBps] = useState(5000);
-  const [rateIIBps, setRateIIBps] = useState(0);
+interface ReinvestmentSplitProps {
+  scheme: ExtendedReproductionScheme | null;
+  onTick: (updated: ExtendedReproductionScheme) => void;
+}
 
-  const dI: DeptState  = { c: YEAR_I_I.c,  v: YEAR_I_I.v,  s: YEAR_I_I.s,  total: YEAR_I_I.total };
-  const dII: DeptState = { c: YEAR_I_II.c, v: YEAR_I_II.v, s: YEAR_I_II.s, total: YEAR_I_II.total };
+function ReinvestmentSplitWidget({ scheme, onTick }: ReinvestmentSplitProps) {
+  const seedRateI  = scheme?.accumulation_rate_i_bps  ?? 5000;
+  const seedRateII = scheme?.accumulation_rate_ii_bps ?? 0;
+  const [rateIBps,  setRateIBps]  = useState(seedRateI);
+  const [rateIIBps, setRateIIBps] = useState(seedRateII);
+  const [ticking,   setTicking]   = useState(false);
+  const [tickError, setTickError] = useState<string | null>(null);
 
-  const aI  = advance(dI, rateIBps);
+  const dI:  DeptState = scheme?.department_i
+    ? deptUnits(scheme.department_i)
+    : { c: YEAR_I_I_FB.c, v: YEAR_I_I_FB.v, s: YEAR_I_I_FB.s, total: YEAR_I_I_FB.total };
+  const dII: DeptState = scheme?.department_ii
+    ? deptUnits(scheme.department_ii)
+    : { c: YEAR_I_II_FB.c, v: YEAR_I_II_FB.v, s: YEAR_I_II_FB.s, total: YEAR_I_II_FB.total };
+
+  const aI  = advance(dI,  rateIBps);
   const aII = advance(dII, rateIIBps);
 
   const lhs = dI.v + aI.deltaV + aI.consumed;
   const rhs = dII.c + aII.deltaC;
   const balanced = lhs === rhs;
+
+  async function handleTick() {
+    if (!scheme) return;
+    setTicking(true);
+    setTickError(null);
+    try {
+      const updated = await extendedReproductionApi.tickScheme(scheme.id);
+      onTick(updated);
+    } catch {
+      setTickError("Failed to advance tick — is the backend running?");
+    } finally {
+      setTicking(false);
+    }
+  }
 
   return (
     <div className="ch21-widget">
@@ -155,6 +208,7 @@ function ReinvestmentSplitWidget() {
       <p className="ch21-subtitle">
         Adjust accumulation rates to see how surplus splits into Δc, Δv, and consumed.
         The balance equation must hold for extended reproduction to proceed.
+        {scheme && ` Backend tick count: ${scheme.tick_count}.`}
       </p>
       <div className="ch21-split-grid">
         <div className="ch21-split-card">
@@ -227,13 +281,25 @@ function ReinvestmentSplitWidget() {
         II.c({fmt(dII.c)}) + Δc_II({fmt(aII.deltaC)}) = {fmt(rhs)}
         {balanced ? " ✓" : " ✗"}
       </div>
+      <button
+        className="ch21-tick-btn"
+        onClick={handleTick}
+        disabled={!scheme || ticking}
+      >
+        {ticking ? "Advancing…" : "Advance one accumulation cycle →"}
+      </button>
+      {tickError && <p className="ch21-tick-error">{tickError}</p>}
     </div>
   );
 }
 
 // ── Widget 3 — 5-Year Growth Table ───────────────────────────────────────────
 
-function GrowthTable() {
+interface GrowthTableProps {
+  scheme: ExtendedReproductionScheme | null;
+}
+
+function GrowthTable({ scheme }: GrowthTableProps) {
   type YearRow = {
     year: number;
     dI: DeptState;
@@ -243,17 +309,22 @@ function GrowthTable() {
     leadConfirmed: boolean;
   };
 
+  const initI:  DeptState = scheme?.department_i  ? deptUnits(scheme.department_i)  : { c: YEAR_I_I_FB.c,  v: YEAR_I_I_FB.v,  s: YEAR_I_I_FB.s,  total: YEAR_I_I_FB.total };
+  const initII: DeptState = scheme?.department_ii ? deptUnits(scheme.department_ii) : { c: YEAR_I_II_FB.c, v: YEAR_I_II_FB.v, s: YEAR_I_II_FB.s, total: YEAR_I_II_FB.total };
+  const rateIBps  = scheme?.accumulation_rate_i_bps  ?? 5000;
+  const rateIIBps = scheme?.accumulation_rate_ii_bps ?? 0;
+
   const rows: YearRow[] = [];
-  let curI: DeptState  = { c: YEAR_I_I.c,  v: YEAR_I_I.v,  s: YEAR_I_I.s,  total: YEAR_I_I.total };
-  let curII: DeptState = { c: YEAR_I_II.c, v: YEAR_I_II.v, s: YEAR_I_II.s, total: YEAR_I_II.total };
+  let curI  = initI;
+  let curII = initII;
 
   rows.push({ year: 1, dI: curI, dII: curII, dIGrowthBps: 0, dIIGrowthBps: 0, leadConfirmed: false });
 
   for (let y = 2; y <= 5; y++) {
-    const prevI = curI;
+    const prevI  = curI;
     const prevII = curII;
-    curI  = advance(curI, 5000).next;
-    curII = advance(curII, 0).next;
+    curI  = advance(curI,  rateIBps).next;
+    curII = advance(curII, rateIIBps).next;
     const dIGrowth  = prevI.total  > 0 ? Math.round((curI.total  - prevI.total)  * 10000 / prevI.total)  : 0;
     const dIIGrowth = prevII.total > 0 ? Math.round((curII.total - prevII.total) * 10000 / prevII.total) : 0;
     rows.push({
@@ -272,6 +343,7 @@ function GrowthTable() {
       <p className="ch21-subtitle">
         Dept I (means of production) grows faster because its accumulation rate is higher.
         This is Marx's fundamental thesis of extended reproduction.
+        {scheme && ` Seeded from backend period "${scheme.period}".`}
       </p>
       <div className="ch21-table-wrap">
         <table className="ch21-growth-table">
@@ -306,9 +378,9 @@ function GrowthTable() {
         </table>
       </div>
       <p className="ch21-note">
-        Values in abstract units (×1 000 pence in the backend). Dept I (50% acc. rate) consistently
-        outgrows Dept II (0% acc. rate), confirming that expanded accumulation requires
-        prior expansion of means-of-production output.
+        Values in abstract units (same as backend seed). Dept I ({bpsToPercent(rateIBps)} acc. rate)
+        consistently outgrows Dept II ({bpsToPercent(rateIIBps)} acc. rate), confirming that
+        expanded accumulation requires prior expansion of means-of-production output.
       </p>
     </div>
   );
@@ -316,19 +388,28 @@ function GrowthTable() {
 
 // ── Widget 4 — Organic Composition Shifts ────────────────────────────────────
 
-function CompositionShiftWidget() {
+interface CompositionShiftProps {
+  scheme: ExtendedReproductionScheme | null;
+}
+
+function CompositionShiftWidget({ scheme }: CompositionShiftProps) {
   type CompRow = { year: number; dIComp: number; dIIComp: number; social: number };
 
+  const initI:  DeptState = scheme?.department_i  ? deptUnits(scheme.department_i)  : { c: YEAR_I_I_FB.c,  v: YEAR_I_I_FB.v,  s: YEAR_I_I_FB.s,  total: YEAR_I_I_FB.total };
+  const initII: DeptState = scheme?.department_ii ? deptUnits(scheme.department_ii) : { c: YEAR_I_II_FB.c, v: YEAR_I_II_FB.v, s: YEAR_I_II_FB.s, total: YEAR_I_II_FB.total };
+  const rateIBps  = scheme?.accumulation_rate_i_bps  ?? 5000;
+  const rateIIBps = scheme?.accumulation_rate_ii_bps ?? 0;
+
   const rows: CompRow[] = [];
-  let curI: DeptState  = { c: YEAR_I_I.c,  v: YEAR_I_I.v,  s: YEAR_I_I.s,  total: YEAR_I_I.total };
-  let curII: DeptState = { c: YEAR_I_II.c, v: YEAR_I_II.v, s: YEAR_I_II.s, total: YEAR_I_II.total };
+  let curI  = initI;
+  let curII = initII;
 
   for (let y = 1; y <= 5; y++) {
     const compI  = curI.v  > 0 ? Math.round(curI.c  * 10000 / curI.v)  : 0;
     const compII = curII.v > 0 ? Math.round(curII.c * 10000 / curII.v) : 0;
     rows.push({ year: y, dIComp: compI, dIIComp: compII, social: Math.round((compI + compII) / 2) });
-    curI  = advance(curI, 5000).next;
-    curII = advance(curII, 0).next;
+    curI  = advance(curI,  rateIBps).next;
+    curII = advance(curII, rateIIBps).next;
   }
 
   return (
@@ -376,15 +457,22 @@ function CompositionShiftWidget() {
 
 // ── Widget 5 — Money Requirement ─────────────────────────────────────────────
 
-function MoneyRequirementWidget() {
-  const totalI  = YEAR_I_I.total;
-  const totalII = YEAR_I_II.total;
-  const baseMoneyPence = 500;
+interface MoneyRequirementProps {
+  scheme: ExtendedReproductionScheme | null;
+  moneyReq: ExtendedMoneyRequirement | null;
+}
 
-  // AdditionalMoney = (totalI + totalII) * (rateI + rateII) / 20000
-  // rateI = 5000, rateII = 0
-  const additionalMoney = Math.floor((totalI + totalII) * (5000 + 0) / 20000);
-  const totalMoney = baseMoneyPence + additionalMoney;
+function MoneyRequirementWidget({ scheme, moneyReq }: MoneyRequirementProps) {
+  const dI  = scheme?.department_i  ? deptUnits(scheme.department_i)  : { total: YEAR_I_I_FB.total };
+  const dII = scheme?.department_ii ? deptUnits(scheme.department_ii) : { total: YEAR_I_II_FB.total };
+  const rateIBps  = scheme?.accumulation_rate_i_bps  ?? 5000;
+  const rateIIBps = scheme?.accumulation_rate_ii_bps ?? 0;
+
+  // Use backend values when available; otherwise compute locally.
+  const baseMoneyPence  = moneyReq?.base_money_pence      ?? 500;
+  const additionalMoney = moneyReq?.additional_money_pence
+    ?? Math.floor((dI.total + dII.total) * (rateIBps + rateIIBps) / 20000);
+  const totalMoney      = moneyReq?.total_money_pence ?? baseMoneyPence + additionalMoney;
 
   return (
     <div className="ch21-widget">
@@ -393,6 +481,7 @@ function MoneyRequirementWidget() {
         Accumulation increases the commodity mass in circulation. The additional money
         comes from the sources identified in Ch. 17: gold production, hoards, and
         new credit instruments.
+        {moneyReq ? " (from backend)" : " (local estimate)"}
       </p>
       <div className="ch21-money-table">
         <div className="ch21-money-row">
@@ -450,13 +539,65 @@ function VolIIIPreview() {
 // ── Root export ───────────────────────────────────────────────────────────────
 
 export function Ch21ExtendedReproduction() {
+  const [scheme,   setScheme]   = useState<ExtendedReproductionScheme | null>(null);
+  const [moneyReq, setMoneyReq] = useState<ExtendedMoneyRequirement | null>(null);
+  const [loading,  setLoading]  = useState(true);
+
+  useEffect(() => {
+    extendedReproductionApi
+      .listSchemes()
+      .then(async (list) => {
+        if (list.length === 0) return;
+        const s = list[0];
+        setScheme(s);
+        extendedReproductionApi
+          .getMoneyRequirement(s.id)
+          .then(setMoneyReq)
+          .catch(() => null);
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  function handleTick(updated: ExtendedReproductionScheme) {
+    setScheme(updated);
+    // Refresh money requirement after tick.
+    extendedReproductionApi
+      .getMoneyRequirement(updated.id)
+      .then(setMoneyReq)
+      .catch(() => null);
+  }
+
+  if (loading) {
+    return (
+      <div className="ch21-root">
+        <div className="ch21-widget">
+          <p className="ch21-loading">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!scheme) {
+    return (
+      <div className="ch21-root">
+        <div className="ch21-widget">
+          <p className="ch21-section-title">Vol. II Ch. 21 — Extended Reproduction</p>
+          <p className="ch21-empty">
+            No seed data found. Run the database migrations to populate this panel.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ch21-root">
-      <CanonicalFixture />
-      <ReinvestmentSplitWidget />
-      <GrowthTable />
-      <CompositionShiftWidget />
-      <MoneyRequirementWidget />
+      <CanonicalFixture scheme={scheme} />
+      <ReinvestmentSplitWidget scheme={scheme} onTick={handleTick} />
+      <GrowthTable scheme={scheme} />
+      <CompositionShiftWidget scheme={scheme} />
+      <MoneyRequirementWidget scheme={scheme} moneyReq={moneyReq} />
       <VolIIIPreview />
     </div>
   );
