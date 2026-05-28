@@ -139,3 +139,7 @@
 .ch10-error {
   color: var(--red);
 }
+
+@media (max-width: 640px) {
+  .ch10-anticipations { grid-template-columns: 1fr; }
+}

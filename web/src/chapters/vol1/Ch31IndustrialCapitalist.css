@@ -20,3 +20,8 @@
   .ch31-pillars { grid-template-columns: 1fr 1fr; }
   .ch31-pillar + .ch31-pillar:nth-child(3) { border-left: none; border-top: 1px solid var(--rule); padding-left: 0; padding-top: 1.5rem; }
 }
+
+@media (max-width: 640px) {
+  .ch31-pillars { grid-template-columns: 1fr; }
+  .ch31-pillar + .ch31-pillar { border-left: none; border-top: 1px solid var(--rule); padding-left: 0; padding-top: 1.5rem; }
+}

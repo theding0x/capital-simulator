@@ -60,3 +60,8 @@
   border-right: 1px solid var(--gold-border);
   transition: width 0.4s ease;
 }
+
+@media (max-width: 640px) {
+  .ch27-event { grid-template-columns: 5.5rem 1fr; }
+  .ch27-event-meta { text-align: left; }
+}

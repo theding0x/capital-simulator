@@ -268,3 +268,7 @@
   font-weight: 600;
   fill: #fbbf24;
 }
+
+@media (max-width: 640px) {
+  .ch18-bar-row { grid-template-columns: 8rem 1fr auto; }
+}

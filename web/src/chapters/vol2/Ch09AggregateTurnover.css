@@ -221,3 +221,7 @@
   color: #b00;
   border: 1px solid #f5c0c0;
 }
+
+@media (max-width: 640px) {
+  .ch09-grid { grid-template-columns: 1fr; }
+}

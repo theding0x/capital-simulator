@@ -297,3 +297,7 @@
   border-color: var(--red);
   color: var(--red);
 }
+
+@media (max-width: 640px) {
+  .cliff-row { grid-template-columns: 1fr; }
+}

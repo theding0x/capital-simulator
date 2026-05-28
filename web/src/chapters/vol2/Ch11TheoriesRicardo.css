@@ -150,3 +150,7 @@
 .ch11-error {
   color: var(--red);
 }
+
+@media (max-width: 640px) {
+  .ch11-comparison { grid-template-columns: 1fr; }
+}
