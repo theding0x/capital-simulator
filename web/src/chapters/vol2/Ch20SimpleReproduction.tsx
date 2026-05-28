@@ -1,4 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { simpleReproductionApi } from "../../api";
+import type {
+  SimpleReproductionScheme,
+  DepartmentalCapital,
+  BalanceCheckResult,
+} from "../../types";
 import "./Ch20SimpleReproduction.css";
 
 // Vol. II Ch. 20 — Simple Reproduction.
@@ -24,27 +30,49 @@ import "./Ch20SimpleReproduction.css";
 // Chapter resolves the Ch. 17 realisation puzzle and refutes Smith's revenue
 // dogma from Ch. 19.
 
-// ── canonical fixture ─────────────────────────────────────────────────────────
+// ── canonical fixture (fallback) ──────────────────────────────────────────────
 
-const DEPT_I = { c: 4000, v: 1000, s: 1000, total: 6000 };
-const DEPT_II = { c: 2000, v: 500, s: 500, total: 3000 };
+const DEPT_I_FALLBACK = { c: 4000, v: 1000, s: 1000, total: 6000 };
+const DEPT_II_FALLBACK = { c: 2000, v: 500, s: 500, total: 3000 };
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function fmt(n: number): string {
-  return n.toLocaleString();
+  return Math.round(n).toLocaleString();
+}
+
+// Backend stores pence × 1 000; abstract units = pence / 1 000.
+function toAbstract(pence: number): number {
+  return Math.round(pence / 1000);
+}
+
+function deptToAbstract(d: DepartmentalCapital) {
+  return {
+    c: toAbstract(d.constant_pence),
+    v: toAbstract(d.variable_pence),
+    s: toAbstract(d.surplus_pence),
+    total: toAbstract(d.total_pence),
+  };
 }
 
 // ── Widget 1 — Canonical Two-Department Table ─────────────────────────────────
 
-function DepartmentTable() {
-  const ivs = DEPT_I.v + DEPT_I.s;
-  const balanced = ivs === DEPT_II.c;
+interface DepartmentTableProps {
+  scheme: SimpleReproductionScheme | null;
+}
+
+function DepartmentTable({ scheme }: DepartmentTableProps) {
+  const dI   = scheme?.department_i   ? deptToAbstract(scheme.department_i)   : DEPT_I_FALLBACK;
+  const dII  = scheme?.department_ii  ? deptToAbstract(scheme.department_ii)  : DEPT_II_FALLBACK;
+  const period = scheme?.period ?? "1865";
+  const ivs = dI.v + dI.s;
+  const balanced = ivs === dII.c;
   return (
     <div className="ch20-widget">
-      <p className="ch20-section-title">The Canonical Reproduction Scheme — 1865</p>
+      <p className="ch20-section-title">The Canonical Reproduction Scheme — {period}</p>
       <p className="ch20-subtitle">
         Values in abstract units. Backend stores pence ×&thinsp;1&thinsp;000.
+        {!scheme && " (displaying local fixture — connect to backend to load seed data)"}
       </p>
       <div className="ch20-table-wrap">
         <table className="ch20-table">
@@ -60,24 +88,24 @@ function DepartmentTable() {
           <tbody>
             <tr>
               <td className="row-dept-i">I — Means of Production</td>
-              <td className="col-c num">{fmt(DEPT_I.c)}</td>
-              <td className="col-v num">{fmt(DEPT_I.v)}</td>
-              <td className="col-s num">{fmt(DEPT_I.s)}</td>
-              <td className="col-total num">{fmt(DEPT_I.total)}</td>
+              <td className="col-c num">{fmt(dI.c)}</td>
+              <td className="col-v num">{fmt(dI.v)}</td>
+              <td className="col-s num">{fmt(dI.s)}</td>
+              <td className="col-total num">{fmt(dI.total)}</td>
             </tr>
             <tr>
               <td className="row-dept-ii">II — Articles of Consumption</td>
-              <td className="col-c num">{fmt(DEPT_II.c)}</td>
-              <td className="col-v num">{fmt(DEPT_II.v)}</td>
-              <td className="col-s num">{fmt(DEPT_II.s)}</td>
-              <td className="col-total num">{fmt(DEPT_II.total)}</td>
+              <td className="col-c num">{fmt(dII.c)}</td>
+              <td className="col-v num">{fmt(dII.v)}</td>
+              <td className="col-s num">{fmt(dII.s)}</td>
+              <td className="col-total num">{fmt(dII.total)}</td>
             </tr>
           </tbody>
         </table>
       </div>
       <div className={`ch20-balance-badge ${balanced ? "balanced" : "imbalanced"}`}>
         <span className="ch20-balance-eq">
-          I(v + s) = {fmt(ivs)}&nbsp;&nbsp;{balanced ? "==" : "≠"}&nbsp;&nbsp;II(c) = {fmt(DEPT_II.c)}
+          I(v + s) = {fmt(ivs)}&nbsp;&nbsp;{balanced ? "==" : "≠"}&nbsp;&nbsp;II(c) = {fmt(dII.c)}
         </span>
         <span className="ch20-balance-verdict">
           {balanced ? "✓ Balanced — simple reproduction holds" : "✗ Imbalanced"}
@@ -89,7 +117,14 @@ function DepartmentTable() {
 
 // ── Widget 2 — Three-Exchange Flow Diagram (SVG) ──────────────────────────────
 
-function ExchangeFlowDiagram() {
+interface ExchangeFlowProps {
+  scheme: SimpleReproductionScheme | null;
+}
+
+function ExchangeFlowDiagram({ scheme }: ExchangeFlowProps) {
+  const dI  = scheme?.department_i  ? deptToAbstract(scheme.department_i)  : DEPT_I_FALLBACK;
+  const dII = scheme?.department_ii ? deptToAbstract(scheme.department_ii) : DEPT_II_FALLBACK;
+  const ivs = dI.v + dI.s;
   return (
     <div className="ch20-widget">
       <p className="ch20-section-title">Three Exchange Flows per Reproduction Cycle</p>
@@ -117,30 +152,30 @@ function ExchangeFlowDiagram() {
           {/* Dept I box */}
           <rect x="20" y="70" width="175" height="75" rx="6" className="ch20-svg-box-i" />
           <text x="107" y="99" textAnchor="middle" className="ch20-svg-label-main">Dept I</text>
-          <text x="107" y="114" textAnchor="middle" className="ch20-svg-label-sub">4000c + 1000v + 1000s</text>
-          <text x="107" y="129" textAnchor="middle" className="ch20-svg-label-sub">Total = 6000</text>
+          <text x="107" y="114" textAnchor="middle" className="ch20-svg-label-sub">{fmt(dI.c)}c + {fmt(dI.v)}v + {fmt(dI.s)}s</text>
+          <text x="107" y="129" textAnchor="middle" className="ch20-svg-label-sub">Total = {fmt(dI.total)}</text>
 
           {/* Dept II box */}
           <rect x="365" y="70" width="175" height="75" rx="6" className="ch20-svg-box-ii" />
           <text x="453" y="99" textAnchor="middle" className="ch20-svg-label-main">Dept II</text>
-          <text x="453" y="114" textAnchor="middle" className="ch20-svg-label-sub">2000c + 500v + 500s</text>
-          <text x="453" y="129" textAnchor="middle" className="ch20-svg-label-sub">Total = 3000</text>
+          <text x="453" y="114" textAnchor="middle" className="ch20-svg-label-sub">{fmt(dII.c)}c + {fmt(dII.v)}v + {fmt(dII.s)}s</text>
+          <text x="453" y="129" textAnchor="middle" className="ch20-svg-label-sub">Total = {fmt(dII.total)}</text>
 
           {/* Flow ① — Intra-Dept-I self-loop */}
           <path d="M 75 70 C 40 25, 145 25, 145 70" stroke="#a78bfa" strokeWidth="2" fill="none" markerEnd="url(#arr-self)" />
-          <text x="107" y="19" textAnchor="middle" className="ch20-svg-flow-label ch20-purple">① Intra-I: c = 4000</text>
+          <text x="107" y="19" textAnchor="middle" className="ch20-svg-flow-label ch20-purple">① Intra-I: c = {fmt(dI.c)}</text>
 
           {/* Flow ② — I(v+s) → II */}
           <path d="M 195 90 L 365 90" stroke="#818cf8" strokeWidth="2" fill="none" markerEnd="url(#arr-i)" />
-          <text x="280" y="80" textAnchor="middle" className="ch20-svg-flow-label ch20-indigo">② I(v+s) → II: 2000</text>
+          <text x="280" y="80" textAnchor="middle" className="ch20-svg-flow-label ch20-indigo">② I(v+s) → II: {fmt(ivs)}</text>
 
           {/* Flow ③ — II(c) → I */}
           <path d="M 365 125 L 195 125" stroke="#34d399" strokeWidth="2" fill="none" markerEnd="url(#arr-ii)" />
-          <text x="280" y="150" textAnchor="middle" className="ch20-svg-flow-label ch20-green">③ II(c) → I: 2000</text>
+          <text x="280" y="150" textAnchor="middle" className="ch20-svg-flow-label ch20-green">③ II(c) → I: {fmt(dII.c)}</text>
 
           {/* Keystone equation */}
           <text x="280" y="195" textAnchor="middle" className="ch20-svg-eq-label">
-            I(v+s) = 2000 == II(c) = 2000 ✓
+            I(v+s) = {fmt(ivs)} {ivs === dII.c ? "==" : "≠"} II(c) = {fmt(dII.c)} {ivs === dII.c ? "✓" : "✗"}
           </text>
         </svg>
       </div>
@@ -148,7 +183,7 @@ function ExchangeFlowDiagram() {
         <div className="ch20-exchange-row ch20-purple">
           <span className="ch20-exch-num">①</span>
           <span className="ch20-exch-body">
-            <strong>Intra-Dept-I replacement</strong> — Dept I buys MP from itself (I.c = 4&thinsp;000).
+            <strong>Intra-Dept-I replacement</strong> — Dept I buys MP from itself (I.c = {fmt(dI.c)}).
             No money crosses the departmental boundary.
           </span>
         </div>
@@ -156,14 +191,14 @@ function ExchangeFlowDiagram() {
           <span className="ch20-exch-num">②</span>
           <span className="ch20-exch-body">
             <strong>I(v+s) → II</strong> — Dept I workers (v) and capitalists (s) purchase
-            articles of consumption. Money flows I→II; goods flow II→I. Value = 2&thinsp;000.
+            articles of consumption. Money flows I→II; goods flow II→I. Value = {fmt(ivs)}.
           </span>
         </div>
         <div className="ch20-exchange-row ch20-green">
           <span className="ch20-exch-num">③</span>
           <span className="ch20-exch-body">
             <strong>II(c) → I</strong> — Dept II purchases replacement MP from Dept I.
-            Money flows II→I; goods flow I→II. Value = 2&thinsp;000.
+            Money flows II→I; goods flow I→II. Value = {fmt(dII.c)}.
           </span>
         </div>
       </div>
@@ -173,39 +208,77 @@ function ExchangeFlowDiagram() {
 
 // ── Widget 3 — Tick Demonstrator ──────────────────────────────────────────────
 
-function TickDemonstrator() {
-  const [tick, setTick] = useState(0);
+interface TickDemonstratorProps {
+  scheme: SimpleReproductionScheme | null;
+  onTick: (updated: SimpleReproductionScheme) => void;
+}
+
+function TickDemonstrator({ scheme, onTick }: TickDemonstratorProps) {
+  const [ticking, setTicking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const dI  = scheme?.department_i  ? deptToAbstract(scheme.department_i)  : DEPT_I_FALLBACK;
+  const dII = scheme?.department_ii ? deptToAbstract(scheme.department_ii) : DEPT_II_FALLBACK;
+  const tickCount = scheme?.tick_count ?? 0;
+
+  async function handleTick() {
+    if (!scheme) return;
+    setTicking(true);
+    setError(null);
+    try {
+      await simpleReproductionApi.advanceTick(scheme.id);
+      const updated = await simpleReproductionApi.getScheme(scheme.id);
+      onTick(updated);
+    } catch {
+      setError("Failed to advance tick — is the backend running?");
+    } finally {
+      setTicking(false);
+    }
+  }
+
   return (
     <div className="ch20-widget">
       <p className="ch20-section-title">Simple Reproduction Tick — Identical Magnitudes</p>
       <p className="ch20-subtitle">
         No accumulation: each tick the scheme repeats with the exact same magnitudes.
+        {scheme
+          ? ` Tick ${tickCount} recorded on the backend.`
+          : " (local simulation — connect to backend to persist ticks)"}
       </p>
       <div className="ch20-tick-display">
         <div className="ch20-tick-period">
-          Period: <strong>1865 + {tick}</strong>
+          Period: <strong>{scheme?.period ?? "1865"}</strong>
+          {tickCount > 0 && (
+            <span className="ch20-tick-badge">
+              {" "}+ {tickCount} cycle{tickCount !== 1 ? "s" : ""}
+            </span>
+          )}
         </div>
         <div className="ch20-tick-row">
           <span className="dept-i-tag">I</span>
           <span className="ch20-tick-formula">
-            {fmt(DEPT_I.c)}c + {fmt(DEPT_I.v)}v + {fmt(DEPT_I.s)}s = {fmt(DEPT_I.total)}
+            {fmt(dI.c)}c + {fmt(dI.v)}v + {fmt(dI.s)}s = {fmt(dI.total)}
           </span>
         </div>
         <div className="ch20-tick-row">
           <span className="dept-ii-tag">II</span>
           <span className="ch20-tick-formula">
-            {fmt(DEPT_II.c)}c + {fmt(DEPT_II.v)}v + {fmt(DEPT_II.s)}s = {fmt(DEPT_II.total)}
+            {fmt(dII.c)}c + {fmt(dII.v)}v + {fmt(dII.s)}s = {fmt(dII.total)}
           </span>
         </div>
         <div className="ch20-tick-note">Magnitudes unchanged — no surplus converted to capital.</div>
       </div>
-      <button className="ch20-tick-btn" onClick={() => setTick((t) => t + 1)}>
-        Advance one reproduction cycle →
+      <button
+        className="ch20-tick-btn"
+        onClick={handleTick}
+        disabled={!scheme || ticking}
+      >
+        {ticking ? "Advancing…" : "Advance one reproduction cycle →"}
       </button>
-      {tick > 0 && (
+      {error && <p className="ch20-tick-error">{error}</p>}
+      {tickCount > 0 && (
         <p className="ch20-tick-confirm">
-          After {tick} cycle{tick !== 1 ? "s" : ""}: Dept I still {fmt(DEPT_I.total)}, Dept II
-          still {fmt(DEPT_II.total)}. Simple reproduction holds.
+          After {tickCount} cycle{tickCount !== 1 ? "s" : ""}: Dept I still {fmt(dI.total)}, Dept II
+          still {fmt(dII.total)}. Simple reproduction holds.
         </p>
       )}
     </div>
@@ -214,17 +287,34 @@ function TickDemonstrator() {
 
 // ── Widget 4 — Imbalance Toy ──────────────────────────────────────────────────
 
-function ImbalanceToy() {
-  const [ivs, setIvs] = useState(DEPT_I.v + DEPT_I.s);
-  const [iic, setIic] = useState(DEPT_II.c);
+interface ImbalanceToyProps {
+  scheme: SimpleReproductionScheme | null;
+  balance: BalanceCheckResult | null;
+}
+
+function ImbalanceToy({ scheme, balance }: ImbalanceToyProps) {
+  const initIvs = scheme?.department_i
+    ? toAbstract(scheme.department_i.variable_pence + scheme.department_i.surplus_pence)
+    : DEPT_I_FALLBACK.v + DEPT_I_FALLBACK.s;
+  const initIIc = scheme?.department_ii
+    ? toAbstract(scheme.department_ii.constant_pence)
+    : DEPT_II_FALLBACK.c;
+
+  const [ivs, setIvs] = useState(initIvs);
+  const [iic, setIic] = useState(initIIc);
   const deficit = ivs - iic;
   const balanced = deficit === 0;
+
+  // Mirror backend balance check result when sliders are at seed values.
+  const showBackendBadge = balance !== null && ivs === initIvs && iic === initIIc;
 
   return (
     <div className="ch20-widget">
       <p className="ch20-section-title">Imbalance Toy — Break the Keystone Equation</p>
       <p className="ch20-subtitle">
         Adjust I(v+s) or II(c) to see what happens when the equation fails.
+        {showBackendBadge &&
+          ` Backend confirms: ${balance.is_balanced ? "balanced" : "imbalanced"}.`}
       </p>
       <div className="ch20-imbal-form">
         <label className="ch20-imbal-label">
@@ -272,10 +362,16 @@ function ImbalanceToy() {
 
 // ── Widget 5 — Money Closed Loop ──────────────────────────────────────────────
 
-function MoneyClosedLoop() {
-  const advanced = DEPT_II.c;
-  const returnedV = DEPT_I.v;
-  const returnedS = DEPT_I.s;
+interface MoneyClosedLoopProps {
+  scheme: SimpleReproductionScheme | null;
+}
+
+function MoneyClosedLoop({ scheme }: MoneyClosedLoopProps) {
+  const dI  = scheme?.department_i  ? deptToAbstract(scheme.department_i)  : DEPT_I_FALLBACK;
+  const dII = scheme?.department_ii ? deptToAbstract(scheme.department_ii) : DEPT_II_FALLBACK;
+  const advanced = dII.c;
+  const returnedV = dI.v;
+  const returnedS = dI.s;
   const returned = returnedV + returnedS;
   const net = advanced - returned;
   return (
@@ -283,6 +379,7 @@ function MoneyClosedLoop() {
       <p className="ch20-section-title">Money Closed Loop — Verification</p>
       <p className="ch20-subtitle">
         Money advanced by Dept II returns to Dept II within the year, closing the circuit.
+        {scheme && <> Period: <strong>{scheme.period}</strong>.</>}
       </p>
       <div className="ch20-loop-table">
         <div className="ch20-loop-row">
@@ -315,13 +412,60 @@ function MoneyClosedLoop() {
 // ── Root export ───────────────────────────────────────────────────────────────
 
 export function Ch20SimpleReproduction() {
+  const [scheme, setScheme] = useState<SimpleReproductionScheme | null>(null);
+  const [balance, setBalance] = useState<BalanceCheckResult | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    simpleReproductionApi
+      .listSchemes()
+      .then(async (list) => {
+        if (list.length === 0) return;
+        const s = list[0];
+        setScheme(s);
+        simpleReproductionApi
+          .balanceCheck(s.id)
+          .then(setBalance)
+          .catch(() => null);
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  function handleTick(updated: SimpleReproductionScheme) {
+    setScheme(updated);
+  }
+
+  if (loading) {
+    return (
+      <div className="ch20-root">
+        <div className="ch20-widget">
+          <p className="ch20-loading">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!scheme) {
+    return (
+      <div className="ch20-root">
+        <div className="ch20-widget">
+          <p className="ch20-section-title">Vol. II Ch. 20 — Simple Reproduction</p>
+          <p className="ch20-empty">
+            No seed data found. Run the database migrations to populate this panel.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ch20-root">
-      <DepartmentTable />
-      <ExchangeFlowDiagram />
-      <TickDemonstrator />
-      <ImbalanceToy />
-      <MoneyClosedLoop />
+      <DepartmentTable scheme={scheme} />
+      <ExchangeFlowDiagram scheme={scheme} />
+      <TickDemonstrator scheme={scheme} onTick={handleTick} />
+      <ImbalanceToy scheme={scheme} balance={balance} />
+      <MoneyClosedLoop scheme={scheme} />
     </div>
   );
 }
