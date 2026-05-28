@@ -300,6 +300,22 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **api-gateway.** Reverse-proxies `/v1/surplus-value/rates` to simulation-engine.
 - **React UI.** "Ch. 18 — Different Formulae for the Rate of Surplus-Value" panel with: two numeric inputs (necessary / surplus labour in minutes); three preset buttons (§ Formula I 100%, § Formula II bounded, § agricultural labourer 300%); side-by-side result cards for each formula with a note on its key property.
 
+### Ch. 19 (Vol. II) — what was built
+
+`simulation-engine` extends the existing `circulation.KnownEconomistError` enum and `economist_attributions` seed data (originally introduced in Chs. 10–11) with six new constants covering Marx's Ch. 19 critique of Quesnay, Smith, and Ricardo on total social reproduction.
+
+- **Six new `KnownEconomistError` constants:**
+  - `ErrorQuesnayProductiveSterileDivision` — Quesnay limits productive labour to agriculture.
+  - `ErrorQuesnayMissingValueTheory` — The Tableau has no labour-theory-of-value foundation.
+  - `ErrorSmithRevenueDogma` — Smith resolves the entire annual product into wages + profit + rent, omitting constant capital.
+  - `ErrorSmithMissingConstantReplacement` — Consequence: no replacement fund for means of production.
+  - `ErrorSmithLabourRegress` — Smith's fix attempt creates an infinite regress of c into historical revenue.
+  - `ErrorRicardoIncompleteReproduction` — Ricardo sees Smith's error at the individual level but cannot derive I(v+s) = II(c).
+- **`AllKnownEconomistErrors` grows from 8 to 14 entries.**
+- **Seed migration `00056_v2_ch19_seed.sql`:** two new `EconomistAttribution` rows (Quesnay Tableau Économique reproduction context; Ricardo reproduction entry) and three additional `economist_attribution_errors` rows on the existing Smith row.
+- **No new HTTP endpoints** — the existing `GET /v1/circulation/economist-attributions` serves all data.
+- **React panel** `Ch19FormerPresentations`: genealogy diagram (Quesnay 1758 → Smith 1776 → Ricardo 1817 → Marx 1885), Smith's revenue-dogma equation comparison (*v+p+r* vs *c+v+s*), per-attribution error cards with refutations, and chapter quotes.
+
 ### Ch. 21 — what was built
 
 `agent-service` adds the `piece_wage.go` domain file implementing Marx's Ch. 21 analysis of the piece-wage form.
@@ -578,7 +594,7 @@ Spec sweep pending; titles below are drawn from the vault filenames and will be 
 | Ch. 16    | ✅ Done     | The Turnover of Variable Capital — VariableCapitalAdvance, PerCircuitSurplusRate, AnnualSurplusRate, AnnualSurplusRateContrast, VariableCapitalReproduction; ComputeAnnualSurplusRate (n × s/v in basis points) | simulation-engine |
 | Ch. 17    | ✅ Done     | The Circulation of Surplus-Value — SurplusCirculation, RealisationSourceEntry, SocialCapitalAggregate, RealisationPuzzle; five realisation sources; AddRealisationSource; SnapshotAggregate; ListRealisationPuzzles; migrations 00052+00053 | simulation-engine |
 | Ch. 18    | ✅ Done     | The Role of Money-Capital in Reproduction — MoneySupplyApportionment, DepartmentMoneyReserve, CapitalDepartment, CirculatingMoneyMass, WageRotationFund, InterDepartmentSettlement, WageRotationFund, InterDepartmentSettlement; migrations 00054+00055 | simulation-engine |
-| Ch. 19    | ⏳ Pending  | Former Presentations of the Subject — Quesnay, Smith, and others                                    | simulation-engine                 |
+| Ch. 19    | ✅ Done     | Former Presentations of the Subject — 6 new KnownEconomistError constants (Quesnay×2, Smith×3, Ricardo×1); seed migration 00056; Ch19FormerPresentations React panel | simulation-engine |
 | Ch. 20    | ⏳ Pending  | Simple Reproduction (Vol. II treatment — Departments I & II)                                        | simulation-engine                 |
 | Ch. 21    | ⏳ Pending  | Accumulation and Reproduction on an Extended Scale                                                  | simulation-engine                 |
 

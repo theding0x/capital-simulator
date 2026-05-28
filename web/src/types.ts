@@ -2328,6 +2328,7 @@ export interface AggregateTurnover {
 // Physiocrats, Adam Smith, and Ricardo.
 
 export type KnownEconomistError =
+  // Ch. 10–11: fixed/circulating capital theories
   | "error_smith_conflation"
   | "error_smith_circulation_capital_conflation"
   | "error_smith_revenue_in_capital"
@@ -2335,7 +2336,14 @@ export type KnownEconomistError =
   | "error_ricardo_conflation"
   | "error_ricardo_fixed_capital_price_explanation"
   | "error_ricardo_no_aggregate_turnover"
-  | "error_ricardo_no_value_revolution";
+  | "error_ricardo_no_value_revolution"
+  // Ch. 19: former presentations of reproduction
+  | "error_quesnay_productive_sterile_division"
+  | "error_quesnay_missing_value_theory"
+  | "error_smith_revenue_dogma"
+  | "error_smith_missing_constant_replacement"
+  | "error_smith_labour_regress"
+  | "error_ricardo_incomplete_reproduction";
 
 export interface EconomistAttribution {
   id: string;
