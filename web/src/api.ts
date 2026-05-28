@@ -1869,3 +1869,48 @@ export const simpleReproductionApi = {
       method: "POST", body: JSON.stringify(input),
     }),
 };
+
+// Vol. II Ch. 21 — Extended Reproduction
+export const extendedReproductionApi = {
+  createScheme: (input: { period: string; accumulation_rate_i_bps: number; accumulation_rate_ii_bps: number }) =>
+    http<import("./types").ExtendedReproductionScheme>("/v1/reproduction/extended/schemes", {
+      method: "POST", body: JSON.stringify(input),
+    }),
+
+  getScheme: (id: string) =>
+    http<import("./types").ExtendedReproductionScheme>(`/v1/reproduction/extended/schemes/${id}`),
+
+  addDepartment: (id: string, input: { department: string; constant_pence: number; variable_pence: number; surplus_pence: number; total_pence: number }) =>
+    http<import("./types").DepartmentalCapital>(`/v1/reproduction/extended/schemes/${id}/departments`, {
+      method: "POST", body: JSON.stringify(input),
+    }),
+
+  createReinvestment: (id: string, input: { department: string; delta_constant_pence: number; delta_variable_pence: number; consumed_surplus_pence: number; cycle_number: number }) =>
+    http<import("./types").Reinvestment>(`/v1/reproduction/extended/schemes/${id}/reinvestments`, {
+      method: "POST", body: JSON.stringify(input),
+    }),
+
+  tickScheme: (id: string) =>
+    http<import("./types").ExtendedReproductionScheme>(`/v1/reproduction/extended/schemes/${id}/tick`, {
+      method: "POST", body: "{}",
+    }),
+
+  getMoneyRequirement: (id: string, baseMoneyPence?: number) =>
+    http<import("./types").ExtendedMoneyRequirement>(
+      `/v1/reproduction/extended/schemes/${id}/money-requirement${baseMoneyPence !== undefined ? `?base_money_pence=${baseMoneyPence}` : ""}`
+    ),
+
+  createMultiPeriodScheme: (input: { label: string; scheme_ids: string[] }) =>
+    http<import("./types").MultiPeriodScheme>("/v1/reproduction/extended/multi-period", {
+      method: "POST", body: JSON.stringify(input),
+    }),
+
+  getMultiPeriodScheme: (id: string) =>
+    http<import("./types").MultiPeriodScheme>(`/v1/reproduction/extended/multi-period/${id}`),
+
+  listCompositionShifts: (id: string) =>
+    http<import("./types").CompositionShift[]>(`/v1/reproduction/extended/multi-period/${id}/composition-shift`),
+
+  listGrowthLeads: (id: string) =>
+    http<import("./types").DepartmentIGrowthLead[]>(`/v1/reproduction/extended/multi-period/${id}/growth-lead`),
+};

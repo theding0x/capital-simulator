@@ -212,6 +212,17 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/reproduction/wage-rotation-funds", h.CreateWageRotationFund)
 	s.HandleFunc("POST /v1/reproduction/inter-department-settlements", h.CreateInterDepartmentSettlement)
 
+	// Vol. II Ch. 21 — Accumulation and Reproduction on an Extended Scale
+	s.HandleFunc("POST /v1/reproduction/extended/schemes", h.handleCreateExtendedReproductionScheme)
+	s.HandleFunc("GET /v1/reproduction/extended/schemes/{id}", h.handleGetExtendedReproductionScheme)
+	s.HandleFunc("POST /v1/reproduction/extended/schemes/{id}/departments", h.handleAddExtendedDepartmentToScheme)
+	s.HandleFunc("POST /v1/reproduction/extended/schemes/{id}/reinvestments", h.handleCreateReinvestment)
+	s.HandleFunc("POST /v1/reproduction/extended/schemes/{id}/tick", h.handleTickExtendedScheme)
+	s.HandleFunc("GET /v1/reproduction/extended/schemes/{id}/money-requirement", h.handleGetExtendedMoneyRequirement)
+	s.HandleFunc("POST /v1/reproduction/extended/multi-period", h.handleCreateMultiPeriodScheme)
+	s.HandleFunc("GET /v1/reproduction/extended/multi-period/{id}/composition-shift", h.handleGetCompositionShift)
+	s.HandleFunc("GET /v1/reproduction/extended/multi-period/{id}/growth-lead", h.handleGetGrowthLead)
+
 	// Vol. II Ch. 20 — Simple Reproduction
 	s.HandleFunc("POST /v1/reproduction/simple/schemes", h.CreateSimpleReproductionScheme)
 	s.HandleFunc("GET /v1/reproduction/simple/schemes", h.ListSimpleReproductionSchemes)

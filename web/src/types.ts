@@ -2883,3 +2883,58 @@ export interface MoneyClosedLoop {
   is_closed: boolean;
   net_flow_pence: number;
 }
+
+// Vol. II Ch. 21 — Extended Reproduction
+
+export interface ExtendedReproductionScheme {
+  id: string;
+  period: string;
+  department_i?: DepartmentalCapital;
+  department_ii?: DepartmentalCapital;
+  accumulation_rate_i_bps: number;
+  accumulation_rate_ii_bps: number;
+  is_balanced: boolean;
+  tick_count: number;
+}
+
+export interface Reinvestment {
+  id: string;
+  scheme_id: string;
+  department: string;
+  delta_constant_pence: number;
+  delta_variable_pence: number;
+  consumed_surplus_pence: number;
+  cycle_number: number;
+}
+
+export interface MultiPeriodScheme {
+  id: string;
+  label: string;
+  scheme_ids: string[];
+}
+
+export interface CompositionShift {
+  id: string;
+  multi_period_id: string;
+  cycle_number: number;
+  dept_i_composition_bps: number;
+  dept_ii_composition_bps: number;
+  social_composition_bps: number;
+}
+
+export interface ExtendedMoneyRequirement {
+  id: string;
+  scheme_id: string;
+  base_money_pence: number;
+  additional_money_pence: number;
+  total_money_pence: number;
+}
+
+export interface DepartmentIGrowthLead {
+  id: string;
+  multi_period_id: string;
+  cycle_number: number;
+  dept_i_growth_bps: number;
+  dept_ii_growth_bps: number;
+  lead_confirmed: boolean;
+}
