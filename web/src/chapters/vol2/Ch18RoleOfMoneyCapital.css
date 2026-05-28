@@ -1,0 +1,270 @@
+/* Vol. II Ch. 18 — The Role of Money-Capital in Reproduction */
+
+.ch18-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Shared widget chrome ─────────────────────────────────── */
+
+.ch18-widget {
+  background: var(--surface-2, #1a1a2e);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.ch18-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent, #a78bfa);
+  margin: 0 0 0.35rem 0;
+}
+
+.ch18-widget-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted, #888);
+  margin: 0 0 1rem 0;
+}
+
+.ch18-note {
+  font-size: 0.75rem;
+  color: var(--text-muted, #777);
+  margin: 0.75rem 0 0 0;
+  font-style: italic;
+}
+
+/* ── Widget 1 — Apportionment bars ───────────────────────── */
+
+.ch18-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ch18-bar-row {
+  display: grid;
+  grid-template-columns: 14rem 1fr 6rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ch18-bar-label {
+  font-size: 0.78rem;
+  color: var(--text, #e0e0e0);
+}
+
+.ch18-bar-track {
+  height: 10px;
+  background: var(--surface-3, #111128);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.ch18-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.bar-dept-i  { background: #818cf8; }
+.bar-dept-ii { background: #34d399; }
+.bar-wage    { background: #fbbf24; }
+.bar-idle    { background: #94a3b8; }
+
+.ch18-bar-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted, #aaa);
+  text-align: right;
+}
+
+/* ── Widget 2 — M×V calculator ───────────────────────────── */
+
+.ch18-mv-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ch18-mv-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+}
+
+.ch18-mv-input {
+  width: 7rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--surface-3, #111128);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 4px;
+  color: var(--text, #e0e0e0);
+  font-size: 0.85rem;
+}
+
+.ch18-mv-times,
+.ch18-mv-equals {
+  font-size: 1.4rem;
+  color: var(--text-muted, #888);
+  padding-bottom: 0.1rem;
+}
+
+.ch18-mv-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-3, #111128);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 6px;
+  min-width: 10rem;
+}
+
+.ch18-mv-result-label {
+  font-size: 0.7rem;
+  color: var(--text-muted, #888);
+}
+
+.ch18-mv-result-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent, #a78bfa);
+}
+
+.ch18-mv-result-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted, #777);
+}
+
+/* ── Widget 3 — Wage rotation toy ────────────────────────── */
+
+.ch18-wr-form {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.ch18-wr-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+}
+
+.ch18-wr-input {
+  width: 8rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--surface-3, #111128);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 4px;
+  color: var(--text, #e0e0e0);
+  font-size: 0.85rem;
+}
+
+.ch18-wr-select {
+  padding: 0.35rem 0.5rem;
+  background: var(--surface-3, #111128);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 4px;
+  color: var(--text, #e0e0e0);
+  font-size: 0.85rem;
+}
+
+.ch18-wr-result {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-3, #111128);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 6px;
+}
+
+.ch18-wr-result-label {
+  font-size: 0.78rem;
+  color: var(--text-muted, #aaa);
+}
+
+.ch18-wr-result-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.ch18-wr-result-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted, #777);
+}
+
+/* ── Widget 4 — Two-dept flow SVG ────────────────────────── */
+
+.ch18-flow-svg-wrapper {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.ch18-flow-svg {
+  width: 100%;
+  height: auto;
+}
+
+.ch18-svg-box-i {
+  fill: #1e1b4b;
+  stroke: #818cf8;
+  stroke-width: 1.5;
+}
+
+.ch18-svg-box-ii {
+  fill: #064e3b;
+  stroke: #34d399;
+  stroke-width: 1.5;
+}
+
+.ch18-svg-label-main {
+  font-size: 13px;
+  font-weight: 700;
+  fill: #e0e0e0;
+}
+
+.ch18-svg-label-sub {
+  font-size: 10px;
+  fill: #a0a0b0;
+}
+
+.ch18-svg-arrow-marker {
+  fill: #a78bfa;
+}
+
+.ch18-svg-arrow-i {
+  stroke: #818cf8;
+  stroke-width: 2;
+  fill: none;
+  marker-end: url(#arrowhead);
+}
+
+.ch18-svg-arrow-ii {
+  stroke: #34d399;
+  stroke-width: 2;
+  fill: none;
+  marker-end: url(#arrowhead);
+}
+
+.ch18-svg-flow-label {
+  font-size: 10px;
+  fill: #c4b5fd;
+}
+
+.ch18-svg-eq-label {
+  font-size: 11px;
+  font-weight: 600;
+  fill: #fbbf24;
+}

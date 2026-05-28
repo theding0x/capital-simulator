@@ -2770,3 +2770,53 @@ export interface RealisationPuzzle {
   puzzle_statement: string;
   resolved_in_chapter: number;
 }
+
+// Vol. II Ch. 18 — The Role of Money-Capital in Reproduction
+
+export interface MoneySupplyApportionment {
+  id: string;
+  total_circulating_money_pence: number;
+  department_i_reserve_pence: number;
+  department_ii_reserve_pence: number;
+  wage_rotation_fund_pence: number;
+  idle_hoard_pence: number;
+  period: string;
+}
+
+export interface DepartmentMoneyReserve {
+  id: string;
+  department: string;
+  reserve_pence: number;
+  purpose: string;
+  period: string;
+}
+
+export interface CirculatingMoneyMass {
+  id: string;
+  money_stock_pence: number;
+  velocity_per_year_basis_points: number;
+  effective_circulating_value_pence: number;
+  period: string;
+}
+
+export interface WageRotationFund {
+  id: string;
+  fund_pence: number;
+  wage_cycle_frequency: number;
+  department: string;
+  period: string;
+}
+
+export interface InterDepartmentSettlement {
+  id: string;
+  from_department: string;
+  to_department: string;
+  amount_pence: number;
+  purpose: string;
+  period: string;
+}
+
+export interface ApportionmentBalanceCheck {
+  balanced: boolean;
+  apportionment_id: string;
+}

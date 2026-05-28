@@ -372,3 +372,28 @@ type SurplusCirculationStore interface {
 	// ListRealisationPuzzles returns all canonical RealisationPuzzle rows.
 	ListRealisationPuzzles(ctx context.Context) ([]repro.RealisationPuzzle, error)
 }
+
+// MoneyCapitalStore is the persistence contract for Vol. II Ch. 18 —
+// The Role of Money-Capital in Reproduction. It manages the five entity
+// types that model how money-capital is apportioned, reserved, and exchanged
+// between the two departments of social production.
+type MoneyCapitalStore interface {
+	CreateMoneySupplyApportionment(ctx context.Context, a repro.MoneySupplyApportionment) (repro.MoneySupplyApportionment, error)
+	GetMoneySupplyApportionment(ctx context.Context, id repro.MoneySupplyApportionmentID) (repro.MoneySupplyApportionment, error)
+	ListMoneySupplyApportionments(ctx context.Context) ([]repro.MoneySupplyApportionment, error)
+	CreateDepartmentMoneyReserve(ctx context.Context, r repro.DepartmentMoneyReserve) (repro.DepartmentMoneyReserve, error)
+	GetDepartmentMoneyReserve(ctx context.Context, id repro.DepartmentMoneyReserveID) (repro.DepartmentMoneyReserve, error)
+	ListDepartmentMoneyReserves(ctx context.Context) ([]repro.DepartmentMoneyReserve, error)
+	CreateCirculatingMoneyMass(ctx context.Context, m repro.CirculatingMoneyMass) (repro.CirculatingMoneyMass, error)
+	GetCirculatingMoneyMass(ctx context.Context, id repro.CirculatingMoneyMassID) (repro.CirculatingMoneyMass, error)
+	ListCirculatingMoneyMasses(ctx context.Context) ([]repro.CirculatingMoneyMass, error)
+	CreateWageRotationFund(ctx context.Context, w repro.WageRotationFund) (repro.WageRotationFund, error)
+	GetWageRotationFund(ctx context.Context, id repro.WageRotationFundID) (repro.WageRotationFund, error)
+	ListWageRotationFunds(ctx context.Context) ([]repro.WageRotationFund, error)
+	CreateInterDepartmentSettlement(ctx context.Context, s repro.InterDepartmentSettlement) (repro.InterDepartmentSettlement, error)
+	GetInterDepartmentSettlement(ctx context.Context, id repro.InterDepartmentSettlementID) (repro.InterDepartmentSettlement, error)
+	ListInterDepartmentSettlements(ctx context.Context) ([]repro.InterDepartmentSettlement, error)
+	// CheckApportionmentBalance returns true when the four parts of the given
+	// apportionment sum exactly to TotalSocialMoneyPence.
+	CheckApportionmentBalance(ctx context.Context, id repro.MoneySupplyApportionmentID) (bool, error)
+}

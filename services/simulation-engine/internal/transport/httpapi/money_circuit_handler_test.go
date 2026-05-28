@@ -12,7 +12,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/transport/httpapi"
 )
 
-func newMCHandler(t *testing.T) *httpapi.Handler {
+func newMoneyCircuitHandler(t *testing.T) *httpapi.Handler {
 	t.Helper()
 	mem := store.NewMemory()
 	return httpapi.New(slog.Default(), httpapi.Deps{
@@ -44,7 +44,7 @@ func createSpinningMill1871MC(t *testing.T, h *httpapi.Handler) string {
 
 func TestCreateMoneyCircuit_Created(t *testing.T) {
 	t.Parallel()
-	h := newMCHandler(t)
+	h := newMoneyCircuitHandler(t)
 	body := `{"amount":42200}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/money-circuits", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -78,7 +78,7 @@ func TestCreateMoneyCircuit_Created(t *testing.T) {
 
 func TestCreateMoneyCircuit_BadRequest(t *testing.T) {
 	t.Parallel()
-	h := newMCHandler(t)
+	h := newMoneyCircuitHandler(t)
 
 	cases := []struct {
 		name string
@@ -104,7 +104,7 @@ func TestCreateMoneyCircuit_BadRequest(t *testing.T) {
 
 func TestGetMoneyCircuit_NotFound(t *testing.T) {
 	t.Parallel()
-	h := newMCHandler(t)
+	h := newMoneyCircuitHandler(t)
 	req := httptest.NewRequest(http.MethodGet, "/v1/money-circuits/doesnotexist", nil)
 	req.SetPathValue("id", "doesnotexist")
 	w := httptest.NewRecorder()
@@ -116,7 +116,7 @@ func TestGetMoneyCircuit_NotFound(t *testing.T) {
 
 func TestGetMoneyCircuit_RoundTrip(t *testing.T) {
 	t.Parallel()
-	h := newMCHandler(t)
+	h := newMoneyCircuitHandler(t)
 	id := createSpinningMill1871MC(t, h)
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/money-circuits/"+id, nil)
@@ -137,7 +137,7 @@ func TestGetMoneyCircuit_RoundTrip(t *testing.T) {
 
 func TestListMoneyCircuits_NonNull(t *testing.T) {
 	t.Parallel()
-	h := newMCHandler(t)
+	h := newMoneyCircuitHandler(t)
 	req := httptest.NewRequest(http.MethodGet, "/v1/money-circuits", nil)
 	w := httptest.NewRecorder()
 	h.ListMoneyCircuits(w, req)
@@ -155,7 +155,7 @@ func TestListMoneyCircuits_NonNull(t *testing.T) {
 
 func TestRecordMoneyPurchase_AdvancesToMC(t *testing.T) {
 	t.Parallel()
-	h := newMCHandler(t)
+	h := newMoneyCircuitHandler(t)
 	id := createSpinningMill1871MC(t, h)
 
 	// SpinningMill1871: Lp=£265.40, Mp=£156.60 → total=£422
@@ -186,7 +186,7 @@ func TestRecordMoneyPurchase_AdvancesToMC(t *testing.T) {
 
 func TestRecordMoneyPurchase_NotFound(t *testing.T) {
 	t.Parallel()
-	h := newMCHandler(t)
+	h := newMoneyCircuitHandler(t)
 	body := `{"labour_amount":26540,"labour_power_hours":1440,"means_amount":15660,"means_capacity_hours":1440}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/money-circuits/missing/purchase", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -200,7 +200,7 @@ func TestRecordMoneyPurchase_NotFound(t *testing.T) {
 
 func TestRecordMoneyProduce_AdvancesToP(t *testing.T) {
 	t.Parallel()
-	h := newMCHandler(t)
+	h := newMoneyCircuitHandler(t)
 	id := createSpinningMill1871MC(t, h)
 
 	// advance to M-C first

@@ -204,6 +204,14 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/reproduction/social-aggregate", h.GetSocialAggregate)
 	s.HandleFunc("GET /v1/reproduction/realisation-puzzles", h.ListRealisationPuzzles)
 
+	// Vol. II Ch. 18 — The Role of Money-Capital in Reproduction
+	s.HandleFunc("POST /v1/reproduction/apportionments", h.CreateApportionment)
+	s.HandleFunc("GET /v1/reproduction/apportionments/{id}/balance-check", h.GetApportionmentBalanceCheck)
+	s.HandleFunc("POST /v1/reproduction/department-reserves", h.CreateDepartmentReserve)
+	s.HandleFunc("POST /v1/reproduction/circulating-money-masses", h.CreateCirculatingMoneyMass)
+	s.HandleFunc("POST /v1/reproduction/wage-rotation-funds", h.CreateWageRotationFund)
+	s.HandleFunc("POST /v1/reproduction/inter-department-settlements", h.CreateInterDepartmentSettlement)
+
 	// Vol. II Ch. 8 — Fixed Capital and Circulating Capital
 	s.HandleFunc("POST /v1/capital-components", h.CreateComponent)
 	s.HandleFunc("GET /v1/capital-components", h.ListComponents)
