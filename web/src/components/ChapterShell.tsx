@@ -51,6 +51,7 @@ import Ch14TimeOfCirculation from "../chapters/vol2/Ch14TimeOfCirculation";
 import { Ch15PriceChanges } from "../chapters/vol2/Ch15PriceChanges";
 import { Ch16TurnoverOfVariableCapital } from "../chapters/vol2/Ch16TurnoverOfVariableCapital";
 import { Ch17CirculationOfSurplus } from "../chapters/vol2/Ch17CirculationOfSurplus";
+import { Ch18RoleOfMoneyCapital } from "../chapters/vol2/Ch18RoleOfMoneyCapital";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -120,6 +121,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v2-ch15": Ch15PriceChanges as AnyPanel,
   "v2-ch16": Ch16TurnoverOfVariableCapital as AnyPanel,
   "v2-ch17": Ch17CirculationOfSurplus as AnyPanel,
+  "v2-ch18": Ch18RoleOfMoneyCapital as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -173,6 +175,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v2-ch15": "A change in the value (price) of the elements of productive capital, whether of means of production or of labour-power, changes the magnitude of the capital-value to be advanced for the reproduction of productive capital.",
   "v2-ch16": "The annual rate of surplus-value … is determined not only by the rate of surplus-value that the capital extracts from the workers in a single turnover, but by how often this exploitation process repeats itself during the year.",
   "v2-ch17": "Where does the money come from to realise the aggregate surplus-value? … formally resolved in Chs. 20–21.",
+  "v2-ch18": "The circulation of money-capital, and of the whole commodity-capital as well, is now for the first time included in the circuit, for here both are within the circulation sphere.",
 };
 
 export function ChapterShell({

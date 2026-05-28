@@ -271,6 +271,18 @@ func main() {
 	srv.Handle("/v1/reproduction/social-aggregate", simProxy)
 	srv.Handle("/v1/reproduction/realisation-puzzles", simProxy)
 
+	// Vol. II Ch. 18 — The Role of Money-Capital in Reproduction → simulation-engine
+	srv.Handle("/v1/reproduction/apportionments", simProxy)
+	srv.Handle("/v1/reproduction/apportionments/{rest...}", simProxy)
+	srv.Handle("/v1/reproduction/department-reserves", simProxy)
+	srv.Handle("/v1/reproduction/department-reserves/{rest...}", simProxy)
+	srv.Handle("/v1/reproduction/circulating-money-mass", simProxy)
+	srv.Handle("/v1/reproduction/circulating-money-mass/{rest...}", simProxy)
+	srv.Handle("/v1/reproduction/wage-rotation-funds", simProxy)
+	srv.Handle("/v1/reproduction/wage-rotation-funds/{rest...}", simProxy)
+	srv.Handle("/v1/reproduction/inter-department-settlements", simProxy)
+	srv.Handle("/v1/reproduction/inter-department-settlements/{rest...}", simProxy)
+
 	// Reverse-proxy routes to finance-service (Vol. III — profit, rent,
 	// interest, credit, fictitious capital, the trinity formula). The
 	// service is scaffolded empty in foundation Phase 3; each Vol. III

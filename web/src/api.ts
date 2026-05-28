@@ -1737,6 +1737,71 @@ export const annualSurplusRateApi = {
   },
 };
 
+// Vol. II Ch. 18 — The Role of Money-Capital in Reproduction
+export const moneyCapitalApi = {
+  createApportionment: (input: {
+    total_circulating_money_pence: number;
+    department_i_reserve_pence: number;
+    department_ii_reserve_pence: number;
+    wage_rotation_fund_pence: number;
+    idle_hoard_pence: number;
+    period: string;
+  }) =>
+    http<import("./types").MoneySupplyApportionment>("/v1/reproduction/apportionments", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  checkApportionmentBalance: (id: string) =>
+    http<import("./types").ApportionmentBalanceCheck>(
+      `/v1/reproduction/apportionments/${id}/balance-check`
+    ),
+
+  createDepartmentReserve: (input: {
+    department: string;
+    reserve_pence: number;
+    purpose: string;
+    period: string;
+  }) =>
+    http<import("./types").DepartmentMoneyReserve>("/v1/reproduction/department-reserves", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createCirculatingMoneyMass: (input: {
+    money_stock_pence: number;
+    velocity_per_year_basis_points: number;
+    period: string;
+  }) =>
+    http<import("./types").CirculatingMoneyMass>("/v1/reproduction/circulating-money-mass", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createWageRotationFund: (input: {
+    fund_pence: number;
+    wage_cycle_frequency: number;
+    department: string;
+    period: string;
+  }) =>
+    http<import("./types").WageRotationFund>("/v1/reproduction/wage-rotation-funds", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  createInterDepartmentSettlement: (input: {
+    from_department: string;
+    to_department: string;
+    amount_pence: number;
+    purpose: string;
+    period: string;
+  }) =>
+    http<import("./types").InterDepartmentSettlement>("/v1/reproduction/inter-department-settlements", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+};
+
 // Vol. II Ch. 17 — The Circulation of Surplus-Value
 export const surplusCirculationApi = {
   create: (input: { period: string; total_surplus_pence: number }) =>
