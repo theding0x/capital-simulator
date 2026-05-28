@@ -173,3 +173,14 @@
 .error-msg { color: #c44; font-size: 0.85rem; }
 .muted { color: var(--ink-muted); }
 .small { font-size: 0.8rem; }
+
+@media (max-width: 880px) {
+  .aggregate-block { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .cost-row { grid-template-columns: 1fr; }
+  .aggregate-block { grid-template-columns: 1fr; }
+  .faux-frais-row { grid-template-columns: 1fr; }
+  .transport-grid { grid-template-columns: 1fr; }
+}

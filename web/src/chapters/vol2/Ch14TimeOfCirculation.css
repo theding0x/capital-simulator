@@ -42,3 +42,7 @@
 .ch14-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
 .ch14-table th { text-align: left; padding: 0.4rem 0.6rem; background: #f8fafc; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
 .ch14-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #f1f5f9; }
+
+@media (max-width: 640px) {
+  .ch14-calc { grid-template-columns: 1fr; }
+}

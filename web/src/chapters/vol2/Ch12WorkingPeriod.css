@@ -198,3 +198,8 @@
   color: var(--ink-muted);
   margin-bottom: 0.5rem;
 }
+
+@media (max-width: 640px) {
+  .ch12-comparison { grid-template-columns: 1fr; }
+  .ch12-constraint-row { grid-template-columns: 1fr; }
+}

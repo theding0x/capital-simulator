@@ -32,3 +32,7 @@
 @media (max-width: 880px) {
   .ch29-step { grid-template-columns: 1fr; }
 }
+
+@media (max-width: 640px) {
+  .ch29-wealth-bar { grid-template-columns: 1fr; }
+}

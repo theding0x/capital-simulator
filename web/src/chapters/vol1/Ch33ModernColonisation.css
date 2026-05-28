@@ -153,6 +153,11 @@
   margin-top: 0.75rem;
 }
 
+@media (max-width: 640px) {
+  .ch33-form-grid { grid-template-columns: 1fr; }
+  .ch33-comparison { grid-template-columns: 1fr; }
+}
+
 .ch33-comparison .ch33-side {
   border: 1px solid var(--border, #e2e2e2);
   border-radius: 6px;

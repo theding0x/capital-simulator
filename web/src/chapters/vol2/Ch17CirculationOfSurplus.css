@@ -305,3 +305,7 @@
   font-style: italic;
   margin: 0;
 }
+
+@media (max-width: 480px) {
+  .ch17-bar-row { grid-template-columns: 7rem 1fr 3rem; }
+}
