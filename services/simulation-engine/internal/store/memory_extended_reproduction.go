@@ -71,6 +71,21 @@ func (m *Memory) GetExtendedReproductionScheme(_ context.Context, id repro.Exten
 	return assembleExtendedScheme(row), nil
 }
 
+func (m *Memory) ListExtendedReproductionSchemes(_ context.Context, period string) ([]repro.ExtendedReproductionScheme, error) {
+	m.extendedRepro.mu.RLock()
+	defer m.extendedRepro.mu.RUnlock()
+	out := make([]repro.ExtendedReproductionScheme, 0, len(m.extendedRepro.schemes))
+	for _, row := range m.extendedRepro.schemes {
+		s := assembleExtendedScheme(row)
+		if period != "" && s.Period != period {
+			continue
+		}
+		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool { return string(out[i].ID) < string(out[j].ID) })
+	return out, nil
+}
+
 // --- DepartmentalCapital ----------------------------------------------------
 
 func (m *Memory) AddExtendedDepartmentToScheme(_ context.Context, schemeID repro.ExtendedReproductionSchemeID, dept repro.DepartmentalCapital) (repro.DepartmentalCapital, error) {

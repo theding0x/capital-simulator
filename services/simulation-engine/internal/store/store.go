@@ -444,6 +444,9 @@ type ExtendedReproductionStore interface {
 	// GetExtendedReproductionScheme returns the scheme with both departments
 	// assembled (when present) and IsBalanced recomputed.
 	GetExtendedReproductionScheme(ctx context.Context, id repro.ExtendedReproductionSchemeID) (repro.ExtendedReproductionScheme, error)
+	// ListExtendedReproductionSchemes returns all schemes. When period is non-empty
+	// only schemes whose period field matches are returned. Never returns nil.
+	ListExtendedReproductionSchemes(ctx context.Context, period string) ([]repro.ExtendedReproductionScheme, error)
 	// AddExtendedDepartmentToScheme attaches a DepartmentalCapital to the scheme.
 	// Returns ErrNotFound if scheme missing. Returns ErrAlreadyExists if that
 	// department slot is already occupied.
