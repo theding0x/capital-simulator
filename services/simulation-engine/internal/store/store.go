@@ -3,7 +3,7 @@
 // advancing a Factory one period at a time. Ch. 25 adds GeneralLawScenario.
 // Vol. II Ch. 2 adds ProductiveCircuit. Vol. II Ch. 16 adds AnnualSurplusRate.
 // Vol. II Ch. 17 adds SurplusCirculation. Vol. II Ch. 20 adds
-// SimpleReproductionScheme.
+// SimpleReproductionScheme. Vol. II Ch. 21 adds ExtendedReproductionScheme.
 package store
 
 import (
@@ -430,4 +430,48 @@ type SimpleReproductionSchemeStore interface {
 	CheckSchemeBalance(ctx context.Context, id repro.SimpleReproductionSchemeID) (repro.BalanceCheckResult, error)
 	// RecordMoneyClosedLoop persists a MoneyClosedLoop record for the scheme.
 	RecordMoneyClosedLoop(ctx context.Context, id repro.SimpleReproductionSchemeID, loop repro.MoneyClosedLoop) (repro.MoneyClosedLoop, error)
+}
+
+// ExtendedReproductionStore — Vol. II Ch. 21: Accumulation and Reproduction on
+// an Extended Scale. It manages ExtendedReproductionScheme (root),
+// Reinvestment (per-cycle surplus split), MultiPeriodScheme (cross-period
+// analysis), CompositionShift (rising c/v ratio), ExtendedMoneyRequirement
+// (money needed for growing circulation), and DepartmentIGrowthLead
+// (confirmation that Dept I grows faster than Dept II).
+type ExtendedReproductionStore interface {
+	// CreateExtendedReproductionScheme persists a new scheme with accumulation rates.
+	CreateExtendedReproductionScheme(ctx context.Context, s repro.ExtendedReproductionScheme) (repro.ExtendedReproductionScheme, error)
+	// GetExtendedReproductionScheme returns the scheme with both departments
+	// assembled (when present) and IsBalanced recomputed.
+	GetExtendedReproductionScheme(ctx context.Context, id repro.ExtendedReproductionSchemeID) (repro.ExtendedReproductionScheme, error)
+	// AddExtendedDepartmentToScheme attaches a DepartmentalCapital to the scheme.
+	// Returns ErrNotFound if scheme missing. Returns ErrAlreadyExists if that
+	// department slot is already occupied.
+	AddExtendedDepartmentToScheme(ctx context.Context, schemeID repro.ExtendedReproductionSchemeID, dept repro.DepartmentalCapital) (repro.DepartmentalCapital, error)
+	// CreateReinvestment persists a Reinvestment linked to the scheme.
+	// Returns ErrNotFound if scheme missing.
+	CreateReinvestment(ctx context.Context, schemeID repro.ExtendedReproductionSchemeID, r repro.Reinvestment) (repro.Reinvestment, error)
+	// ListReinvestments returns all Reinvestment records for a scheme in
+	// ascending cycle_number order. Returns an empty slice (never nil) if none.
+	ListReinvestments(ctx context.Context, schemeID repro.ExtendedReproductionSchemeID) ([]repro.Reinvestment, error)
+	// TickExtendedScheme advances one accumulation cycle: computes Reinvestment
+	// for each department, advances DepartmentalCapital values, updates IsBalanced
+	// and increments TickCount atomically.
+	// Returns ErrNotFound if scheme or departments are missing.
+	TickExtendedScheme(ctx context.Context, schemeID repro.ExtendedReproductionSchemeID) (repro.ExtendedReproductionScheme, error)
+	// GetExtendedMoneyRequirement computes the money requirement for the scheme
+	// without persisting it. Returns ErrNotFound if scheme missing.
+	GetExtendedMoneyRequirement(ctx context.Context, schemeID repro.ExtendedReproductionSchemeID, baseMoneyPence int64) (repro.ExtendedMoneyRequirement, error)
+	// CreateMultiPeriodScheme persists a MultiPeriodScheme and eagerly computes
+	// CompositionShift and DepartmentIGrowthLead rows for each consecutive pair
+	// of scheme IDs. Returns ErrNotFound if any linked scheme is missing.
+	CreateMultiPeriodScheme(ctx context.Context, mp repro.MultiPeriodScheme) (repro.MultiPeriodScheme, error)
+	// GetMultiPeriodScheme returns a MultiPeriodScheme by ID.
+	GetMultiPeriodScheme(ctx context.Context, id repro.MultiPeriodSchemeID) (repro.MultiPeriodScheme, error)
+	// ListCompositionShifts returns all CompositionShift rows for a
+	// MultiPeriodScheme sorted by cycle_number ascending. Never nil.
+	ListCompositionShifts(ctx context.Context, mpID repro.MultiPeriodSchemeID) ([]repro.CompositionShift, error)
+	// ListGrowthLeads returns all DepartmentIGrowthLead rows for a
+	// MultiPeriodScheme sorted by cycle_number ascending. Never nil.
+	ListGrowthLeads(ctx context.Context, mpID repro.MultiPeriodSchemeID) ([]repro.DepartmentIGrowthLead, error)
 }
