@@ -1,0 +1,224 @@
+/* ─── ch-panel shared namespace ──────────────────────────────────────────────
+   Used by Ch. 18, 23, 24, 25 and any future calculator-style chapter panels.
+   Defines the section / form / stat-card / table scaffold in project tokens.
+   Imported once from main.tsx so all ch-panel chapters get styles for free. */
+
+/* ─── Panel wrapper ──────────────────────────────────────────────────────── */
+
+/* .ch-panel — outer container; inherits .chapter-body sizing from the shell */
+.ch-panel { /* pass-through; sizing handled by .chapter-body */ }
+
+/* ─── Sections ───────────────────────────────────────────────────────────── */
+
+.ch-section {
+  padding: 2rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ch-section:last-of-type {
+  border-bottom: none;
+}
+
+.ch-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 1.75rem;
+}
+
+.ch-description {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  margin-bottom: 1.75rem;
+  font-style: italic;
+  font-family: 'IBM Plex Sans', sans-serif;
+  max-width: 60ch;
+  line-height: 1.6;
+}
+
+/* caption text rendered below a preset row */
+.ch-caption {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  font-style: italic;
+  font-family: 'IBM Plex Sans', sans-serif;
+  margin-bottom: 1rem;
+}
+
+/* ─── Preset buttons ─────────────────────────────────────────────────────── */
+
+.preset-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.preset-btn {
+  font-size: 0.68rem;
+  background: transparent;
+  border-color: var(--border);
+  color: var(--ink-muted);
+}
+
+.preset-btn:hover:not(:disabled) {
+  background: var(--surface-raised);
+  border-color: var(--ink-muted);
+  color: var(--ink);
+}
+
+/* ─── Form scaffold ──────────────────────────────────────────────────────── */
+
+.ch-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* two-column input grid; degrades to 1-col below 640 px */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .form-row { grid-template-columns: 1fr; }
+}
+
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--ink-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* .form-input inherits all rules from the global input {} block in index.css */
+.form-input { width: 100%; }
+
+/* primary submit button */
+.ch-btn {
+  align-self: flex-start;
+  background: var(--lead-dim);
+  border-color: var(--lead);
+  color: var(--lead-hover);
+}
+
+.ch-btn:hover:not(:disabled) {
+  background: var(--lead);
+  border-color: var(--lead);
+  color: #fff;
+}
+
+/* inline error message */
+.ch-error {
+  color: var(--red);
+  font-size: 0.82rem;
+  font-family: 'IBM Plex Mono', monospace;
+  margin-top: 0.5rem;
+}
+
+/* ─── Stat-card grid ─────────────────────────────────────────────────────── */
+
+.rates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.rates-card {
+  padding: 1.25rem 1.5rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rates-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.rates-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--gold-bright);
+  line-height: 1.1;
+}
+
+.rates-note {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* full-width summary row inside a rates-grid */
+.rates-summary {
+  grid-column: 1 / -1;
+}
+
+/* ─── Utility ────────────────────────────────────────────────────────────── */
+
+/* generic italic helper — used alongside ch-caption and similar classes */
+.italic { font-style: italic; }
+
+/* ─── Chapter data table ─────────────────────────────────────────────────── */
+
+.ch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.ch-table thead th {
+  text-align: left;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  padding: 0 1rem 0.75rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ch-table thead th:last-child { padding-right: 0; }
+
+.ch-table tbody tr {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.1s;
+}
+
+.ch-table tbody tr:last-child { border-bottom: none; }
+
+.ch-table tbody tr:hover > td { background: var(--surface-raised); }
+
+.ch-table tbody td {
+  padding: 0.75rem 1rem 0.75rem 0;
+  vertical-align: middle;
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+}
+
+.ch-table tbody td:first-child { color: var(--ink); }
+.ch-table tbody td:last-child  { padding-right: 0; }
