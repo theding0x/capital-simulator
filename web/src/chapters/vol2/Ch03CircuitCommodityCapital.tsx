@@ -148,7 +148,11 @@ export function Ch03CircuitCommodityCapital() {
               <li
                 key={c.id}
                 className={c.id === selectedId ? "selected" : ""}
+                role="button"
+                tabIndex={0}
+                aria-pressed={c.id === selectedId}
                 onClick={() => setSelectedId(c.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(c.id); } }}
               >
                 {fmt(c.initial.total)} — {c.mode}
                 {c.terminal && <span className="cc-closed-badge">closed</span>}

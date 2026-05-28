@@ -133,7 +133,11 @@ export function Ch02CircuitProductiveCapital() {
               <li
                 key={c.id}
                 className={c.id === selectedId ? "selected" : ""}
+                role="button"
+                tabIndex={0}
+                aria-pressed={c.id === selectedId}
                 onClick={() => setSelectedId(c.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(c.id); } }}
               >
                 {fmt(c.constant_pence + c.variable_pence)} — {c.mode}
               </li>
