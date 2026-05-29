@@ -207,3 +207,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Nebeneinander prose (uplift batch) ────────────────────────────────── */
+.v2-ch04-nebeneinander {
+  margin: 1rem 0 1.25rem;
+  padding: 0.85rem 1.25rem;
+  border-left: 2px solid var(--gold-border);
+  background: var(--gold-bg);
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 72ch;
+}

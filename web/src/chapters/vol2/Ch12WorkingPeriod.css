@@ -203,3 +203,42 @@
   .ch12-comparison { grid-template-columns: 1fr; }
   .ch12-constraint-row { grid-template-columns: 1fr; }
 }
+
+/* ── Insight (uplift batch) ────────────────────────────────────────────── */
+.v2-ch12-insight {
+  background: var(--surface-raised);
+  border-left: 3px solid var(--red);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 1.5rem;
+}
+
+.v2-ch12-insight-h2 {
+  margin: 0 0 0.65rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.v2-ch12-insight-prose {
+  margin: 0 0 0.6rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  max-width: 72ch;
+}
+
+.v2-ch12-insight-kpi {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--gold-bright);
+}

@@ -117,6 +117,7 @@ export function Ch12WorkingPeriod() {
 
   return (
     <div className="ch12-panel">
+      <CapitalLockingInsight />
       {/* SpinningMill vs LocomotiveWorks side-by-side */}
       {periods.length > 0 && (
         <section className="ch12-comparison">
@@ -203,5 +204,23 @@ export function Ch12WorkingPeriod() {
         </div>
       </section>
     </div>
+  );
+}
+
+function CapitalLockingInsight() {
+  return (
+    <section className="v2-ch12-insight">
+      <h2 className="v2-ch12-insight-h2">The capital-locking multiplier</h2>
+      <p className="v2-ch12-insight-prose">
+        A working period of <em>n</em> weeks ties up <em>n</em> times more
+        capital than a single-week period at the same scale of production —
+        because no value can be realised until the working period closes.
+        Marx's locomotive-works fixture runs 84 weeks: the same daily output
+        of labour-power, but <strong>84×</strong> the capital locked at any
+        instant. The discrete vs connected modes below show the same
+        mechanism on two seed fixtures.
+      </p>
+      <span className="v2-ch12-insight-kpi">×84 — locomotive vs spinning</span>
+    </section>
   );
 }
