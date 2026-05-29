@@ -100,11 +100,34 @@ type CirculationCostStore interface {
 	SystemFauxFrais(ctx context.Context, period string) (costs.SystemFauxFraisResult, error)
 }
 
+// MoneyCh3Store is the persistence contract for Vol. I Ch. 3 money-form
+// records: hoards (money withdrawn from circulation), payment obligations
+// (means of payment / credit), and world-money transfers (cross-border
+// settlement). It is embedded in Store.
+type MoneyCh3Store interface {
+	// Hoard operations.
+	CreateHoard(ctx context.Context, h market.Hoard) (market.Hoard, error)
+	GetHoard(ctx context.Context, id market.HoardID) (market.Hoard, error)
+	ListHoards(ctx context.Context) ([]market.Hoard, error)
+
+	// PaymentObligation operations. SettlePaymentObligation marks an
+	// obligation paid and returns ErrNotFound when the id is unknown.
+	CreatePaymentObligation(ctx context.Context, p market.PaymentObligation) (market.PaymentObligation, error)
+	GetPaymentObligation(ctx context.Context, id market.PaymentObligationID) (market.PaymentObligation, error)
+	ListPaymentObligations(ctx context.Context) ([]market.PaymentObligation, error)
+	SettlePaymentObligation(ctx context.Context, id market.PaymentObligationID) (market.PaymentObligation, error)
+
+	// WorldMoneyTransfer operations.
+	CreateWorldMoneyTransfer(ctx context.Context, t market.WorldMoneyTransfer) (market.WorldMoneyTransfer, error)
+	ListWorldMoneyTransfers(ctx context.Context) ([]market.WorldMoneyTransfer, error)
+}
+
 // Store is the persistence contract for market-service domain records.
 type Store interface {
 	TurnoverTimeStore
 	CirculationTimeV2Store
 	CirculationCostStore
+	MoneyCh3Store
 	// Owner operations.
 	CreateOwner(ctx context.Context, o market.Owner) (market.Owner, error)
 	GetOwner(ctx context.Context, id market.OwnerID) (market.Owner, error)

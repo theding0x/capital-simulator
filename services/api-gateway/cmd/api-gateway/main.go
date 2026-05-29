@@ -65,6 +65,16 @@ func main() {
 	srv.Handle("/v1/perishability", marketProxy)
 	srv.Handle("/v1/market-separation", marketProxy)
 
+	// Vol. I Ch. 3 — Money domain: hoards, payment obligations, world-money,
+	// M = ΣP / V circulation calculator → market-service
+	srv.Handle("/v1/hoards", marketProxy)
+	srv.Handle("/v1/hoards/{rest...}", marketProxy)
+	srv.Handle("/v1/payment-obligations", marketProxy)
+	srv.Handle("/v1/payment-obligations/{rest...}", marketProxy)
+	srv.Handle("/v1/world-money-transfers", marketProxy)
+	srv.Handle("/v1/world-money-transfers/{rest...}", marketProxy)
+	srv.Handle("/v1/circulation/money-required", marketProxy)
+
 	// Vol. II Ch. 6 — Costs of Circulation → market-service
 	srv.Handle("/v1/circulation-costs", marketProxy)
 	srv.Handle("/v1/circulation-costs/{rest...}", marketProxy)
