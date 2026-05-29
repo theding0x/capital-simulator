@@ -198,3 +198,65 @@ func TestMemory_ListVariationsNeverNil(t *testing.T) {
 		t.Error("list should return a non-nil slice even when empty")
 	}
 }
+
+func TestMemory_TurnoverAnalysisRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Marx's Capital A: 100C, 20v, s' = 100%, n = 2 → annual p' = 40%.
+	a := profit.ComputeTurnoverAnalysis(100, 20, 10000, 2)
+	created, err := m.CreateTurnoverAnalysis(ctx, a)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+
+	got, err := m.GetTurnoverAnalysis(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetTurnoverAnalysisNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetTurnoverAnalysis(context.Background(), profit.TurnoverAnalysisID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateTurnoverAnalysisDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	a := profit.ComputeTurnoverAnalysis(100, 20, 10000, 2)
+	a.ID = profit.TurnoverAnalysisID("fixed-id-3456")
+
+	if _, err := m.CreateTurnoverAnalysis(ctx, a); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateTurnoverAnalysis(ctx, a); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListTurnoverAnalysesNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListTurnoverAnalyses(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}

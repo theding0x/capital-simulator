@@ -330,6 +330,9 @@ func main() {
 	srv.Handle("/v1/profit/variation", financeProxy)
 	srv.Handle("/v1/profit/variation/{rest...}", financeProxy)
 	srv.Handle("/v1/profit/compare", financeProxy)
+	// Vol. III Ch. 4 — The Effect of the Turnover on the Rate of Profit → finance-service
+	srv.Handle("/v1/profit/turnover-analysis", financeProxy)
+	srv.Handle("/v1/profit/turnover-analysis/{rest...}", financeProxy)
 	// Vol. III, Ch. 9 — General Rate of Profit + Prices of Production → finance-service
 	// srv.Handle("/v1/general-profit-rate", financeProxy)
 	// srv.Handle("/v1/prices-of-production", financeProxy)

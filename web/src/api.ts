@@ -1988,4 +1988,17 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // Vol. III Ch. 4 — The Effect of the Turnover on the Rate of Profit
+  listTurnoverAnalyses: () =>
+    http<{ items: import("./types").TurnoverAnalysisResponse[] }>("/v1/profit/turnover-analysis").then((r) => r.items),
+
+  getTurnoverAnalysis: (id: string) =>
+    http<import("./types").TurnoverAnalysisResponse>(`/v1/profit/turnover-analysis/${id}`),
+
+  createTurnoverAnalysis: (input: { c: number; v: number; s_rate: number; n: number }) =>
+    http<import("./types").TurnoverAnalysisResponse>("/v1/profit/turnover-analysis", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

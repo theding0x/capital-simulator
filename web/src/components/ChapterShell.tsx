@@ -58,6 +58,7 @@ import { Ch21ExtendedReproduction } from "../chapters/vol2/Ch21ExtendedReproduct
 import { Ch01CostPriceAndProfit } from "../chapters/vol3/Ch01CostPriceAndProfit";
 import { Ch02RateOfProfit } from "../chapters/vol3/Ch02RateOfProfit";
 import { Ch03ProfitRateRelation } from "../chapters/vol3/Ch03ProfitRateRelation";
+import { Ch04TurnoverEffect } from "../chapters/vol3/Ch04TurnoverEffect";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -134,6 +135,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch01": Ch01CostPriceAndProfit as AnyPanel,
   "v3-ch02": Ch02RateOfProfit as AnyPanel,
   "v3-ch03": Ch03ProfitRateRelation as AnyPanel,
+  "v3-ch04": Ch04TurnoverEffect as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -193,6 +195,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch01": "The capitalist may sell a commodity at a profit even when he sells it below its value. So long as its selling price is higher than its cost-price, a portion of the surplus-value incorporated in it is always realised.",
   "v3-ch02": "Profit is nevertheless a converted form of surplus-value, a form in which its origin and the secret of its existence are obscured and extinguished.",
   "v3-ch03": "The rate of profit is related to the rate of surplus-value as the variable capital is to the total capital.",
+  "v3-ch04": "The shorter the period of turnover ... the larger, therefore, the appropriated surplus-value, provided other conditions remain the same.",
 };
 
 export function ChapterShell({

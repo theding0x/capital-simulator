@@ -209,6 +209,65 @@ func (m *MySQL) ListVariations(ctx context.Context) ([]profit.VariationAnalysis,
 	return out, rows.Err()
 }
 
+// CreateTurnoverAnalysis persists a, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateTurnoverAnalysis(ctx context.Context, a profit.TurnoverAnalysis) (profit.TurnoverAnalysis, error) {
+	if a.ID.IsZero() {
+		a.ID = profit.NewTurnoverAnalysisID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO turnover_analyses
+		(id, total_capital, variable_capital, surplus_value_rate_bp, turnovers,
+		 annual_profit_rate_bp, single_turnover_rate_bp, annual_surplus_value_rate_bp, annual_wages, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID),
+		int64(a.C), int64(a.V), int64(a.SRate), int64(a.N),
+		a.AnnualProfitRate.BasisPoints, a.SingleTurnoverProfitRate,
+		int64(a.AnnualSurplusValueRate), int64(a.AnnualWages),
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return profit.TurnoverAnalysis{}, ErrAlreadyExists
+		}
+		return profit.TurnoverAnalysis{}, err
+	}
+	return a, nil
+}
+
+// GetTurnoverAnalysis returns the analysis with id, or ErrNotFound.
+func (m *MySQL) GetTurnoverAnalysis(ctx context.Context, id profit.TurnoverAnalysisID) (profit.TurnoverAnalysis, error) {
+	const q = `SELECT id, total_capital, variable_capital, surplus_value_rate_bp, turnovers,
+		annual_profit_rate_bp, single_turnover_rate_bp, annual_surplus_value_rate_bp, annual_wages, created_at
+		FROM turnover_analyses WHERE id = ?`
+	return scanTurnoverAnalysis(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListTurnoverAnalyses returns all stored turnover analyses, newest first.
+func (m *MySQL) ListTurnoverAnalyses(ctx context.Context) ([]profit.TurnoverAnalysis, error) {
+	const q = `SELECT id, total_capital, variable_capital, surplus_value_rate_bp, turnovers,
+		annual_profit_rate_bp, single_turnover_rate_bp, annual_surplus_value_rate_bp, annual_wages, created_at
+		FROM turnover_analyses ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []profit.TurnoverAnalysis
+	for rows.Next() {
+		a, err := scanTurnoverAnalysis(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
 // rowScanner is satisfied by both *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -309,6 +368,41 @@ func scanVariation(s rowScanner) (profit.VariationAnalysis, error) {
 		NewCompositionBP:   newComp,
 		ProportionalChange: proportional,
 		CreatedAt:          createdAt,
+	}, nil
+}
+
+func scanTurnoverAnalysis(s rowScanner) (profit.TurnoverAnalysis, error) {
+	var (
+		id                                          string
+		totalCapital, variableCapital, sRateBP, n   int64
+		annualBP, singleBP, annualSurplusBP, wages  int64
+		createdAt                                   time.Time
+	)
+	err := s.Scan(&id, &totalCapital, &variableCapital, &sRateBP, &n,
+		&annualBP, &singleBP, &annualSurplusBP, &wages, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return profit.TurnoverAnalysis{}, ErrNotFound
+		}
+		return profit.TurnoverAnalysis{}, err
+	}
+	return profit.TurnoverAnalysis{
+		ID:    profit.TurnoverAnalysisID(id),
+		C:     profit.TotalCapital(totalCapital),
+		V:     profit.VariableCapitalPerTurnover(variableCapital),
+		SRate: profit.RateOfSurplusValue(sRateBP),
+		N:     profit.TurnoverCount(n),
+		AnnualProfitRate: profit.AnnualProfitRate{
+			SurplusValueRate: profit.RateOfSurplusValue(sRateBP),
+			Turnovers:        profit.TurnoverCount(n),
+			VariableCapital:  profit.VariableCapitalPerTurnover(variableCapital),
+			TotalCapital:     profit.TotalCapital(totalCapital),
+			BasisPoints:      annualBP,
+		},
+		SingleTurnoverProfitRate: singleBP,
+		AnnualSurplusValueRate:   profit.AnnualSurplusValueRate(annualSurplusBP),
+		AnnualWages:              profit.LabourMinutes(wages),
+		CreatedAt:                createdAt,
 	}, nil
 }
 
