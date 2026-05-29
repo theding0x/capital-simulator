@@ -336,6 +336,9 @@ func main() {
 	// Vol. III Ch. 5 — Economy in the Employment of Constant Capital → finance-service
 	srv.Handle("/v1/profit/economy", financeProxy)
 	srv.Handle("/v1/profit/economy/{rest...}", financeProxy)
+	// Vol. III Ch. 6 — The Effect of Price Fluctuation on the Rate of Profit → finance-service
+	srv.Handle("/v1/profit/price-fluctuation", financeProxy)
+	srv.Handle("/v1/profit/price-fluctuation/{rest...}", financeProxy)
 	// Vol. III, Ch. 9 — General Rate of Profit + Prices of Production → finance-service
 	// srv.Handle("/v1/general-profit-rate", financeProxy)
 	// srv.Handle("/v1/prices-of-production", financeProxy)

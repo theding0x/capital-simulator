@@ -76,4 +76,15 @@ type Store interface {
 	GetEconomyAnalysis(ctx context.Context, id profit.EconomyAnalysisID) (profit.EconomyAnalysis, error)
 	// ListEconomyAnalyses returns all stored economy analyses, newest first.
 	ListEconomyAnalyses(ctx context.Context) ([]profit.EconomyAnalysis, error)
+
+	// CreatePriceFluctuationAnalysis persists a price-fluctuation analysis (Vol.
+	// III Ch. 6) — the movement in the rate of profit produced by a re-pricing of
+	// the raw-material element of constant capital — assigning an ID and
+	// created-at timestamp when absent. It returns ErrAlreadyExists if the ID
+	// collides.
+	CreatePriceFluctuationAnalysis(ctx context.Context, a profit.PriceFluctuationAnalysis) (profit.PriceFluctuationAnalysis, error)
+	// GetPriceFluctuationAnalysis returns the analysis with the given ID, or ErrNotFound.
+	GetPriceFluctuationAnalysis(ctx context.Context, id profit.PriceFluctuationAnalysisID) (profit.PriceFluctuationAnalysis, error)
+	// ListPriceFluctuationAnalyses returns all stored analyses, newest first.
+	ListPriceFluctuationAnalyses(ctx context.Context) ([]profit.PriceFluctuationAnalysis, error)
 }

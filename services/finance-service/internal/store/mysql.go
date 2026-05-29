@@ -327,6 +327,65 @@ func (m *MySQL) ListEconomyAnalyses(ctx context.Context) ([]profit.EconomyAnalys
 	return out, rows.Err()
 }
 
+// CreatePriceFluctuationAnalysis persists a, assigning an ID and timestamp when absent.
+func (m *MySQL) CreatePriceFluctuationAnalysis(ctx context.Context, a profit.PriceFluctuationAnalysis) (profit.PriceFluctuationAnalysis, error) {
+	if a.ID.IsZero() {
+		a.ID = profit.NewPriceFluctuationAnalysisID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO price_fluctuation_analyses
+		(id, kind, fixed_capital, original_material_capital, price_factor, variable_capital, surplus_value,
+		 old_profit_rate_bp, new_profit_rate_bp, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID), string(a.Kind),
+		int64(a.Effect.FixedCapital), int64(a.Effect.OriginalMaterialCapital), a.Effect.PriceFactor,
+		int64(a.Effect.VariableCapital), int64(a.Effect.SurplusValue),
+		a.OldProfitRate, a.NewProfitRate,
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return profit.PriceFluctuationAnalysis{}, ErrAlreadyExists
+		}
+		return profit.PriceFluctuationAnalysis{}, err
+	}
+	return a, nil
+}
+
+// GetPriceFluctuationAnalysis returns the analysis with id, or ErrNotFound.
+func (m *MySQL) GetPriceFluctuationAnalysis(ctx context.Context, id profit.PriceFluctuationAnalysisID) (profit.PriceFluctuationAnalysis, error) {
+	const q = `SELECT id, kind, fixed_capital, original_material_capital, price_factor, variable_capital, surplus_value,
+		old_profit_rate_bp, new_profit_rate_bp, created_at
+		FROM price_fluctuation_analyses WHERE id = ?`
+	return scanPriceFluctuationAnalysis(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListPriceFluctuationAnalyses returns all stored analyses, newest first.
+func (m *MySQL) ListPriceFluctuationAnalyses(ctx context.Context) ([]profit.PriceFluctuationAnalysis, error) {
+	const q = `SELECT id, kind, fixed_capital, original_material_capital, price_factor, variable_capital, surplus_value,
+		old_profit_rate_bp, new_profit_rate_bp, created_at
+		FROM price_fluctuation_analyses ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []profit.PriceFluctuationAnalysis
+	for rows.Next() {
+		a, err := scanPriceFluctuationAnalysis(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
 // rowScanner is satisfied by both *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -493,6 +552,37 @@ func scanEconomyAnalysis(s rowScanner) (profit.EconomyAnalysis, error) {
 		NewProfitRate:  newBP,
 		ProfitRateGain: gainBP,
 		CreatedAt:      createdAt,
+	}, nil
+}
+
+func scanPriceFluctuationAnalysis(s rowScanner) (profit.PriceFluctuationAnalysis, error) {
+	var (
+		id, kind                              string
+		fixed, material, factor, variable, sv int64
+		oldBP, newBP                          int64
+		createdAt                             time.Time
+	)
+	err := s.Scan(&id, &kind, &fixed, &material, &factor, &variable, &sv,
+		&oldBP, &newBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return profit.PriceFluctuationAnalysis{}, ErrNotFound
+		}
+		return profit.PriceFluctuationAnalysis{}, err
+	}
+	return profit.PriceFluctuationAnalysis{
+		ID:   profit.PriceFluctuationAnalysisID(id),
+		Kind: profit.PriceFluctuationKind(kind),
+		Effect: profit.ConstantCapitalPriceEffect{
+			FixedCapital:            profit.ConstantCapital(fixed),
+			OriginalMaterialCapital: profit.ConstantCapital(material),
+			PriceFactor:             factor,
+			VariableCapital:         profit.VariableCapital(variable),
+			SurplusValue:            profit.SurplusValue(sv),
+		},
+		OldProfitRate: oldBP,
+		NewProfitRate: newBP,
+		CreatedAt:     createdAt,
 	}, nil
 }
 
