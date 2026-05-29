@@ -1963,4 +1963,29 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // Vol. III Ch. 3 — Relation of the Rate of Profit to the Rate of Surplus-Value
+  listVariations: () =>
+    http<{ items: import("./types").VariationAnalysisResponse[] }>("/v1/profit/variation").then((r) => r.items),
+
+  getVariation: (id: string) =>
+    http<import("./types").VariationAnalysisResponse>(`/v1/profit/variation/${id}`),
+
+  analyseVariation: (input: {
+    initial: { c: number; v: number; s_rate: number };
+    changed: { c: number; v: number; s_rate: number };
+  }) =>
+    http<import("./types").VariationAnalysisResponse>("/v1/profit/variation", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  compareProfitRates: (input: {
+    first: { c: number; v: number; s_rate: number };
+    second: { c: number; v: number; s_rate: number };
+  }) =>
+    http<import("./types").ProfitRateComparisonResponse>("/v1/profit/compare", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

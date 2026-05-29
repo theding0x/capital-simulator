@@ -15,6 +15,7 @@ type Memory struct {
 	now         func() time.Time
 	costPrices  map[profit.CostPriceID]profit.CostPrice
 	profitRates map[profit.ProfitRateID]profit.ProfitRateAnalysis
+	variations  map[profit.VariationAnalysisID]profit.VariationAnalysis
 }
 
 // NewMemory returns an empty in-memory store.
@@ -23,6 +24,7 @@ func NewMemory() *Memory {
 		now:         time.Now,
 		costPrices:  make(map[profit.CostPriceID]profit.CostPrice),
 		profitRates: make(map[profit.ProfitRateID]profit.ProfitRateAnalysis),
+		variations:  make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
 	}
 }
 
@@ -108,6 +110,51 @@ func (m *Memory) ListProfitRates(_ context.Context) ([]profit.ProfitRateAnalysis
 
 	out := make([]profit.ProfitRateAnalysis, 0, len(m.profitRates))
 	for _, a := range m.profitRates {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateVariation stores a, assigning an ID and timestamp when absent.
+func (m *Memory) CreateVariation(_ context.Context, a profit.VariationAnalysis) (profit.VariationAnalysis, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if a.ID.IsZero() {
+		a.ID = profit.NewVariationAnalysisID()
+	}
+	if _, exists := m.variations[a.ID]; exists {
+		return profit.VariationAnalysis{}, ErrAlreadyExists
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	m.variations[a.ID] = a
+	return a, nil
+}
+
+// GetVariation returns the variation analysis with id, or ErrNotFound.
+func (m *Memory) GetVariation(_ context.Context, id profit.VariationAnalysisID) (profit.VariationAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	a, ok := m.variations[id]
+	if !ok {
+		return profit.VariationAnalysis{}, ErrNotFound
+	}
+	return a, nil
+}
+
+// ListVariations returns all stored variation analyses, newest first.
+func (m *Memory) ListVariations(_ context.Context) ([]profit.VariationAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]profit.VariationAnalysis, 0, len(m.variations))
+	for _, a := range m.variations {
 		out = append(out, a)
 	}
 	sort.Slice(out, func(i, j int) bool {
