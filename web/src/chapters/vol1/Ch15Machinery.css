@@ -1,0 +1,216 @@
+/* Ch. 15 — Machinery and Modern Industry
+   Scoped under .v1-ch15-*. */
+
+.v1-ch15-insight {
+  background: var(--surface-raised);
+  border-left: 3px solid var(--red);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 1.5rem;
+}
+
+.v1-ch15-insight-h2 {
+  margin: 0 0 0.65rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.v1-ch15-insight-prose {
+  margin: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  max-width: 72ch;
+}
+
+.v1-ch15-machines {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.v1-ch15-machine {
+  display: grid;
+  grid-template-columns: 14rem 1fr 6rem;
+  align-items: center;
+  column-gap: 0.85rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.v1-ch15-machine-name {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.v1-ch15-machine-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
+.v1-ch15-wear-bar {
+  height: 0.85rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.v1-ch15-wear-fill {
+  height: 100%;
+  background: var(--gold-bright);
+  transition: width 240ms ease;
+}
+
+.v1-ch15-wear-fill--near-end {
+  background: var(--red);
+}
+
+.v1-ch15-wear-pct {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  color: var(--ink);
+  text-align: right;
+}
+
+.v1-ch15-moral-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red);
+  border: 1px solid rgba(192, 57, 43, 0.32);
+  border-radius: 2px;
+}
+
+.v1-ch15-composition {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.v1-ch15-composition-row {
+  display: grid;
+  grid-template-columns: 6rem 1fr 9rem;
+  align-items: center;
+  column-gap: 0.75rem;
+}
+
+.v1-ch15-composition-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.v1-ch15-composition-track {
+  display: flex;
+  height: 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.v1-ch15-composition-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+}
+
+.v1-ch15-composition-seg--v {
+  background: var(--lead);
+  color: var(--ink);
+}
+
+.v1-ch15-composition-seg--c {
+  background: var(--lead-hover);
+  color: var(--ink);
+}
+
+.v1-ch15-composition-seg--machine {
+  background: var(--gold-bright);
+  color: #15171d;
+  font-weight: 500;
+}
+
+.v1-ch15-composition-total {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  color: var(--ink);
+  text-align: right;
+}
+
+.v1-ch15-conservation {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--gold-bright);
+}
+
+.v1-ch15-conservation--broken {
+  background: rgba(192, 57, 43, 0.08);
+  border-color: rgba(192, 57, 43, 0.32);
+  color: var(--red);
+}
+
+.v1-ch15-coda {
+  margin: 2.25rem 0 0.5rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.v1-ch15-coda-quote {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 64ch;
+}
+
+.v1-ch15-coda-cite {
+  display: block;
+  margin-top: 0.6rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-style: normal;
+}
+
+@media (max-width: 720px) {
+  .v1-ch15-machine { grid-template-columns: 8rem 1fr 4rem; }
+  .v1-ch15-composition-row { grid-template-columns: 4rem 1fr 5rem; }
+}
