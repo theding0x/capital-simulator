@@ -4,6 +4,72 @@ import type { WorkingSession } from "../../types";
 import { useCurrency, usePounds } from "../../CurrencyContext";
 import "./Ch20TimeWages.css";
 
+function TimeWageInsight({
+  dailyPence,
+  workingDayHours,
+  onHoursChange,
+}: {
+  dailyPence: number;
+  workingDayHours: number;
+  onHoursChange: (h: number) => void;
+}) {
+  const probePrice =
+    workingDayHours > 0 ? dailyPence / workingDayHours : 0;
+  return (
+    <section className="v1-ch20-insight">
+      <h2 className="v1-ch20-insight-h2">
+        Why the time-wage falls as the day lengthens
+      </h2>
+      <p className="v1-ch20-insight-prose">
+        The daily price of labour-power is set first; the hourly price is a
+        derivative — the day's pay divided by hours worked. Hold the daily wage
+        constant and stretch the working day from 8h to 12h to 16h: the hourly
+        price drops by a third, then by half. The capitalist appears to pay the
+        same wage; the worker's labour is in fact purchased at a progressively
+        lower unit price.
+      </p>
+      <div className="v1-ch20-probe">
+        <label className="v1-ch20-probe-label" htmlFor="v1-ch20-probe-slider">
+          Extension probe — drag to lengthen the working day
+        </label>
+        <input
+          id="v1-ch20-probe-slider"
+          className="v1-ch20-probe-slider"
+          type="range"
+          min={1}
+          max={24}
+          step={1}
+          value={workingDayHours}
+          onChange={(e) => onHoursChange(Number(e.target.value))}
+          aria-label="Working day length in hours"
+        />
+        <div className="v1-ch20-probe-readout">
+          <span className="v1-ch20-probe-hours">{workingDayHours}h</span>
+          <span className="v1-ch20-probe-arrow">→</span>
+          <span className="v1-ch20-probe-price">
+            {probePrice.toFixed(2)}d. / hour
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PriceOscillationCoda() {
+  return (
+    <aside className="v1-ch20-coda">
+      <p className="v1-ch20-coda-quote">
+        “The day-wages, week-wages, etc., may remain the same, although the
+        price of labour falls. ... The actual price of labour falls below its
+        nominal price.”
+        <span className="v1-ch20-coda-cite">
+          — Marx, Capital Vol. I, Ch. 20
+        </span>
+      </p>
+    </aside>
+  );
+}
+
 export function Ch20TimeWages() {
   const { modern } = useCurrency();
   const fmt = usePounds();
@@ -41,6 +107,11 @@ export function Ch20TimeWages() {
 
   return (
     <div className="ch20-time-wage">
+      <TimeWageInsight
+        dailyPence={dailyPence}
+        workingDayHours={workingDayHours}
+        onHoursChange={setWorkingDayHours}
+      />
       <section className="ch20-section">
         <h2>Enter Working Session</h2>
         <p className="ch20-explainer">
@@ -202,6 +273,7 @@ export function Ch20TimeWages() {
           </div>
         </section>
       )}
+      <PriceOscillationCoda />
     </div>
   );
 }

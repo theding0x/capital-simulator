@@ -4,6 +4,118 @@ import type { WageComparison } from "../../types";
 import { useCurrency, usePounds } from "../../CurrencyContext";
 import "./Ch22NationalWages.css";
 
+function NationalWagesInsight() {
+  return (
+    <section className="v1-ch22-insight">
+      <h2 className="v1-ch22-insight-h2">
+        Nominal vs. relative — the price of labour reads two ways
+      </h2>
+      <p className="v1-ch22-insight-prose">
+        A higher daily wage does not always mean labour is dearer. Marx's §22
+        reduction proceeds in three steps: (1) bring all wages to a uniform
+        working day; (2) adjust by national intensity of labour; (3) divide
+        by the value the worker produces. The country with the highest
+        nominal wage can come out as the cheapest source of labour for the
+        capitalist — and Marx's central example is England.
+      </p>
+    </section>
+  );
+}
+
+function GBParadoxCallout({ comparison }: { comparison: WageComparison | null }) {
+  if (!comparison) return null;
+  const gbWage = comparison.day_wages.find((w) => w.country_code === "GB");
+  const gbStd = comparison.standardised_wages.find((s) => s.country_code === "GB");
+  const gbRel = comparison.relative_prices.find((r) => r.country_code === "GB");
+  if (!gbWage || !gbRel) return null;
+  const others = comparison.relative_prices.filter((r) => r.country_code !== "GB");
+  const isLowestRelative =
+    others.length > 0 && others.every((r) => gbRel.ratio < r.ratio);
+  return (
+    <aside className="v1-ch22-paradox">
+      <h3 className="v1-ch22-paradox-h3">The GB paradox</h3>
+      <p className="v1-ch22-paradox-prose">
+        England: highest nominal daily wage ({gbWage.nominal_pence}d.) yet
+        {isLowestRelative ? " the lowest" : " a low"} relative price of labour
+        ({gbRel.ratio.toFixed(3)}). The capitalist who buys English labour gets
+        more value back per shilling spent than the capitalist who buys it
+        anywhere else in the dataset.
+      </p>
+      <dl className="v1-ch22-paradox-kpis">
+        <div>
+          <dt>Nominal</dt>
+          <dd>{gbWage.nominal_pence}d.</dd>
+        </div>
+        <div>
+          <dt>Standardised (600 min)</dt>
+          <dd>{gbStd ? `${gbStd.amount}d.` : "—"}</dd>
+        </div>
+        <div>
+          <dt>Relative price</dt>
+          <dd>{gbRel.ratio.toFixed(3)}</dd>
+        </div>
+      </dl>
+    </aside>
+  );
+}
+
+function SpindleRatioChart({ comparison }: { comparison: WageComparison | null }) {
+  if (!comparison || comparison.spindle_ratios.length === 0) return null;
+  const sorted = [...comparison.spindle_ratios].sort(
+    (a, b) => b.spindles_per_worker - a.spindles_per_worker,
+  );
+  const max = Math.max(...sorted.map((s) => s.spindles_per_worker), 1);
+  return (
+    <section className="v1-ch22-spindles">
+      <h3 className="v1-ch22-spindles-h3">
+        Spindles per worker — productivity grounds the paradox
+      </h3>
+      <p className="v1-ch22-spindles-prose">
+        A higher spindle ratio means each English worker tends more
+        machinery, so the same hour of labour transforms more raw material
+        into yarn. Productivity is what makes the higher nominal wage
+        compatible with a lower price of labour per unit of value.
+      </p>
+      <div className="v1-ch22-spindles-rows">
+        {sorted.map((s) => {
+          const pct = (s.spindles_per_worker / max) * 100;
+          return (
+            <div key={s.country_code} className="v1-ch22-spindles-row">
+              <span className="v1-ch22-spindles-country">{s.country_code}</span>
+              <div className="v1-ch22-spindles-track">
+                <div
+                  className="v1-ch22-spindles-fill"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="v1-ch22-spindles-value">
+                {s.spindles_per_worker}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function NationalWagesCoda() {
+  return (
+    <aside className="v1-ch22-coda">
+      <p className="v1-ch22-coda-quote">
+        “It will be found, frequently, that the daily or weekly wages in the
+        first nation are higher than in the second, whilst the relative price
+        of labour, i.e. the price of labour as compared both with surplus-value
+        and with the value of the product, stands higher in the second than in
+        the first.”
+        <span className="v1-ch22-coda-cite">
+          — Marx, Capital Vol. I, Ch. 22
+        </span>
+      </p>
+    </aside>
+  );
+}
+
 export function Ch22NationalWages() {
   const { modern } = useCurrency();
   const fmt = usePounds();
@@ -66,6 +178,8 @@ export function Ch22NationalWages() {
 
   return (
     <div className="ch22-national-wages">
+      <NationalWagesInsight />
+      <GBParadoxCallout comparison={comparison} />
       <section className="ch22-section">
         <h2>Cross-National Wage Comparison</h2>
         <p className="ch22-explainer">
@@ -185,6 +299,8 @@ export function Ch22NationalWages() {
           </form>
         </div>
       </section>
+      <SpindleRatioChart comparison={comparison} />
+      <NationalWagesCoda />
     </div>
   );
 }
