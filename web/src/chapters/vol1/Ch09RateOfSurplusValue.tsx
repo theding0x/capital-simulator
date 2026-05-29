@@ -5,6 +5,7 @@ import type {
   RateOfSurplusValueResult,
   ProductionAccountResult,
 } from "../../types";
+import "./Ch09RateOfSurplusValue.css";
 
 interface Ch09Props {
   onSharedChanged: () => void;
@@ -14,6 +15,87 @@ function minutesToHours(m: number): string {
   const h = Math.floor(m / 60);
   const min = m % 60;
   return min === 0 ? `${h}h` : `${h}h ${min}m`;
+}
+
+function DayBar({ v, s }: { v: number; s: number }) {
+  const total = v + s;
+  const pct = (n: number) => (total > 0 ? `${(n / total) * 100}%` : "0%");
+  return (
+    <>
+      <div className="v1-ch09-day" role="img" aria-label="Working-day partition">
+        <span className="v1-ch09-day-label">{minutesToHours(total)} day</span>
+        <div className="v1-ch09-day-track">
+          <div
+            className="v1-ch09-day-seg v1-ch09-day-seg--necessary"
+            style={{ flexBasis: pct(v) }}
+            title={`Necessary labour (v): ${minutesToHours(v)}`}
+          >
+            v
+          </div>
+          <div
+            className="v1-ch09-day-seg v1-ch09-day-seg--surplus"
+            style={{ flexBasis: pct(s) }}
+            title={`Surplus labour (s): ${minutesToHours(s)}`}
+          >
+            s
+          </div>
+        </div>
+        <span className="v1-ch09-day-total">{minutesToHours(total)}</span>
+      </div>
+      <p className="v1-ch09-legend">
+        <span>
+          <span className="v1-ch09-legend-swatch" style={{ background: "var(--lead)" }} />
+          v — necessary ({minutesToHours(v)})
+        </span>
+        <span>
+          <span className="v1-ch09-legend-swatch" style={{ background: "var(--gold-bright)" }} />
+          s — surplus ({minutesToHours(s)})
+        </span>
+      </p>
+    </>
+  );
+}
+
+function RateChip({ v, s }: { v: number; s: number }) {
+  const rate = v > 0 ? ((s / v) * 100).toFixed(1) : "∞";
+  const fraction = v + s > 0 ? ((s / (v + s)) * 100).toFixed(1) : "—";
+  return (
+    <div className="v1-ch09-rate">
+      <span className="v1-ch09-rate-label">s / v (rate of exploitation)</span>
+      <span className="v1-ch09-rate-value">{rate}%</span>
+      <span className="v1-ch09-rate-meta">· surplus-produce {fraction}%</span>
+    </div>
+  );
+}
+
+function RateInsight() {
+  return (
+    <section className="v1-ch09-insight">
+      <h2 className="v1-ch09-insight-h2">s/v is not the rate of profit</h2>
+      <p className="v1-ch09-insight-prose">
+        The rate of surplus-value compares surplus labour to <em>necessary</em>
+        labour — not to the total capital advanced. Marx insists this is the
+        rate of <strong>exploitation</strong> of labour-power by capital, and
+        every variation in the working day, the wage, or productivity shows up
+        first in this single number.
+      </p>
+    </section>
+  );
+}
+
+function RateCoda() {
+  return (
+    <aside className="v1-ch09-coda">
+      <p className="v1-ch09-coda-quote">
+        “The rate of surplus-value is therefore an exact expression for the
+        degree of exploitation of labour-power by capital, or of the labourer
+        by the capitalist.”
+        <span className="v1-ch09-coda-cite">
+          — Marx, Capital Vol. I, Ch. 9 §1
+        </span>
+      </p>
+    </aside>
+  );
 }
 
 export function Ch09RateOfSurplusValue({ onSharedChanged: _onSharedChanged }: Ch09Props) {
@@ -32,9 +114,11 @@ export function Ch09RateOfSurplusValue({ onSharedChanged: _onSharedChanged }: Ch
 
   return (
     <>
+      <RateInsight />
       <RateProbePanel />
       <RecordAccountPanel onCreated={refreshAccounts} />
       {accounts.length > 0 && <AccountListPanel accounts={accounts} />}
+      <RateCoda />
     </>
   );
 }
@@ -69,14 +153,27 @@ function RateProbePanel() {
         Compute s/v — the rate of surplus-value (degree of exploitation) from surplus and
         variable capital magnitudes in labour-minutes.
       </p>
-      <div style={{ marginBottom: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-        <button type="button" onClick={() => loadFixture(80, 52)}>
-          1871 Spinning Mill (s=80, v=52)
+      <div className="v1-ch09-presets">
+        <span className="v1-ch09-presets-label">Marx fixture</span>
+        <button
+          type="button"
+          className="v1-ch09-preset-button"
+          onClick={() => loadFixture(80, 52)}
+        >
+          §1 Spinning Mill (s=80, v=52)
         </button>
-        <button type="button" onClick={() => loadFixture(211, 210)}>
+        <button
+          type="button"
+          className="v1-ch09-preset-button"
+          onClick={() => loadFixture(211, 210)}
+        >
           Jacob's Wheat 1815 (s=211, v=210)
         </button>
-        <button type="button" onClick={() => loadFixture(360, 360)}>
+        <button
+          type="button"
+          className="v1-ch09-preset-button"
+          onClick={() => loadFixture(360, 360)}
+        >
           Cotton Spinner (s=360, v=360)
         </button>
       </div>
@@ -106,30 +203,10 @@ function RateProbePanel() {
       </form>
 
       {result && (
-        <table className="data-table">
-          <tbody>
-            <tr>
-              <td>Surplus Value (s)</td>
-              <td>{minutesToHours(result.surplus)}</td>
-            </tr>
-            <tr>
-              <td>Variable Capital (v)</td>
-              <td>{minutesToHours(result.variable)}</td>
-            </tr>
-            <tr>
-              <td>Rate of Surplus-Value (s/v)</td>
-              <td><strong>{(result.rate * 100).toFixed(2)}%</strong></td>
-            </tr>
-            <tr>
-              <td>Value Product (v + s)</td>
-              <td>{minutesToHours(result.value_product)}</td>
-            </tr>
-            <tr>
-              <td>Surplus-Produce Fraction (s/(v+s))</td>
-              <td>{(result.surplus_produce_fraction * 100).toFixed(1)}%</td>
-            </tr>
-          </tbody>
-        </table>
+        <>
+          <DayBar v={result.variable} s={result.surplus} />
+          <RateChip v={result.variable} s={result.surplus} />
+        </>
       )}
     </section>
   );
@@ -202,25 +279,12 @@ function RecordAccountPanel({ onCreated }: RecordAccountPanelProps) {
       {result && (
         <div>
           <p className="small muted">Saved: <span className="monospace">{result.id}</span></p>
-          <table className="data-table">
-            <tbody>
-              <tr><td>c</td><td>{minutesToHours(result.constant)}</td></tr>
-              <tr><td>v</td><td>{minutesToHours(result.variable)}</td></tr>
-              <tr><td>s</td><td>{minutesToHours(result.surplus)}</td></tr>
-              <tr>
-                <td>Rate (s/v)</td>
-                <td><strong>{(result.rate_of_surplus_value * 100).toFixed(2)}%</strong></td>
-              </tr>
-              <tr>
-                <td>Value Product (v + s)</td>
-                <td>{minutesToHours(result.value_product)}</td>
-              </tr>
-              <tr>
-                <td>Expanded Capital (c + v + s)</td>
-                <td>{minutesToHours(result.expanded_capital)}</td>
-              </tr>
-            </tbody>
-          </table>
+          <DayBar v={result.variable} s={result.surplus} />
+          <RateChip v={result.variable} s={result.surplus} />
+          <p className="small muted" style={{ marginTop: "0.5rem" }}>
+            c {minutesToHours(result.constant)} · v + s = {minutesToHours(result.value_product)} ·
+            c + v + s = {minutesToHours(result.expanded_capital)}
+          </p>
         </div>
       )}
     </section>
