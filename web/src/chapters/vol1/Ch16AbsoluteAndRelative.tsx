@@ -7,16 +7,30 @@ import type {
   RelativeSurplusValueResult,
   SurplusValueRateResult,
 } from "../../types";
+import "./Ch16AbsoluteAndRelative.css";
 
-// Ch.16 is the synthesis chapter: the same working-day partition drives
-// both branches. The panel keeps one set of inputs (working day +
-// necessary labour) and computes both surplus-value forms side-by-side.
 export function Ch16AbsoluteAndRelative() {
   return (
     <>
+      <SeparationInsight />
       <SurplusValueCalculator />
       <MillCritiquePanel />
     </>
+  );
+}
+
+function SeparationInsight() {
+  return (
+    <section className="v1-ch16-insight">
+      <h2 className="v1-ch16-insight-h2">Same magnitude, two Origins</h2>
+      <p className="v1-ch16-insight-prose">
+        The two surplus-value forms produce the same magnitude type: a quantity
+        of <em>surplus labour</em> embodied in product. What distinguishes them
+        is the <strong>Origin</strong>: absolute surplus prolongs the working
+        day; relative surplus shrinks necessary labour. The bars below split
+        the same starting partition along the two paths.
+      </p>
+    </section>
   );
 }
 
@@ -64,12 +78,8 @@ function SurplusValueCalculator() {
     <section className="card">
       <h2>Working-day partition (§1)</h2>
       <p className="description">
-        Ch. 16 §1: surplus-value comes in two analytically distinct forms
-        — absolute (prolong the working day, hold necessary labour fixed)
-        and relative (raise productivity, hold the working day fixed) —
-        but the magnitude type is the same. The Origin tag is the only
-        thing that distinguishes them. Configure a starting partition and
-        watch both mechanisms produce surplus from the same input.
+        Configure a starting partition and watch both mechanisms produce
+        surplus from the same input.
       </p>
       <form className="form-grid" onSubmit={submit}>
         <label>
@@ -113,8 +123,9 @@ function SurplusValueCalculator() {
         </label>
       </form>
       {err && <p className="error">{err}</p>}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+      <div className="v1-ch16-results">
         <ResultCard
+          flavour="absolute"
           heading="Absolute — prolongation"
           subtitle="Working day grows; necessary labour fixed."
           oldWD={abs?.old_working_day}
@@ -123,6 +134,7 @@ function SurplusValueCalculator() {
           origin={abs?.absolute_surplus_value.origin ?? "absolute"}
         />
         <ResultCard
+          flavour="relative"
           heading="Relative — productivity"
           subtitle="Necessary labour shrinks; working day fixed."
           oldWD={rel?.old_working_day}
@@ -131,12 +143,11 @@ function SurplusValueCalculator() {
           origin={rel?.relative_surplus_value.origin ?? "relative"}
         />
       </div>
-      <p className="small muted" style={{ marginTop: "1rem" }}>
-        §1, closing: "From one standpoint, any distinction between
+      <p className="v1-ch16-closing-prose">
+        §1, closing: “From one standpoint, any distinction between
         absolute and relative surplus-value appears illusory. Relative
-        surplus-value is absolute … Absolute surplus-value is relative."
-        The two share a magnitude type; the Origin tag is the line
-        between them.
+        surplus-value is absolute … Absolute surplus-value is relative.”
+        The two share a magnitude type; the Origin tag is the line between them.
       </p>
     </section>
   );
@@ -149,6 +160,7 @@ interface ProductionWorkingDay {
 }
 
 function ResultCard({
+  flavour,
   heading,
   subtitle,
   oldWD,
@@ -156,6 +168,7 @@ function ResultCard({
   surplus,
   origin,
 }: {
+  flavour: "absolute" | "relative";
   heading: string;
   subtitle: string;
   oldWD?: ProductionWorkingDay;
@@ -163,40 +176,71 @@ function ResultCard({
   surplus: number;
   origin: string;
 }) {
+  if (!oldWD || !newWD) {
+    return (
+      <div className="v1-ch16-result">
+        <span className={`v1-ch16-result-tag v1-ch16-result-tag--${flavour}`}>
+          {flavour}
+        </span>
+        <h3 className="v1-ch16-result-h3">{heading}</h3>
+        <p className="v1-ch16-result-sub">{subtitle}</p>
+        <p className="v1-ch16-result-sub">—</p>
+      </div>
+    );
+  }
+  const max = Math.max(oldWD.total, newWD.total, 1);
+  const pct = (n: number) => `${(n / max) * 100}%`;
   return (
-    <div style={{ padding: "0.75rem", border: "1px solid var(--ink-muted)" }}>
-      <h3 style={{ marginTop: 0, marginBottom: "0.25rem" }}>{heading}</h3>
-      <p className="small muted" style={{ marginTop: 0 }}>{subtitle}</p>
-      {oldWD && newWD ? (
-        <table className="data-table">
-          <tbody>
-            <tr>
-              <td>Total</td>
-              <td>{fmtHoursLong(oldWD.total)} → <strong>{fmtHoursLong(newWD.total)}</strong></td>
-            </tr>
-            <tr>
-              <td>Necessary</td>
-              <td>{fmtHoursLong(oldWD.necessary_labour)} → <strong>{fmtHoursLong(newWD.necessary_labour)}</strong></td>
-            </tr>
-            <tr>
-              <td>Surplus</td>
-              <td>{fmtHoursLong(oldWD.surplus_labour)} → <strong>{fmtHoursLong(newWD.surplus_labour)}</strong></td>
-            </tr>
-            <tr>
-              <td>Gain</td>
-              <td><strong>{surplus} min</strong> <span className="muted">({origin})</span></td>
-            </tr>
-          </tbody>
-        </table>
-      ) : (
-        <p className="small muted">—</p>
-      )}
+    <div className="v1-ch16-result">
+      <span className={`v1-ch16-result-tag v1-ch16-result-tag--${flavour}`}>
+        {flavour}
+      </span>
+      <h3 className="v1-ch16-result-h3">{heading}</h3>
+      <p className="v1-ch16-result-sub">{subtitle}</p>
+      <div className="v1-ch16-bars">
+        <div className="v1-ch16-bar-row">
+          <span className="v1-ch16-bar-label">Before</span>
+          <div className="v1-ch16-bar-track">
+            <div
+              className="v1-ch16-bar-seg--necessary"
+              style={{ flexBasis: pct(oldWD.necessary_labour) }}
+              title={`v: ${fmtHoursLong(oldWD.necessary_labour)}`}
+            />
+            <div
+              className="v1-ch16-bar-seg--surplus"
+              style={{ flexBasis: pct(oldWD.surplus_labour) }}
+              title={`s: ${fmtHoursLong(oldWD.surplus_labour)}`}
+            />
+          </div>
+          <span className="v1-ch16-bar-total">{fmtHoursLong(oldWD.total)}</span>
+        </div>
+        <div className="v1-ch16-bar-row">
+          <span className="v1-ch16-bar-label">After</span>
+          <div className="v1-ch16-bar-track">
+            <div
+              className="v1-ch16-bar-seg--necessary"
+              style={{ flexBasis: pct(newWD.necessary_labour) }}
+              title={`v: ${fmtHoursLong(newWD.necessary_labour)}`}
+            />
+            <div
+              className="v1-ch16-bar-seg--surplus"
+              style={{ flexBasis: pct(newWD.surplus_labour) }}
+              title={`s: ${fmtHoursLong(newWD.surplus_labour)}`}
+            />
+          </div>
+          <span className="v1-ch16-bar-total">{fmtHoursLong(newWD.total)}</span>
+        </div>
+      </div>
+      <div className="v1-ch16-gain">
+        <span className="v1-ch16-gain-label">Gain</span>
+        <span className="v1-ch16-gain-value">+{surplus} min</span>
+        <span className="v1-ch16-origin-tag">Origin: {origin}</span>
+      </div>
     </div>
   );
 }
 
 function MillCritiquePanel() {
-  // §1 fixture: £400 constant + £100 variable + £20 surplus.
   const [surplusLabour, setSurplusLabour] = useState(20);
   const [necessaryLabour, setNecessaryLabour] = useState(100);
   const [totalCapital, setTotalCapital] = useState(500);
@@ -226,10 +270,8 @@ function MillCritiquePanel() {
       <h2>Rate of surplus-value vs rate of profit (§1, Mill critique)</h2>
       <p className="description">
         Marx, §1: "if the rate of surplus-value be 20%, the rate of profit
-        will be 20:500, i.e., 4% and not 20%." The two rates use the same
-        numerator (surplus-value) but different denominators — necessary
-        labour vs total capital advanced. The Mill error is to collapse
-        them.
+        will be 20:500, i.e., 4% and not 20%." Same numerator, different
+        denominators. The Mill error is to collapse them.
       </p>
       <form className="form-grid" onSubmit={(e) => { e.preventDefault(); void recompute(); }}>
         <label>
@@ -247,32 +289,40 @@ function MillCritiquePanel() {
       </form>
       {err && <p className="error">{err}</p>}
       {result && (
-        <table className="data-table" style={{ marginTop: "0.75rem" }}>
-          <thead>
-            <tr>
-              <th>Quantity</th>
-              <th>Formula</th>
-              <th>Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Rate of surplus-value (s/v)</td>
-              <td>{result.surplus_labour_minutes} / {result.necessary_labour_minutes}</td>
-              <td><strong>{(result.rate_of_surplus_value * 100).toFixed(2)}%</strong></td>
-            </tr>
-            <tr>
-              <td>Rate of profit (s / (c+v))</td>
-              <td>{result.surplus_value_minutes} / {result.total_capital_advanced}</td>
-              <td><strong>{(result.rate_of_profit * 100).toFixed(2)}%</strong></td>
-            </tr>
-            <tr>
-              <td>Mill critique holds?</td>
-              <td className="small muted">RateOfProfit &lt; RateSurplusValue</td>
-              <td>{result.mill_critique_holds ? "yes" : "no"}</td>
-            </tr>
-          </tbody>
-        </table>
+        <>
+          <div className="v1-ch16-mill">
+            <div className="v1-ch16-mill-row">
+              <span className="v1-ch16-mill-label">Rate of surplus-value</span>
+              <span className="v1-ch16-mill-formula">
+                s / v · {result.surplus_labour_minutes} / {result.necessary_labour_minutes}
+              </span>
+              <span className="v1-ch16-mill-value">
+                {(result.rate_of_surplus_value * 100).toFixed(2)}%
+              </span>
+            </div>
+            <div className="v1-ch16-mill-row">
+              <span className="v1-ch16-mill-label">Rate of profit</span>
+              <span className="v1-ch16-mill-formula">
+                s / (c+v) · {result.surplus_value_minutes} / {result.total_capital_advanced}
+              </span>
+              <span className="v1-ch16-mill-value">
+                {(result.rate_of_profit * 100).toFixed(2)}%
+              </span>
+            </div>
+          </div>
+          <span
+            className={
+              "v1-ch16-badge " +
+              (result.mill_critique_holds
+                ? "v1-ch16-badge--holds"
+                : "v1-ch16-badge--breaks")
+            }
+          >
+            {result.mill_critique_holds
+              ? "Mill critique holds — rate of profit < rate of surplus-value"
+              : "Mill error — rates collapsed"}
+          </span>
+        </>
       )}
     </section>
   );
