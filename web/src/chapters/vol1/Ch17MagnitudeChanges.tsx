@@ -3,6 +3,36 @@ import type { FormEvent } from "react";
 import { api } from "../../api";
 import { fmtHoursLong } from "../../format";
 import type { LabourScenarioResult } from "../../types";
+import "./Ch17MagnitudeChanges.css";
+
+const BASELINE = { workingDay: 720, necessary: 480, intensity: 1.0, productivity: 1.0 };
+
+const LAWS = [
+  { id: "law1", num: "Law 1", name: "Productivity" },
+  { id: "law2", num: "Law 2", name: "Intensity" },
+  { id: "law3", num: "Law 3", name: "Duration" },
+  { id: "law4", num: "Law 4", name: "Combination" },
+] as const;
+
+function diagnoseLaw(
+  workingDay: number,
+  necessary: number,
+  intensity: number,
+  productivity: number,
+): string {
+  const dayMoved = workingDay !== BASELINE.workingDay;
+  const intensityMoved = Math.abs(intensity - BASELINE.intensity) > 0.001;
+  const productivityMoved =
+    Math.abs(productivity - BASELINE.productivity) > 0.001 ||
+    necessary !== BASELINE.necessary;
+  const moves = [intensityMoved, dayMoved, productivityMoved].filter(Boolean).length;
+  if (moves === 0) return "";
+  if (moves > 1) return "law4";
+  if (productivityMoved) return "law1";
+  if (intensityMoved) return "law2";
+  if (dayMoved) return "law3";
+  return "";
+}
 
 // Ch. 17 partitions a single working day under three independent
 // magnitudes — duration, intensity, productivity — and reads the rate
@@ -69,7 +99,39 @@ const PRESETS: Preset[] = [
 ];
 
 export function Ch17MagnitudeChanges() {
-  return <MagnitudeCalculator />;
+  return (
+    <>
+      <MagnitudeInsight />
+      <MagnitudeCalculator />
+    </>
+  );
+}
+
+function MagnitudeInsight() {
+  return (
+    <section className="v1-ch17-insight">
+      <h2 className="v1-ch17-insight-h2">Three independent magnitudes</h2>
+      <p className="v1-ch17-insight-prose">
+        The working-day partition responds to three knobs that can be turned
+        independently. The §1 law (constant daily value) holds only along the
+        productivity axis; moving the intensity axis breaks it.
+      </p>
+      <div className="v1-ch17-axes">
+        <div className="v1-ch17-axis">
+          <span className="v1-ch17-axis-tag">§3 Axis A</span>
+          <span className="v1-ch17-axis-name">Duration</span>
+        </div>
+        <div className="v1-ch17-axis">
+          <span className="v1-ch17-axis-tag">§2 Axis B</span>
+          <span className="v1-ch17-axis-name">Intensity</span>
+        </div>
+        <div className="v1-ch17-axis">
+          <span className="v1-ch17-axis-tag">§1 Axis C</span>
+          <span className="v1-ch17-axis-name">Productivity</span>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function MagnitudeCalculator() {
@@ -130,16 +192,19 @@ function MagnitudeCalculator() {
         directly; §4 combines all three. Cycle through the presets to
         see each law in isolation.
       </p>
-      <div className="form-grid" style={{ marginBottom: "0.75rem" }}>
+      <div className="v1-ch17-presets">
+        <span className="v1-ch17-presets-label">Marx fixture</span>
         {PRESETS.map((p) => (
           <button
             key={p.id}
             type="button"
-            className={`btn ${activePreset === p.id ? "btn-primary" : ""}`}
+            className={
+              "v1-ch17-preset-button" +
+              (activePreset === p.id ? " v1-ch17-preset-button--active" : "")
+            }
             onClick={() => applyPreset(p)}
           >
-            <strong style={{ marginRight: "0.4rem" }}>{p.section}</strong>
-            {p.label.replace(/^§\d[A-D]?\s—\s/, "")}
+            {p.section} {p.label.replace(/^§\d[A-D]?\s—\s/, "")}
           </button>
         ))}
       </div>
@@ -148,111 +213,174 @@ function MagnitudeCalculator() {
           {active.caption}
         </p>
       )}
-      <form className="form-grid" onSubmit={submit}>
-        <label>
-          <span>Working day (min)</span>
+
+      <div className="v1-ch17-sliders">
+        <div className="v1-ch17-slider-row">
+          <span
+            className={
+              "v1-ch17-slider-label" +
+              (workingDay !== BASELINE.workingDay ? " v1-ch17-slider-label--moved" : "")
+            }
+          >
+            Duration
+          </span>
           <input
-            type="number"
-            min={60}
+            type="range"
+            className="v1-ch17-slider"
+            min={120}
             max={1440}
+            step={10}
             value={workingDay}
             onChange={(e) => {
               setActivePreset("");
               setWorkingDay(Number(e.target.value));
             }}
           />
-        </label>
-        <label>
-          <span>Necessary labour (min)</span>
+          <span className="v1-ch17-slider-value">{fmtHoursLong(workingDay)}</span>
+        </div>
+        <div className="v1-ch17-slider-row">
+          <span
+            className={
+              "v1-ch17-slider-label" +
+              (Math.abs(intensity - BASELINE.intensity) > 0.001
+                ? " v1-ch17-slider-label--moved"
+                : "")
+            }
+          >
+            Intensity
+          </span>
           <input
-            type="number"
-            min={1}
-            max={workingDay - 1}
-            value={necessary}
-            onChange={(e) => {
-              setActivePreset("");
-              setNecessary(Number(e.target.value));
-            }}
-          />
-        </label>
-        <label>
-          <span>Intensity factor (1.0 = normal)</span>
-          <input
-            type="number"
-            min={0.1}
-            step={0.05}
+            type="range"
+            className="v1-ch17-slider"
+            min={0.5}
+            max={2.0}
+            step={0.01}
             value={intensity}
             onChange={(e) => {
               setActivePreset("");
               setIntensity(Number(e.target.value));
             }}
           />
-        </label>
-        <label>
-          <span>Productivity factor (1.0 = unchanged)</span>
+          <span className="v1-ch17-slider-value">×{intensity.toFixed(2)}</span>
+        </div>
+        <div className="v1-ch17-slider-row">
+          <span
+            className={
+              "v1-ch17-slider-label" +
+              (Math.abs(productivity - BASELINE.productivity) > 0.001
+                ? " v1-ch17-slider-label--moved"
+                : "")
+            }
+          >
+            Productivity
+          </span>
           <input
-            type="number"
-            min={0.1}
-            step={0.05}
+            type="range"
+            className="v1-ch17-slider"
+            min={0.5}
+            max={2.0}
+            step={0.01}
             value={productivity}
             onChange={(e) => {
               setActivePreset("");
               setProductivity(Number(e.target.value));
             }}
           />
-        </label>
-      </form>
+          <span className="v1-ch17-slider-value">×{productivity.toFixed(2)}</span>
+        </div>
+        <div className="v1-ch17-slider-row">
+          <span
+            className={
+              "v1-ch17-slider-label" +
+              (necessary !== BASELINE.necessary ? " v1-ch17-slider-label--moved" : "")
+            }
+          >
+            Necessary
+          </span>
+          <input
+            type="range"
+            className="v1-ch17-slider"
+            min={60}
+            max={workingDay - 1}
+            step={10}
+            value={necessary}
+            onChange={(e) => {
+              setActivePreset("");
+              setNecessary(Number(e.target.value));
+            }}
+          />
+          <span className="v1-ch17-slider-value">{fmtHoursLong(necessary)}</span>
+        </div>
+      </div>
+
+      <form onSubmit={submit} style={{ display: "none" }} aria-hidden="true" />
       {err && <p className="error">{err}</p>}
+
       {result && (
-        <table className="data-table" style={{ marginTop: "1rem" }}>
-          <tbody>
-            <tr>
-              <td>Daily value created</td>
-              <td>
-                <strong>{fmtHoursLong(result.daily_value_minutes)}</strong>{" "}
-                <span className="muted">({result.daily_value_minutes} min)</span>
-              </td>
-            </tr>
-            <tr>
-              <td>Necessary labour (= value of labour-power)</td>
-              <td>
-                {fmtHoursLong(result.necessary_labour_minutes)}{" "}
-                <span className="muted">({result.necessary_labour_minutes} min)</span>
-              </td>
-            </tr>
-            <tr>
-              <td>Surplus labour</td>
-              <td>
-                <strong>{fmtHoursLong(result.surplus_labour_minutes)}</strong>{" "}
-                <span className="muted">({result.surplus_labour_minutes} min)</span>
-              </td>
-            </tr>
-            <tr>
-              <td>Rate of surplus-value (s/v)</td>
-              <td>
-                <strong>{surplusPct}%</strong>
-              </td>
-            </tr>
-            <tr>
-              <td>§1 Law 1 — daily value constant?</td>
-              <td>
-                {result.law_constant_daily_value ? (
-                  <span>holds (normal intensity)</span>
-                ) : (
-                  <span className="muted">
-                    fails — intensity ≠ 1.0 lifts the daily value
+        <>
+          <div className="v1-ch17-result">
+            {(() => {
+              const total =
+                result.necessary_labour_minutes + result.surplus_labour_minutes;
+              const max = Math.max(total, 1);
+              const pct = (n: number) => `${(n / max) * 100}%`;
+              return (
+                <div className="v1-ch17-bar">
+                  <span className="v1-ch17-bar-label">Working day</span>
+                  <div className="v1-ch17-bar-track">
+                    <div
+                      className="v1-ch17-bar-seg--necessary"
+                      style={{ flexBasis: pct(result.necessary_labour_minutes) }}
+                      title={`v: ${fmtHoursLong(result.necessary_labour_minutes)}`}
+                    />
+                    <div
+                      className="v1-ch17-bar-seg--surplus"
+                      style={{ flexBasis: pct(result.surplus_labour_minutes) }}
+                      title={`s: ${fmtHoursLong(result.surplus_labour_minutes)}`}
+                    />
+                  </div>
+                  <span className="v1-ch17-bar-total">
+                    {fmtHoursLong(total)}
                   </span>
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </div>
+              );
+            })()}
+          </div>
+          <div className="v1-ch17-rate">
+            <span className="v1-ch17-rate-label">s / v</span>
+            <span className="v1-ch17-rate-value">{surplusPct}%</span>
+            <span style={{ color: "var(--ink-muted)", fontSize: "0.75rem" }}>
+              · daily value {fmtHoursLong(result.daily_value_minutes)}{" "}
+              {result.law_constant_daily_value ? "(Law 1 holds)" : "(Law 1 breaks)"}
+            </span>
+          </div>
+          {(() => {
+            const activeLaw = diagnoseLaw(workingDay, necessary, intensity, productivity);
+            return (
+              <div className="v1-ch17-law-block">
+                {LAWS.map((l) => (
+                  <div
+                    key={l.id}
+                    className={
+                      "v1-ch17-law" +
+                      (activeLaw === l.id ? " v1-ch17-law--active" : "")
+                    }
+                  >
+                    <span className="v1-ch17-law-tag">{l.num}</span>
+                    <span className="v1-ch17-law-name">{l.name}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </>
       )}
-      <p className="small muted" style={{ marginTop: "1rem" }}>
-        §1, closing: "The value of labour-power, and the surplus-value,
-        vary in opposite directions." Cycle §1 ↔ baseline to see this
-        directly: the value-of-labour-power column moves down as the
-        surplus column moves up, and the daily-value total holds steady.
+
+      <p className="v1-ch17-closing">
+        §1, closing: “The value of labour-power, and the surplus-value, vary in
+        opposite directions.” Move the Productivity slider alone to watch the
+        necessary segment shrink and the surplus segment grow with the total
+        held fixed.
       </p>
     </section>
   );
