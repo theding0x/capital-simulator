@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import type { SurplusValueSnapshot, SurplusLimitsResponse } from "../../types";
+import "./Ch11RateAndMassOfSurplusValue.css";
 
 interface Ch11Props {
   onSharedChanged: () => void;
@@ -10,9 +11,128 @@ interface Ch11Props {
 export function Ch11RateAndMassOfSurplusValue({ onSharedChanged: _unused }: Ch11Props) {
   return (
     <>
+      <CompensationInsight />
       <MassCalculatorPanel />
+      <CompensationPanel />
       <LimitsPanel />
+      <ExhaustionCoda />
     </>
+  );
+}
+
+function CompensationInsight() {
+  return (
+    <section className="v1-ch11-insight">
+      <h2 className="v1-ch11-insight-h2">S = rate × V (and S = v × rate × n)</h2>
+      <div className="v1-ch11-formulas">
+        <div className="v1-ch11-formula">
+          <span className="v1-ch11-formula-tag">Rate formula</span>
+          <span className="v1-ch11-formula-eqn">S = (s / v) × V</span>
+        </div>
+        <div className="v1-ch11-formula">
+          <span className="v1-ch11-formula-tag">Worker formula</span>
+          <span className="v1-ch11-formula-eqn">S = v × (s / v) × n</span>
+        </div>
+      </div>
+      <p className="v1-ch11-insight-prose">
+        The two formulations agree when <code>V == v × n</code>. The
+        compensation law shows that raising the rate of exploitation can
+        offset a fall in the variable capital advanced — the mass S stays
+        constant as the path changes.
+      </p>
+    </section>
+  );
+}
+
+interface CompensationCase {
+  id: string;
+  label: string;
+  rate: number;
+  V: number;
+}
+
+const COMPENSATION_CASES: CompensationCase[] = [
+  { id: "low-rate-large-v", label: "Case A — rate 100%, V = 300", rate: 1.0, V: 300 },
+  { id: "high-rate-small-v", label: "Case B — rate 200%, V = 150", rate: 2.0, V: 150 },
+];
+
+function CompensationPanel() {
+  const total = Math.max(
+    ...COMPENSATION_CASES.map((c) => c.V * (1 + c.rate)),
+  );
+  return (
+    <section className="card">
+      <h2>Compensation Law</h2>
+      <p className="description">
+        Two paths to the same surplus. Each bar shows variable capital (v,
+        lead) followed by surplus-value (s, gold). Total length is{" "}
+        <code>V + S = V × (1 + rate)</code>; the gold area is{" "}
+        <code>S = rate × V</code>.
+      </p>
+      <div className="v1-ch11-compensation">
+        {COMPENSATION_CASES.map((c, idx) => {
+          const S = c.rate * c.V;
+          const span = c.V + S;
+          const pct = (n: number) => `${(n / total) * 100}%`;
+          return (
+            <div key={c.id} className="v1-ch11-case">
+              <span className="v1-ch11-case-tag">
+                {idx === 0 ? "Path A" : "Path B"}
+              </span>
+              <h3 className="v1-ch11-case-h3">{c.label}</h3>
+              <div
+                className="v1-ch11-case-track"
+                role="img"
+                aria-label={`v=${c.V}, S=${S}`}
+              >
+                <div
+                  className="v1-ch11-case-seg v1-ch11-case-seg--v"
+                  style={{ width: pct(c.V) }}
+                  title={`V = ${c.V}`}
+                >
+                  V
+                </div>
+                <div
+                  className="v1-ch11-case-seg v1-ch11-case-seg--s"
+                  style={{ width: pct(S) }}
+                  title={`S = ${S}`}
+                >
+                  S
+                </div>
+              </div>
+              <span className="v1-ch11-case-meta">
+                S = rate × V = <strong>{S}</strong>{" "}
+                <span className="v1-ch11-case-meta-muted">
+                  · V + S = {span}
+                </span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="v1-ch11-invariant">
+        <span className="v1-ch11-invariant-label">Invariant S</span>
+        <span className="v1-ch11-invariant-value">
+          {COMPENSATION_CASES[0].rate * COMPENSATION_CASES[0].V}
+        </span>
+      </div>
+    </section>
+  );
+}
+
+function ExhaustionCoda() {
+  return (
+    <aside className="v1-ch11-coda">
+      <p className="v1-ch11-coda-quote">
+        The compensation between rate and variable capital meets a hard
+        physiological boundary: the workman's exhaustion fixes a floor under
+        v and a ceiling over s. The mass of surplus-value cannot be sustained
+        indefinitely by raising the rate alone.
+        <span className="v1-ch11-coda-cite">
+          — closing note, Capital Vol. I, Ch. 11 §1
+        </span>
+      </p>
+    </aside>
   );
 }
 
@@ -106,9 +226,15 @@ function MassCalculatorPanel() {
         [worker formula]. When V = v × n both must agree — the compensation law shows that
         raising the rate can offset a fall in the number of workers.
       </p>
-      <div style={{ marginBottom: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      <div className="v1-ch11-presets">
+        <span className="v1-ch11-presets-label">Marx fixture</span>
         {FIXTURES.map((f) => (
-          <button key={f.label} type="button" onClick={() => loadFixture(f)}>
+          <button
+            key={f.label}
+            type="button"
+            className="v1-ch11-preset-button"
+            onClick={() => loadFixture(f)}
+          >
             {f.label}
           </button>
         ))}
