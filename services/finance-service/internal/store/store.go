@@ -9,7 +9,12 @@
 // MySQL implementations.
 package store
 
-import "errors"
+import (
+	"context"
+	"errors"
+
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
+)
 
 // Sentinel errors that callers can branch on with errors.Is.
 var (
@@ -19,9 +24,17 @@ var (
 
 // Store is the persistence contract for finance-service.
 //
-// The interface is intentionally empty in foundation Phase 3 — finance-service
-// is scaffolded ahead of any Vol. III chapter so the api-gateway can route to
-// it and `make build` produces a binary. Each Vol. III chapter PR adds methods
-// here and corresponding implementations in memory.go + mysql.go, following
-// the per-chapter pattern documented in CLAUDE.md.
-type Store interface{}
+// Vol. III Ch. 1 ("Cost-Price and Profit") opens the interface with cost-price
+// persistence. Later chapters append their own methods here and the matching
+// implementations in memory.go + mysql.go, following the per-chapter pattern
+// documented in CLAUDE.md.
+type Store interface {
+	// CreateCostPrice persists a computed cost-price, assigning an ID and
+	// created-at timestamp when absent. It returns ErrAlreadyExists if the ID
+	// collides.
+	CreateCostPrice(ctx context.Context, cp profit.CostPrice) (profit.CostPrice, error)
+	// GetCostPrice returns the cost-price with the given ID, or ErrNotFound.
+	GetCostPrice(ctx context.Context, id profit.CostPriceID) (profit.CostPrice, error)
+	// ListCostPrices returns all stored cost-prices, newest first.
+	ListCostPrices(ctx context.Context) ([]profit.CostPrice, error)
+}

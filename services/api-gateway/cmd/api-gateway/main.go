@@ -319,9 +319,11 @@ func main() {
 		logger.Error("failed to build finance proxy", "err", err)
 		os.Exit(1)
 	}
-	_ = financeProxy // keep the variable live until the first Vol. III route uncomments below
-	// Vol. III, Ch. 1-2 — Cost-Price, Profit, Rate of Profit → finance-service
-	// srv.Handle("/v1/cost-prices", financeProxy)
+	// Vol. III Ch. 1 — Cost-Price and Profit → finance-service
+	srv.Handle("/v1/profit/cost-price", financeProxy)
+	srv.Handle("/v1/profit/cost-price/{rest...}", financeProxy)
+	srv.Handle("/v1/profit/profit-form", financeProxy)
+	// Vol. III, Ch. 2 — The Rate of Profit → finance-service
 	// srv.Handle("/v1/profit-rates", financeProxy)
 	// Vol. III, Ch. 9 — General Rate of Profit + Prices of Production → finance-service
 	// srv.Handle("/v1/general-profit-rate", financeProxy)
