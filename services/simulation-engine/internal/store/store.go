@@ -10,8 +10,8 @@ import (
 	"context"
 	"errors"
 
-	comp "github.com/theding0x/capital-simulator/services/simulation-engine/internal/composition"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
+	comp "github.com/theding0x/capital-simulator/services/simulation-engine/internal/composition"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 	repro "github.com/theding0x/capital-simulator/services/simulation-engine/internal/reproduction"
@@ -477,4 +477,15 @@ type ExtendedReproductionStore interface {
 	// ListGrowthLeads returns all DepartmentIGrowthLead rows for a
 	// MultiPeriodScheme sorted by cycle_number ascending. Never nil.
 	ListGrowthLeads(ctx context.Context, mpID repro.MultiPeriodSchemeID) ([]repro.DepartmentIGrowthLead, error)
+}
+
+// EngineTickStore is the persistence contract for the automatic tick
+// scheduler's audit log (issue #214). Each RecordEngineTick row is one
+// scheduler pass: how many registered tickers ran, how many domain entities
+// they advanced, how long the pass took, and how many tickers errored.
+// ListEngineTicks returns recent passes newest-first; a non-positive limit
+// returns every row. The log is append-only — no update or delete.
+type EngineTickStore interface {
+	RecordEngineTick(ctx context.Context, t engine.ScheduledTick) (engine.ScheduledTick, error)
+	ListEngineTicks(ctx context.Context, limit int) ([]engine.ScheduledTick, error)
 }

@@ -3,6 +3,12 @@ package httpapi
 import "github.com/theding0x/capital-simulator/pkg/httpx"
 
 func Register(s *httpx.Server, h *Handler) {
+	// Issue #214 — automatic tick scheduler (engine operator control)
+	s.HandleFunc("POST /v1/engine/start", h.StartEngine)
+	s.HandleFunc("POST /v1/engine/stop", h.StopEngine)
+	s.HandleFunc("GET /v1/engine/status", h.EngineStatus)
+	s.HandleFunc("GET /v1/engine/ticks", h.ListEngineTicks)
+
 	// Vol. II Ch. 1 — The Circuit of Money-Capital
 	s.HandleFunc("POST /v1/money-circuits", h.CreateMoneyCircuit)
 	s.HandleFunc("GET /v1/money-circuits", h.ListMoneyCircuits)

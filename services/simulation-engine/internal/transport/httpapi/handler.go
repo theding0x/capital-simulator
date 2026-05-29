@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
@@ -17,26 +18,26 @@ import (
 // and the productivity fetcher (added in the Part IV bridge refactor).
 // Pre-Ch.15 surplus and production endpoints remain stateless.
 type Handler struct {
-	Logger             *slog.Logger
-	Machines           store.MachineStore
-	Factories          store.FactoryStore
-	Productivity       ProductivityFetcher
-	GeneralLaw         store.GeneralLawStore
-	HistoricalStages   store.HistoricalStageStore
-	EnclosureEvents    store.EnclosureEventStore
-	WageStatutes       store.WageStatuteStore
-	VagrancyLaws       store.VagrancyLawStore
-	FarmTenures        store.FarmTenureStore
-	DomesticIndustries store.DomesticIndustryStore
-	CapitalOrigins     store.CapitalOriginStore
-	ColonialTransfers  store.ColonialTransferStore
-	NationalDebts      store.NationalDebtStore
-	ProtectionSystems  store.ProtectionSystemStore
-	Trajectories       store.AccumulationTrajectoryStore
-	ColonialMarkets    store.ColonialLabourMarketStore
-	ProductiveCircuits store.ProductiveCircuitStore
-	CommodityCircuits  store.CommodityCircuitStore
-	MoneyCircuits      store.MoneyCircuitStore
+	Logger                *slog.Logger
+	Machines              store.MachineStore
+	Factories             store.FactoryStore
+	Productivity          ProductivityFetcher
+	GeneralLaw            store.GeneralLawStore
+	HistoricalStages      store.HistoricalStageStore
+	EnclosureEvents       store.EnclosureEventStore
+	WageStatutes          store.WageStatuteStore
+	VagrancyLaws          store.VagrancyLawStore
+	FarmTenures           store.FarmTenureStore
+	DomesticIndustries    store.DomesticIndustryStore
+	CapitalOrigins        store.CapitalOriginStore
+	ColonialTransfers     store.ColonialTransferStore
+	NationalDebts         store.NationalDebtStore
+	ProtectionSystems     store.ProtectionSystemStore
+	Trajectories          store.AccumulationTrajectoryStore
+	ColonialMarkets       store.ColonialLabourMarketStore
+	ProductiveCircuits    store.ProductiveCircuitStore
+	CommodityCircuits     store.CommodityCircuitStore
+	MoneyCircuits         store.MoneyCircuitStore
 	IndustrialCapitals    store.IndustrialCapitalStore
 	Turnovers             store.TurnoverStore
 	Composition           store.CompositionStore
@@ -50,6 +51,8 @@ type Handler struct {
 	MoneyCapital          store.MoneyCapitalStore
 	SimpleReproduction    store.SimpleReproductionSchemeStore
 	ExtendedReproduction  store.ExtendedReproductionStore
+	Scheduler             *engine.Scheduler
+	EngineTicks           store.EngineTickStore
 }
 
 // Deps is the dependency bag passed to New. Each field maps to the
@@ -58,25 +61,25 @@ type Handler struct {
 // new stores as fields here — callers that do not use them keep
 // working unchanged.
 type Deps struct {
-	Machines            store.MachineStore
-	Factories           store.FactoryStore
-	Productivity        ProductivityFetcher
-	GeneralLaw          store.GeneralLawStore
-	HistoricalStages    store.HistoricalStageStore
-	EnclosureEvents     store.EnclosureEventStore
-	WageStatutes        store.WageStatuteStore
-	VagrancyLaws        store.VagrancyLawStore
-	FarmTenures         store.FarmTenureStore
-	DomesticIndustries  store.DomesticIndustryStore
-	CapitalOrigins      store.CapitalOriginStore
-	ColonialTransfers   store.ColonialTransferStore
-	NationalDebts       store.NationalDebtStore
-	ProtectionSystems   store.ProtectionSystemStore
-	Trajectories        store.AccumulationTrajectoryStore
-	ColonialMarkets     store.ColonialLabourMarketStore
-	ProductiveCircuits  store.ProductiveCircuitStore
-	CommodityCircuits   store.CommodityCircuitStore
-	MoneyCircuits       store.MoneyCircuitStore
+	Machines              store.MachineStore
+	Factories             store.FactoryStore
+	Productivity          ProductivityFetcher
+	GeneralLaw            store.GeneralLawStore
+	HistoricalStages      store.HistoricalStageStore
+	EnclosureEvents       store.EnclosureEventStore
+	WageStatutes          store.WageStatuteStore
+	VagrancyLaws          store.VagrancyLawStore
+	FarmTenures           store.FarmTenureStore
+	DomesticIndustries    store.DomesticIndustryStore
+	CapitalOrigins        store.CapitalOriginStore
+	ColonialTransfers     store.ColonialTransferStore
+	NationalDebts         store.NationalDebtStore
+	ProtectionSystems     store.ProtectionSystemStore
+	Trajectories          store.AccumulationTrajectoryStore
+	ColonialMarkets       store.ColonialLabourMarketStore
+	ProductiveCircuits    store.ProductiveCircuitStore
+	CommodityCircuits     store.CommodityCircuitStore
+	MoneyCircuits         store.MoneyCircuitStore
 	IndustrialCapitals    store.IndustrialCapitalStore
 	Turnovers             store.TurnoverStore
 	Composition           store.CompositionStore
@@ -90,6 +93,8 @@ type Deps struct {
 	MoneyCapital          store.MoneyCapitalStore
 	SimpleReproduction    store.SimpleReproductionSchemeStore
 	ExtendedReproduction  store.ExtendedReproductionStore
+	Scheduler             *engine.Scheduler
+	EngineTicks           store.EngineTickStore
 }
 
 func New(logger *slog.Logger, d Deps) *Handler {
@@ -97,26 +102,26 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		logger = slog.Default()
 	}
 	return &Handler{
-		Logger:             logger,
-		Machines:           d.Machines,
-		Factories:          d.Factories,
-		Productivity:       d.Productivity,
-		GeneralLaw:         d.GeneralLaw,
-		HistoricalStages:   d.HistoricalStages,
-		EnclosureEvents:    d.EnclosureEvents,
-		WageStatutes:       d.WageStatutes,
-		VagrancyLaws:       d.VagrancyLaws,
-		FarmTenures:        d.FarmTenures,
-		DomesticIndustries: d.DomesticIndustries,
-		CapitalOrigins:     d.CapitalOrigins,
-		ColonialTransfers:  d.ColonialTransfers,
-		NationalDebts:      d.NationalDebts,
-		ProtectionSystems:  d.ProtectionSystems,
-		Trajectories:       d.Trajectories,
-		ColonialMarkets:    d.ColonialMarkets,
-		ProductiveCircuits: d.ProductiveCircuits,
-		CommodityCircuits:  d.CommodityCircuits,
-		MoneyCircuits:      d.MoneyCircuits,
+		Logger:                logger,
+		Machines:              d.Machines,
+		Factories:             d.Factories,
+		Productivity:          d.Productivity,
+		GeneralLaw:            d.GeneralLaw,
+		HistoricalStages:      d.HistoricalStages,
+		EnclosureEvents:       d.EnclosureEvents,
+		WageStatutes:          d.WageStatutes,
+		VagrancyLaws:          d.VagrancyLaws,
+		FarmTenures:           d.FarmTenures,
+		DomesticIndustries:    d.DomesticIndustries,
+		CapitalOrigins:        d.CapitalOrigins,
+		ColonialTransfers:     d.ColonialTransfers,
+		NationalDebts:         d.NationalDebts,
+		ProtectionSystems:     d.ProtectionSystems,
+		Trajectories:          d.Trajectories,
+		ColonialMarkets:       d.ColonialMarkets,
+		ProductiveCircuits:    d.ProductiveCircuits,
+		CommodityCircuits:     d.CommodityCircuits,
+		MoneyCircuits:         d.MoneyCircuits,
 		IndustrialCapitals:    d.IndustrialCapitals,
 		Turnovers:             d.Turnovers,
 		Composition:           d.Composition,
@@ -130,6 +135,8 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		MoneyCapital:          d.MoneyCapital,
 		SimpleReproduction:    d.SimpleReproduction,
 		ExtendedReproduction:  d.ExtendedReproduction,
+		Scheduler:             d.Scheduler,
+		EngineTicks:           d.EngineTicks,
 	}
 }
 

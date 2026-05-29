@@ -17,39 +17,39 @@ import (
 
 // Memory is the in-memory implementation of all store interfaces.
 type Memory struct {
-	mu                 sync.RWMutex
-	machines           map[machinery.MachineID]machinery.Machine
-	factories          map[machinery.FactoryID]machinery.Factory
-	ticks              map[machinery.FactoryID][]engine.Tick
-	generalLaw         map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario
-	historicalStages   map[simulation.HistoricalStageID]simulation.HistoricalStage
-	stageNames         map[string]simulation.HistoricalStageID
-	enclosureEvents    []simulation.EnclosureEvent
-	wageStatutes       []simulation.WageStatute
-	vagrancyLaws       []simulation.VagrancyLaw
-	farmTenures        []simulation.FarmTenure
-	domesticIndustries []simulation.DomesticIndustry
-	capitalOrigins     []simulation.CapitalOrigin
-	colonialTransfers  []simulation.ColonialTransfer
-	nationalDebts      []simulation.NationalDebt
-	protectionSystems  []simulation.ProtectionSystem
-	trajectories       map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory
-	colonialMarkets    map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket
-	colonyNames        map[string]simulation.ColonialLabourMarketID
-	productiveCircuits  map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit
-	commodityCircuits   map[circulation.CommodityCircuitID]circulation.CommodityCircuit
-	moneyCircuits       map[circulation.MoneyCircuitID]circulation.MoneyCircuit
-	industrialCapitals  map[circulation.IndustrialCapitalID]circulation.IndustrialCapital
-	capitalParts        map[circulation.IndustrialCapitalID][]circulation.CapitalPart
-	stageDistributions  map[circulation.IndustrialCapitalID][]circulation.StageDistribution
-	stageBlocks         map[circulation.IndustrialCapitalID][]circulation.StageBlock
-	valueRevolutions    map[circulation.IndustrialCapitalID][]circulation.ValueRevolutionResult
-	interlocks          map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock
-	supplyDemand        map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance
-	sinkingFunds        map[circulation.IndustrialCapitalID]circulation.SinkingFund
-	turnovers            map[tv.TurnoverID]tv.Turnover
-	turnoverCycles       map[tv.TurnoverID][]tv.TurnoverCycle
-	turnoverNumbers      map[tv.TurnoverID]tv.TurnoverNumber
+	mu                    sync.RWMutex
+	machines              map[machinery.MachineID]machinery.Machine
+	factories             map[machinery.FactoryID]machinery.Factory
+	ticks                 map[machinery.FactoryID][]engine.Tick
+	generalLaw            map[simulation.GeneralLawScenarioID]simulation.GeneralLawScenario
+	historicalStages      map[simulation.HistoricalStageID]simulation.HistoricalStage
+	stageNames            map[string]simulation.HistoricalStageID
+	enclosureEvents       []simulation.EnclosureEvent
+	wageStatutes          []simulation.WageStatute
+	vagrancyLaws          []simulation.VagrancyLaw
+	farmTenures           []simulation.FarmTenure
+	domesticIndustries    []simulation.DomesticIndustry
+	capitalOrigins        []simulation.CapitalOrigin
+	colonialTransfers     []simulation.ColonialTransfer
+	nationalDebts         []simulation.NationalDebt
+	protectionSystems     []simulation.ProtectionSystem
+	trajectories          map[simulation.AccumulationTrajectoryID]simulation.AccumulationTrajectory
+	colonialMarkets       map[simulation.ColonialLabourMarketID]simulation.ColonialLabourMarket
+	colonyNames           map[string]simulation.ColonialLabourMarketID
+	productiveCircuits    map[circulation.ProductiveCircuitID]circulation.ProductiveCircuit
+	commodityCircuits     map[circulation.CommodityCircuitID]circulation.CommodityCircuit
+	moneyCircuits         map[circulation.MoneyCircuitID]circulation.MoneyCircuit
+	industrialCapitals    map[circulation.IndustrialCapitalID]circulation.IndustrialCapital
+	capitalParts          map[circulation.IndustrialCapitalID][]circulation.CapitalPart
+	stageDistributions    map[circulation.IndustrialCapitalID][]circulation.StageDistribution
+	stageBlocks           map[circulation.IndustrialCapitalID][]circulation.StageBlock
+	valueRevolutions      map[circulation.IndustrialCapitalID][]circulation.ValueRevolutionResult
+	interlocks            map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock
+	supplyDemand          map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance
+	sinkingFunds          map[circulation.IndustrialCapitalID]circulation.SinkingFund
+	turnovers             map[tv.TurnoverID]tv.Turnover
+	turnoverCycles        map[tv.TurnoverID][]tv.TurnoverCycle
+	turnoverNumbers       map[tv.TurnoverID]tv.TurnoverNumber
 	composition           *memoryComposition
 	aggregateTurnovers    *memoryAggregateTurnover
 	economistAttributions []circulation.EconomistAttribution
@@ -61,6 +61,7 @@ type Memory struct {
 	moneyCapital          *memoryMoneyCapital
 	simpleRepro           *memorySimpleReproduction
 	extendedRepro         *memoryExtendedReproduction
+	engineTicks           []engine.ScheduledTick
 	now                   func() time.Time
 }
 
@@ -86,18 +87,18 @@ func NewMemory() *Memory {
 		interlocks:         make(map[circulation.IndustrialCapitalID][]circulation.MetamorphosisInterlock),
 		supplyDemand:       make(map[circulation.IndustrialCapitalID][]circulation.SupplyDemandImbalance),
 		sinkingFunds:       make(map[circulation.IndustrialCapitalID]circulation.SinkingFund),
-		turnovers:           make(map[tv.TurnoverID]tv.Turnover),
-		turnoverCycles:      make(map[tv.TurnoverID][]tv.TurnoverCycle),
-		turnoverNumbers:     make(map[tv.TurnoverID]tv.TurnoverNumber),
+		turnovers:          make(map[tv.TurnoverID]tv.Turnover),
+		turnoverCycles:     make(map[tv.TurnoverID][]tv.TurnoverCycle),
+		turnoverNumbers:    make(map[tv.TurnoverID]tv.TurnoverNumber),
 		composition:        newMemoryComposition(),
 		aggregateTurnovers: newMemoryAggregateTurnover(),
 		workingPeriod:      newMemoryWorkingPeriod(),
 		productionTime:     newMemoryProductionTime(),
 		priceRevolution:    newMemoryPriceRevolution(),
 		valorisation:       newMemoryValorisation(),
-		moneyCapital:  newMemoryMoneyCapital(),
-		simpleRepro:   newMemorySimpleReproduction(),
-		extendedRepro: newMemoryExtendedReproduction(),
+		moneyCapital:       newMemoryMoneyCapital(),
+		simpleRepro:        newMemorySimpleReproduction(),
+		extendedRepro:      newMemoryExtendedReproduction(),
 		reproduction: func() *memoryReproduction {
 			r := newMemoryReproduction()
 			// Seed the canonical Ch. 17 realisation puzzle and 100-spinning-mill fixture.
