@@ -134,9 +134,6 @@ function WorkingDayPanel() {
     }
   }
 
-  const necessaryPct = result ? ((result.necessary_labour / result.total) * 100).toFixed(1) : null;
-  const surplusPct = result ? ((result.surplus_labour / result.total) * 100).toFixed(1) : null;
-
   return (
     <section className="card">
       <h2>Working-Day Split</h2>
