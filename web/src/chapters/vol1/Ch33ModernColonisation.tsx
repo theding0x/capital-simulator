@@ -24,6 +24,7 @@ export function Ch33ModernColonisation() {
 
   const [markets, setMarkets] = useState<ColonialLabourMarket[]>([]);
   const [listError, setListError] = useState("");
+  const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState("");
 
   const [newForm, setNewForm] = useState<CreateColonialLabourMarketInput>(DEFAULT_NEW_MARKET);
@@ -55,6 +56,8 @@ export function Ch33ModernColonisation() {
       }
     } catch (e) {
       setListError(String(e));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -119,6 +122,7 @@ export function Ch33ModernColonisation() {
   }
 
   return (
+    <>
     <div className="ch33-grid">
       <section className="ch33-card">
         <h2>The colonial labour market</h2>
@@ -130,6 +134,11 @@ export function Ch33ModernColonisation() {
           ‘Mr. Peel was left without a servant to make his bed.’”
         </p>
         {listError && <div className="ch33-error">{listError}</div>}
+        {loading ? (
+          <p className="ch33-empty">Loading colonies&#8230;</p>
+        ) : markets.length === 0 ? (
+          <p className="ch33-empty">No colonies on file yet &#8212; register one below to begin.</p>
+        ) : (
         <ul className="ch33-list">
           {markets.map((m) => (
             <li
@@ -159,6 +168,7 @@ export function Ch33ModernColonisation() {
             </li>
           ))}
         </ul>
+        )}
       </section>
 
       <section className="ch33-card">
@@ -333,5 +343,16 @@ export function Ch33ModernColonisation() {
         )}
       </section>
     </div>
+
+      <aside className="v1-ch33-coda">
+        <p className="v1-ch33-coda-quote">
+          &#8220;The capitalist mode of production and accumulation, and therefore capitalist private
+          property, have for their fundamental condition the annihilation of that private property
+          which rests on the labour of the individual himself; in other words, the expropriation of
+          the labourer.&#8221;
+          <span className="v1-ch33-coda-cite">&#8212; Marx, Capital Vol. I, Ch. 33</span>
+        </p>
+      </aside>
+    </>
   );
 }

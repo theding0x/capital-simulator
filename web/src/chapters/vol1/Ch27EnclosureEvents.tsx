@@ -220,13 +220,17 @@ export function Ch27EnclosureEvents() {
             </tr>
           </tbody>
         </table>
-        <p className="note" style={{ marginTop: "1rem", maxWidth: "62ch" }}>
+      </section>
+
+      <aside className="v1-ch27-coda">
+        <p className="v1-ch27-coda-quote">
           &#8220;The transformation of arable land into sheep-walks was the watchword of the time in
           England. The robbery of the common lands, the usurpation of feudal and clan property, its
           transformation into modern private property under circumstances of reckless terrorism, were
           just so many idyllic methods of primitive accumulation.&#8221;
+          <span className="v1-ch27-coda-cite">&#8212; Marx, Capital Vol. I, Ch. 27</span>
         </p>
-      </section>
+      </aside>
     </>
   );
 }

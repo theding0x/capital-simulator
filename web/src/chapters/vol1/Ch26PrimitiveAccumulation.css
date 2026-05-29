@@ -53,20 +53,29 @@
   padding: 0 0.5rem;
   min-width: 4rem;
 }
-.ch26-coda {
-  margin-top: 1.5rem;
-  padding: 1rem 1.25rem;
-  background: var(--red-dim);
-  border-left: 2px solid var(--red);
+/* Ch26 uplift: standardized closing coda (matches Ch20 / Ch03 reference) */
+.v1-ch26-coda {
+  background: transparent;
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 0 0;
+  margin: 1.5rem 0 0;
 }
-.ch26-coda p {
-  font-family: 'Playfair Display', serif;
+
+.v1-ch26-coda-quote {
   font-style: italic;
-  font-size: 0.98rem;
-  color: var(--ink);
-  line-height: 1.55;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
   margin: 0;
-  max-width: 60ch;
+  max-width: 64ch;
+}
+
+.v1-ch26-coda-cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--gold);
 }
 
 @media (max-width: 880px) {

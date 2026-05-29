@@ -86,6 +86,7 @@ export function Ch32HistoricalTendency() {
   );
 
   return (
+    <>
     <div className="ch32-grid">
       <section className="ch32-card ch32-stages">
         <h2>The dialectic of expropriation</h2>
@@ -244,6 +245,17 @@ export function Ch32HistoricalTendency() {
         {simResult && <TrajectoryView trajectory={simResult} fmt={fmt} />}
       </section>
     </div>
+
+      <aside className="v1-ch32-coda">
+        <p className="v1-ch32-coda-quote">
+          &#8220;Centralisation of the means of production and socialisation of labour at last reach
+          a point where they become incompatible with their capitalist integument. This integument
+          is burst asunder. The knell of capitalist private property sounds. The expropriators are
+          expropriated.&#8221;
+          <span className="v1-ch32-coda-cite">&#8212; Marx, Capital Vol. I, Ch. 32</span>
+        </p>
+      </aside>
+    </>
   );
 }
 

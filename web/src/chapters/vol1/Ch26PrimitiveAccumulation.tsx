@@ -158,13 +158,14 @@ export function Ch26PrimitiveAccumulation() {
           </tbody>
         </table>
 
-        <div className="ch26-coda">
-          <p>
+        <aside className="v1-ch26-coda">
+          <p className="v1-ch26-coda-quote">
             &#8220;In actual history, it is notorious that conquest, enslavement, robbery, murder,
             briefly force, play the great part. In the tender annals of political economy, the
             idyllic reigns from time immemorial.&#8221;
+            <span className="v1-ch26-coda-cite">&#8212; Marx, Capital Vol. I, Ch. 26</span>
           </p>
-        </div>
+        </aside>
       </section>
     </>
   );

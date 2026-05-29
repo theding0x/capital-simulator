@@ -237,6 +237,15 @@ export function Ch30HomeMarket() {
           </li>
         </ul>
       </section>
+
+      <aside className="v1-ch30-coda">
+        <p className="v1-ch30-coda-quote">
+          &#8220;The expropriation and expulsion of a part of the agricultural population not only
+          set free for industrial capital the labourers, their means of subsistence, and material
+          for labour; it also created the home market.&#8221;
+          <span className="v1-ch30-coda-cite">&#8212; Marx, Capital Vol. I, Ch. 30</span>
+        </p>
+      </aside>
     </>
   );
 }
