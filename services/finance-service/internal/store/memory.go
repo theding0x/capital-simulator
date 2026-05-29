@@ -17,6 +17,7 @@ type Memory struct {
 	profitRates map[profit.ProfitRateID]profit.ProfitRateAnalysis
 	variations  map[profit.VariationAnalysisID]profit.VariationAnalysis
 	turnovers   map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
+	economies   map[profit.EconomyAnalysisID]profit.EconomyAnalysis
 }
 
 // NewMemory returns an empty in-memory store.
@@ -27,6 +28,7 @@ func NewMemory() *Memory {
 		profitRates: make(map[profit.ProfitRateID]profit.ProfitRateAnalysis),
 		variations:  make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
 		turnovers:   make(map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis),
+		economies:   make(map[profit.EconomyAnalysisID]profit.EconomyAnalysis),
 	}
 }
 
@@ -202,6 +204,51 @@ func (m *Memory) ListTurnoverAnalyses(_ context.Context) ([]profit.TurnoverAnaly
 
 	out := make([]profit.TurnoverAnalysis, 0, len(m.turnovers))
 	for _, a := range m.turnovers {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateEconomyAnalysis stores a, assigning an ID and timestamp when absent.
+func (m *Memory) CreateEconomyAnalysis(_ context.Context, a profit.EconomyAnalysis) (profit.EconomyAnalysis, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if a.ID.IsZero() {
+		a.ID = profit.NewEconomyAnalysisID()
+	}
+	if _, exists := m.economies[a.ID]; exists {
+		return profit.EconomyAnalysis{}, ErrAlreadyExists
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	m.economies[a.ID] = a
+	return a, nil
+}
+
+// GetEconomyAnalysis returns the analysis with id, or ErrNotFound.
+func (m *Memory) GetEconomyAnalysis(_ context.Context, id profit.EconomyAnalysisID) (profit.EconomyAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	a, ok := m.economies[id]
+	if !ok {
+		return profit.EconomyAnalysis{}, ErrNotFound
+	}
+	return a, nil
+}
+
+// ListEconomyAnalyses returns all stored economy analyses, newest first.
+func (m *Memory) ListEconomyAnalyses(_ context.Context) ([]profit.EconomyAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]profit.EconomyAnalysis, 0, len(m.economies))
+	for _, a := range m.economies {
 		out = append(out, a)
 	}
 	sort.Slice(out, func(i, j int) bool {

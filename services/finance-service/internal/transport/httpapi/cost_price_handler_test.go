@@ -31,6 +31,9 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/profit/turnover-analysis", h.CreateTurnoverAnalysis)
 	mux.HandleFunc("GET /v1/profit/turnover-analysis", h.ListTurnoverAnalyses)
 	mux.HandleFunc("GET /v1/profit/turnover-analysis/{id}", h.GetTurnoverAnalysis)
+	mux.HandleFunc("POST /v1/profit/economy", h.CreateEconomyAnalysis)
+	mux.HandleFunc("GET /v1/profit/economy", h.ListEconomyAnalyses)
+	mux.HandleFunc("GET /v1/profit/economy/{id}", h.GetEconomyAnalysis)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

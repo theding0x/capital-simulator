@@ -66,4 +66,14 @@ type Store interface {
 	GetTurnoverAnalysis(ctx context.Context, id profit.TurnoverAnalysisID) (profit.TurnoverAnalysis, error)
 	// ListTurnoverAnalyses returns all stored turnover analyses, newest first.
 	ListTurnoverAnalyses(ctx context.Context) ([]profit.TurnoverAnalysis, error)
+
+	// CreateEconomyAnalysis persists an economy analysis (Vol. III Ch. 5) — a
+	// saving in constant capital and the rise it produces in the rate of profit
+	// s/(c+v) — assigning an ID and created-at timestamp when absent. It returns
+	// ErrAlreadyExists if the ID collides.
+	CreateEconomyAnalysis(ctx context.Context, a profit.EconomyAnalysis) (profit.EconomyAnalysis, error)
+	// GetEconomyAnalysis returns the economy analysis with the given ID, or ErrNotFound.
+	GetEconomyAnalysis(ctx context.Context, id profit.EconomyAnalysisID) (profit.EconomyAnalysis, error)
+	// ListEconomyAnalyses returns all stored economy analyses, newest first.
+	ListEconomyAnalyses(ctx context.Context) ([]profit.EconomyAnalysis, error)
 }

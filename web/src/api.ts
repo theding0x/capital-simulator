@@ -2001,4 +2001,23 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // Vol. III Ch. 5 — Economy in the Employment of Constant Capital
+  listEconomyAnalyses: () =>
+    http<{ items: import("./types").EconomyAnalysisResponse[] }>("/v1/profit/economy").then((r) => r.items),
+
+  getEconomyAnalysis: (id: string) =>
+    http<import("./types").EconomyAnalysisResponse>(`/v1/profit/economy/${id}`),
+
+  createEconomyAnalysis: (input: {
+    kind: import("./types").EconomyKind;
+    constant: number;
+    variable: number;
+    surplus_value: number;
+    saving: number;
+  }) =>
+    http<import("./types").EconomyAnalysisResponse>("/v1/profit/economy", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };
