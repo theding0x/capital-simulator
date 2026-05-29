@@ -17,6 +17,25 @@ const DEFAULT_FORM: CreateCommodityCircuitInput = {
   mode: "simple",
 };
 
+function SocialCapitalCoda() {
+  return (
+    <aside className="v2-ch03-coda">
+      <p className="v2-ch03-coda-quote">
+        “Form III, C′…C′, alone presupposes the cycle as the cycle of social
+        capital, not the cycle of an individual capital in isolation.
+        Each capitalist's commodity-product is at the same time another
+        capitalist's means of production — the means of production enter the
+        opening C′ already as the output of other circuits, and the closing
+        C′ enters someone else's circuit as input. The form makes the
+        reproduction of the social total product visible.”
+        <span className="v2-ch03-coda-cite">
+          — Marx, Capital Vol. II, Ch. 3 (paraphrasing §IV)
+        </span>
+      </p>
+    </aside>
+  );
+}
+
 export function Ch03CircuitCommodityCapital() {
   const fmt = usePounds();
 
@@ -370,6 +389,7 @@ export function Ch03CircuitCommodityCapital() {
           </div>
         )}
       </div>
+      <SocialCapitalCoda />
     </div>
   );
 }

@@ -17,6 +17,26 @@ const DEFAULT_FORM: CreateProductiveCircuitInput = {
   min_capitalisation_increment_pence: 100,
 };
 
+function FormIIAsymmetryInsight() {
+  return (
+    <section className="v2-ch02-insight">
+      <h2 className="v2-ch02-insight-h2">
+        Form II — production is both start and end
+      </h2>
+      <p className="v2-ch02-insight-prose">
+        Form I (M…M′) makes profit-making appear to be the goal of the whole
+        process — money in, more money out, with production a means. Form II
+        (P…P) re-reads the same circuit starting from production. Now
+        money-capital and commodity-capital are only transitional moments;
+        the continuation of production itself becomes the goal, and the
+        capitalist's surplus appears as the means by which that continuation
+        is enlarged. Neither form is wrong — together they show that the
+        circuit is the unity of all three.
+      </p>
+    </section>
+  );
+}
+
 export function Ch02CircuitProductiveCapital() {
   const fmt = usePounds();
 
@@ -102,6 +122,7 @@ export function Ch02CircuitProductiveCapital() {
 
   return (
     <div>
+      <FormIIAsymmetryInsight />
       {/* Circuit diagram — P…C'—M'—C…P */}
       <div className="pc-card" style={{ marginBottom: "1.5rem" }}>
         <h3>The Circuit of Productive Capital — P … C&prime;—M&prime;—C … P</h3>
