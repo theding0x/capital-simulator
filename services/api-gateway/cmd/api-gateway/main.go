@@ -326,6 +326,10 @@ func main() {
 	// Vol. III Ch. 2 — The Rate of Profit → finance-service
 	srv.Handle("/v1/profit/rate", financeProxy)
 	srv.Handle("/v1/profit/rate/{rest...}", financeProxy)
+	// Vol. III Ch. 3 — Relation of the Rate of Profit to the Rate of Surplus-Value → finance-service
+	srv.Handle("/v1/profit/variation", financeProxy)
+	srv.Handle("/v1/profit/variation/{rest...}", financeProxy)
+	srv.Handle("/v1/profit/compare", financeProxy)
 	// Vol. III, Ch. 9 — General Rate of Profit + Prices of Production → finance-service
 	// srv.Handle("/v1/general-profit-rate", financeProxy)
 	// srv.Handle("/v1/prices-of-production", financeProxy)

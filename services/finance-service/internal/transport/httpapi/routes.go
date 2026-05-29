@@ -15,4 +15,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/profit/rate", h.CreateProfitRate)
 	s.HandleFunc("GET /v1/profit/rate", h.ListProfitRates)
 	s.HandleFunc("GET /v1/profit/rate/{id}", h.GetProfitRate)
+
+	// Vol. III Ch. 3 — Relation of the Rate of Profit to the Rate of Surplus-Value
+	s.HandleFunc("POST /v1/profit/variation", h.CreateVariation)
+	s.HandleFunc("GET /v1/profit/variation", h.ListVariations)
+	s.HandleFunc("GET /v1/profit/variation/{id}", h.GetVariation)
+	s.HandleFunc("POST /v1/profit/compare", h.CompareProfitRates)
 }

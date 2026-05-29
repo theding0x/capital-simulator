@@ -150,6 +150,65 @@ func (m *MySQL) ListProfitRates(ctx context.Context) ([]profit.ProfitRateAnalysi
 	return out, rows.Err()
 }
 
+// CreateVariation persists a, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateVariation(ctx context.Context, a profit.VariationAnalysis) (profit.VariationAnalysis, error) {
+	if a.ID.IsZero() {
+		a.ID = profit.NewVariationAnalysisID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO variation_analyses
+		(id, vcase, initial_c, initial_v, initial_s_rate_bp, changed_c, changed_v, changed_s_rate_bp,
+		 old_profit_rate_bp, new_profit_rate_bp, old_composition_bp, new_composition_bp, proportional_change, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID), string(a.Case),
+		int64(a.Initial.C), int64(a.Initial.V), int64(a.Initial.SRate),
+		int64(a.Changed.C), int64(a.Changed.V), int64(a.Changed.SRate),
+		a.OldProfitRate, a.NewProfitRate, a.OldCompositionBP, a.NewCompositionBP,
+		a.ProportionalChange, a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return profit.VariationAnalysis{}, ErrAlreadyExists
+		}
+		return profit.VariationAnalysis{}, err
+	}
+	return a, nil
+}
+
+// GetVariation returns the variation analysis with id, or ErrNotFound.
+func (m *MySQL) GetVariation(ctx context.Context, id profit.VariationAnalysisID) (profit.VariationAnalysis, error) {
+	const q = `SELECT id, vcase, initial_c, initial_v, initial_s_rate_bp, changed_c, changed_v, changed_s_rate_bp,
+		old_profit_rate_bp, new_profit_rate_bp, old_composition_bp, new_composition_bp, proportional_change, created_at
+		FROM variation_analyses WHERE id = ?`
+	return scanVariation(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListVariations returns all stored variation analyses, newest first.
+func (m *MySQL) ListVariations(ctx context.Context) ([]profit.VariationAnalysis, error) {
+	const q = `SELECT id, vcase, initial_c, initial_v, initial_s_rate_bp, changed_c, changed_v, changed_s_rate_bp,
+		old_profit_rate_bp, new_profit_rate_bp, old_composition_bp, new_composition_bp, proportional_change, created_at
+		FROM variation_analyses ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []profit.VariationAnalysis
+	for rows.Next() {
+		a, err := scanVariation(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
 // rowScanner is satisfied by both *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -212,6 +271,44 @@ func scanProfitRate(s rowScanner) (profit.ProfitRateAnalysis, error) {
 		SurplusValueRate: profit.RateOfSurplusValue(surplusBP),
 		Mystification:    profit.MystificationDegree(mystBP),
 		CreatedAt:        createdAt,
+	}, nil
+}
+
+func scanVariation(s rowScanner) (profit.VariationAnalysis, error) {
+	var (
+		id, vcase                             string
+		initC, initV, initS, chgC, chgV, chgS int64
+		oldP, newP, oldComp, newComp          int64
+		proportional                          bool
+		createdAt                             time.Time
+	)
+	err := s.Scan(&id, &vcase, &initC, &initV, &initS, &chgC, &chgV, &chgS,
+		&oldP, &newP, &oldComp, &newComp, &proportional, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return profit.VariationAnalysis{}, ErrNotFound
+		}
+		return profit.VariationAnalysis{}, err
+	}
+	return profit.VariationAnalysis{
+		ID:   profit.VariationAnalysisID(id),
+		Case: profit.VariationCase(vcase),
+		Initial: profit.ProfitRateFormula{
+			C:     profit.ConstantCapital(initC),
+			V:     profit.VariableCapital(initV),
+			SRate: profit.RateOfSurplusValue(initS),
+		},
+		Changed: profit.ProfitRateFormula{
+			C:     profit.ConstantCapital(chgC),
+			V:     profit.VariableCapital(chgV),
+			SRate: profit.RateOfSurplusValue(chgS),
+		},
+		OldProfitRate:      oldP,
+		NewProfitRate:      newP,
+		OldCompositionBP:   oldComp,
+		NewCompositionBP:   newComp,
+		ProportionalChange: proportional,
+		CreatedAt:          createdAt,
 	}, nil
 }
 

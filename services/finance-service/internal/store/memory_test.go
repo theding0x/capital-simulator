@@ -131,3 +131,70 @@ func TestMemory_ListProfitRatesNeverNil(t *testing.T) {
 		t.Error("list should return a non-nil slice even when empty")
 	}
 }
+
+func TestMemory_VariationRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	a := profit.ComputeVariationAnalysis(
+		profit.ProfitRateFormula{C: 80, V: 20, SRate: 10000},
+		profit.ProfitRateFormula{C: 100, V: 20, SRate: 10000},
+	)
+	created, err := m.CreateVariation(ctx, a)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+
+	got, err := m.GetVariation(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetVariationNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetVariation(context.Background(), profit.VariationAnalysisID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateVariationDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	a := profit.ComputeVariationAnalysis(
+		profit.ProfitRateFormula{C: 80, V: 20, SRate: 10000},
+		profit.ProfitRateFormula{C: 60, V: 20, SRate: 10000},
+	)
+	a.ID = profit.VariationAnalysisID("fixed-id-9012")
+
+	if _, err := m.CreateVariation(ctx, a); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateVariation(ctx, a); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListVariationsNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListVariations(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}

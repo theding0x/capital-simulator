@@ -46,4 +46,14 @@ type Store interface {
 	GetProfitRate(ctx context.Context, id profit.ProfitRateID) (profit.ProfitRateAnalysis, error)
 	// ListProfitRates returns all stored analyses, newest first.
 	ListProfitRates(ctx context.Context) ([]profit.ProfitRateAnalysis, error)
+
+	// CreateVariation persists a variation analysis (Vol. III Ch. 3) — the
+	// movement of the rate of profit between two decompositions — assigning an
+	// ID and created-at timestamp when absent. It returns ErrAlreadyExists if
+	// the ID collides.
+	CreateVariation(ctx context.Context, a profit.VariationAnalysis) (profit.VariationAnalysis, error)
+	// GetVariation returns the variation analysis with the given ID, or ErrNotFound.
+	GetVariation(ctx context.Context, id profit.VariationAnalysisID) (profit.VariationAnalysis, error)
+	// ListVariations returns all stored variation analyses, newest first.
+	ListVariations(ctx context.Context) ([]profit.VariationAnalysis, error)
 }

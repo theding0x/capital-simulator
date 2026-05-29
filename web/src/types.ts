@@ -2995,3 +2995,50 @@ export interface ProfitRateAnalysisResponse {
   mystification: number;
   created_at: string;
 }
+
+// Vol. III Ch. 3 — Relation of the Rate of Profit to the Rate of Surplus-Value.
+// Marx's master equation p′ = s′·(v/C) resolves the rate of profit into two
+// factors: the rate of surplus-value s′ and the value-composition v/C. In the
+// formula struct, c is the constant component and v the variable component, so
+// the total capital C = c + v. s_rate and every *_rate / *_bp field is in basis
+// points (10000 bp = 100%).
+
+export type VariationCase =
+  | "s_constant_vc_variable"
+  | "s_variable_vc_constant"
+  | "both_variable";
+
+export interface ProfitRateFormulaV3 {
+  c: number;
+  v: number;
+  s_rate: number;
+}
+
+export interface CompositionRatioV3 {
+  variable: number;
+  total: number;
+  basis_points: number;
+}
+
+export interface VariationAnalysisResponse {
+  id: string;
+  case: VariationCase;
+  initial: ProfitRateFormulaV3;
+  changed: ProfitRateFormulaV3;
+  old_profit_rate: number;
+  new_profit_rate: number;
+  old_composition_bp: number;
+  new_composition_bp: number;
+  proportional_change: boolean;
+  created_at: string;
+}
+
+export interface ProfitRateComparisonResponse {
+  first: ProfitRateFormulaV3;
+  second: ProfitRateFormulaV3;
+  first_profit_rate: number;
+  second_profit_rate: number;
+  first_composition: CompositionRatioV3;
+  second_composition: CompositionRatioV3;
+  equal_surplus_rate: boolean;
+}
