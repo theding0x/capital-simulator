@@ -215,6 +215,7 @@ export function Ch05TimeOfCirculation() {
 
   return (
     <div className="ch05-panel">
+      <ActiveFractionInsight />
       {/* ── TurnoverTime list ── */}
       <section className="ch05-section">
         <h2 className="ch05-h2">Turnover Records</h2>
@@ -290,6 +291,39 @@ export function Ch05TimeOfCirculation() {
         </p>
         <PerishabilityCliff perishabilities={perishabilities} />
       </section>
+
+      <CirculationCoda />
     </div>
+  );
+}
+
+function ActiveFractionInsight() {
+  return (
+    <section className="v2-ch05-insight">
+      <h2 className="v2-ch05-insight-h2">The active fraction of capital</h2>
+      <p className="v2-ch05-insight-prose">
+        Total turnover time is production time + circulation time, but only
+        production time is value-creating. The <em>active fraction</em>
+        measures the share of the working period during which a capital is
+        actually valorizing itself; the rest of the turnover is dead weight.
+        Each turnover record's active fraction sits below.
+      </p>
+    </section>
+  );
+}
+
+function CirculationCoda() {
+  return (
+    <aside className="v2-ch05-coda">
+      <p className="v2-ch05-coda-quote">
+        “The time of circulation of capital … is a negative quantity for the
+        process of valorization. It is the time during which capital does not
+        function as productive capital, hence neither produces commodities nor
+        surplus-value.”
+        <span className="v2-ch05-coda-cite">
+          — Marx, Capital Vol. II, Ch. 5
+        </span>
+      </p>
+    </aside>
   );
 }

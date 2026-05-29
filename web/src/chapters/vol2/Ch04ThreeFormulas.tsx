@@ -75,6 +75,12 @@ export function Ch04ThreeFormulas() {
         </div>
       </div>
 
+      <p className="v2-ch04-nebeneinander">
+        Marx insists the three formulas are not stages a capital passes
+        through one after another — they are simultaneous moments of a
+        single capital in motion. <em>Nebeneinander</em>, not Nacheinander.
+      </p>
+
       {capitals.length === 0 ? (
         <p className="ch04-empty">No industrial capitals recorded yet.</p>
       ) : (
