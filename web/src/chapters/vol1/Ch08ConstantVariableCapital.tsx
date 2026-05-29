@@ -6,6 +6,7 @@ import type {
   DecomposeCapitalResult,
   CapitalCompositionResult,
 } from "../../types";
+import "./Ch08ConstantVariableCapital.css";
 
 interface Ch08Props {
   onSharedChanged: () => void;
@@ -17,12 +18,126 @@ function minutesToHours(m: number): string {
   return min === 0 ? `${h}h` : `${h}h ${min}m`;
 }
 
+const COMPARE_INDUSTRIES = [
+  {
+    id: "spinning",
+    label: "1871 Spinning Mill",
+    tag: "High c/v",
+    c: 1440,
+    v: 360,
+    s: 360,
+  },
+  {
+    id: "tailoring",
+    label: "Tailoring (handicraft)",
+    tag: "Low c/v",
+    c: 120,
+    v: 360,
+    s: 360,
+  },
+] as const;
+
 export function Ch08ConstantVariableCapital({ onSharedChanged: _onSharedChanged }: Ch08Props) {
   return (
     <>
+      <CapitalInsight />
       <DecomposeCapitalPanel />
       <CapitalCompositionPanel />
+      <IndustryComparisonPanel />
+      <Coda />
     </>
+  );
+}
+
+function CapitalInsight() {
+  return (
+    <section className="v1-ch08-insight">
+      <h2 className="v1-ch08-insight-h2">Constant transfers. Variable expands.</h2>
+      <p className="v1-ch08-insight-prose">
+        Constant capital transfers its value to the product unchanged; variable
+        capital reproduces its own value <em>and</em> expands it (v → v + s).
+        The composition <code>c/v</code> measures how much dead labour each
+        living labourer animates.
+      </p>
+    </section>
+  );
+}
+
+function CvsBar({
+  c,
+  v,
+  s,
+  label,
+  total,
+}: {
+  c: number;
+  v: number;
+  s: number;
+  label: string;
+  total?: number;
+}) {
+  const sum = total ?? c + v + s;
+  const pct = (n: number) => (sum > 0 ? `${(n / sum) * 100}%` : "0%");
+  return (
+    <div className="v1-ch08-decomp" role="img" aria-label={`c + v + s decomposition: ${label}`}>
+      <span className="v1-ch08-decomp-label">{label}</span>
+      <div className="v1-ch08-decomp-track">
+        <div
+          className="v1-ch08-decomp-seg v1-ch08-decomp-seg--c"
+          style={{ flexBasis: pct(c) }}
+          title={`c: ${minutesToHours(c)}`}
+        >
+          c
+        </div>
+        <div
+          className="v1-ch08-decomp-seg v1-ch08-decomp-seg--v"
+          style={{ flexBasis: pct(v) }}
+          title={`v: ${minutesToHours(v)}`}
+        >
+          v
+        </div>
+        <div
+          className="v1-ch08-decomp-seg v1-ch08-decomp-seg--s"
+          style={{ flexBasis: pct(s) }}
+          title={`s: ${minutesToHours(s)}`}
+        >
+          s
+        </div>
+      </div>
+      <span className="v1-ch08-decomp-total">{minutesToHours(sum)}</span>
+    </div>
+  );
+}
+
+function CvsLegend({ c, v, s }: { c: number; v: number; s: number }) {
+  return (
+    <p className="v1-ch08-legend">
+      <span>
+        <span className="v1-ch08-legend-swatch" style={{ background: "var(--lead-hover)" }} />
+        c — constant ({minutesToHours(c)})
+      </span>
+      <span>
+        <span className="v1-ch08-legend-swatch" style={{ background: "var(--lead)" }} />
+        v — variable ({minutesToHours(v)})
+      </span>
+      <span>
+        <span className="v1-ch08-legend-swatch" style={{ background: "var(--gold-bright)" }} />
+        s — surplus ({minutesToHours(s)})
+      </span>
+    </p>
+  );
+}
+
+function CompositionKpi({ c, v }: { c: number; v: number }) {
+  const ratio = v > 0 ? (c / v).toFixed(2) : "∞";
+  return (
+    <div className="v1-ch08-composition">
+      <span className="v1-ch08-composition-label">c / v</span>
+      <span className="v1-ch08-composition-value">{ratio}</span>
+      <span className="v1-ch08-composition-ratio">
+        ({minutesToHours(c)} dead / {minutesToHours(v)} living)
+      </span>
+    </div>
   );
 }
 
@@ -139,38 +254,24 @@ function DecomposeCapitalPanel() {
       </form>
 
       {result && (
-        <table className="data-table">
-          <tbody>
-            <tr>
-              <td>Constant Capital (c) — transferred</td>
-              <td>{minutesToHours(result.product_value.constant)}</td>
-            </tr>
-            <tr>
-              <td>Variable Capital (v) — reproduced</td>
-              <td>{minutesToHours(result.product_value.variable)}</td>
-            </tr>
-            <tr>
-              <td>Surplus Value (s)</td>
-              <td><strong>{minutesToHours(result.product_value.surplus)}</strong></td>
-            </tr>
-            <tr>
-              <td>Total Product Value (c + v + s)</td>
-              <td>
-                <strong>
-                  {minutesToHours(
-                    result.product_value.constant +
-                    result.product_value.variable +
-                    result.product_value.surplus
-                  )}
-                </strong>
-              </td>
-            </tr>
-            <tr>
-              <td>Capital Composition (c/v)</td>
-              <td>{result.composition_ratio.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
+        <>
+          <h3 className="v1-ch08-result-h3">c + v + s</h3>
+          <CvsBar
+            c={result.product_value.constant}
+            v={result.product_value.variable}
+            s={result.product_value.surplus}
+            label="Product value"
+          />
+          <CvsLegend
+            c={result.product_value.constant}
+            v={result.product_value.variable}
+            s={result.product_value.surplus}
+          />
+          <CompositionKpi
+            c={result.product_value.constant}
+            v={result.product_value.variable}
+          />
+        </>
       )}
     </section>
   );
@@ -226,23 +327,65 @@ function CapitalCompositionPanel() {
       </form>
 
       {result && (
-        <table className="data-table">
-          <tbody>
-            <tr>
-              <td>Constant Capital (c)</td>
-              <td>{minutesToHours(result.constant)}</td>
-            </tr>
-            <tr>
-              <td>Variable Capital (v)</td>
-              <td>{minutesToHours(result.variable)}</td>
-            </tr>
-            <tr>
-              <td>Composition Ratio (c/v)</td>
-              <td><strong>{result.composition_ratio.toFixed(2)}</strong></td>
-            </tr>
-          </tbody>
-        </table>
+        <>
+          <h3 className="v1-ch08-result-h3">Composition</h3>
+          <CvsBar c={result.constant} v={result.variable} s={0} label="c + v" />
+          <CompositionKpi c={result.constant} v={result.variable} />
+        </>
       )}
     </section>
+  );
+}
+
+function IndustryComparisonPanel() {
+  const max = Math.max(
+    ...COMPARE_INDUSTRIES.map((it) => it.c + it.v + it.s),
+  );
+  return (
+    <section className="card">
+      <h2>High vs Low Organic Composition</h2>
+      <p className="description">
+        Two industries with the same wage bill (v) and the same surplus rate
+        (s/v = 100%) produce strikingly different aggregates — the spinning
+        mill animates 12× as much dead labour as the tailor.
+      </p>
+      <div className="v1-ch08-compare">
+        {COMPARE_INDUSTRIES.map((it) => (
+          <div key={it.id} className="v1-ch08-compare-card">
+            <span className="v1-ch08-compare-tag">{it.tag}</span>
+            <h3 className="v1-ch08-compare-h3">{it.label}</h3>
+            <CvsBar
+              c={it.c}
+              v={it.v}
+              s={it.s}
+              label="c + v + s"
+              total={max}
+            />
+            <span className="v1-ch08-compare-meta">
+              c / v = <strong>{(it.c / it.v).toFixed(2)}</strong>{" "}
+              <span className="v1-ch08-compare-meta-muted">
+                · s / v = {(it.s / it.v).toFixed(2)}
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Coda() {
+  return (
+    <aside className="v1-ch08-coda">
+      <p className="v1-ch08-coda-quote">
+        “That part of capital which is converted into means of production …
+        does not, in the process of production, undergo any quantitative
+        alteration of value. I therefore call it the <em>constant</em> part of
+        capital.”
+        <span className="v1-ch08-coda-cite">
+          — Marx, Capital Vol. I, Ch. 8 §1
+        </span>
+      </p>
+    </aside>
   );
 }
