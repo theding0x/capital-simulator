@@ -140,3 +140,89 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Ch20 uplift: insight + extension probe + coda */
+.v1-ch20-insight {
+  background: var(--surface-raised);
+  border: 1px solid var(--border, #2a2a4a);
+  border-left: 3px solid var(--red);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.v1-ch20-insight-h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  color: var(--text, #eee);
+}
+
+.v1-ch20-insight-prose {
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.v1-ch20-probe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--lead-dim);
+  border-radius: 6px;
+}
+
+.v1-ch20-probe-label {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.v1-ch20-probe-slider {
+  width: 100%;
+  accent-color: var(--red);
+}
+
+.v1-ch20-probe-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-family: monospace;
+}
+
+.v1-ch20-probe-hours {
+  font-size: 1.1rem;
+  color: var(--text, #eee);
+}
+
+.v1-ch20-probe-arrow {
+  color: var(--ink-muted);
+}
+
+.v1-ch20-probe-price {
+  font-size: 1.25rem;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.v1-ch20-coda {
+  background: transparent;
+  border-top: 1px solid var(--border, #2a2a4a);
+  padding: 1.25rem 0 0;
+  margin: 0;
+}
+
+.v1-ch20-coda-quote {
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.v1-ch20-coda-cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
