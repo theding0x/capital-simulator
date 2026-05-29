@@ -8,6 +8,7 @@ import type {
   RawMaterial,
   Instrument,
 } from "../../types";
+import "./Ch07LabourProcess.css";
 
 interface Ch07Props {
   onSharedChanged: () => void;
@@ -18,6 +19,37 @@ function minutesToHours(m: number): string {
   const min = m % 60;
   return min === 0 ? `${h}h` : `${h}h ${min}m`;
 }
+
+interface FixturePreset {
+  id: string;
+  label: string;
+  duration: number;
+  productKind: string;
+  productQty: number;
+  rawMaterials: RawMaterial[];
+  instruments: Instrument[];
+}
+
+const FIXTURES: FixturePreset[] = [
+  {
+    id: "yarn-1871",
+    label: "Yarn / cotton (Ch.7 §2)",
+    duration: 720,
+    productKind: "yarn",
+    productQty: 10,
+    rawMaterials: [{ commodity_id: "cotton", quantity: 10, snlt_per_unit: 120 }],
+    instruments: [{ commodity_id: "spindle", wear_per_run: 240 }],
+  },
+  {
+    id: "yarn-1871-twelve",
+    label: "Yarn / 12-hour day (s/v = 100%)",
+    duration: 720,
+    productKind: "yarn",
+    productQty: 20,
+    rawMaterials: [{ commodity_id: "cotton", quantity: 20, snlt_per_unit: 60 }],
+    instruments: [{ commodity_id: "spindle", wear_per_run: 240 }],
+  },
+];
 
 export function Ch07LabourProcess({ onSharedChanged: _onSharedChanged }: Ch07Props) {
   const [workers, setWorkers] = useState<LabourWorker[]>([]);
@@ -42,6 +74,7 @@ export function Ch07LabourProcess({ onSharedChanged: _onSharedChanged }: Ch07Pro
 
   return (
     <>
+      <TwoFacesInsight />
       {loadErr && <p className="error">{loadErr}</p>}
       <RunLabourProcessPanel
         workers={workers}
@@ -49,7 +82,39 @@ export function Ch07LabourProcess({ onSharedChanged: _onSharedChanged }: Ch07Pro
         onResult={setResult}
       />
       {result && <ValorizationResultPanel result={result} />}
+      <Coda />
     </>
+  );
+}
+
+function TwoFacesInsight() {
+  return (
+    <section className="v1-ch07-insight">
+      <h2 className="v1-ch07-insight-h2">One process, two faces</h2>
+      <div className="v1-ch07-insight-faces">
+        <div className="v1-ch07-face">
+          <span className="v1-ch07-face-tag">Labour-process</span>
+          <h3 className="v1-ch07-face-h3">Production of use-values</h3>
+          <span className="v1-ch07-face-gloss">
+            Purposeful activity, raw material, and instruments combine to make
+            something useful. A process between man and nature.
+          </span>
+        </div>
+        <div className="v1-ch07-face">
+          <span className="v1-ch07-face-tag">Valorization-process</span>
+          <h3 className="v1-ch07-face-h3">Production of surplus-value</h3>
+          <span className="v1-ch07-face-gloss">
+            The same activity produces new value beyond the value of
+            labour-power advanced. A process between capital and the worker.
+          </span>
+        </div>
+      </div>
+      <p className="v1-ch07-insight-prose">
+        Marx insists they are one and the same act, taken from two angles. The
+        bars below split that single act first by time (necessary vs surplus
+        labour) and then by value (c + v + s).
+      </p>
+    </section>
   );
 }
 
@@ -72,6 +137,14 @@ function RunLabourProcessPanel({ workers, capitalists, onResult }: RunPanelProps
     { commodity_id: "spindle", wear_per_run: 240 },
   ]);
   const [err, setErr] = useState<string | null>(null);
+
+  function applyPreset(p: FixturePreset) {
+    setDuration(p.duration);
+    setProductKind(p.productKind);
+    setProductQty(p.productQty);
+    setRawMaterials(p.rawMaterials.map((rm) => ({ ...rm })));
+    setInstruments(p.instruments.map((i) => ({ ...i })));
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -110,6 +183,19 @@ function RunLabourProcessPanel({ workers, capitalists, onResult }: RunPanelProps
         The capitalist sets the worker to work on raw materials with instruments of labour.
         The result is a new product whose value exceeds the value of labour-power advanced.
       </p>
+      <div className="v1-ch07-presets">
+        <span className="v1-ch07-presets-label">Marx fixture</span>
+        {FIXTURES.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className="v1-ch07-preset-button"
+            onClick={() => applyPreset(p)}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
       <form className="form-grid" onSubmit={submit}>
         <label>
           <span>Worker</span>
@@ -252,55 +338,123 @@ function RunLabourProcessPanel({ workers, capitalists, onResult }: RunPanelProps
 
 function ValorizationResultPanel({ result }: { result: RunLabourProcessResult }) {
   const { labour_process: lp, product, valorization: v } = result;
+  const c = Math.max(v.product_value - lp.duration, 0);
+  const necessary = v.necessary_labour;
+  const surplus = v.surplus_labour;
+  const dayTotal = lp.duration;
+  const valueTotal = v.product_value;
+
   const surplusRate =
-    v.necessary_labour > 0
-      ? ((v.surplus_value / v.necessary_labour) * 100).toFixed(1)
-      : "∞";
+    necessary > 0 ? ((surplus / necessary) * 100).toFixed(1) : "∞";
+
+  const dayPct = (n: number) => (dayTotal > 0 ? `${(n / dayTotal) * 100}%` : "0%");
+  const valPct = (n: number) => (valueTotal > 0 ? `${(n / valueTotal) * 100}%` : "0%");
 
   return (
     <section className="card">
       <h2>Valorization Result</h2>
       <p className="small muted">Process ID: <span className="monospace">{lp.id}</span></p>
-      <table className="data-table">
-        <tbody>
-          <tr>
-            <td>Working Day</td>
-            <td>{minutesToHours(lp.duration)}</td>
-          </tr>
-          <tr>
-            <td>Necessary Labour</td>
-            <td>{minutesToHours(v.necessary_labour)}</td>
-          </tr>
-          <tr>
-            <td>Surplus Labour</td>
-            <td>{minutesToHours(v.surplus_labour)}</td>
-          </tr>
-          <tr>
-            <td>Transferred Value (constant capital)</td>
-            <td>{minutesToHours(v.product_value - lp.duration)}</td>
-          </tr>
-          <tr>
-            <td>Value Added (living labour)</td>
-            <td>{minutesToHours(lp.duration)}</td>
-          </tr>
-          <tr>
-            <td>Total Product Value</td>
-            <td><strong>{minutesToHours(v.product_value)}</strong></td>
-          </tr>
-          <tr>
-            <td>Surplus Value</td>
-            <td><strong>{minutesToHours(v.surplus_value)}</strong></td>
-          </tr>
-          <tr>
-            <td>Rate of Surplus Value (s/v)</td>
-            <td>{surplusRate}%</td>
-          </tr>
-        </tbody>
-      </table>
-      <p className="small">
+
+      <h3 className="v1-ch07-result-h3">Working day</h3>
+      <div className="v1-ch07-partition" role="img" aria-label="Working-day partition">
+        <span className="v1-ch07-partition-label">{minutesToHours(dayTotal)} day</span>
+        <div className="v1-ch07-partition-track">
+          <div
+            className="v1-ch07-partition-seg v1-ch07-partition-seg--necessary"
+            style={{ flexBasis: dayPct(necessary) }}
+            title={`Necessary labour: ${minutesToHours(necessary)}`}
+          >
+            v
+          </div>
+          <div
+            className="v1-ch07-partition-seg v1-ch07-partition-seg--surplus"
+            style={{ flexBasis: dayPct(surplus) }}
+            title={`Surplus labour: ${minutesToHours(surplus)}`}
+          >
+            s
+          </div>
+        </div>
+        <span className="v1-ch07-partition-total">{minutesToHours(dayTotal)}</span>
+      </div>
+      <p className="v1-ch07-legend">
+        <span>
+          <span className="v1-ch07-legend-swatch" style={{ background: "var(--lead)" }} />
+          Necessary labour ({minutesToHours(necessary)})
+        </span>
+        <span>
+          <span className="v1-ch07-legend-swatch" style={{ background: "var(--gold-bright)" }} />
+          Surplus labour ({minutesToHours(surplus)})
+        </span>
+      </p>
+
+      <h3 className="v1-ch07-result-h3">Value composition</h3>
+      <div className="v1-ch07-partition" role="img" aria-label="Value composition c + v + s">
+        <span className="v1-ch07-partition-label">{minutesToHours(valueTotal)} value</span>
+        <div className="v1-ch07-partition-track">
+          <div
+            className="v1-ch07-partition-seg v1-ch07-partition-seg--constant"
+            style={{ flexBasis: valPct(c) }}
+            title={`c (transferred): ${minutesToHours(c)}`}
+          >
+            c
+          </div>
+          <div
+            className="v1-ch07-partition-seg v1-ch07-partition-seg--necessary"
+            style={{ flexBasis: valPct(necessary) }}
+            title={`v (necessary): ${minutesToHours(necessary)}`}
+          >
+            v
+          </div>
+          <div
+            className="v1-ch07-partition-seg v1-ch07-partition-seg--surplus"
+            style={{ flexBasis: valPct(surplus) }}
+            title={`s (surplus): ${minutesToHours(surplus)}`}
+          >
+            s
+          </div>
+        </div>
+        <span className="v1-ch07-partition-total">{minutesToHours(valueTotal)}</span>
+      </div>
+      <p className="v1-ch07-legend">
+        <span>
+          <span className="v1-ch07-legend-swatch" style={{ background: "var(--lead-hover)" }} />
+          c — transferred ({minutesToHours(c)})
+        </span>
+        <span>
+          <span className="v1-ch07-legend-swatch" style={{ background: "var(--lead)" }} />
+          v — necessary ({minutesToHours(necessary)})
+        </span>
+        <span>
+          <span className="v1-ch07-legend-swatch" style={{ background: "var(--gold-bright)" }} />
+          s — surplus ({minutesToHours(surplus)})
+        </span>
+      </p>
+
+      <div className="v1-ch07-surplus-rate">
+        <span className="v1-ch07-surplus-rate-label">Rate of surplus-value (s/v)</span>
+        <span className="v1-ch07-surplus-rate-value">{surplusRate}%</span>
+      </div>
+
+      <p className="small" style={{ marginTop: "1rem" }}>
         <strong>Product:</strong> {lp.product_quantity} × {product.commodity_kind} —
         total value {minutesToHours(product.total_value)}
       </p>
     </section>
+  );
+}
+
+function Coda() {
+  return (
+    <aside className="v1-ch07-coda">
+      <p className="v1-ch07-coda-quote">
+        “By turning his money into commodities that serve as the material
+        elements of a new product, and as factors in the labour-process … the
+        capitalist drinks up the labour-power of others, transforming his money
+        not merely into commodities, but into capital.”
+        <span className="v1-ch07-coda-cite">
+          — Marx, Capital Vol. I, Ch. 7
+        </span>
+      </p>
+    </aside>
   );
 }
