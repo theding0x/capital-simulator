@@ -1,5 +1,70 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { api } from "../../api";
+import type {
+  FarmTenure,
+  FarmTenureInput,
+  HistoricalStage,
+  RealRentResult,
+  TenantForm,
+} from "../../types";
 import "./Ch29GenesisFarmer.css";
+
+interface TenurePreset {
+  id: string;
+  label: string;
+  input: FarmTenureInput;
+}
+
+const TENURE_PRESETS: TenurePreset[] = [
+  {
+    id: "bailiff-1300",
+    label: "Bailiff (≈1300)",
+    input: {
+      form: "bailiff",
+      lease_period_years: 1,
+      rent_pence: 0,
+      capital_advanced_pence: 0,
+      revenue_pence: 400,
+      wage_costs_pence: 320,
+    },
+  },
+  {
+    id: "metayer-1450",
+    label: "Métayer (1450)",
+    input: {
+      form: "metayer",
+      lease_period_years: 7,
+      rent_pence: 600,
+      capital_advanced_pence: 1200,
+      revenue_pence: 2000,
+      wage_costs_pence: 800,
+    },
+  },
+  {
+    id: "capitalist-1650",
+    label: "Capitalist Farmer (1650)",
+    input: {
+      form: "capitalist-farmer",
+      lease_period_years: 99,
+      rent_pence: 2000,
+      capital_advanced_pence: 50000,
+      revenue_pence: 60000,
+      wage_costs_pence: 12000,
+    },
+  },
+];
+
+const TENURE_FORMS: { value: TenantForm; label: string }[] = [
+  { value: "bailiff", label: "Bailiff" },
+  { value: "metayer", label: "Métayer" },
+  { value: "capitalist-farmer", label: "Capitalist farmer" },
+];
+
+function fmtPence(p: number): string {
+  const pounds = p / 100;
+  return `£${pounds.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
 
 function Stat({
   label,
@@ -85,6 +150,9 @@ export function Ch29GenesisFarmer() {
 
   return (
     <>
+      <DepreciationInsight />
+      <FarmTenuresPanel />
+      <RealRentPanel />
       <section className="card">
         <h2>The Twin Movement</h2>
         <p className="description">
@@ -237,6 +305,333 @@ export function Ch29GenesisFarmer() {
           </tbody>
         </table>
       </section>
+      <HarrisonCoda />
     </>
+  );
+}
+
+function DepreciationInsight() {
+  return (
+    <section className="v1-ch29-insight">
+      <h2 className="v1-ch29-insight-h2">Long leases against a depreciating currency</h2>
+      <p className="v1-ch29-insight-prose">
+        Between 1500 and 1650 the silver content of the English coinage fell and
+        New-World bullion drove a sustained rise in commodity prices. A tenant
+        farmer who had locked in a nominal money rent on a long lease watched
+        his real obligation evaporate while his harvest sold for ever more.
+        The <em>Real-Rent</em> probe below deflates a nominal rent by a chosen
+        depreciation factor; the <em>Recorded Tenures</em> panel ties tenure
+        type to its computed profit on the live backend.
+      </p>
+    </section>
+  );
+}
+
+function FarmTenuresPanel() {
+  const [stages, setStages] = useState<HistoricalStage[]>([]);
+  const [selectedStage, setSelectedStage] = useState<string>("");
+  const [tenures, setTenures] = useState<FarmTenure[]>([]);
+  const [draft, setDraft] = useState<FarmTenureInput>(TENURE_PRESETS[2].input);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await api.listHistoricalStages();
+        setStages(list);
+        if (list.length > 0 && !selectedStage) {
+          setSelectedStage(list[0].id);
+        }
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : String(e));
+      }
+    })();
+  }, [selectedStage]);
+
+  const refreshTenures = useCallback(async (stageId: string) => {
+    if (!stageId) return;
+    setLoading(true);
+    try {
+      const list = await api.listFarmTenures(stageId);
+      setTenures(list);
+      setErr(null);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshTenures(selectedStage);
+  }, [selectedStage, refreshTenures]);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedStage) {
+      setErr("Pick a historical stage first.");
+      return;
+    }
+    setErr(null);
+    try {
+      await api.createFarmTenure(selectedStage, draft);
+      await refreshTenures(selectedStage);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  const finalForm: TenantForm = "capitalist-farmer";
+
+  return (
+    <section className="card">
+      <h2>Recorded Tenures</h2>
+      <p className="description">
+        Persist farm-tenure records against a chosen historical stage. The
+        backend computes the surplus
+        (<code>profit = revenue − rent − wages</code>); each new tenure
+        appears as a card with its form and profit. The progression climbs as
+        the form shifts from bailiff to capitalist farmer.
+      </p>
+
+      <div className="v1-ch29-presets">
+        <span className="v1-ch29-presets-label">Stage</span>
+        <select
+          value={selectedStage}
+          onChange={(e) => setSelectedStage(e.target.value)}
+        >
+          <option value="">— pick a historical stage —</option>
+          {stages.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
+        <span className="v1-ch29-presets-label" style={{ marginLeft: "0.4rem" }}>
+          Preset
+        </span>
+        {TENURE_PRESETS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className="v1-ch29-preset-button"
+            onClick={() => setDraft(p.input)}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      <form className="form-grid" onSubmit={submit}>
+        <label>
+          <span>Form</span>
+          <select
+            value={draft.form}
+            onChange={(e) =>
+              setDraft({ ...draft, form: e.target.value as TenantForm })
+            }
+          >
+            {TENURE_FORMS.map((f) => (
+              <option key={f.value} value={f.value}>{f.label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Lease period (years)</span>
+          <input
+            type="number"
+            min={1}
+            value={draft.lease_period_years}
+            onChange={(e) =>
+              setDraft({ ...draft, lease_period_years: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          <span>Rent (pence)</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.rent_pence}
+            onChange={(e) =>
+              setDraft({ ...draft, rent_pence: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          <span>Capital advanced (pence)</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.capital_advanced_pence}
+            onChange={(e) =>
+              setDraft({
+                ...draft,
+                capital_advanced_pence: Number(e.target.value),
+              })
+            }
+          />
+        </label>
+        <label>
+          <span>Revenue (pence)</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.revenue_pence}
+            onChange={(e) =>
+              setDraft({ ...draft, revenue_pence: Number(e.target.value) })
+            }
+          />
+        </label>
+        <label>
+          <span>Wage costs (pence)</span>
+          <input
+            type="number"
+            min={0}
+            value={draft.wage_costs_pence}
+            onChange={(e) =>
+              setDraft({ ...draft, wage_costs_pence: Number(e.target.value) })
+            }
+          />
+        </label>
+        <div className="form-actions span2">
+          <button type="submit" className="primary" disabled={!selectedStage}>
+            Record tenure
+          </button>
+          {err && <span className="error">{err}</span>}
+        </div>
+      </form>
+
+      {loading && <p className="small muted">Loading tenures…</p>}
+      {!loading && tenures.length === 0 && selectedStage && (
+        <p className="small muted">No tenures recorded yet on this stage.</p>
+      )}
+      {tenures.length > 0 && (
+        <div className="v1-ch29-tenures">
+          {tenures.map((t) => {
+            const isFinal = t.form === finalForm;
+            const negative = t.surplus.profit < 0;
+            return (
+              <div
+                key={t.id}
+                className={
+                  "v1-ch29-tenure" +
+                  (isFinal ? " v1-ch29-tenure--final" : "")
+                }
+              >
+                <span className="v1-ch29-tenure-tag">{t.form}</span>
+                <h3 className="v1-ch29-tenure-h3">
+                  {t.lease_period_years}-yr lease
+                </h3>
+                <span className="v1-ch29-tenure-meta">
+                  rent {fmtPence(t.rent_pence)} · capital {fmtPence(t.capital_advanced_pence)} ·
+                  revenue {fmtPence(t.revenue_pence)} · wages {fmtPence(t.wage_costs_pence)}
+                </span>
+                <span
+                  className={
+                    "v1-ch29-tenure-profit" +
+                    (negative ? " v1-ch29-tenure-profit--negative" : "")
+                  }
+                >
+                  profit {fmtPence(t.surplus.profit)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RealRentPanel() {
+  const [nominal, setNominal] = useState(2400);
+  const [factor, setFactor] = useState(0.45);
+  const [result, setResult] = useState<RealRentResult | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const recompute = useCallback(async () => {
+    setErr(null);
+    try {
+      const r = await api.computeRealRent(nominal, factor);
+      setResult(r);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+      setResult(null);
+    }
+  }, [nominal, factor]);
+
+  useEffect(() => {
+    void recompute();
+  }, [recompute]);
+
+  const windfallPence = useMemo(
+    () => (result ? result.nominal_rent_pence - result.real_rent_pence : 0),
+    [result],
+  );
+
+  return (
+    <section className="card">
+      <h2>Real-Rent Probe (§1 — currency depreciation)</h2>
+      <p className="description">
+        Deflates a nominal rent by a depreciation factor in (0, 1]. A factor of
+        0.5 means the currency halved in real value; the tenant's effective
+        rent burden is half the nominal figure, and the difference is windfall.
+      </p>
+      <form
+        className="form-grid"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void recompute();
+        }}
+      >
+        <label>
+          <span>Nominal rent (pence)</span>
+          <input
+            type="number"
+            min={0}
+            value={nominal}
+            onChange={(e) => setNominal(Number(e.target.value))}
+          />
+        </label>
+        <label>
+          <span>Depreciation factor (0–1)</span>
+          <input
+            type="number"
+            min={0.01}
+            max={1}
+            step={0.05}
+            value={factor}
+            onChange={(e) => setFactor(Number(e.target.value))}
+          />
+        </label>
+      </form>
+      {err && <p className="error">{err}</p>}
+      {result && (
+        <div className="v1-ch29-rent-chip">
+          <span className="v1-ch29-rent-chip-label">Real rent</span>
+          <span className="v1-ch29-rent-chip-value">
+            {fmtPence(result.real_rent_pence)}
+          </span>
+          <span className="v1-ch29-rent-chip-meta">
+            · windfall {fmtPence(windfallPence)} (×{result.depreciation_factor.toFixed(2)})
+          </span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function HarrisonCoda() {
+  return (
+    <aside className="v1-ch29-coda">
+      <p className="v1-ch29-coda-quote">
+        “Whereas in old time, a man would have been thought well to do that
+        could keep £50 or £100 in store, now in our days £200 or £300 is
+        scarcely accounted a great matter.”
+        <span className="v1-ch29-coda-cite">
+          — Harrison, quoted by Marx, Capital Vol. I, Ch. 29
+        </span>
+      </p>
+    </aside>
   );
 }
