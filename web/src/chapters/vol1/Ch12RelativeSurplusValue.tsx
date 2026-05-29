@@ -7,6 +7,7 @@ import type {
   ProductionRateResult,
   ExtraSurplusValueResult,
 } from "../../types";
+import "./Ch12RelativeSurplusValue.css";
 
 interface Ch12Props {
   onSharedChanged: () => void;
@@ -15,10 +16,99 @@ interface Ch12Props {
 export function Ch12RelativeSurplusValue({ onSharedChanged: _unused }: Ch12Props) {
   return (
     <>
+      <SequenceInsight />
       <WorkingDayPanel />
       <ShortenWorkingDayPanel />
       <ExtraSurplusValuePanel />
+      <RelativeCoda />
     </>
+  );
+}
+
+function SequenceInsight() {
+  return (
+    <section className="v1-ch12-insight">
+      <h2 className="v1-ch12-insight-h2">The mechanism of relative surplus-value</h2>
+      <div className="v1-ch12-sequence">
+        <div className="v1-ch12-step">
+          <span className="v1-ch12-step-tag">Productivity</span>
+          <span className="v1-ch12-step-eqn">π ↑</span>
+          <span className="v1-ch12-step-arrow">→</span>
+        </div>
+        <div className="v1-ch12-step">
+          <span className="v1-ch12-step-tag">Value of LP</span>
+          <span className="v1-ch12-step-eqn">v ↓</span>
+          <span className="v1-ch12-step-arrow">→</span>
+        </div>
+        <div className="v1-ch12-step">
+          <span className="v1-ch12-step-tag">Necessary labour</span>
+          <span className="v1-ch12-step-eqn">a ↓</span>
+          <span className="v1-ch12-step-arrow">→</span>
+        </div>
+        <div className="v1-ch12-step">
+          <span className="v1-ch12-step-tag">Surplus labour</span>
+          <span className="v1-ch12-step-eqn">a′ ↑</span>
+        </div>
+      </div>
+      <p className="v1-ch12-insight-prose">
+        With the working day held constant, a productivity rise in the
+        wage-goods industries cheapens labour-power. Necessary labour contracts,
+        and surplus labour expands by the same amount — relative surplus-value.
+      </p>
+    </section>
+  );
+}
+
+function DayBar({
+  necessary,
+  surplus,
+  label,
+  total,
+}: {
+  necessary: number;
+  surplus: number;
+  label: string;
+  total?: number;
+}) {
+  const sum = total ?? necessary + surplus;
+  const pct = (n: number) => (sum > 0 ? `${(n / sum) * 100}%` : "0%");
+  return (
+    <div className="v1-ch12-bar" role="img" aria-label={`${label}: necessary ${necessary}, surplus ${surplus}`}>
+      <span className="v1-ch12-bar-label">{label}</span>
+      <div className="v1-ch12-bar-track">
+        <div
+          className="v1-ch12-bar-seg v1-ch12-bar-seg--necessary"
+          style={{ flexBasis: pct(necessary) }}
+          title={`Necessary: ${necessary} min`}
+        >
+          v
+        </div>
+        <div
+          className="v1-ch12-bar-seg v1-ch12-bar-seg--surplus"
+          style={{ flexBasis: pct(surplus) }}
+          title={`Surplus: ${surplus} min`}
+        >
+          s
+        </div>
+      </div>
+      <span className="v1-ch12-bar-total">{sum} min</span>
+    </div>
+  );
+}
+
+function RelativeCoda() {
+  return (
+    <aside className="v1-ch12-coda">
+      <p className="v1-ch12-coda-quote">
+        “I call that surplus-value which is produced by the curtailment of the
+        necessary labour-time, and by the corresponding alteration in the
+        respective lengths of the two components of the working day, relative
+        surplus-value.”
+        <span className="v1-ch12-coda-cite">
+          — Marx, Capital Vol. I, Ch. 12 §1
+        </span>
+      </p>
+    </aside>
   );
 }
 
@@ -43,9 +133,6 @@ function WorkingDayPanel() {
       setErr(e instanceof Error ? e.message : String(e));
     }
   }
-
-  const necessaryPct = result ? ((result.necessary_labour / result.total) * 100).toFixed(1) : null;
-  const surplusPct = result ? ((result.surplus_labour / result.total) * 100).toFixed(1) : null;
 
   return (
     <section className="card">
@@ -81,49 +168,27 @@ function WorkingDayPanel() {
       </form>
       {result && (
         <>
-          <div style={{ marginTop: "1rem" }}>
-            <div style={{ display: "flex", height: "1.5rem", borderRadius: "4px", overflow: "hidden", fontSize: "0.75rem" }}>
-              <div
-                style={{
-                  width: `${necessaryPct}%`,
-                  background: "var(--red)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontWeight: 600,
-                }}
-              >
-                Necessary {necessaryPct}%
-              </div>
-              <div
-                style={{
-                  width: `${surplusPct}%`,
-                  background: "var(--ink-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  fontWeight: 600,
-                }}
-              >
-                Surplus {surplusPct}%
-              </div>
+          <DayBar
+            necessary={result.necessary_labour}
+            surplus={result.surplus_labour}
+            label="Working day"
+          />
+          <p className="v1-ch12-legend">
+            <span>
+              <span className="v1-ch12-legend-swatch" style={{ background: "var(--lead)" }} />
+              v — necessary ({result.necessary_labour} min)
+            </span>
+            <span>
+              <span className="v1-ch12-legend-swatch" style={{ background: "var(--gold-bright)" }} />
+              s — surplus ({result.surplus_labour} min)
+            </span>
+          </p>
+          {rateResult && (
+            <div className="v1-ch12-rate">
+              <span className="v1-ch12-rate-label">s / v</span>
+              <span className="v1-ch12-rate-value">{(rateResult.rate * 100).toFixed(1)}%</span>
             </div>
-          </div>
-          <table className="data-table" style={{ marginTop: "0.75rem" }}>
-            <tbody>
-              <tr><td>Total</td><td>{result.total} min ({(result.total / 60).toFixed(1)} h)</td></tr>
-              <tr><td>Necessary Labour</td><td>{result.necessary_labour} min ({(result.necessary_labour / 60).toFixed(1)} h)</td></tr>
-              <tr><td>Surplus Labour</td><td>{result.surplus_labour} min ({(result.surplus_labour / 60).toFixed(1)} h)</td></tr>
-              {rateResult && (
-                <tr>
-                  <td><strong>Rate of Surplus-Value s/v</strong></td>
-                  <td><strong>{(rateResult.rate * 100).toFixed(1)}%</strong></td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          )}
         </>
       )}
     </section>
@@ -175,9 +240,17 @@ function ShortenWorkingDayPanel() {
         relative surplus-value. §1: "I call that surplus-value which is produced by curtailment
         of the necessary labour-time … relative surplus-value."
       </p>
-      <div style={{ marginBottom: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      <div className="v1-ch12-presets">
+        <span className="v1-ch12-presets-label">Marx fixture</span>
         {SHORTEN_FIXTURES.map((f) => (
-          <button key={f.label} type="button" onClick={() => loadFixture(f)}>{f.label}</button>
+          <button
+            key={f.label}
+            type="button"
+            className="v1-ch12-preset-button"
+            onClick={() => loadFixture(f)}
+          >
+            {f.label}
+          </button>
         ))}
       </div>
       <form className="form-grid" onSubmit={submit}>
@@ -203,25 +276,26 @@ function ShortenWorkingDayPanel() {
         </div>
       </form>
       {result && (
-        <table className="data-table">
-          <tbody>
-            <tr><td>New Total</td><td>{result.working_day.total} min</td></tr>
-            <tr><td>New Necessary Labour</td><td>{result.working_day.necessary_labour} min</td></tr>
-            <tr><td>New Surplus Labour</td><td>{result.working_day.surplus_labour} min</td></tr>
-            <tr>
-              <td><strong>Relative Surplus-Value (delta)</strong></td>
-              <td><strong>+{result.relative_surplus_value} min</strong></td>
-            </tr>
-            <tr>
-              <td>New Rate s/v</td>
-              <td>
-                {result.working_day.necessary_labour > 0
-                  ? ((result.working_day.surplus_labour / result.working_day.necessary_labour) * 100).toFixed(1) + "%"
-                  : "—"}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <>
+          <DayBar necessary={nl} surplus={sl} label="Before" total={total} />
+          <DayBar
+            necessary={result.working_day.necessary_labour}
+            surplus={result.working_day.surplus_labour}
+            label="After"
+            total={total}
+          />
+          <span className="v1-ch12-delta">
+            ∆ surplus labour = +{result.relative_surplus_value} min (relative surplus-value)
+          </span>
+          <div className="v1-ch12-rate">
+            <span className="v1-ch12-rate-label">New s / v</span>
+            <span className="v1-ch12-rate-value">
+              {result.working_day.necessary_labour > 0
+                ? ((result.working_day.surplus_labour / result.working_day.necessary_labour) * 100).toFixed(1) + "%"
+                : "∞"}
+            </span>
+          </div>
+        </>
       )}
     </section>
   );
@@ -266,9 +340,17 @@ function ExtraSurplusValuePanel() {
         generalisation of the new productivity. §1: "The capitalist … realises an extra
         surplus-value."
       </p>
-      <div style={{ marginBottom: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      <div className="v1-ch12-presets">
+        <span className="v1-ch12-presets-label">Marx fixture</span>
         {EXTRA_FIXTURES.map((f) => (
-          <button key={f.label} type="button" onClick={() => loadFixture(f)}>{f.label}</button>
+          <button
+            key={f.label}
+            type="button"
+            className="v1-ch12-preset-button"
+            onClick={() => loadFixture(f)}
+          >
+            {f.label}
+          </button>
         ))}
       </div>
       <form className="form-grid" onSubmit={submit}>

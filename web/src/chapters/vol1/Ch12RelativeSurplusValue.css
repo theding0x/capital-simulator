@@ -1,0 +1,259 @@
+/* Ch. 12 — The Concept of Relative Surplus-Value
+   Scoped under .v1-ch12-*.
+   Productivity ↑ → Value of LP ↓ → Necessary labour ↓ → Surplus labour ↑ */
+
+.v1-ch12-insight {
+  background: var(--surface-raised);
+  border-left: 3px solid var(--red);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 1.5rem;
+}
+
+.v1-ch12-insight-h2 {
+  margin: 0 0 0.65rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.v1-ch12-sequence {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.v1-ch12-step {
+  position: relative;
+  padding: 0.7rem 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.v1-ch12-step-tag {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 0.2rem;
+}
+
+.v1-ch12-step-eqn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.v1-ch12-step-arrow {
+  position: absolute;
+  right: -0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.1rem;
+  color: var(--gold-bright);
+  z-index: 2;
+}
+
+.v1-ch12-insight-prose {
+  margin: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  max-width: 72ch;
+}
+
+.v1-ch12-bar {
+  display: grid;
+  grid-template-columns: 6rem 1fr 5rem;
+  align-items: center;
+  column-gap: 0.85rem;
+  margin: 0.6rem 0 0.3rem;
+}
+
+.v1-ch12-bar-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.v1-ch12-bar-track {
+  display: flex;
+  height: 1.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.v1-ch12-bar-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+  transition: flex-basis 280ms ease;
+}
+
+.v1-ch12-bar-seg--necessary {
+  background: var(--lead);
+  color: var(--ink);
+}
+
+.v1-ch12-bar-seg--surplus {
+  background: var(--gold-bright);
+  color: #15171d;
+  font-weight: 500;
+}
+
+.v1-ch12-bar-total {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  color: var(--ink);
+  text-align: right;
+}
+
+.v1-ch12-delta {
+  display: inline-block;
+  margin: 0.4rem 0 0.85rem 6.85rem;
+  padding: 0.2rem 0.55rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  border-radius: 3px;
+  color: var(--gold-bright);
+}
+
+.v1-ch12-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0.25rem 0 0.5rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+}
+
+.v1-ch12-legend-swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.v1-ch12-rate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.55rem 0.9rem;
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  border-radius: 3px;
+  margin: 0.5rem 0;
+}
+
+.v1-ch12-rate-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.v1-ch12-rate-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.v1-ch12-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.v1-ch12-presets-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  align-self: center;
+}
+
+.v1-ch12-preset-button {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  padding: 0.32rem 0.7rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.v1-ch12-preset-button:hover {
+  border-color: var(--gold-border);
+  color: var(--gold-bright);
+}
+
+.v1-ch12-coda {
+  margin: 2.25rem 0 0.5rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.v1-ch12-coda-quote {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 64ch;
+}
+
+.v1-ch12-coda-cite {
+  display: block;
+  margin-top: 0.6rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-style: normal;
+}
+
+@media (max-width: 720px) {
+  .v1-ch12-sequence { grid-template-columns: 1fr 1fr; }
+  .v1-ch12-step-arrow { display: none; }
+  .v1-ch12-bar { grid-template-columns: 4.5rem 1fr 4.5rem; }
+  .v1-ch12-delta { margin-left: 5.35rem; }
+}
