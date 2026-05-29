@@ -59,6 +59,7 @@ import { Ch01CostPriceAndProfit } from "../chapters/vol3/Ch01CostPriceAndProfit"
 import { Ch02RateOfProfit } from "../chapters/vol3/Ch02RateOfProfit";
 import { Ch03ProfitRateRelation } from "../chapters/vol3/Ch03ProfitRateRelation";
 import { Ch04TurnoverEffect } from "../chapters/vol3/Ch04TurnoverEffect";
+import { Ch05ConstantCapitalEconomy } from "../chapters/vol3/Ch05ConstantCapitalEconomy";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -136,6 +137,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch02": Ch02RateOfProfit as AnyPanel,
   "v3-ch03": Ch03ProfitRateRelation as AnyPanel,
   "v3-ch04": Ch04TurnoverEffect as AnyPanel,
+  "v3-ch05": Ch05ConstantCapitalEconomy as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -196,6 +198,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch02": "Profit is nevertheless a converted form of surplus-value, a form in which its origin and the secret of its existence are obscured and extinguished.",
   "v3-ch03": "The rate of profit is related to the rate of surplus-value as the variable capital is to the total capital.",
   "v3-ch04": "The shorter the period of turnover ... the larger, therefore, the appropriated surplus-value, provided other conditions remain the same.",
+  "v3-ch05": "Every economy in the conditions of production ... increases the rate of profit, since it reduces the value of the constant capital, while leaving the surplus-value untouched.",
 };
 
 export function ChapterShell({

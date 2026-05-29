@@ -260,3 +260,70 @@ func TestMemory_ListTurnoverAnalysesNeverNil(t *testing.T) {
 		t.Error("list should return a non-nil slice even when empty")
 	}
 }
+
+func TestMemory_EconomyAnalysisRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Marx's §I two-enterprise illustration: economising £2,000 of constant
+	// capital lifts p' from 8 1/3% to 10%.
+	a := profit.ComputeEconomyAnalysis(profit.ConstantCapitalEconomy{
+		Kind: profit.KindRawMaterialSaving, ConstantCapital: 11000, VariableCapital: 1000, SurplusValue: 1000, Saving: 2000,
+	})
+	created, err := m.CreateEconomyAnalysis(ctx, a)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+
+	got, err := m.GetEconomyAnalysis(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetEconomyAnalysisNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetEconomyAnalysis(context.Background(), profit.EconomyAnalysisID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateEconomyAnalysisDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	a := profit.ComputeEconomyAnalysis(profit.ConstantCapitalEconomy{
+		Kind: profit.KindRawMaterialSaving, ConstantCapital: 11000, VariableCapital: 1000, SurplusValue: 1000, Saving: 2000,
+	})
+	a.ID = profit.EconomyAnalysisID("fixed-id-7890")
+
+	if _, err := m.CreateEconomyAnalysis(ctx, a); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateEconomyAnalysis(ctx, a); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListEconomyAnalysesNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListEconomyAnalyses(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}

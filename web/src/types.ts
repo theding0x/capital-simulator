@@ -3071,3 +3071,54 @@ export interface TurnoverAnalysisResponse {
   annual_wages: number;
   created_at: string;
 }
+
+// Vol. III Ch. 5 — Economy in the Employment of Constant Capital. A saving in
+// constant capital raises the rate of profit s/(c+v) without touching s or v:
+// the denominator shrinks while the surplus stays put. The economy takes various
+// forms (the kind), and the analysis records the old rate, the new rate, and the
+// gain between them, all in basis points (10000 bp = 100%). Magnitudes are
+// LabourMinutes, expressed in £ in Marx's examples.
+
+export type EconomyKind =
+  | "shared_conditions"
+  | "waste_reduction"
+  | "workday_extension"
+  | "improved_machinery"
+  | "raw_material_saving";
+
+export interface ConstantCapitalEconomyV3 {
+  kind: EconomyKind;
+  constant_capital: number;
+  variable_capital: number;
+  surplus_value: number;
+  saving: number;
+}
+
+export interface EconomyAnalysisResponse {
+  id: string;
+  economy: ConstantCapitalEconomyV3;
+  old_profit_rate: number;
+  new_profit_rate: number;
+  profit_rate_gain: number;
+  created_at: string;
+}
+
+// §IV — conditions of production used in common: solo_cost is the aggregate the
+// participants bear providing the condition each for itself; shared_cost is the
+// single shared facility serving them all. The saving per participant is
+// (solo_cost − shared_cost) / participant_count.
+export interface SharedConditionResponse {
+  kind: EconomyKind;
+  solo_cost: number;
+  shared_cost: number;
+  participant_count: number;
+}
+
+// §IV — waste reclaimed and returned to production. The constant-capital saving
+// is recovered_waste × price_per_unit.
+export interface WasteReductionResponse {
+  kind: EconomyKind;
+  original_waste: number;
+  recovered_waste: number;
+  price_per_unit: number;
+}

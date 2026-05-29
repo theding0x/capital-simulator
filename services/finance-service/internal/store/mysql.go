@@ -268,6 +268,65 @@ func (m *MySQL) ListTurnoverAnalyses(ctx context.Context) ([]profit.TurnoverAnal
 	return out, rows.Err()
 }
 
+// CreateEconomyAnalysis persists a, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateEconomyAnalysis(ctx context.Context, a profit.EconomyAnalysis) (profit.EconomyAnalysis, error) {
+	if a.ID.IsZero() {
+		a.ID = profit.NewEconomyAnalysisID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO economy_analyses
+		(id, kind, constant_capital, variable_capital, surplus_value, saving,
+		 old_profit_rate_bp, new_profit_rate_bp, profit_rate_gain_bp, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID), string(a.Economy.Kind),
+		int64(a.Economy.ConstantCapital), int64(a.Economy.VariableCapital),
+		int64(a.Economy.SurplusValue), int64(a.Economy.Saving),
+		a.OldProfitRate, a.NewProfitRate, a.ProfitRateGain,
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return profit.EconomyAnalysis{}, ErrAlreadyExists
+		}
+		return profit.EconomyAnalysis{}, err
+	}
+	return a, nil
+}
+
+// GetEconomyAnalysis returns the analysis with id, or ErrNotFound.
+func (m *MySQL) GetEconomyAnalysis(ctx context.Context, id profit.EconomyAnalysisID) (profit.EconomyAnalysis, error) {
+	const q = `SELECT id, kind, constant_capital, variable_capital, surplus_value, saving,
+		old_profit_rate_bp, new_profit_rate_bp, profit_rate_gain_bp, created_at
+		FROM economy_analyses WHERE id = ?`
+	return scanEconomyAnalysis(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListEconomyAnalyses returns all stored economy analyses, newest first.
+func (m *MySQL) ListEconomyAnalyses(ctx context.Context) ([]profit.EconomyAnalysis, error) {
+	const q = `SELECT id, kind, constant_capital, variable_capital, surplus_value, saving,
+		old_profit_rate_bp, new_profit_rate_bp, profit_rate_gain_bp, created_at
+		FROM economy_analyses ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []profit.EconomyAnalysis
+	for rows.Next() {
+		a, err := scanEconomyAnalysis(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
 // rowScanner is satisfied by both *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -373,10 +432,10 @@ func scanVariation(s rowScanner) (profit.VariationAnalysis, error) {
 
 func scanTurnoverAnalysis(s rowScanner) (profit.TurnoverAnalysis, error) {
 	var (
-		id                                          string
-		totalCapital, variableCapital, sRateBP, n   int64
-		annualBP, singleBP, annualSurplusBP, wages  int64
-		createdAt                                   time.Time
+		id                                         string
+		totalCapital, variableCapital, sRateBP, n  int64
+		annualBP, singleBP, annualSurplusBP, wages int64
+		createdAt                                  time.Time
 	)
 	err := s.Scan(&id, &totalCapital, &variableCapital, &sRateBP, &n,
 		&annualBP, &singleBP, &annualSurplusBP, &wages, &createdAt)
@@ -403,6 +462,37 @@ func scanTurnoverAnalysis(s rowScanner) (profit.TurnoverAnalysis, error) {
 		AnnualSurplusValueRate:   profit.AnnualSurplusValueRate(annualSurplusBP),
 		AnnualWages:              profit.LabourMinutes(wages),
 		CreatedAt:                createdAt,
+	}, nil
+}
+
+func scanEconomyAnalysis(s rowScanner) (profit.EconomyAnalysis, error) {
+	var (
+		id, kind                          string
+		constant, variable, surplus, save int64
+		oldBP, newBP, gainBP              int64
+		createdAt                         time.Time
+	)
+	err := s.Scan(&id, &kind, &constant, &variable, &surplus, &save,
+		&oldBP, &newBP, &gainBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return profit.EconomyAnalysis{}, ErrNotFound
+		}
+		return profit.EconomyAnalysis{}, err
+	}
+	return profit.EconomyAnalysis{
+		ID: profit.EconomyAnalysisID(id),
+		Economy: profit.ConstantCapitalEconomy{
+			Kind:            profit.EconomyKind(kind),
+			ConstantCapital: profit.ConstantCapital(constant),
+			VariableCapital: profit.VariableCapital(variable),
+			SurplusValue:    profit.SurplusValue(surplus),
+			Saving:          profit.ConstantCapital(save),
+		},
+		OldProfitRate:  oldBP,
+		NewProfitRate:  newBP,
+		ProfitRateGain: gainBP,
+		CreatedAt:      createdAt,
 	}, nil
 }
 

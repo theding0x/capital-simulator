@@ -46,12 +46,14 @@ type VariableCapital LabourMinutes
 type SurplusValue LabourMinutes
 
 // Sentinel validation errors for a CapitalOutlay (and, for Ch. 4, a
-// TurnoverAnalysis).
+// TurnoverAnalysis; for Ch. 5, a ConstantCapitalEconomy).
 var (
 	ErrNegativeMagnitude        = errors.New("profit: value magnitude cannot be negative")
 	ErrFixedWearExceedsConstant = errors.New("profit: fixed wear-and-tear exceeds consumed constant capital")
 	ErrWearExceedsAdvanced      = errors.New("profit: fixed wear-and-tear exceeds advanced fixed capital")
 	ErrVariableExceedsTotal     = errors.New("profit: variable capital exceeds total capital")
+	ErrSavingExceedsConstant    = errors.New("profit: economy saving exceeds constant capital")
+	ErrUnknownEconomyKind       = errors.New("profit: unknown economy kind")
 )
 
 // CostPriceID identifies a stored cost-price computation. 96-bit hex from

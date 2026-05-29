@@ -26,4 +26,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/profit/turnover-analysis", h.CreateTurnoverAnalysis)
 	s.HandleFunc("GET /v1/profit/turnover-analysis", h.ListTurnoverAnalyses)
 	s.HandleFunc("GET /v1/profit/turnover-analysis/{id}", h.GetTurnoverAnalysis)
+
+	// Vol. III Ch. 5 — Economy in the Employment of Constant Capital
+	s.HandleFunc("POST /v1/profit/economy", h.CreateEconomyAnalysis)
+	s.HandleFunc("GET /v1/profit/economy", h.ListEconomyAnalyses)
+	s.HandleFunc("GET /v1/profit/economy/{id}", h.GetEconomyAnalysis)
 }
