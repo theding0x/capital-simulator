@@ -45,11 +45,13 @@ type VariableCapital LabourMinutes
 // excess of the new value created over the variable capital advanced.
 type SurplusValue LabourMinutes
 
-// Sentinel validation errors for a CapitalOutlay.
+// Sentinel validation errors for a CapitalOutlay (and, for Ch. 4, a
+// TurnoverAnalysis).
 var (
 	ErrNegativeMagnitude        = errors.New("profit: value magnitude cannot be negative")
 	ErrFixedWearExceedsConstant = errors.New("profit: fixed wear-and-tear exceeds consumed constant capital")
 	ErrWearExceedsAdvanced      = errors.New("profit: fixed wear-and-tear exceeds advanced fixed capital")
+	ErrVariableExceedsTotal     = errors.New("profit: variable capital exceeds total capital")
 )
 
 // CostPriceID identifies a stored cost-price computation. 96-bit hex from

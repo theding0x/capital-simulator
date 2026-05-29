@@ -21,4 +21,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/profit/variation", h.ListVariations)
 	s.HandleFunc("GET /v1/profit/variation/{id}", h.GetVariation)
 	s.HandleFunc("POST /v1/profit/compare", h.CompareProfitRates)
+
+	// Vol. III Ch. 4 — The Effect of the Turnover on the Rate of Profit
+	s.HandleFunc("POST /v1/profit/turnover-analysis", h.CreateTurnoverAnalysis)
+	s.HandleFunc("GET /v1/profit/turnover-analysis", h.ListTurnoverAnalyses)
+	s.HandleFunc("GET /v1/profit/turnover-analysis/{id}", h.GetTurnoverAnalysis)
 }

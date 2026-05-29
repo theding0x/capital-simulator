@@ -56,4 +56,14 @@ type Store interface {
 	GetVariation(ctx context.Context, id profit.VariationAnalysisID) (profit.VariationAnalysis, error)
 	// ListVariations returns all stored variation analyses, newest first.
 	ListVariations(ctx context.Context) ([]profit.VariationAnalysis, error)
+
+	// CreateTurnoverAnalysis persists a turnover analysis (Vol. III Ch. 4) — the
+	// annual rate of profit p' = s'·n·(v/C) corrected for the number of turnovers
+	// — assigning an ID and created-at timestamp when absent. It returns
+	// ErrAlreadyExists if the ID collides.
+	CreateTurnoverAnalysis(ctx context.Context, a profit.TurnoverAnalysis) (profit.TurnoverAnalysis, error)
+	// GetTurnoverAnalysis returns the turnover analysis with the given ID, or ErrNotFound.
+	GetTurnoverAnalysis(ctx context.Context, id profit.TurnoverAnalysisID) (profit.TurnoverAnalysis, error)
+	// ListTurnoverAnalyses returns all stored turnover analyses, newest first.
+	ListTurnoverAnalyses(ctx context.Context) ([]profit.TurnoverAnalysis, error)
 }

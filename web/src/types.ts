@@ -3042,3 +3042,32 @@ export interface ProfitRateComparisonResponse {
   second_composition: CompositionRatioV3;
   equal_surplus_rate: boolean;
 }
+
+// Vol. III Ch. 4 — The Effect of the Turnover on the Rate of Profit. Turnover
+// corrects the rate of profit: across a year the variable capital yields its
+// surplus once for every turnover, so the annual rate of profit is
+// p′ = s′·n·(v/C). c is the total capital C, v the variable capital advanced (the
+// v in C), s_rate is s′ and every *_rate / basis_points field is in basis points
+// (10000 bp = 100%). n is the whole number of turnovers; annual_wages is the
+// year's wage bill vn — what the capitalist's books show in place of v.
+
+export interface AnnualProfitRateV3 {
+  surplus_value_rate: number;
+  turnovers: number;
+  variable_capital: number;
+  total_capital: number;
+  basis_points: number;
+}
+
+export interface TurnoverAnalysisResponse {
+  id: string;
+  c: number;
+  v: number;
+  s_rate: number;
+  n: number;
+  annual_profit_rate: AnnualProfitRateV3;
+  single_turnover_profit_rate: number;
+  annual_surplus_value_rate: number;
+  annual_wages: number;
+  created_at: string;
+}
