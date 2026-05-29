@@ -14,6 +14,61 @@ import type {
   WorldMoneyTransfer,
 } from "../../types";
 import { fmtMinutes } from "../../format";
+import "./Ch03Money.css";
+
+function MoneyFunctionsInsight() {
+  return (
+    <section className="v1-ch03-insight">
+      <h2 className="v1-ch03-insight-h2">Three functions of money</h2>
+      <p className="v1-ch03-insight-prose">
+        Money is the universal equivalent, but it does its work in three
+        distinct functions. The panels below probe each in turn — circulation
+        as C—M—C, payment obligations as credit, and world money in
+        cross-currency transfers.
+      </p>
+      <div className="v1-ch03-functions">
+        <div className="v1-ch03-function">
+          <span className="v1-ch03-function-tag">§2</span>
+          <span className="v1-ch03-function-name">Medium of circulation</span>
+          <span className="v1-ch03-function-gloss">
+            C—M—C · money mediates the exchange of one commodity for another.
+          </span>
+        </div>
+        <div className="v1-ch03-function">
+          <span className="v1-ch03-function-tag">§3b</span>
+          <span className="v1-ch03-function-name">Means of payment</span>
+          <span className="v1-ch03-function-gloss">
+            Deferred settlement · credit precedes the actual transfer of money.
+          </span>
+        </div>
+        <div className="v1-ch03-function">
+          <span className="v1-ch03-function-tag">§3c</span>
+          <span className="v1-ch03-function-name">World money</span>
+          <span className="v1-ch03-function-gloss">
+            Beyond domestic territory · the universal equivalent in its
+            unmediated, bullion form.
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MoneyUniversalCoda() {
+  return (
+    <aside className="v1-ch03-coda">
+      <p className="v1-ch03-coda-quote">
+        “Money is the universal commodity, the medium of all sale and
+        purchase, the measure of all values, the universal equivalent —
+        because all commodities relate to it as the form in which their own
+        value is realised.”
+        <span className="v1-ch03-coda-cite">
+          — Marx, Capital Vol. I, Ch. 3
+        </span>
+      </p>
+    </aside>
+  );
+}
 
 interface Ch03Props {
   owners: Owner[];
@@ -43,11 +98,13 @@ export function Ch03Money({ owners, onSharedChanged: _onSharedChanged }: Ch03Pro
 
   return (
     <>
+      <MoneyFunctionsInsight />
       <CirculationPanel />
       <CircuitPanel owners={owners} circuits={circuits} onChanged={refreshLocal} />
       <HoardPanel owners={owners} hoards={hoards} onChanged={refreshLocal} />
       <PaymentObligationsPanel owners={owners} obligations={obligations} onChanged={refreshLocal} />
       <WorldMoneyPanel owners={owners} transfers={transfers} onChanged={refreshLocal} />
+      <MoneyUniversalCoda />
     </>
   );
 }

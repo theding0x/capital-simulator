@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../api";
 import type { Commodity, ExchangeRatio, SocialRelations, UpdateCommodityInput, CreateCommodityInput } from "../../types";
 import { fmtMinutes, fmtQty } from "../../format";
+import "./Ch01Commodity.css";
 
 function emptyDraft(): CreateCommodityInput {
   return {
@@ -21,6 +22,8 @@ interface Ch01Props {
 export function Ch01Commodity({ commodities, onSharedChanged }: Ch01Props) {
   return (
     <>
+      <DualCharacterInsight />
+      <FourFormsOfValue />
       <NewCommodityForm onCreated={onSharedChanged} />
       <section className="card">
         <h2>Commodities</h2>
@@ -34,7 +37,92 @@ export function Ch01Commodity({ commodities, onSharedChanged }: Ch01Props) {
         )}
       </section>
       <ExchangeRatioPanel commodities={commodities} />
+      <FetishismCoda />
     </>
+  );
+}
+
+function DualCharacterInsight() {
+  return (
+    <section className="v1-ch01-insight">
+      <h2 className="v1-ch01-insight-h2">The dual character of labour embodied in commodities</h2>
+      <p className="v1-ch01-insight-prose">
+        Every commodity has two sides: a useful object and a magnitude of
+        value. The labour that produces it is, correspondingly, two-sided —
+        concrete labour producing the use-value, and abstract human labour
+        forming its value. The whole of <em>Capital</em> hinges on this
+        distinction.
+      </p>
+      <div className="v1-ch01-dual">
+        <div className="v1-ch01-face">
+          <span className="v1-ch01-face-tag">Concrete labour</span>
+          <span className="v1-ch01-face-name">Use-value side</span>
+          <span className="v1-ch01-face-gloss">
+            Tailoring, weaving, spinning — qualitatively distinct kinds of
+            useful work. Produces the body of the commodity.
+          </span>
+        </div>
+        <div className="v1-ch01-face">
+          <span className="v1-ch01-face-tag">Abstract labour</span>
+          <span className="v1-ch01-face-name">Value side</span>
+          <span className="v1-ch01-face-gloss">
+            Human labour considered as expenditure of labour-power per se,
+            independent of its concrete form. Measured in SNLT.
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FourFormsOfValue() {
+  const FORMS = [
+    { tag: "§3 A", name: "Elementary", gloss: "20 yds linen = 1 coat" },
+    { tag: "§3 B", name: "Expanded", gloss: "linen = coat = tea = corn = …" },
+    { tag: "§3 C", name: "General", gloss: "all commodities express value in one" },
+    { tag: "§3 D", name: "Money", gloss: "the universal equivalent is gold", final: true },
+  ];
+  return (
+    <section className="card">
+      <h2>The four forms of value (§3)</h2>
+      <p className="description">
+        Marx walks the value-form from its simplest seed through to money.
+        Each step requires the next: the elementary form's accidental
+        equation forces the expanded form, which forces the general form,
+        which crystallises in the money form.
+      </p>
+      <div className="v1-ch01-forms">
+        {FORMS.map((f, i) => (
+          <div
+            key={f.tag}
+            className={"v1-ch01-form" + (f.final ? " v1-ch01-form--final" : "")}
+          >
+            <span className="v1-ch01-form-tag">{f.tag}</span>
+            <span className="v1-ch01-form-name">{f.name}</span>
+            <span className="v1-ch01-form-gloss">{f.gloss}</span>
+            {i < FORMS.length - 1 && (
+              <span className="v1-ch01-form-arrow">→</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FetishismCoda() {
+  return (
+    <aside className="v1-ch01-coda">
+      <p className="v1-ch01-coda-quote">
+        “A definite social relation between men … assumes, in their eyes,
+        the fantastic form of a relation between things … This I call the
+        fetishism which attaches itself to the products of labour, so soon
+        as they are produced as commodities.”
+        <span className="v1-ch01-coda-cite">
+          — Marx, Capital Vol. I, Ch. 1 §4
+        </span>
+      </p>
+    </aside>
   );
 }
 
