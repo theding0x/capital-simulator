@@ -12,6 +12,7 @@ import type {
   MachineEntryInput,
   PrimeMoverKind,
 } from "../../types";
+import "./Ch15Machinery.css";
 
 interface Ch15Props {
   onSharedChanged: () => void;
@@ -43,6 +44,7 @@ export function Ch15Machinery({ onSharedChanged: _ }: Ch15Props) {
 
   return (
     <>
+      <MachineryInsight />
       <RegisterMachinePanel onCreated={refresh} />
       <MachineRegistryPanel machines={machines} />
       <AssembleFactoryPanel machines={machines} onCreated={refresh} />
@@ -60,7 +62,35 @@ export function Ch15Machinery({ onSharedChanged: _ }: Ch15Props) {
         }}
       />
       <CapitalCompositionPanel />
+      <MachineryCoda />
     </>
+  );
+}
+
+function MachineryInsight() {
+  return (
+    <section className="v1-ch15-insight">
+      <h2 className="v1-ch15-insight-h2">Means of production, means of surplus</h2>
+      <p className="v1-ch15-insight-prose">
+        A machine transfers value gradually as it wears (§2): its lifespan is
+        a bank of dead labour that drips into each product. Mechanisation also
+        substitutes constant for variable capital (§6) — the same total
+        capital, fewer workers, more dead labour per living labourer.
+      </p>
+    </section>
+  );
+}
+
+function MachineryCoda() {
+  return (
+    <aside className="v1-ch15-coda">
+      <p className="v1-ch15-coda-quote">
+        “The machine is a means for producing surplus-value.”
+        <span className="v1-ch15-coda-cite">
+          — Marx, Capital Vol. I, Ch. 15 §1
+        </span>
+      </p>
+    </aside>
   );
 }
 
@@ -198,34 +228,56 @@ function MachineRegistryPanel({ machines }: { machines: Machine[] }) {
         the hand labour replaced for the day&apos;s output — the §2 advantage
         of the machine over hand labour.
       </p>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Value</th>
-            <th>Lifespan</th>
-            <th>Productive power</th>
-            <th>Daily wear</th>
-            <th>Per-unit wear</th>
-            <th>Labour displaced/day</th>
-            <th>Accumulated wear</th>
-          </tr>
-        </thead>
-        <tbody>
-          {machines.map((m) => (
-            <tr key={m.id}>
-              <td>{m.name}</td>
-              <td>{compactNumber(m.machine_value)} lab-min</td>
-              <td>{compactNumber(m.lifespan_days)} d</td>
-              <td>{compactNumber(m.productive_power)}/d</td>
-              <td>{poundsFromLabourMinutes(m.daily_wear_and_tear)}</td>
-              <td>{m.value_transferred_per_unit} lab-min</td>
-              <td>{compactNumber(m.daily_labour_displaced)} lab-min</td>
-              <td>{compactNumber(m.accumulated_wear)} lab-min</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="v1-ch15-machines">
+        {machines.map((m) => {
+          const physicalPct =
+            m.machine_value > 0
+              ? Math.min(100, (m.accumulated_wear / m.machine_value) * 100)
+              : 0;
+          const moralPct =
+            m.machine_value > 0
+              ? Math.min(
+                  100 - physicalPct,
+                  (m.accumulated_depreciation / m.machine_value) * 100,
+                )
+              : 0;
+          const totalPct = physicalPct + moralPct;
+          const hasMoral = m.accumulated_depreciation > 0;
+          return (
+            <div key={m.id} className="v1-ch15-machine">
+              <div className="v1-ch15-machine-name">
+                <span>
+                  {m.name}
+                  {hasMoral && (
+                    <span className="v1-ch15-moral-tag">moral</span>
+                  )}
+                </span>
+                <span className="v1-ch15-machine-meta">
+                  {compactNumber(m.machine_value)} lab-min ·{" "}
+                  {compactNumber(m.lifespan_days)} d ·{" "}
+                  daily wear {poundsFromLabourMinutes(m.daily_wear_and_tear)} ·{" "}
+                  displaces {compactNumber(m.daily_labour_displaced)} lab-min/d
+                </span>
+              </div>
+              <div
+                className="v1-ch15-wear-bar"
+                role="img"
+                aria-label={`${physicalPct.toFixed(0)}% physical wear, ${moralPct.toFixed(0)}% moral`}
+                title={`Accumulated wear: ${compactNumber(m.accumulated_wear)} / ${compactNumber(m.machine_value)} lab-min`}
+              >
+                <div
+                  className={
+                    "v1-ch15-wear-fill" +
+                    (totalPct >= 75 ? " v1-ch15-wear-fill--near-end" : "")
+                  }
+                  style={{ width: `${totalPct}%` }}
+                />
+              </div>
+              <span className="v1-ch15-wear-pct">{totalPct.toFixed(0)}%</span>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }
@@ -537,27 +589,75 @@ function CapitalCompositionPanel() {
           <input type="number" min={0} value={otherConstantPounds} onChange={(e) => setOtherConstantPounds(Number(e.target.value))} />
         </label>
       </form>
-      <div className="small" style={{ marginTop: "0.75rem", padding: "0.5rem 0.75rem", border: "1px solid var(--ink-muted)" }}>
-        <div>
-          <strong>Before:</strong> V=£{before.variable.toLocaleString()},
-          C=£{before.constant.toLocaleString()},
-          Total=£{before.total.toLocaleString()},
-          c/v={before.variable === 0 ? "—" : (before.constant / before.variable).toFixed(2)}
-        </div>
-        <div>
-          <strong>After:</strong> V=£{after.variable.toLocaleString()},
-          C=£{after.constant.toLocaleString()},
-          Total=£{after.total.toLocaleString()},
-          c/v={after.variable === 0 ? "—" : (after.constant / after.variable).toFixed(2)}
-        </div>
-        <div style={{ marginTop: "0.5rem" }}>
-          {totalDiff === 0 ? (
-            <span style={{ color: "#1f7a3a" }}>Total capital conserved ({conserved ? "machine cost = displaced wage bill" : "by chance"}).</span>
-          ) : (
-            <span className="error">Total moved by £{totalDiff.toLocaleString()} — outside the pure §6 substitution period.</span>
-          )}
-        </div>
-      </div>
+      {(() => {
+        const max = Math.max(before.total, after.total, 1);
+        const pct = (n: number) => `${(n / max) * 100}%`;
+        return (
+          <div className="v1-ch15-composition">
+            <div className="v1-ch15-composition-row">
+              <span className="v1-ch15-composition-label">Before</span>
+              <div className="v1-ch15-composition-track" role="img" aria-label="Capital before mechanisation">
+                <div
+                  className="v1-ch15-composition-seg v1-ch15-composition-seg--v"
+                  style={{ flexBasis: pct(before.variable) }}
+                  title={`V = £${before.variable.toLocaleString()}`}
+                >
+                  V
+                </div>
+                <div
+                  className="v1-ch15-composition-seg v1-ch15-composition-seg--c"
+                  style={{ flexBasis: pct(before.constant) }}
+                  title={`C = £${before.constant.toLocaleString()}`}
+                >
+                  C
+                </div>
+              </div>
+              <span className="v1-ch15-composition-total">
+                V £{before.variable.toLocaleString()} · C £{before.constant.toLocaleString()}
+              </span>
+            </div>
+            <div className="v1-ch15-composition-row">
+              <span className="v1-ch15-composition-label">After</span>
+              <div className="v1-ch15-composition-track" role="img" aria-label="Capital after mechanisation">
+                <div
+                  className="v1-ch15-composition-seg v1-ch15-composition-seg--v"
+                  style={{ flexBasis: pct(after.variable) }}
+                  title={`V = £${after.variable.toLocaleString()}`}
+                >
+                  V
+                </div>
+                <div
+                  className="v1-ch15-composition-seg v1-ch15-composition-seg--c"
+                  style={{ flexBasis: pct(after.constant - machineCostPounds) }}
+                  title={`Other C = £${(after.constant - machineCostPounds).toLocaleString()}`}
+                >
+                  C
+                </div>
+                <div
+                  className="v1-ch15-composition-seg v1-ch15-composition-seg--machine"
+                  style={{ flexBasis: pct(machineCostPounds) }}
+                  title={`Machine = £${machineCostPounds.toLocaleString()}`}
+                >
+                  M
+                </div>
+              </div>
+              <span className="v1-ch15-composition-total">
+                V £{after.variable.toLocaleString()} · C £{after.constant.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        );
+      })()}
+      <span
+        className={
+          "v1-ch15-conservation" +
+          (totalDiff === 0 ? "" : " v1-ch15-conservation--broken")
+        }
+      >
+        {totalDiff === 0
+          ? `Total capital conserved (${conserved ? "machine cost = displaced wage bill" : "by chance"}). c/v: ${before.variable === 0 ? "—" : (before.constant / before.variable).toFixed(2)} → ${after.variable === 0 ? "∞" : (after.constant / after.variable).toFixed(2)}`
+          : `Total moved by £${totalDiff.toLocaleString()} — outside the pure §6 substitution period.`}
+      </span>
     </section>
   );
 }
