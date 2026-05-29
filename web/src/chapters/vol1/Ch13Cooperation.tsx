@@ -42,9 +42,38 @@ interface Ch13Props {
 export function Ch13Cooperation({ onSharedChanged: _unused }: Ch13Props) {
   return (
     <>
+      <BurkeAssemblyFraming />
       <CooperationLedgerPanel />
       <MinimumCapitalPanel />
+      <SocialProductivePowerCoda />
     </>
+  );
+}
+
+function BurkeAssemblyFraming() {
+  return (
+    <section className="v1-ch13-prelude">
+      <p className="v1-ch13-prelude-quote">
+        “The five-man platoon attacks with a strength that exceeds the
+        arithmetic sum of its five separate forces.”
+        <span className="v1-ch13-prelude-cite">— §3, paraphrasing Burke</span>
+      </p>
+    </section>
+  );
+}
+
+function SocialProductivePowerCoda() {
+  return (
+    <aside className="v1-ch13-coda">
+      <p className="v1-ch13-coda-quote">
+        “The social productive power of labour, or productive power of social
+        labour, … is the new power that arises from the fusion of many forces
+        into one single force.”
+        <span className="v1-ch13-coda-cite">
+          — Marx, Capital Vol. I, Ch. 13 §13
+        </span>
+      </p>
+    </aside>
   );
 }
 

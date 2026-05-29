@@ -31,6 +31,7 @@ export function Ch19WageForm() {
 
   return (
     <div className="ch19-wage-form">
+      <WageFormInsight />
       <section className="ch19-section">
         <h2>Enter Wage Form</h2>
         <p className="ch19-explainer">
@@ -160,6 +161,41 @@ export function Ch19WageForm() {
           </div>
         </section>
       )}
+      <WageFormJusticeCoda />
     </div>
+  );
+}
+
+function WageFormInsight() {
+  return (
+    <section className="v1-ch19-insight">
+      <h2 className="v1-ch19-insight-h2">The wage form's mystification</h2>
+      <p className="v1-ch19-insight-prose">
+        The wage <em>looks</em> like the price of a day's labour, as if every
+        hour were paid. In fact it is the price of <em>labour-power</em> —
+        and that value is reproduced in the necessary portion of the working
+        day. The unpaid surplus portion is invisible inside the wage form.
+        Every later confusion about exploitation traces back to this surface
+        appearance.
+      </p>
+    </section>
+  );
+}
+
+function WageFormJusticeCoda() {
+  return (
+    <aside className="v1-ch19-coda">
+      <p className="v1-ch19-coda-quote">
+        “This phenomenal form, which makes the actual relation invisible, and,
+        indeed, shows the direct opposite of that relation, forms the basis of
+        all the juridical notions of both labourer and capitalist, of all the
+        mystifications of the capitalistic mode of production, of all its
+        illusions as to liberty, of all the apologetic shifts of the vulgar
+        economists.”
+        <span className="v1-ch19-coda-cite">
+          — Marx, Capital Vol. I, Ch. 19 §I
+        </span>
+      </p>
+    </aside>
   );
 }

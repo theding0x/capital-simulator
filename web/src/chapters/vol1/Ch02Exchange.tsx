@@ -12,6 +12,41 @@ import type {
   UniversalEquivalent,
 } from "../../types";
 import { fmtMinutes, fmtQty } from "../../format";
+import "./Ch02Exchange.css";
+
+function UniversalEquivalentInsight({ ue }: { ue: UniversalEquivalent | null }) {
+  return (
+    <section className="v1-ch02-insight">
+      <h2 className="v1-ch02-insight-h2">The universal equivalent crystallises</h2>
+      <p className="v1-ch02-insight-prose">
+        Out of the daily traffic of bilateral exchanges, one commodity is
+        progressively cast in the role of the equivalent against all others.
+        That commodity becomes <em>money</em>. Every priced commodity below
+        states its value in units of the universal equivalent.
+      </p>
+      {ue && (
+        <span className="v1-ch02-ue-badge">
+          Universal equivalent: {ue.commodity_id}
+        </span>
+      )}
+    </section>
+  );
+}
+
+function MoneyCrystalCoda() {
+  return (
+    <aside className="v1-ch02-coda">
+      <p className="v1-ch02-coda-quote">
+        “Money is a crystal formed of necessity in the course of the
+        exchanges, whereby different products of labour are practically
+        equated to one another and thus by practice converted into commodities.”
+        <span className="v1-ch02-coda-cite">
+          — Marx, Capital Vol. I, Ch. 2
+        </span>
+      </p>
+    </aside>
+  );
+}
 
 interface Ch02Props {
   commodities: Commodity[];
@@ -63,6 +98,7 @@ export function Ch02Exchange({ commodities, owners, onSharedChanged }: Ch02Props
 
   return (
     <>
+      <UniversalEquivalentInsight ue={universalEquivalent} />
       <OwnersPanel owners={owners} onOwnerCreated={onSharedChanged} />
       <OffersPanel
         owners={owners}
@@ -88,6 +124,7 @@ export function Ch02Exchange({ commodities, owners, onSharedChanged }: Ch02Props
         prices={prices}
         onChanged={refreshLocal}
       />
+      <MoneyCrystalCoda />
     </>
   );
 }
