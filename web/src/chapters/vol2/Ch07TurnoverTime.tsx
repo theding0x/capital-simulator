@@ -59,7 +59,7 @@ export function Ch07TurnoverTime() {
     [rows],
   );
 
-  const maxN = chartRows.length > 0 ? chartRows[0].n : 1;
+  const maxN = chartRows.length > 0 ? Math.max(chartRows[0].n, 1) : 1;
   const slowThreshold = 4;
 
   return (
