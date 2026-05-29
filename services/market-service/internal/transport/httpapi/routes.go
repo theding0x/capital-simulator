@@ -68,4 +68,15 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/turnover-time/{id}/active-fraction", h.GetActiveFraction)
 	s.HandleFunc("POST /v1/perishability", h.SetPerishability)
 	s.HandleFunc("POST /v1/market-separation", h.SetMarketSeparation)
+
+	// Vol. I Ch. 3 — Money: hoards, payment obligations, world-money, M = ΣP / V
+	s.HandleFunc("POST /v1/hoards", h.CreateHoard)
+	s.HandleFunc("GET /v1/hoards", h.ListHoards)
+	s.HandleFunc("GET /v1/hoards/{id}", h.GetHoard)
+	s.HandleFunc("POST /v1/payment-obligations", h.CreatePaymentObligation)
+	s.HandleFunc("GET /v1/payment-obligations", h.ListPaymentObligations)
+	s.HandleFunc("POST /v1/payment-obligations/{id}/settle", h.SettlePaymentObligation)
+	s.HandleFunc("POST /v1/world-money-transfers", h.CreateWorldMoneyTransfer)
+	s.HandleFunc("GET /v1/world-money-transfers", h.ListWorldMoneyTransfers)
+	s.HandleFunc("GET /v1/circulation/money-required", h.MoneyRequired)
 }
