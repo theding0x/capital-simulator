@@ -111,7 +111,7 @@ export const CHAPTERS: ChapterDef[] = [
   // Volume III — The Process of Capitalist Production as a Whole
   // Part I — The Transformation of Surplus-Value into Profit
   { id: "v3-ch01", volume: 3, number: 1,  title: "Cost-Price and Profit",                                     part: "Part I — The Transformation of Surplus-Value into Profit",          circuitNode: ["delta-M"],                        status: "done"    },
-  { id: "v3-ch02", volume: 3, number: 2,  title: "The Rate of Profit",                                        part: "Part I — The Transformation of Surplus-Value into Profit",          circuitNode: ["delta-M"],                        status: "pending" },
+  { id: "v3-ch02", volume: 3, number: 2,  title: "The Rate of Profit",                                        part: "Part I — The Transformation of Surplus-Value into Profit",          circuitNode: ["delta-M"],                        status: "done"    },
   { id: "v3-ch03", volume: 3, number: 3,  title: "The Relation of the Rate of Profit to the Rate of Surplus-Value", part: "Part I — The Transformation of Surplus-Value into Profit",    circuitNode: ["delta-M"],                        status: "pending" },
   { id: "v3-ch04", volume: 3, number: 4,  title: "The Effect of the Turnover on the Rate of Profit",          part: "Part I — The Transformation of Surplus-Value into Profit",          circuitNode: ["delta-M", "whole"],               status: "pending" },
   { id: "v3-ch05", volume: 3, number: 5,  title: "Economy in the Employment of Constant Capital",             part: "Part I — The Transformation of Surplus-Value into Profit",          circuitNode: ["P", "delta-M"],                   status: "pending" },

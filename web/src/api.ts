@@ -1950,4 +1950,17 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // Vol. III Ch. 2 — The Rate of Profit
+  listProfitRates: () =>
+    http<{ items: import("./types").ProfitRateAnalysisResponse[] }>("/v1/profit/rate").then((r) => r.items),
+
+  getProfitRate: (id: string) =>
+    http<import("./types").ProfitRateAnalysisResponse>(`/v1/profit/rate/${id}`),
+
+  computeProfitRate: (input: { constant: number; variable: number; surplus_value: number }) =>
+    http<import("./types").ProfitRateAnalysisResponse>("/v1/profit/rate", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

@@ -56,6 +56,7 @@ import { Ch19FormerPresentations } from "../chapters/vol2/Ch19FormerPresentation
 import { Ch20SimpleReproduction } from "../chapters/vol2/Ch20SimpleReproduction";
 import { Ch21ExtendedReproduction } from "../chapters/vol2/Ch21ExtendedReproduction";
 import { Ch01CostPriceAndProfit } from "../chapters/vol3/Ch01CostPriceAndProfit";
+import { Ch02RateOfProfit } from "../chapters/vol3/Ch02RateOfProfit";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -130,6 +131,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v2-ch20": Ch20SimpleReproduction as AnyPanel,
   "v2-ch21": Ch21ExtendedReproduction as AnyPanel,
   "v3-ch01": Ch01CostPriceAndProfit as AnyPanel,
+  "v3-ch02": Ch02RateOfProfit as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -187,6 +189,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v2-ch19": "Quesnay's Tableau Économique … shows how the result of annual production circulates through consumption and thus reproduces its starting-point. Adam Smith, however, entirely omits the constant portion of value which must replace the constant capital consumed.",
   "v2-ch20": "For simple reproduction to proceed without a hitch, the variable capital plus the surplus-value of Department I must equal the constant capital of Department II: I(v+s) = II(c).",
   "v3-ch01": "The capitalist may sell a commodity at a profit even when he sells it below its value. So long as its selling price is higher than its cost-price, a portion of the surplus-value incorporated in it is always realised.",
+  "v3-ch02": "Profit is nevertheless a converted form of surplus-value, a form in which its origin and the secret of its existence are obscured and extinguished.",
 };
 
 export function ChapterShell({

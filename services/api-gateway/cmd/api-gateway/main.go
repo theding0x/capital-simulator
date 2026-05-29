@@ -323,8 +323,9 @@ func main() {
 	srv.Handle("/v1/profit/cost-price", financeProxy)
 	srv.Handle("/v1/profit/cost-price/{rest...}", financeProxy)
 	srv.Handle("/v1/profit/profit-form", financeProxy)
-	// Vol. III, Ch. 2 — The Rate of Profit → finance-service
-	// srv.Handle("/v1/profit-rates", financeProxy)
+	// Vol. III Ch. 2 — The Rate of Profit → finance-service
+	srv.Handle("/v1/profit/rate", financeProxy)
+	srv.Handle("/v1/profit/rate/{rest...}", financeProxy)
 	// Vol. III, Ch. 9 — General Rate of Profit + Prices of Production → finance-service
 	// srv.Handle("/v1/general-profit-rate", financeProxy)
 	// srv.Handle("/v1/prices-of-production", financeProxy)

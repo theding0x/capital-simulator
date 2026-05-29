@@ -21,6 +21,9 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("GET /v1/profit/cost-price", h.ListCostPrices)
 	mux.HandleFunc("GET /v1/profit/cost-price/{id}", h.GetCostPrice)
 	mux.HandleFunc("POST /v1/profit/profit-form", h.ComputeProfitForm)
+	mux.HandleFunc("POST /v1/profit/rate", h.CreateProfitRate)
+	mux.HandleFunc("GET /v1/profit/rate", h.ListProfitRates)
+	mux.HandleFunc("GET /v1/profit/rate/{id}", h.GetProfitRate)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st
