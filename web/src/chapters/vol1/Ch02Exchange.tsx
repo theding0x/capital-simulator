@@ -14,7 +14,14 @@ import type {
 import { fmtMinutes, fmtQty } from "../../format";
 import "./Ch02Exchange.css";
 
-function UniversalEquivalentInsight({ ue }: { ue: UniversalEquivalent | null }) {
+function UniversalEquivalentInsight({
+  ue,
+  commodityById,
+}: {
+  ue: UniversalEquivalent | null;
+  commodityById: Map<string, Commodity>;
+}) {
+  const commodity = ue ? commodityById.get(ue.commodity_id) : null;
   return (
     <section className="v1-ch02-insight">
       <h2 className="v1-ch02-insight-h2">The universal equivalent crystallises</h2>
@@ -26,7 +33,7 @@ function UniversalEquivalentInsight({ ue }: { ue: UniversalEquivalent | null }) 
       </p>
       {ue && (
         <span className="v1-ch02-ue-badge">
-          Universal equivalent: {ue.commodity_id}
+          Universal equivalent: {commodity?.name ?? ue.commodity_id.slice(0, 8)}
         </span>
       )}
     </section>
@@ -98,7 +105,7 @@ export function Ch02Exchange({ commodities, owners, onSharedChanged }: Ch02Props
 
   return (
     <>
-      <UniversalEquivalentInsight ue={universalEquivalent} />
+      <UniversalEquivalentInsight ue={universalEquivalent} commodityById={commodityById} />
       <OwnersPanel owners={owners} onOwnerCreated={onSharedChanged} />
       <OffersPanel
         owners={owners}
