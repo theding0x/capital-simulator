@@ -2974,3 +2974,24 @@ export interface ProfitFormResponse {
   mystifies_origin: boolean;
   selling_price_scenarios: ProfitScenario[];
 }
+
+// Vol. III Ch. 2 — The Rate of Profit. The same surplus-value measured against
+// the total capital C = c + v gives the rate of profit p′; measured against the
+// variable capital v alone it gives the rate of surplus-value s′. Both rates are
+// basis points (10000 bp = 100%). Mystification is the gap (s′ − p′)/s′ in bp.
+
+export interface RateOfProfitV3 {
+  surplus_value: number;
+  total_capital: number;
+  basis_points: number;
+}
+
+export interface ProfitRateAnalysisResponse {
+  id: string;
+  constant_capital: number;
+  variable_capital: number;
+  profit_rate: RateOfProfitV3;
+  surplus_value_rate: number;
+  mystification: number;
+  created_at: string;
+}

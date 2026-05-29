@@ -37,4 +37,13 @@ type Store interface {
 	GetCostPrice(ctx context.Context, id profit.CostPriceID) (profit.CostPrice, error)
 	// ListCostPrices returns all stored cost-prices, newest first.
 	ListCostPrices(ctx context.Context) ([]profit.CostPrice, error)
+
+	// CreateProfitRate persists a rate-of-profit analysis (Vol. III Ch. 2),
+	// assigning an ID and created-at timestamp when absent. It returns
+	// ErrAlreadyExists if the ID collides.
+	CreateProfitRate(ctx context.Context, a profit.ProfitRateAnalysis) (profit.ProfitRateAnalysis, error)
+	// GetProfitRate returns the analysis with the given ID, or ErrNotFound.
+	GetProfitRate(ctx context.Context, id profit.ProfitRateID) (profit.ProfitRateAnalysis, error)
+	// ListProfitRates returns all stored analyses, newest first.
+	ListProfitRates(ctx context.Context) ([]profit.ProfitRateAnalysis, error)
 }

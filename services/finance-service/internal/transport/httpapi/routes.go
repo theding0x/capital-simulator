@@ -10,4 +10,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/profit/cost-price", h.ListCostPrices)
 	s.HandleFunc("GET /v1/profit/cost-price/{id}", h.GetCostPrice)
 	s.HandleFunc("POST /v1/profit/profit-form", h.ComputeProfitForm)
+
+	// Vol. III Ch. 2 — The Rate of Profit
+	s.HandleFunc("POST /v1/profit/rate", h.CreateProfitRate)
+	s.HandleFunc("GET /v1/profit/rate", h.ListProfitRates)
+	s.HandleFunc("GET /v1/profit/rate/{id}", h.GetProfitRate)
 }

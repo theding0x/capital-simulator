@@ -92,6 +92,64 @@ func (m *MySQL) ListCostPrices(ctx context.Context) ([]profit.CostPrice, error) 
 	return out, rows.Err()
 }
 
+// CreateProfitRate persists a, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateProfitRate(ctx context.Context, a profit.ProfitRateAnalysis) (profit.ProfitRateAnalysis, error) {
+	if a.ID.IsZero() {
+		a.ID = profit.NewProfitRateID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO profit_rates
+		(id, constant, variable, surplus_value, total_capital, profit_rate_bp, surplus_value_rate_bp, mystification_bp, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID),
+		int64(a.ConstantCapital), int64(a.VariableCapital),
+		int64(a.ProfitRate.SurplusValue), int64(a.ProfitRate.TotalCapital),
+		a.ProfitRate.BasisPoints, int64(a.SurplusValueRate), int64(a.Mystification),
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return profit.ProfitRateAnalysis{}, ErrAlreadyExists
+		}
+		return profit.ProfitRateAnalysis{}, err
+	}
+	return a, nil
+}
+
+// GetProfitRate returns the analysis with id, or ErrNotFound.
+func (m *MySQL) GetProfitRate(ctx context.Context, id profit.ProfitRateID) (profit.ProfitRateAnalysis, error) {
+	const q = `SELECT id, constant, variable, surplus_value, total_capital,
+		profit_rate_bp, surplus_value_rate_bp, mystification_bp, created_at
+		FROM profit_rates WHERE id = ?`
+	return scanProfitRate(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListProfitRates returns all stored analyses, newest first.
+func (m *MySQL) ListProfitRates(ctx context.Context) ([]profit.ProfitRateAnalysis, error) {
+	const q = `SELECT id, constant, variable, surplus_value, total_capital,
+		profit_rate_bp, surplus_value_rate_bp, mystification_bp, created_at
+		FROM profit_rates ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []profit.ProfitRateAnalysis
+	for rows.Next() {
+		a, err := scanProfitRate(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
 // rowScanner is satisfied by both *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -124,6 +182,36 @@ func scanCostPrice(s rowScanner) (profit.CostPrice, error) {
 		FixedComponent:       profit.LabourMinutes(fixedComponent),
 		CirculatingComponent: profit.LabourMinutes(circulatingComponent),
 		CreatedAt:            createdAt,
+	}, nil
+}
+
+func scanProfitRate(s rowScanner) (profit.ProfitRateAnalysis, error) {
+	var (
+		id                                 string
+		constant, variable, surplus, total int64
+		profitBP, surplusBP, mystBP        int64
+		createdAt                          time.Time
+	)
+	err := s.Scan(&id, &constant, &variable, &surplus, &total,
+		&profitBP, &surplusBP, &mystBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return profit.ProfitRateAnalysis{}, ErrNotFound
+		}
+		return profit.ProfitRateAnalysis{}, err
+	}
+	return profit.ProfitRateAnalysis{
+		ID:              profit.ProfitRateID(id),
+		ConstantCapital: profit.ConstantCapital(constant),
+		VariableCapital: profit.VariableCapital(variable),
+		ProfitRate: profit.RateOfProfit{
+			SurplusValue: profit.SurplusValue(surplus),
+			TotalCapital: profit.TotalCapital(total),
+			BasisPoints:  profitBP,
+		},
+		SurplusValueRate: profit.RateOfSurplusValue(surplusBP),
+		Mystification:    profit.MystificationDegree(mystBP),
+		CreatedAt:        createdAt,
 	}, nil
 }
 
