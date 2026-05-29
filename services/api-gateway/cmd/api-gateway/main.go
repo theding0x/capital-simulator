@@ -156,6 +156,12 @@ func main() {
 	}
 	srv.Handle("/v1/sim/status", simProxy)
 
+	// Issue #214 — automatic tick scheduler (operator control) → simulation-engine
+	srv.Handle("/v1/engine/start", simProxy)
+	srv.Handle("/v1/engine/stop", simProxy)
+	srv.Handle("/v1/engine/status", simProxy)
+	srv.Handle("/v1/engine/ticks", simProxy)
+
 	// Ch. 11 — Rate and Mass of Surplus-Value → simulation-engine
 	srv.Handle("/v1/surplus/mass", simProxy)
 	srv.Handle("/v1/surplus/limits", simProxy)
