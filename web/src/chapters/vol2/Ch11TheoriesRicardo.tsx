@@ -183,6 +183,13 @@ export function Ch11TheoriesRicardo() {
       <DurabilityComparisonView />
       <RicardoErrorsView attributions={attributions} />
       <DeferredSection />
+      <aside className="v2-ch11-coda">
+        <p className="v2-ch11-coda-quote">
+          &#8220;Ricardo, like Barton, everywhere confounds the relation of variable
+          to constant capital with that of circulating to fixed capital.&#8221;
+          <span className="v2-ch11-coda-cite">&#8212; Marx, Capital Vol. II, Ch. 11</span>
+        </p>
+      </aside>
     </div>
   );
 }

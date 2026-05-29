@@ -82,21 +82,26 @@ function BenchmarkRow({ b }: { b: NaturalProcessIndustry }) {
   const labourPct = (labourFraction * 100).toFixed(2);
 
   return (
-    <div className="ch13-benchmark-row">
-      <span className="ch13-bench-name">{b.industry_name}</span>
-      <span className="ch13-bench-days">
+    <div className="ch13-benchmark-row" role="row">
+      <span className="ch13-bench-name" role="cell">{b.industry_name}</span>
+      <span className="ch13-bench-days" role="cell">
         {b.typical_production_days_count.toLocaleString()}&nbsp;d
       </span>
-      <span className="ch13-bench-labour">
+      <span className="ch13-bench-labour" role="cell">
         {b.typical_labour_days_count}&nbsp;d
       </span>
-      <div className="ch13-bench-bar">
+      <div
+        className="ch13-bench-bar"
+        role="cell"
+        aria-label={`Labour fraction ${labourPct}%`}
+      >
         <div
           className="ch13-bench-bar-fill"
           style={{ width: `${labourFraction * 100}%` }}
+          aria-hidden="true"
         />
       </div>
-      <span className="ch13-bench-ratio">{labourPct}%</span>
+      <span className="ch13-bench-ratio" role="cell">{labourPct}%</span>
     </div>
   );
 }
@@ -226,23 +231,39 @@ export function Ch13TimeOfProduction() {
           ratio&nbsp;=&nbsp;labour-days&nbsp;&divide;&nbsp;production-days
           &nbsp;&times;&nbsp;100&nbsp;(basis-points&nbsp;/&nbsp;100)
         </p>
-        <div className="ch13-benchmark-header">
-          <span>Industry</span>
-          <span>Production</span>
-          <span>Labour</span>
-          <span>Labour fraction</span>
-          <span>Ratio</span>
-        </div>
-        {benchmarks.length === 0 ? (
-          <p className="ch13-empty">No benchmarks recorded.</p>
-        ) : (
-          <div className="ch13-benchmark-list">
-            {benchmarks.map((b) => (
-              <BenchmarkRow key={b.id} b={b} />
-            ))}
+        <div
+          className="ch13-benchmark-table"
+          role="table"
+          aria-label="Industry labour-to-production ratios"
+        >
+          <div className="ch13-benchmark-header" role="row">
+            <span role="columnheader">Industry</span>
+            <span role="columnheader">Production</span>
+            <span role="columnheader">Labour</span>
+            <span role="columnheader">Labour fraction</span>
+            <span role="columnheader">Ratio</span>
           </div>
-        )}
+          {benchmarks.length === 0 ? (
+            <p className="ch13-empty">No benchmarks recorded.</p>
+          ) : (
+            <div className="ch13-benchmark-list" role="rowgroup">
+              {benchmarks.map((b) => (
+                <BenchmarkRow key={b.id} b={b} />
+              ))}
+            </div>
+          )}
+        </div>
       </section>
+
+      <aside className="v2-ch13-coda">
+        <p className="v2-ch13-coda-quote">
+          &#8220;Working time is always production time &#8212; time during which capital
+          is held fast in the sphere of production. But, vice versa, not all time during
+          which capital is engaged in the process of production is necessarily working
+          time.&#8221;
+          <span className="v2-ch13-coda-cite">&#8212; Marx, Capital Vol. II, Ch. 13</span>
+        </p>
+      </aside>
     </div>
   );
 }

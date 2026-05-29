@@ -220,3 +220,28 @@
 .ch13-error {
   color: var(--red);
 }
+
+/* Ch13 uplift: standardized closing coda */
+.v2-ch13-coda {
+  background: transparent;
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 0 0;
+  margin: 0.5rem 0 0;
+}
+
+.v2-ch13-coda-quote {
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 64ch;
+}
+
+.v2-ch13-coda-cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
