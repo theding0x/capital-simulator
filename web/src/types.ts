@@ -2938,3 +2938,39 @@ export interface DepartmentIGrowthLead {
   dept_ii_growth_bps: number;
   lead_confirmed: boolean;
 }
+
+// Vol. III Ch. 1 — Cost-Price and Profit. Magnitudes are LabourMinutes; Marx's
+// worked examples express them in £ (6s. = one social working-day).
+
+export interface CapitalOutlayV3 {
+  constant: number;
+  variable: number;
+  fixed_wear_and_tear: number;
+  fixed_advanced: number;
+}
+
+export interface CostPriceResponse {
+  id: string;
+  outlay: CapitalOutlayV3;
+  k: number;
+  fixed_component: number;
+  circulating_component: number;
+  created_at: string;
+}
+
+export interface ProfitScenario {
+  selling_price: number;
+  cost_price: number;
+  commodity_value: number;
+  amount: number;
+  below_value: boolean;
+}
+
+export interface ProfitFormResponse {
+  cost_price: number;
+  surplus_value: number;
+  profit: number;
+  commodity_value: number;
+  mystifies_origin: boolean;
+  selling_price_scenarios: ProfitScenario[];
+}

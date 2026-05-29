@@ -4,7 +4,10 @@
 package httpapi
 
 import (
+	"encoding/json"
+	"errors"
 	"log/slog"
+	"net/http"
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/store"
 )
@@ -23,4 +26,36 @@ func New(s store.Store, logger *slog.Logger) *Handler {
 		logger = slog.Default()
 	}
 	return &Handler{Store: s, Logger: logger}
+}
+
+// --- helpers ----------------------------------------------------------------
+
+func decodeJSON(r *http.Request, dst any) error {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
+		return errors.New("invalid json: " + err.Error())
+	}
+	return nil
+}
+
+func writeJSON(w http.ResponseWriter, status int, body any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(body)
+}
+
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+func writeStoreError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, store.ErrNotFound):
+		writeError(w, http.StatusNotFound, err.Error())
+	case errors.Is(err, store.ErrAlreadyExists):
+		writeError(w, http.StatusConflict, err.Error())
+	default:
+		writeError(w, http.StatusInternalServerError, err.Error())
+	}
 }

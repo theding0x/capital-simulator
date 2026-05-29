@@ -1925,3 +1925,29 @@ export const extendedReproductionApi = {
   listGrowthLeads: (id: string) =>
     http<import("./types").DepartmentIGrowthLead[]>(`/v1/reproduction/extended/multi-period/${id}/growth-lead`),
 };
+
+// Vol. III Ch. 1 — Cost-Price and Profit
+export const financeApi = {
+  listCostPrices: () =>
+    http<{ items: import("./types").CostPriceResponse[] }>("/v1/profit/cost-price").then((r) => r.items),
+
+  getCostPrice: (id: string) =>
+    http<import("./types").CostPriceResponse>(`/v1/profit/cost-price/${id}`),
+
+  computeCostPrice: (input: {
+    constant: number;
+    variable: number;
+    fixed_wear_and_tear?: number;
+    fixed_advanced?: number;
+  }) =>
+    http<import("./types").CostPriceResponse>("/v1/profit/cost-price", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getProfitForm: (input: { cost_price: number; surplus_value: number }) =>
+    http<import("./types").ProfitFormResponse>("/v1/profit/profit-form", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+};
