@@ -20,6 +20,22 @@ const DEFAULT_CREATE: CreateMoneyCircuitInput = {
   amount: 42200,
 };
 
+function MoneyFormLensCoda() {
+  return (
+    <aside className="v2-ch01-coda">
+      <p className="v2-ch01-coda-quote">
+        “The circuit M—C…P…C′—M′ shows the process most strongly in the form
+        of money: money is what is advanced, money is what is regained. The
+        presupposition appears to be M; the result, M′. Production and
+        circulation are the necessary detour between them.”
+        <span className="v2-ch01-coda-cite">
+          — Marx, Capital Vol. II, Ch. 1 (paraphrasing §I)
+        </span>
+      </p>
+    </aside>
+  );
+}
+
 export function Ch01CircuitMoneyCapital() {
   const fmt = usePounds();
 
@@ -443,6 +459,7 @@ export function Ch01CircuitMoneyCapital() {
           </div>
         )}
       </div>
+      <MoneyFormLensCoda />
     </div>
   );
 }

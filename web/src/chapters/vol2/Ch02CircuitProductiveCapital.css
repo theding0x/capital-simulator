@@ -225,3 +225,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Ch02 uplift: Form II asymmetry insight */
+.v2-ch02-insight {
+  background: var(--surface-raised);
+  border: 1px solid var(--border, #2a2a4a);
+  border-left: 3px solid var(--red);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.v2-ch02-insight-h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  color: var(--text, #eee);
+}
+
+.v2-ch02-insight-prose {
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
