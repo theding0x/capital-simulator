@@ -14,6 +14,7 @@ import type {
   ManufactureMinimumCapitalResult,
   SkillLevel,
 } from "../../types";
+import "./Ch14Manufacture.css";
 
 interface Ch14Props {
   onSharedChanged: () => void;
@@ -49,9 +50,40 @@ export function Ch14Manufacture({ onSharedChanged: _ }: Ch14Props) {
 
   return (
     <>
+      <ManufactureInsight />
       <CreateManufacturePanel capitalists={capitalists} onCreated={refresh} />
       <ManufacturesListPanel manufactures={manufactures} onChanged={refresh} />
+      <ManufactureCoda />
     </>
+  );
+}
+
+function ManufactureInsight() {
+  return (
+    <section className="v1-ch14-insight">
+      <h2 className="v1-ch14-insight-h2">The detail labourer and the collective labourer</h2>
+      <p className="v1-ch14-insight-prose">
+        Manufacture splits a craft into specialised partial operations. Each
+        worker becomes a detail labourer; the whole shop becomes the
+        collective labourer — a single productive mechanism whose output is
+        bounded by its slowest role. The role highlighted in red below is the
+        bottleneck that gates the entire flow.
+      </p>
+    </section>
+  );
+}
+
+function ManufactureCoda() {
+  return (
+    <aside className="v1-ch14-coda">
+      <p className="v1-ch14-coda-quote">
+        “In manufacture, the conversion of social labour into mechanism is
+        consciously realised by capital.”
+        <span className="v1-ch14-coda-cite">
+          — Marx, Capital Vol. I, Ch. 14 §5
+        </span>
+      </p>
+    </aside>
   );
 }
 
@@ -332,40 +364,81 @@ function ManufacturesListPanel({
 }
 
 function HierarchyTable({ m }: { m: Manufacture }) {
+  const throughputs = m.hierarchy.map(
+    (r) => r.output_rate_per_hour * r.head_count,
+  );
+  const minThroughput = throughputs.length ? Math.min(...throughputs) : 0;
+  const maxThroughput = throughputs.length ? Math.max(...throughputs) : 1;
+  // Skilled first, then unskilled (Marx §5 hierarchy).
+  const ordered = [...m.hierarchy].sort((a, b) =>
+    a.skill_level === b.skill_level
+      ? b.output_rate_per_hour * b.head_count -
+        a.output_rate_per_hour * a.head_count
+      : a.skill_level === "skilled"
+      ? -1
+      : 1,
+  );
   return (
     <div style={{ padding: "0.75rem", background: "var(--surface-raised)" }}>
       <h3 style={{ marginTop: 0 }}>Labour Hierarchy — {m.name}</h3>
       <p className="small muted">
         §5: manufacture begets a skill hierarchy; unskilled labour-power costs less because
-        apprenticeship cost vanishes.
+        apprenticeship cost vanishes. Skilled roles at top, unskilled below. Bar length is
+        headcount × output / hr; the bottleneck role is shown in red.
       </p>
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>Role</th>
-            <th>Skill</th>
-            <th>Output / hr</th>
-            <th>Headcount</th>
-            <th>Tool</th>
-          </tr>
-        </thead>
-        <tbody>
-          {m.hierarchy.map((r) => (
-            <tr key={r.name}>
-              <td>{r.name}</td>
-              <td>{r.skill_level}</td>
-              <td>{r.output_rate_per_hour.toLocaleString()}</td>
-              <td>{r.head_count}</td>
-              <td>{r.tool_name || "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="small" style={{ marginTop: "0.6rem" }}>
-        Collective labourer: <strong>{m.collective_labourer.total_workers}</strong> workers; output
-        per {minutesToHours(m.collective_labourer.period_minutes)} =
-        {" "}<strong>{m.collective_labourer.output_per_period_minutes.toLocaleString()}</strong>{" "}
-        units (bottleneck-bounded). Paralysed if any role goes absent:{" "}
+      <div className="v1-ch14-hierarchy">
+        {ordered.map((r) => {
+          const throughput = r.output_rate_per_hour * r.head_count;
+          const isBottleneck = throughput === minThroughput && ordered.length > 1;
+          const widthPct = maxThroughput > 0 ? (throughput / maxThroughput) * 100 : 0;
+          return (
+            <div
+              key={r.name}
+              className={
+                "v1-ch14-role" +
+                (isBottleneck ? " v1-ch14-role--bottleneck" : "")
+              }
+            >
+              <div className="v1-ch14-role-name">
+                <span>
+                  {r.name}
+                  {isBottleneck && (
+                    <span className="v1-ch14-bottleneck-tag">bottleneck</span>
+                  )}
+                </span>
+                <span className="v1-ch14-role-skill">
+                  {r.skill_level}
+                  {r.tool_name ? ` · ${r.tool_name}` : ""}
+                </span>
+              </div>
+              <div
+                className="v1-ch14-role-bar"
+                role="img"
+                aria-label={`${r.name}: ${throughput.toLocaleString()} units/hour`}
+              >
+                <div
+                  className="v1-ch14-role-fill"
+                  style={{ width: `${widthPct}%` }}
+                  title={`${throughput.toLocaleString()} units/hour`}
+                />
+              </div>
+              <span className="v1-ch14-role-throughput">
+                {r.head_count} × {r.output_rate_per_hour.toLocaleString()}/hr
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="v1-ch14-collective">
+        <span className="v1-ch14-collective-label">Collective labourer</span>
+        <span className="v1-ch14-collective-value">
+          {m.collective_labourer.total_workers} workers ·{" "}
+          {m.collective_labourer.output_per_period_minutes.toLocaleString()} units /{" "}
+          {minutesToHours(m.collective_labourer.period_minutes)}
+        </span>
+      </div>
+      <p className="small muted" style={{ marginTop: "0.5rem" }}>
+        Output is bottleneck-bounded by the slowest role. Paralysed if any role goes absent:{" "}
         <strong>{m.collective_labourer.is_paralysed_if_absent_one ? "yes" : "no"}</strong>.
       </p>
     </div>
@@ -522,11 +595,46 @@ function MinimumCapitalPanel({ m }: { m: Manufacture }) {
       </form>
       {err && <p className="error">{err}</p>}
       {result && (
-        <p className="small" style={{ marginTop: "0.5rem" }}>
-          Manufacture minimum: <strong>{fmt(result.minimum_capital_pence)}</strong>{" "}
-          ({result.minimum_capital_pence.toLocaleString()} pence). Simple-cooperation baseline:{" "}
-          {fmt(result.cooperation_baseline_pence)}.
-        </p>
+        <div className="v1-ch14-min">
+          {(() => {
+            const max = Math.max(
+              result.minimum_capital_pence,
+              result.cooperation_baseline_pence,
+              1,
+            );
+            const pct = (n: number) => `${(n / max) * 100}%`;
+            return (
+              <>
+                <div className="v1-ch14-min-row">
+                  <span className="v1-ch14-min-label">Manufacture min.</span>
+                  <div className="v1-ch14-min-track">
+                    <div
+                      className="v1-ch14-min-fill v1-ch14-min-fill--manufacture"
+                      style={{ width: pct(result.minimum_capital_pence) }}
+                      title={`${result.minimum_capital_pence.toLocaleString()} pence`}
+                    />
+                  </div>
+                  <span className="v1-ch14-min-amount">
+                    {fmt(result.minimum_capital_pence)}
+                  </span>
+                </div>
+                <div className="v1-ch14-min-row">
+                  <span className="v1-ch14-min-label">Cooperation baseline</span>
+                  <div className="v1-ch14-min-track">
+                    <div
+                      className="v1-ch14-min-fill v1-ch14-min-fill--cooperation"
+                      style={{ width: pct(result.cooperation_baseline_pence) }}
+                      title={`${result.cooperation_baseline_pence.toLocaleString()} pence`}
+                    />
+                  </div>
+                  <span className="v1-ch14-min-amount">
+                    {fmt(result.cooperation_baseline_pence)}
+                  </span>
+                </div>
+              </>
+            );
+          })()}
+        </div>
       )}
     </div>
   );
