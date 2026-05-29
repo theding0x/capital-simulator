@@ -38,3 +38,28 @@
 @media (max-width: 480px) {
   .ch30-stats { grid-template-columns: 1fr; }
 }
+
+/* Ch30 uplift: standardized closing coda */
+.v1-ch30-coda {
+  background: transparent;
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 0 0;
+  margin: 1.5rem 0 0;
+}
+
+.v1-ch30-coda-quote {
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 64ch;
+}
+
+.v1-ch30-coda-cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--gold);
+}

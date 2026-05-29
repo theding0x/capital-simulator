@@ -184,3 +184,37 @@
 .ch33-readout strong {
   color: var(--red);
 }
+
+/* Ch33 uplift: empty / loading placeholder for the colony list */
+.ch33-empty {
+  color: var(--ink-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+  padding: 0.75rem 0;
+  margin: 0;
+}
+
+/* Ch33 uplift: standardized closing coda */
+.v1-ch33-coda {
+  background: transparent;
+  border-top: 1px solid var(--border);
+  padding: 1.25rem 0 0;
+  margin: 1.5rem 0 0;
+}
+
+.v1-ch33-coda-quote {
+  font-style: italic;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 64ch;
+}
+
+.v1-ch33-coda-cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
