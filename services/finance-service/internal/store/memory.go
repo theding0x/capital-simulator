@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 )
 
@@ -21,6 +22,7 @@ type Memory struct {
 	priceFlux    map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
 	compositions map[profit.CompositionEffectID]profit.CompositionEffectAnalysis
 	magnitudes   map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis
+	spheres      map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere
 }
 
 // NewMemory returns an empty in-memory store.
@@ -35,6 +37,7 @@ func NewMemory() *Memory {
 		priceFlux:    make(map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis),
 		compositions: make(map[profit.CompositionEffectID]profit.CompositionEffectAnalysis),
 		magnitudes:   make(map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis),
+		spheres:      make(map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere),
 	}
 }
 
@@ -391,6 +394,51 @@ func (m *Memory) ListMagnitudeChanges(_ context.Context) ([]profit.MagnitudeChan
 	out := make([]profit.MagnitudeChangeAnalysis, 0, len(m.magnitudes))
 	for _, a := range m.magnitudes {
 		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateProductionSphere stores s, assigning an ID and timestamp when absent.
+func (m *Memory) CreateProductionSphere(_ context.Context, s avgprofit.ProductionSphere) (avgprofit.ProductionSphere, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID.IsZero() {
+		s.ID = avgprofit.NewProductionSphereID()
+	}
+	if _, exists := m.spheres[s.ID]; exists {
+		return avgprofit.ProductionSphere{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	m.spheres[s.ID] = s
+	return s, nil
+}
+
+// GetProductionSphere returns the sphere with id, or ErrNotFound.
+func (m *Memory) GetProductionSphere(_ context.Context, id avgprofit.ProductionSphereID) (avgprofit.ProductionSphere, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	s, ok := m.spheres[id]
+	if !ok {
+		return avgprofit.ProductionSphere{}, ErrNotFound
+	}
+	return s, nil
+}
+
+// ListProductionSpheres returns all stored spheres, newest first.
+func (m *Memory) ListProductionSpheres(_ context.Context) ([]avgprofit.ProductionSphere, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]avgprofit.ProductionSphere, 0, len(m.spheres))
+	for _, s := range m.spheres {
+		out = append(out, s)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)

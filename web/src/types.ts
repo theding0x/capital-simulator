@@ -3215,3 +3215,29 @@ export interface PartISummaryResponse {
   analyses: ProfitRateAnalysisResponse[];
   created_at: string;
 }
+
+// Vol. III Ch. 8 — Different Compositions of Capitals in Different Branches.
+// ProductionSphereResponse mirrors avgprofit.ProductionSphere. Rates in basis
+// points (10000 = 100%); capital magnitudes in LabourMinutes.
+export interface ProductionSphereResponse {
+  id: string;
+  name: string;
+  c: number;
+  v: number;
+  s_rate: number;
+  constant_capital: number;
+  surplus_value: number;
+  individual_profit_rate: number;
+  variable_percent: number;
+  labour_power_index: number;
+  created_at: string;
+}
+
+// OrganicCompositionResponse mirrors avgprofit.OrganicComposition with derived
+// percentage fields for rendering.
+export interface OrganicCompositionResponse {
+  constant: number;
+  variable: number;
+  constant_percent: number;
+  variable_percent: number;
+}

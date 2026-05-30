@@ -10,6 +10,7 @@ import (
 	"time"
 
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 )
 
@@ -497,6 +498,62 @@ func (m *MySQL) ListMagnitudeChanges(ctx context.Context) ([]profit.MagnitudeCha
 	return out, rows.Err()
 }
 
+// CreateProductionSphere persists s, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateProductionSphere(ctx context.Context, s avgprofit.ProductionSphere) (avgprofit.ProductionSphere, error) {
+	if s.ID.IsZero() {
+		s.ID = avgprofit.NewProductionSphereID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO production_spheres
+		(id, name, c, v, s_rate, constant_capital, surplus_value, individual_profit_rate, variable_percent, labour_power_index, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID), s.Name,
+		int64(s.C), int64(s.V), int64(s.SRate),
+		int64(s.ConstantCapital), int64(s.SurplusValue),
+		int64(s.IndividualProfitRate), s.VariablePercent,
+		int64(s.LabourPowerIndex), s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return avgprofit.ProductionSphere{}, ErrAlreadyExists
+		}
+		return avgprofit.ProductionSphere{}, err
+	}
+	return s, nil
+}
+
+// GetProductionSphere returns the sphere with id, or ErrNotFound.
+func (m *MySQL) GetProductionSphere(ctx context.Context, id avgprofit.ProductionSphereID) (avgprofit.ProductionSphere, error) {
+	const q = `SELECT id, name, c, v, s_rate, constant_capital, surplus_value, individual_profit_rate, variable_percent, labour_power_index, created_at
+		FROM production_spheres WHERE id = ?`
+	return scanProductionSphere(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListProductionSpheres returns all stored spheres, newest first.
+func (m *MySQL) ListProductionSpheres(ctx context.Context) ([]avgprofit.ProductionSphere, error) {
+	const q = `SELECT id, name, c, v, s_rate, constant_capital, surplus_value, individual_profit_rate, variable_percent, labour_power_index, created_at
+		FROM production_spheres ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []avgprofit.ProductionSphere
+	for rows.Next() {
+		s, err := scanProductionSphere(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
 // rowScanner is satisfied by both *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -755,6 +812,34 @@ func scanMagnitudeChange(s rowScanner) (profit.MagnitudeChangeAnalysis, error) {
 		NewRate:       newRate,
 		RateUnchanged: rateUnchanged,
 		CreatedAt:     createdAt,
+	}, nil
+}
+
+func scanProductionSphere(s rowScanner) (avgprofit.ProductionSphere, error) {
+	var (
+		id, name                                                      string
+		c, v, sRate, cc, sv, ipr, varPct, lpi                        int64
+		createdAt                                                     time.Time
+	)
+	err := s.Scan(&id, &name, &c, &v, &sRate, &cc, &sv, &ipr, &varPct, &lpi, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return avgprofit.ProductionSphere{}, ErrNotFound
+		}
+		return avgprofit.ProductionSphere{}, err
+	}
+	return avgprofit.ProductionSphere{
+		ID:                   avgprofit.ProductionSphereID(id),
+		Name:                 name,
+		C:                    avgprofit.TotalCapital(c),
+		V:                    avgprofit.VariableCapital(v),
+		SRate:                avgprofit.RateOfSurplusValue(sRate),
+		ConstantCapital:      avgprofit.ConstantCapital(cc),
+		SurplusValue:         avgprofit.SurplusValue(sv),
+		IndividualProfitRate: avgprofit.SphereProfitRate(ipr),
+		VariablePercent:      varPct,
+		LabourPowerIndex:     avgprofit.LabourPowerIndex(lpi),
+		CreatedAt:            createdAt,
 	}, nil
 }
 

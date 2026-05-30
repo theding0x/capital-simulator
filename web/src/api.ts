@@ -2079,4 +2079,12 @@ export const financeApi = {
 
   getPartISummary: () =>
     http<import("./types").PartISummaryResponse>("/v1/profit/summary"),
+
+  // Vol. III Ch. 8 — Different Compositions of Capitals in Different Branches
+  listProductionSpheres: () =>
+    http<{ items: import("./types").ProductionSphereResponse[] }>("/v1/avgprofit/spheres").then((r) => r.items),
+  getProductionSphere: (id: string) =>
+    http<import("./types").ProductionSphereResponse>(`/v1/avgprofit/spheres/${id}`),
+  createProductionSphere: (input: { name: string; c: number; v: number; s_rate: number }) =>
+    http<import("./types").ProductionSphereResponse>("/v1/avgprofit/spheres", { method: "POST", body: JSON.stringify(input) }),
 };

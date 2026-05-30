@@ -44,6 +44,10 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("GET /v1/profit/magnitude-change", h.ListMagnitudeChanges)
 	mux.HandleFunc("GET /v1/profit/magnitude-change/{id}", h.GetMagnitudeChange)
 	mux.HandleFunc("GET /v1/profit/summary", h.GetPartISummary)
+	// Vol. III Ch. 8 — Different Compositions of Capitals in Different Branches
+	mux.HandleFunc("POST /v1/avgprofit/spheres", h.CreateProductionSphere)
+	mux.HandleFunc("GET /v1/avgprofit/spheres", h.ListProductionSpheres)
+	mux.HandleFunc("GET /v1/avgprofit/spheres/{id}", h.GetProductionSphere)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st
