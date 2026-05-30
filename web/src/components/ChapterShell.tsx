@@ -69,6 +69,7 @@ import { Ch11WageFluctuations } from "../chapters/vol3/Ch11WageFluctuations";
 import { Ch12SupplementaryRemarks } from "../chapters/vol3/Ch12SupplementaryRemarks";
 import { Ch13FallingProfitLaw } from "../chapters/vol3/Ch13FallingProfitLaw";
 import { Ch14CounteractingForces } from "../chapters/vol3/Ch14CounteractingForces";
+import { Ch15InternalContradictions } from "../chapters/vol3/Ch15InternalContradictions";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -156,6 +157,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch12": Ch12SupplementaryRemarks as AnyPanel,
   "v3-ch13": Ch13FallingProfitLaw as AnyPanel,
   "v3-ch14": Ch14CounteractingForces as AnyPanel,
+  "v3-ch15": Ch15InternalContradictions as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -226,6 +228,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch12": "The price of production of a commodity may vary for only two reasons: first, a change in the general rate of profit; second, a change in the value of the commodity itself. The grounds advanced for a higher price create no value — they are but a claim to a larger share of the aggregate surplus-value.",
   "v3-ch13": "The progressive tendency of the general rate of profit to fall is therefore just an expression peculiar to the capitalist mode of production of the progressive development of the social productivity of labour.",
   "v3-ch14": "The same influences which produce a tendency in the general rate of profit to fall, also call forth counter-effects, which hamper, retard, and partly paralyse this fall.",
+  "v3-ch15": "The real barrier of capitalist production is capital itself.",
 };
 
 export function ChapterShell({

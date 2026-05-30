@@ -91,4 +91,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/tendency/scenario", h.CreateCounteractingScenario)
 	s.HandleFunc("GET /v1/tendency/scenario", h.ListCounteractingScenarios)
 	s.HandleFunc("GET /v1/tendency/scenario/{id}", h.GetCounteractingScenario)
+
+	// Vol. III Ch. 15 — Internal Contradictions of the Law (COMPLETES Part III)
+	s.HandleFunc("POST /v1/tendency/crisis", h.CreateCrisis)
+	s.HandleFunc("GET /v1/tendency/crisis", h.ListCrises)
+	s.HandleFunc("GET /v1/tendency/crisis/{id}", h.GetCrisis)
+	s.HandleFunc("POST /v1/tendency/contradiction", h.CreateInternalContradiction)
+	s.HandleFunc("GET /v1/tendency/contradiction/{id}", h.GetInternalContradiction)
+	s.HandleFunc("GET /v1/tendency/summary", h.GetPartIIISummary)
 }

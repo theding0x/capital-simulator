@@ -2216,4 +2216,26 @@ export const financeApi = {
     ),
   getCounteractingScenario: (id: string) =>
     http<import("./types").CounteractingScenarioResponse>(`/v1/tendency/scenario/${id}`),
+
+  // Vol. III Ch. 15 — Internal Contradictions of the Law
+  createCrisis: (body: { constant_capital_writedown: number; pre_crisis_profit_rate: number }) =>
+    http<import("./types").CrisisResponse>("/v1/tendency/crisis", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listCrises: () =>
+    http<{ items: import("./types").CrisisResponse[] }>("/v1/tendency/crisis").then(
+      (r) => r.items ?? [],
+    ),
+  getCrisis: (id: string) =>
+    http<import("./types").CrisisResponse>(`/v1/tendency/crisis/${id}`),
+  createContradiction: (body: { kind: string; note?: string }) =>
+    http<import("./types").InternalContradictionResponse>("/v1/tendency/contradiction", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getContradiction: (id: string) =>
+    http<import("./types").InternalContradictionResponse>(`/v1/tendency/contradiction/${id}`),
+  getPartIIISummary: () =>
+    http<import("./types").PartIIISummaryResponse>("/v1/tendency/summary"),
 };

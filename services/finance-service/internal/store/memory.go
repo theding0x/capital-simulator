@@ -35,6 +35,8 @@ type Memory struct {
 	rateMasses         map[tendency.RateMassContradictionID]tendency.RateMassContradiction
 	counterForces      map[tendency.CounteractingForceID]tendency.CounteractingForce
 	counterScenarios   map[tendency.CounteractingScenarioID]tendency.CounteractingScenario
+	crises             map[tendency.CrisisID]tendency.Crisis
+	contradictions     map[tendency.InternalContradictionID]tendency.InternalContradiction
 }
 
 // NewMemory returns an empty in-memory store.
@@ -61,6 +63,8 @@ func NewMemory() *Memory {
 		rateMasses:         make(map[tendency.RateMassContradictionID]tendency.RateMassContradiction),
 		counterForces:      make(map[tendency.CounteractingForceID]tendency.CounteractingForce),
 		counterScenarios:   make(map[tendency.CounteractingScenarioID]tendency.CounteractingScenario),
+		crises:             make(map[tendency.CrisisID]tendency.Crisis),
+		contradictions:     make(map[tendency.InternalContradictionID]tendency.InternalContradiction),
 	}
 }
 
@@ -883,6 +887,96 @@ func (m *Memory) ListCounteractingScenarios(_ context.Context) ([]tendency.Count
 	out := make([]tendency.CounteractingScenario, 0, len(m.counterScenarios))
 	for _, s := range m.counterScenarios {
 		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCrisis stores c, assigning an ID and timestamp when absent.
+func (m *Memory) CreateCrisis(_ context.Context, c tendency.Crisis) (tendency.Crisis, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if c.ID.IsZero() {
+		c.ID = tendency.NewCrisisID()
+	}
+	if _, exists := m.crises[c.ID]; exists {
+		return tendency.Crisis{}, ErrAlreadyExists
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+	m.crises[c.ID] = c
+	return c, nil
+}
+
+// GetCrisis returns the crisis with id, or ErrNotFound.
+func (m *Memory) GetCrisis(_ context.Context, id tendency.CrisisID) (tendency.Crisis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	c, ok := m.crises[id]
+	if !ok {
+		return tendency.Crisis{}, ErrNotFound
+	}
+	return c, nil
+}
+
+// ListCrises returns all stored crises, newest first.
+func (m *Memory) ListCrises(_ context.Context) ([]tendency.Crisis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]tendency.Crisis, 0, len(m.crises))
+	for _, c := range m.crises {
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateInternalContradiction stores c, assigning an ID and timestamp when absent.
+func (m *Memory) CreateInternalContradiction(_ context.Context, c tendency.InternalContradiction) (tendency.InternalContradiction, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if c.ID.IsZero() {
+		c.ID = tendency.NewInternalContradictionID()
+	}
+	if _, exists := m.contradictions[c.ID]; exists {
+		return tendency.InternalContradiction{}, ErrAlreadyExists
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+	m.contradictions[c.ID] = c
+	return c, nil
+}
+
+// GetInternalContradiction returns the contradiction with id, or ErrNotFound.
+func (m *Memory) GetInternalContradiction(_ context.Context, id tendency.InternalContradictionID) (tendency.InternalContradiction, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	c, ok := m.contradictions[id]
+	if !ok {
+		return tendency.InternalContradiction{}, ErrNotFound
+	}
+	return c, nil
+}
+
+// ListInternalContradictions returns all stored contradictions, newest first.
+func (m *Memory) ListInternalContradictions(_ context.Context) ([]tendency.InternalContradiction, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]tendency.InternalContradiction, 0, len(m.contradictions))
+	for _, c := range m.contradictions {
+		out = append(out, c)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)

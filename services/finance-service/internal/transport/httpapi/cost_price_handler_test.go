@@ -83,6 +83,13 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/tendency/scenario", h.CreateCounteractingScenario)
 	mux.HandleFunc("GET /v1/tendency/scenario", h.ListCounteractingScenarios)
 	mux.HandleFunc("GET /v1/tendency/scenario/{id}", h.GetCounteractingScenario)
+	// Vol. III Ch. 15 — Exposition of the Internal Contradictions of the Law
+	mux.HandleFunc("POST /v1/tendency/crisis", h.CreateCrisis)
+	mux.HandleFunc("GET /v1/tendency/crisis", h.ListCrises)
+	mux.HandleFunc("GET /v1/tendency/crisis/{id}", h.GetCrisis)
+	mux.HandleFunc("POST /v1/tendency/contradiction", h.CreateInternalContradiction)
+	mux.HandleFunc("GET /v1/tendency/contradiction/{id}", h.GetInternalContradiction)
+	mux.HandleFunc("GET /v1/tendency/summary", h.GetPartIIISummary)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st
