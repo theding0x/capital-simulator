@@ -67,6 +67,7 @@ import { Ch09GeneralRateOfProfit } from "../chapters/vol3/Ch09GeneralRateOfProfi
 import { Ch10Equalisation } from "../chapters/vol3/Ch10Equalisation";
 import { Ch11WageFluctuations } from "../chapters/vol3/Ch11WageFluctuations";
 import { Ch12SupplementaryRemarks } from "../chapters/vol3/Ch12SupplementaryRemarks";
+import { Ch13FallingProfitLaw } from "../chapters/vol3/Ch13FallingProfitLaw";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -152,6 +153,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch10": Ch10Equalisation as AnyPanel,
   "v3-ch11": Ch11WageFluctuations as AnyPanel,
   "v3-ch12": Ch12SupplementaryRemarks as AnyPanel,
+  "v3-ch13": Ch13FallingProfitLaw as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -220,6 +222,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch10": "Competition can only equalise the deviating profit rates into a general rate by transforming the values of commodities into prices of production. As soon as profit is distributed uniformly, it is distributed as such regardless of its origin.",
   "v3-ch11": "A general rise in wages ... would therefore lower the general rate of profit but would not alter the values of commodities.",
   "v3-ch12": "The price of production of a commodity may vary for only two reasons: first, a change in the general rate of profit; second, a change in the value of the commodity itself. The grounds advanced for a higher price create no value — they are but a claim to a larger share of the aggregate surplus-value.",
+  "v3-ch13": "The progressive tendency of the general rate of profit to fall is therefore just an expression peculiar to the capitalist mode of production of the progressive development of the social productivity of labour.",
 };
 
 export function ChapterShell({

@@ -77,4 +77,11 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/avgprofit/price-change/{id}", h.GetPriceOfProductionChange)
 	s.HandleFunc("POST /v1/avgprofit/compensation-ground", h.ComputeCompensationGround)
 	s.HandleFunc("GET /v1/avgprofit/summary", h.GetPartIISummary)
+
+	// Vol. III Ch. 13 — The Law As Such (Tendential Fall in the Rate of Profit)
+	s.HandleFunc("POST /v1/tendency/trajectory", h.CreateCompositionTrajectory)
+	s.HandleFunc("GET /v1/tendency/trajectory", h.ListCompositionTrajectories)
+	s.HandleFunc("GET /v1/tendency/trajectory/{id}", h.GetCompositionTrajectory)
+	s.HandleFunc("POST /v1/tendency/rate-mass", h.CreateRateMassContradiction)
+	s.HandleFunc("GET /v1/tendency/rate-mass/{id}", h.GetRateMassContradiction)
 }

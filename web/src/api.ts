@@ -2162,4 +2162,33 @@ export const financeApi = {
     }),
   getPartIISummary: () =>
     http<import("./types").PartIISummaryResponse>("/v1/avgprofit/summary"),
+
+  // Vol. III Ch. 13 — The Law as Such (Tendential Fall in the Rate of Profit)
+  createCompositionTrajectory: (input: {
+    label: string;
+    surplus_value_rate: number;
+    steps: [number, number][];
+  }) =>
+    http<import("./types").CompositionTrajectoryResponse>("/v1/tendency/trajectory", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  listCompositionTrajectories: () =>
+    http<{ items: import("./types").CompositionTrajectoryResponse[] }>("/v1/tendency/trajectory").then(
+      (r) => r.items,
+    ),
+  getCompositionTrajectory: (id: string) =>
+    http<import("./types").CompositionTrajectoryResponse>(`/v1/tendency/trajectory/${id}`),
+  computeRateMassContradiction: (input: {
+    old_c: number;
+    old_rate: number;
+    new_c: number;
+    new_rate: number;
+  }) =>
+    http<import("./types").RateMassContradictionResponse>("/v1/tendency/rate-mass", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  getRateMassContradiction: (id: string) =>
+    http<import("./types").RateMassContradictionResponse>(`/v1/tendency/rate-mass/${id}`),
 };
