@@ -998,6 +998,190 @@ func scanPriceOfProduction(s rowScanner) (avgprofit.PriceOfProduction, error) {
 	}, nil
 }
 
+// CreateMarketValue persists v, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateMarketValue(ctx context.Context, v avgprofit.MarketValue) (avgprofit.MarketValue, error) {
+	if v.ID.IsZero() {
+		v.ID = avgprofit.NewMarketValueID()
+	}
+	if v.CreatedAt.IsZero() {
+		v.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO market_values
+		(id, sphere_name, bulk_condition_value, best_condition_value, worst_condition_value, value, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(v.ID), v.SphereName,
+		int64(v.BulkConditionValue), int64(v.BestConditionValue), int64(v.WorstConditionValue),
+		int64(v.Value), v.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return avgprofit.MarketValue{}, ErrAlreadyExists
+		}
+		return avgprofit.MarketValue{}, err
+	}
+	return v, nil
+}
+
+// GetMarketValue returns the market-value record with id, or ErrNotFound.
+func (m *MySQL) GetMarketValue(ctx context.Context, id avgprofit.MarketValueID) (avgprofit.MarketValue, error) {
+	const q = `SELECT id, sphere_name, bulk_condition_value, best_condition_value, worst_condition_value, value, created_at
+		FROM market_values WHERE id = ?`
+	return scanMarketValue(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// CreateSurplusProfit persists s, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateSurplusProfit(ctx context.Context, s avgprofit.SurplusProfit) (avgprofit.SurplusProfit, error) {
+	if s.ID.IsZero() {
+		s.ID = avgprofit.NewSurplusProfitID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO surplus_profits
+		(id, firm_name, individual_value, market_value, output_qty, general_rate, amount, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID), s.FirmName,
+		int64(s.IndividualValue), int64(s.MarketValue), s.OutputQty,
+		int64(s.GeneralRate), int64(s.Amount), s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return avgprofit.SurplusProfit{}, ErrAlreadyExists
+		}
+		return avgprofit.SurplusProfit{}, err
+	}
+	return s, nil
+}
+
+// GetSurplusProfit returns the surplus-profit record with id, or ErrNotFound.
+func (m *MySQL) GetSurplusProfit(ctx context.Context, id avgprofit.SurplusProfitID) (avgprofit.SurplusProfit, error) {
+	const q = `SELECT id, firm_name, individual_value, market_value, output_qty, general_rate, amount, created_at
+		FROM surplus_profits WHERE id = ?`
+	return scanSurplusProfit(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// CreateEqualisation persists e, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateEqualisation(ctx context.Context, e avgprofit.Equalisation) (avgprofit.Equalisation, error) {
+	if e.ID.IsZero() {
+		e.ID = avgprofit.NewEqualisationID()
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO equalisations
+		(id, sphere_name, initial_rate, target_rate, direction, is_converging, market_price, market_value, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(e.ID), e.SphereName,
+		int64(e.InitialRate), int64(e.TargetRate),
+		string(e.Direction), e.IsConverging,
+		int64(e.Flow.MarketPrice), int64(e.Flow.MarketValue),
+		e.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return avgprofit.Equalisation{}, ErrAlreadyExists
+		}
+		return avgprofit.Equalisation{}, err
+	}
+	return e, nil
+}
+
+// GetEqualisation returns the equalisation record with id, or ErrNotFound.
+func (m *MySQL) GetEqualisation(ctx context.Context, id avgprofit.EqualisationID) (avgprofit.Equalisation, error) {
+	const q = `SELECT id, sphere_name, initial_rate, target_rate, direction, is_converging, market_price, market_value, created_at
+		FROM equalisations WHERE id = ?`
+	return scanEqualisation(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+func scanMarketValue(s rowScanner) (avgprofit.MarketValue, error) {
+	var (
+		id, sphereName                         string
+		bulk, best, worst, value               int64
+		createdAt                              time.Time
+	)
+	err := s.Scan(&id, &sphereName, &bulk, &best, &worst, &value, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return avgprofit.MarketValue{}, ErrNotFound
+		}
+		return avgprofit.MarketValue{}, err
+	}
+	return avgprofit.MarketValue{
+		ID:                  avgprofit.MarketValueID(id),
+		SphereName:          sphereName,
+		BulkConditionValue:  avgprofit.CommodityValue(bulk),
+		BestConditionValue:  avgprofit.CommodityValue(best),
+		WorstConditionValue: avgprofit.CommodityValue(worst),
+		Value:               avgprofit.CommodityValue(value),
+		CreatedAt:           createdAt,
+	}, nil
+}
+
+func scanSurplusProfit(s rowScanner) (avgprofit.SurplusProfit, error) {
+	var (
+		id, firmName                                       string
+		indVal, marketVal, outputQty, generalRate, amount int64
+		createdAt                                         time.Time
+	)
+	err := s.Scan(&id, &firmName, &indVal, &marketVal, &outputQty, &generalRate, &amount, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return avgprofit.SurplusProfit{}, ErrNotFound
+		}
+		return avgprofit.SurplusProfit{}, err
+	}
+	return avgprofit.SurplusProfit{
+		ID:              avgprofit.SurplusProfitID(id),
+		FirmName:        firmName,
+		IndividualValue: avgprofit.IndividualValue(indVal),
+		MarketValue:     avgprofit.CommodityValue(marketVal),
+		OutputQty:       outputQty,
+		GeneralRate:     avgprofit.SphereProfitRate(generalRate),
+		Amount:          avgprofit.Profit(amount),
+		CreatedAt:       createdAt,
+	}, nil
+}
+
+func scanEqualisation(s rowScanner) (avgprofit.Equalisation, error) {
+	var (
+		id, sphereName, direction      string
+		initialRate, targetRate        int64
+		isConverging                   bool
+		marketPrice, marketValue       int64
+		createdAt                      time.Time
+	)
+	err := s.Scan(&id, &sphereName, &initialRate, &targetRate, &direction, &isConverging, &marketPrice, &marketValue, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return avgprofit.Equalisation{}, ErrNotFound
+		}
+		return avgprofit.Equalisation{}, err
+	}
+	flow := avgprofit.ComputeCapitalFlow(
+		sphereName,
+		avgprofit.SphereProfitRate(initialRate),
+		avgprofit.SphereProfitRate(targetRate),
+		avgprofit.MarketPriceAmount(marketPrice),
+		avgprofit.CommodityValue(marketValue),
+	)
+	return avgprofit.Equalisation{
+		ID:           avgprofit.EqualisationID(id),
+		SphereName:   sphereName,
+		InitialRate:  avgprofit.SphereProfitRate(initialRate),
+		TargetRate:   avgprofit.SphereProfitRate(targetRate),
+		Direction:    avgprofit.CapitalFlowDirection(direction),
+		IsConverging: isConverging,
+		Flow:         flow,
+		CreatedAt:    createdAt,
+	}, nil
+}
+
 // isDuplicate reports whether err is a MySQL duplicate-key error (1062).
 func isDuplicate(err error) bool {
 	if err == nil {

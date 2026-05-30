@@ -2110,4 +2110,18 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // Vol. III Ch. 10 — Equalisation of the General Rate of Profit Through Competition
+  createMarketValue: (input: { sphere_name: string; bulk_condition_value: number; best_condition_value: number; worst_condition_value: number }) =>
+    http<import("./types").MarketValueResponse>("/v1/avgprofit/market-value", { method: "POST", body: JSON.stringify(input) }),
+  getMarketValue: (id: string) =>
+    http<import("./types").MarketValueResponse>(`/v1/avgprofit/market-value/${id}`),
+  computeSurplusProfit: (input: { firm_name: string; individual_value: number; market_value: number; output_qty: number; general_rate: number }) =>
+    http<import("./types").SurplusProfitResponse>("/v1/avgprofit/surplus-profit", { method: "POST", body: JSON.stringify(input) }),
+  getSurplusProfit: (id: string) =>
+    http<import("./types").SurplusProfitResponse>(`/v1/avgprofit/surplus-profit/${id}`),
+  createCapitalFlow: (input: { sphere_name: string; current_sphere_rate: number; general_rate: number; market_price: number; market_value: number }) =>
+    http<import("./types").EqualisationResponse>("/v1/avgprofit/capital-flow", { method: "POST", body: JSON.stringify(input) }),
+  getEqualisation: (id: string) =>
+    http<import("./types").EqualisationResponse>(`/v1/avgprofit/equalisation/${id}`),
 };

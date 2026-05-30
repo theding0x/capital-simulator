@@ -55,6 +55,13 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("GET /v1/avgprofit/price-of-production", h.ListPricesOfProduction)
 	mux.HandleFunc("GET /v1/avgprofit/price-of-production/{id}", h.GetPriceOfProduction)
 	mux.HandleFunc("POST /v1/avgprofit/social-aggregate", h.ComputeSocialAggregate)
+	// Vol. III Ch. 10 — Equalisation of the General Rate of Profit Through Competition
+	mux.HandleFunc("POST /v1/avgprofit/market-value", h.CreateMarketValue)
+	mux.HandleFunc("GET /v1/avgprofit/market-value/{id}", h.GetMarketValue)
+	mux.HandleFunc("POST /v1/avgprofit/surplus-profit", h.CreateSurplusProfit)
+	mux.HandleFunc("GET /v1/avgprofit/surplus-profit/{id}", h.GetSurplusProfit)
+	mux.HandleFunc("POST /v1/avgprofit/capital-flow", h.CreateCapitalFlow)
+	mux.HandleFunc("GET /v1/avgprofit/equalisation/{id}", h.GetEqualisation)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

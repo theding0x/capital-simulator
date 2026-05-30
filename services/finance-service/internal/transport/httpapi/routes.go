@@ -58,4 +58,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/avgprofit/price-of-production", h.ListPricesOfProduction)
 	s.HandleFunc("GET /v1/avgprofit/price-of-production/{id}", h.GetPriceOfProduction)
 	s.HandleFunc("POST /v1/avgprofit/social-aggregate", h.ComputeSocialAggregate)
+
+	// Vol. III Ch. 10 — Equalisation of the General Rate of Profit Through Competition
+	s.HandleFunc("POST /v1/avgprofit/market-value", h.CreateMarketValue)
+	s.HandleFunc("GET /v1/avgprofit/market-value/{id}", h.GetMarketValue)
+	s.HandleFunc("POST /v1/avgprofit/surplus-profit", h.CreateSurplusProfit)
+	s.HandleFunc("GET /v1/avgprofit/surplus-profit/{id}", h.GetSurplusProfit)
+	s.HandleFunc("POST /v1/avgprofit/capital-flow", h.CreateCapitalFlow)
+	s.HandleFunc("GET /v1/avgprofit/equalisation/{id}", h.GetEqualisation)
 }

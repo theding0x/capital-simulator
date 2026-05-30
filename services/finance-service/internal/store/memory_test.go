@@ -599,3 +599,171 @@ func TestMemory_ListProductionSpheres_NewestFirst(t *testing.T) {
 		t.Errorf("first item id = %s, want B (%s)", out[0].ID, createdB.ID)
 	}
 }
+
+// --- MarketValue store tests (Ch. 10) ---
+
+func TestMemory_MarketValueRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Cotton: bulk=100, best=80, worst=130 (spec fixture).
+	mv := avgprofit.ComputeMarketValue("cotton", 100, 80, 130)
+	created, err := m.CreateMarketValue(ctx, mv)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if created.Value != 100 {
+		t.Errorf("Value = %d, want 100 (bulk condition)", created.Value)
+	}
+
+	got, err := m.GetMarketValue(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetMarketValueNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetMarketValue(context.Background(), avgprofit.MarketValueID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateMarketValueDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	mv := avgprofit.ComputeMarketValue("cotton", 100, 80, 130)
+	mv.ID = avgprofit.MarketValueID("fixed-mv-id-0001")
+
+	if _, err := m.CreateMarketValue(ctx, mv); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateMarketValue(ctx, mv); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+// --- SurplusProfit store tests (Ch. 10) ---
+
+func TestMemory_SurplusProfitRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// High-productivity firm: indVal=60, marketVal=100, qty=1000 → amount=40000.
+	sp := avgprofit.ComputeSurplusProfit("High-productivity firm", 60, 100, 1000, 2200)
+	created, err := m.CreateSurplusProfit(ctx, sp)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if created.Amount != 40000 {
+		t.Errorf("Amount = %d, want 40000", created.Amount)
+	}
+
+	got, err := m.GetSurplusProfit(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetSurplusProfitNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetSurplusProfit(context.Background(), avgprofit.SurplusProfitID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateSurplusProfitDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	sp := avgprofit.ComputeSurplusProfit("firm", 60, 100, 1000, 2200)
+	sp.ID = avgprofit.SurplusProfitID("fixed-sp-id-0001")
+
+	if _, err := m.CreateSurplusProfit(ctx, sp); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateSurplusProfit(ctx, sp); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+// --- Equalisation store tests (Ch. 10) ---
+
+func TestMemory_EqualisationRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Cotton sphere: initialRate=3000, targetRate=2200 → inflow, converging.
+	eq := avgprofit.ComputeEqualisation("cotton", 3000, 2200)
+	created, err := m.CreateEqualisation(ctx, eq)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if !created.IsConverging {
+		t.Error("IsConverging = false, want true")
+	}
+	if created.Direction != avgprofit.KindInflow {
+		t.Errorf("Direction = %q, want %q", created.Direction, avgprofit.KindInflow)
+	}
+
+	got, err := m.GetEqualisation(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetEqualisationNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetEqualisation(context.Background(), avgprofit.EqualisationID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateEqualisationDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	eq := avgprofit.ComputeEqualisation("cotton", 3000, 2200)
+	eq.ID = avgprofit.EqualisationID("fixed-eq-id-0001")
+
+	if _, err := m.CreateEqualisation(ctx, eq); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateEqualisation(ctx, eq); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
