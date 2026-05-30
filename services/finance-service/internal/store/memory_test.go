@@ -1202,3 +1202,267 @@ func TestCh13SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// --- CounteractingForce store tests (Ch. 14) ---
+
+func TestMemory_CounteractingForceRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// §VI stock capital — the one kind excluded from the general rate.
+	f, err := tendency.NewCounteractingForce(tendency.KindStockCapital, "Marx §VI")
+	if err != nil {
+		t.Fatalf("new force: %v", err)
+	}
+	created, err := m.CreateCounteractingForce(ctx, f)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if !created.ExcludedFromGeneralRate {
+		t.Error("ExcludedFromGeneralRate = false, want true for stock_capital")
+	}
+
+	got, err := m.GetCounteractingForce(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetCounteractingForceNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetCounteractingForce(context.Background(), tendency.CounteractingForceID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateCounteractingForceDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	f, err := tendency.NewCounteractingForce(tendency.KindForeignTrade, "")
+	if err != nil {
+		t.Fatalf("new force: %v", err)
+	}
+	f.ID = tendency.CounteractingForceID("5eed000000000000001405")
+
+	if _, err := m.CreateCounteractingForce(ctx, f); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateCounteractingForce(ctx, f); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+// --- CounteractingScenario store tests (Ch. 14) ---
+
+// ch14LawSteps mirrors the §law base trajectory the scenario is built on.
+var ch14LawSteps = [][2]int64{{50, 100}, {100, 100}, {200, 100}, {300, 100}, {400, 100}}
+
+// ch14IndustrialKinds are the five forces (§I–§V) that uplift the path.
+var ch14IndustrialKinds = []tendency.CounteractingForceKind{
+	tendency.KindIntensifiedExploitation,
+	tendency.KindDepressedWages,
+	tendency.KindCheaperConstantCapital,
+	tendency.KindRelativeOverpopulation,
+	tendency.KindForeignTrade,
+}
+
+// ch14Forces builds the five-force slice, failing the test on a rejected kind.
+func ch14Forces(t *testing.T) []tendency.CounteractingForce {
+	t.Helper()
+	forces := make([]tendency.CounteractingForce, 0, len(ch14IndustrialKinds))
+	for _, k := range ch14IndustrialKinds {
+		f, err := tendency.NewCounteractingForce(k, "")
+		if err != nil {
+			t.Fatalf("new force %q: %v", k, err)
+		}
+		forces = append(forces, f)
+	}
+	return forces
+}
+
+func TestMemory_CounteractingScenarioRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	trajectory := tendency.BuildCompositionTrajectory("law", 10000, ch14LawSteps)
+	scenario, err := tendency.BuildCounteractingScenario("All five industrial forces", trajectory, ch14Forces(t))
+	if err != nil {
+		t.Fatalf("build scenario: %v", err)
+	}
+
+	created, err := m.CreateCounteractingScenario(ctx, scenario)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+
+	got, err := m.GetCounteractingScenario(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID || got.Label != created.Label {
+		t.Errorf("round-trip scalar mismatch:\n got  %+v\n want %+v", got, created)
+	}
+	if got.InitialProfitRate != created.InitialProfitRate || got.FinalProfitRate != created.FinalProfitRate {
+		t.Errorf("round-trip rate mismatch: got init=%d final=%d, want init=%d final=%d",
+			got.InitialProfitRate, got.FinalProfitRate, created.InitialProfitRate, created.FinalProfitRate)
+	}
+	if !got.CreatedAt.Equal(created.CreatedAt) {
+		t.Errorf("round-trip CreatedAt mismatch: got %v, want %v", got.CreatedAt, created.CreatedAt)
+	}
+	// JSON-roundtripped Forces survive.
+	if len(got.Forces) != len(created.Forces) {
+		t.Fatalf("Forces len = %d, want %d", len(got.Forces), len(created.Forces))
+	}
+	for i := range created.Forces {
+		if got.Forces[i] != created.Forces[i] {
+			t.Errorf("Forces[%d] mismatch:\n got  %+v\n want %+v", i, got.Forces[i], created.Forces[i])
+		}
+	}
+	// JSON-roundtripped ModifiedRates survive.
+	if len(got.ModifiedRates) != len(created.ModifiedRates) {
+		t.Fatalf("ModifiedRates len = %d, want %d", len(got.ModifiedRates), len(created.ModifiedRates))
+	}
+	for i := range created.ModifiedRates {
+		if got.ModifiedRates[i] != created.ModifiedRates[i] {
+			t.Errorf("ModifiedRates[%d] = %d, want %d", i, got.ModifiedRates[i], created.ModifiedRates[i])
+		}
+	}
+	// JSON-roundtripped BaseTrajectory periods survive.
+	if len(got.BaseTrajectory.Periods) != len(created.BaseTrajectory.Periods) {
+		t.Fatalf("BaseTrajectory.Periods len = %d, want %d",
+			len(got.BaseTrajectory.Periods), len(created.BaseTrajectory.Periods))
+	}
+	for i := range created.BaseTrajectory.Periods {
+		if got.BaseTrajectory.Periods[i] != created.BaseTrajectory.Periods[i] {
+			t.Errorf("BaseTrajectory.Periods[%d] mismatch:\n got  %+v\n want %+v",
+				i, got.BaseTrajectory.Periods[i], created.BaseTrajectory.Periods[i])
+		}
+	}
+}
+
+func TestMemory_GetCounteractingScenarioNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetCounteractingScenario(context.Background(), tendency.CounteractingScenarioID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateCounteractingScenarioDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	trajectory := tendency.BuildCompositionTrajectory("law", 10000, ch14LawSteps)
+	scenario, err := tendency.BuildCounteractingScenario("law", trajectory, ch14Forces(t))
+	if err != nil {
+		t.Fatalf("build scenario: %v", err)
+	}
+	scenario.ID = tendency.CounteractingScenarioID("5eed000000000000001407")
+
+	if _, err := m.CreateCounteractingScenario(ctx, scenario); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateCounteractingScenario(ctx, scenario); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListCounteractingScenariosNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListCounteractingScenarios(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListCounteractingScenarios_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	trajectory := tendency.BuildCompositionTrajectory("law", 10000, ch14LawSteps)
+	first, err := tendency.BuildCounteractingScenario("first", trajectory, ch14Forces(t))
+	if err != nil {
+		t.Fatalf("build first: %v", err)
+	}
+	second, err := tendency.BuildCounteractingScenario("second", trajectory, ch14Forces(t))
+	if err != nil {
+		t.Fatalf("build second: %v", err)
+	}
+
+	createdFirst, err := m.CreateCounteractingScenario(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateCounteractingScenario(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListCounteractingScenarios(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh14SeedIDs asserts the Ch. 14 seed IDs (5eed…<CC=14>01–07) carry the 14
+// token and are unique (mirrors the seed migration 00028_v3_ch14_seed.sql).
+func TestCh14SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000001401",
+		"5eed000000000000001402",
+		"5eed000000000000001403",
+		"5eed000000000000001404",
+		"5eed000000000000001405",
+		"5eed000000000000001406",
+		"5eed000000000000001407",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "14" {
+			t.Errorf("seed id %q chapter token = %q, want 14", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

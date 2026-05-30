@@ -374,6 +374,11 @@ func main() {
 	srv.Handle("/v1/tendency/trajectory/{rest...}", financeProxy)
 	srv.Handle("/v1/tendency/rate-mass", financeProxy)
 	srv.Handle("/v1/tendency/rate-mass/{rest...}", financeProxy)
+	// Vol. III Ch. 14 — Counteracting Influences → finance-service
+	srv.Handle("/v1/tendency/counteracting-force", financeProxy)
+	srv.Handle("/v1/tendency/counteracting-force/{rest...}", financeProxy)
+	srv.Handle("/v1/tendency/scenario", financeProxy)
+	srv.Handle("/v1/tendency/scenario/{rest...}", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)

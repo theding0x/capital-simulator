@@ -197,4 +197,20 @@ type Store interface {
 	GetRateMassContradiction(ctx context.Context, id tendency.RateMassContradictionID) (tendency.RateMassContradiction, error)
 	// ListRateMassContradictions returns all stored records, newest first.
 	ListRateMassContradictions(ctx context.Context) ([]tendency.RateMassContradiction, error)
+
+	// CreateCounteractingForce persists a counteracting force (Vol. III Ch. 14),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists
+	// on ID collision.
+	CreateCounteractingForce(ctx context.Context, f tendency.CounteractingForce) (tendency.CounteractingForce, error)
+	// GetCounteractingForce returns the force with the given ID, or ErrNotFound.
+	GetCounteractingForce(ctx context.Context, id tendency.CounteractingForceID) (tendency.CounteractingForce, error)
+
+	// CreateCounteractingScenario persists a counteracting scenario (Vol. III Ch. 14),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists
+	// on ID collision.
+	CreateCounteractingScenario(ctx context.Context, s tendency.CounteractingScenario) (tendency.CounteractingScenario, error)
+	// GetCounteractingScenario returns the scenario with the given ID, or ErrNotFound.
+	GetCounteractingScenario(ctx context.Context, id tendency.CounteractingScenarioID) (tendency.CounteractingScenario, error)
+	// ListCounteractingScenarios returns all stored scenarios, newest first.
+	ListCounteractingScenarios(ctx context.Context) ([]tendency.CounteractingScenario, error)
 }

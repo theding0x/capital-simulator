@@ -2191,4 +2191,29 @@ export const financeApi = {
     }),
   getRateMassContradiction: (id: string) =>
     http<import("./types").RateMassContradictionResponse>(`/v1/tendency/rate-mass/${id}`),
+
+  // Vol. III Ch. 14 — Counteracting Influences
+  createCounteractingForce: (input: { kind: string; note?: string }) =>
+    http<import("./types").CounteractingForceResponse>("/v1/tendency/counteracting-force", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  getCounteractingForce: (id: string) =>
+    http<import("./types").CounteractingForceResponse>(`/v1/tendency/counteracting-force/${id}`),
+  createCounteractingScenario: (input: {
+    label: string;
+    force_kinds: string[];
+    steps: [number, number][];
+    surplus_value_rate: number;
+  }) =>
+    http<import("./types").CounteractingScenarioResponse>("/v1/tendency/scenario", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  listCounteractingScenarios: () =>
+    http<{ items: import("./types").CounteractingScenarioResponse[] }>("/v1/tendency/scenario").then(
+      (r) => r.items,
+    ),
+  getCounteractingScenario: (id: string) =>
+    http<import("./types").CounteractingScenarioResponse>(`/v1/tendency/scenario/${id}`),
 };

@@ -1531,6 +1531,182 @@ func scanRateMassContradiction(s rowScanner) (tendency.RateMassContradiction, er
 	}, nil
 }
 
+// CreateCounteractingForce persists f, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateCounteractingForce(ctx context.Context, f tendency.CounteractingForce) (tendency.CounteractingForce, error) {
+	if f.ID.IsZero() {
+		f.ID = tendency.NewCounteractingForceID()
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO counteracting_forces
+		(id, kind, excluded_from_general_rate, note, created_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(f.ID), string(f.Kind), f.ExcludedFromGeneralRate, f.Note, f.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return tendency.CounteractingForce{}, ErrAlreadyExists
+		}
+		return tendency.CounteractingForce{}, err
+	}
+	return f, nil
+}
+
+// GetCounteractingForce returns the force with id, or ErrNotFound.
+func (m *MySQL) GetCounteractingForce(ctx context.Context, id tendency.CounteractingForceID) (tendency.CounteractingForce, error) {
+	const q = `SELECT id, kind, excluded_from_general_rate, note, created_at
+		FROM counteracting_forces WHERE id = ?`
+	return scanCounteractingForce(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+func scanCounteractingForce(s rowScanner) (tendency.CounteractingForce, error) {
+	var (
+		id, kind  string
+		excluded  bool
+		note      string
+		createdAt time.Time
+	)
+	err := s.Scan(&id, &kind, &excluded, &note, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return tendency.CounteractingForce{}, ErrNotFound
+		}
+		return tendency.CounteractingForce{}, err
+	}
+	return tendency.CounteractingForce{
+		ID:                      tendency.CounteractingForceID(id),
+		Kind:                    tendency.CounteractingForceKind(kind),
+		ExcludedFromGeneralRate: excluded,
+		Note:                    note,
+		CreatedAt:               createdAt,
+	}, nil
+}
+
+// CreateCounteractingScenario persists s, assigning an ID and timestamp when
+// absent. Forces, the base trajectory, and the modified rates are stored as JSON
+// TEXT; the domain layer owns serialisation.
+func (m *MySQL) CreateCounteractingScenario(ctx context.Context, s tendency.CounteractingScenario) (tendency.CounteractingScenario, error) {
+	if s.ID.IsZero() {
+		s.ID = tendency.NewCounteractingScenarioID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	if s.Forces == nil {
+		s.Forces = []tendency.CounteractingForce{}
+	}
+	if s.ModifiedRates == nil {
+		s.ModifiedRates = []int64{}
+	}
+
+	forcesJSON, err := json.Marshal(s.Forces)
+	if err != nil {
+		return tendency.CounteractingScenario{}, err
+	}
+	trajectoryJSON, err := json.Marshal(s.BaseTrajectory)
+	if err != nil {
+		return tendency.CounteractingScenario{}, err
+	}
+	ratesJSON, err := json.Marshal(s.ModifiedRates)
+	if err != nil {
+		return tendency.CounteractingScenario{}, err
+	}
+
+	const q = `INSERT INTO counteracting_scenarios
+		(id, label, forces_json, base_trajectory_json, initial_profit_rate, final_profit_rate, modified_rates_json, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(s.ID), s.Label, string(forcesJSON), string(trajectoryJSON),
+		s.InitialProfitRate, s.FinalProfitRate, string(ratesJSON), s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return tendency.CounteractingScenario{}, ErrAlreadyExists
+		}
+		return tendency.CounteractingScenario{}, err
+	}
+	return s, nil
+}
+
+// GetCounteractingScenario returns the scenario with id, or ErrNotFound.
+func (m *MySQL) GetCounteractingScenario(ctx context.Context, id tendency.CounteractingScenarioID) (tendency.CounteractingScenario, error) {
+	const q = `SELECT id, label, forces_json, base_trajectory_json, initial_profit_rate, final_profit_rate, modified_rates_json, created_at
+		FROM counteracting_scenarios WHERE id = ?`
+	return scanCounteractingScenario(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCounteractingScenarios returns all stored scenarios, newest first.
+func (m *MySQL) ListCounteractingScenarios(ctx context.Context) ([]tendency.CounteractingScenario, error) {
+	const q = `SELECT id, label, forces_json, base_trajectory_json, initial_profit_rate, final_profit_rate, modified_rates_json, created_at
+		FROM counteracting_scenarios ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]tendency.CounteractingScenario, 0)
+	for rows.Next() {
+		s, err := scanCounteractingScenario(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func scanCounteractingScenario(s rowScanner) (tendency.CounteractingScenario, error) {
+	var (
+		id, label                             string
+		forcesJSON, trajectoryJSON, ratesJSON string
+		initialRate, finalRate                int64
+		createdAt                             time.Time
+	)
+	err := s.Scan(&id, &label, &forcesJSON, &trajectoryJSON, &initialRate, &finalRate, &ratesJSON, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return tendency.CounteractingScenario{}, ErrNotFound
+		}
+		return tendency.CounteractingScenario{}, err
+	}
+
+	var forces []tendency.CounteractingForce
+	if err := json.Unmarshal([]byte(forcesJSON), &forces); err != nil {
+		return tendency.CounteractingScenario{}, err
+	}
+	if forces == nil {
+		forces = []tendency.CounteractingForce{}
+	}
+
+	var trajectory tendency.CompositionTrajectory
+	if err := json.Unmarshal([]byte(trajectoryJSON), &trajectory); err != nil {
+		return tendency.CounteractingScenario{}, err
+	}
+
+	var rates []int64
+	if err := json.Unmarshal([]byte(ratesJSON), &rates); err != nil {
+		return tendency.CounteractingScenario{}, err
+	}
+	if rates == nil {
+		rates = []int64{}
+	}
+
+	return tendency.CounteractingScenario{
+		ID:                tendency.CounteractingScenarioID(id),
+		Label:             label,
+		Forces:            forces,
+		BaseTrajectory:    trajectory,
+		InitialProfitRate: initialRate,
+		FinalProfitRate:   finalRate,
+		ModifiedRates:     rates,
+		CreatedAt:         createdAt,
+	}, nil
+}
+
 // isDuplicate reports whether err is a MySQL duplicate-key error (1062).
 func isDuplicate(err error) bool {
 	if err == nil {
