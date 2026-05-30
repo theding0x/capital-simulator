@@ -14,6 +14,7 @@ import (
 	"errors"
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
@@ -229,4 +230,13 @@ type Store interface {
 	GetInternalContradiction(ctx context.Context, id tendency.InternalContradictionID) (tendency.InternalContradiction, error)
 	// ListInternalContradictions returns all stored contradictions, newest first.
 	ListInternalContradictions(ctx context.Context) ([]tendency.InternalContradiction, error)
+
+	// CreateCommercialCapital persists a commercial-capital record (Vol. III Ch. 16 — opens Part IV),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCommercialCapital(ctx context.Context, cc merchant.CommercialCapital) (merchant.CommercialCapital, error)
+	// GetCommercialCapital returns the commercial-capital record with the given ID, or ErrNotFound.
+	GetCommercialCapital(ctx context.Context, id merchant.CommercialCapitalID) (merchant.CommercialCapital, error)
+	// ListCommercialCapitals returns all stored commercial-capital records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCommercialCapitals(ctx context.Context) ([]merchant.CommercialCapital, error)
 }

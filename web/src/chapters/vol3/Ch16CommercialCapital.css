@@ -1,0 +1,223 @@
+.v3-ch16 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.v3-ch16-intro p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.v3-ch16-subintro {
+  margin: 0 0 0.9rem;
+  color: var(--colour-muted, #555);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.v3-ch16 code {
+  background: var(--colour-bg, #f3f4f6);
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+
+.v3-ch16-error {
+  color: var(--colour-error, #c0392b);
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+.v3-ch16-section {
+  background: var(--colour-surface, #fff);
+  border: 1px solid var(--colour-border, #e0e0e0);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.v3-ch16-section h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Linen merchant fixture grid */
+.v3-ch16-fixture-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.v3-ch16-fixture-cell {
+  flex: 1 1 8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 4px;
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+}
+
+.v3-ch16-fixture-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #065f46;
+}
+
+.v3-ch16-fixture-value {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #065f46;
+}
+
+/* Functions taxonomy list */
+.v3-ch16-functions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.v3-ch16-function {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: var(--colour-bg, #f9fafb);
+  border: 1px solid var(--colour-border, #eee);
+  border-radius: 4px;
+  padding: 0.55rem 0.75rem;
+}
+
+.v3-ch16-function-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.v3-ch16-function-zero {
+  color: #065f46;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.v3-ch16-function-desc {
+  font-size: 0.78rem;
+  color: var(--colour-muted, #666);
+  line-height: 1.45;
+}
+
+/* Form */
+.v3-ch16-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: flex-end;
+}
+
+.v3-ch16-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--colour-muted, #666);
+}
+
+.v3-ch16-form input[type="number"] {
+  width: 9rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--colour-border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch16-text-input {
+  width: 18rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--colour-border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch16-form select {
+  width: 9rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--colour-border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.v3-ch16-btn {
+  padding: 0.4rem 1rem;
+  background: var(--colour-primary, #2c3e50);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.v3-ch16-btn:hover {
+  opacity: 0.88;
+}
+
+/* Preview pill */
+.v3-ch16-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.v3-ch16-preview-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.v3-ch16-preview-figure {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Table */
+.v3-ch16-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.v3-ch16-table th,
+.v3-ch16-table td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--colour-border, #eee);
+}
+
+.v3-ch16-table th {
+  font-size: 0.74rem;
+  color: var(--colour-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.v3-ch16-money {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.v3-ch16-zero {
+  color: #065f46;
+  font-variant-numeric: tabular-nums;
+}

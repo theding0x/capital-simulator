@@ -12,6 +12,7 @@ import (
 
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
@@ -1854,6 +1855,84 @@ func scanInternalContradiction(s rowScanner) (tendency.InternalContradiction, er
 		IsCoexistent: isCoexistent,
 		Note:         note,
 		CreatedAt:    createdAt,
+	}, nil
+}
+
+// CreateCommercialCapital persists cc, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateCommercialCapital(ctx context.Context, cc merchant.CommercialCapital) (merchant.CommercialCapital, error) {
+	if cc.ID.IsZero() {
+		cc.ID = merchant.NewCommercialCapitalID()
+	}
+	if cc.CreatedAt.IsZero() {
+		cc.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO commercial_capitals
+		(id, money_advanced, commodity_description, function, surplus_value_produced, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(cc.ID), cc.MoneyAdvanced, cc.CommodityDescription,
+		int(cc.Function), cc.SurplusValueProduced, cc.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return merchant.CommercialCapital{}, ErrAlreadyExists
+		}
+		return merchant.CommercialCapital{}, err
+	}
+	return cc, nil
+}
+
+// GetCommercialCapital returns the commercial-capital record with id, or ErrNotFound.
+func (m *MySQL) GetCommercialCapital(ctx context.Context, id merchant.CommercialCapitalID) (merchant.CommercialCapital, error) {
+	const q = `SELECT id, money_advanced, commodity_description, function, surplus_value_produced, created_at
+		FROM commercial_capitals WHERE id = ?`
+	return scanCommercialCapital(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCommercialCapitals returns all stored commercial-capital records, newest first.
+func (m *MySQL) ListCommercialCapitals(ctx context.Context) ([]merchant.CommercialCapital, error) {
+	const q = `SELECT id, money_advanced, commodity_description, function, surplus_value_produced, created_at
+		FROM commercial_capitals ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]merchant.CommercialCapital, 0)
+	for rows.Next() {
+		cc, err := scanCommercialCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, cc)
+	}
+	return out, rows.Err()
+}
+
+func scanCommercialCapital(s rowScanner) (merchant.CommercialCapital, error) {
+	var (
+		id, commodityDescription string
+		moneyAdvanced            int64
+		function                 int
+		surplusValueProduced     int64
+		createdAt                time.Time
+	)
+	err := s.Scan(&id, &moneyAdvanced, &commodityDescription, &function, &surplusValueProduced, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return merchant.CommercialCapital{}, ErrNotFound
+		}
+		return merchant.CommercialCapital{}, err
+	}
+	return merchant.CommercialCapital{
+		ID:                   merchant.CommercialCapitalID(id),
+		MoneyAdvanced:        moneyAdvanced,
+		CommodityDescription: commodityDescription,
+		Function:             merchant.CommercialCapitalFunction(function),
+		SurplusValueProduced: surplusValueProduced,
+		CreatedAt:            createdAt,
 	}, nil
 }
 

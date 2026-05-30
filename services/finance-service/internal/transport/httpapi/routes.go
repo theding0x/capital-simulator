@@ -99,4 +99,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/tendency/contradiction", h.CreateInternalContradiction)
 	s.HandleFunc("GET /v1/tendency/contradiction/{id}", h.GetInternalContradiction)
 	s.HandleFunc("GET /v1/tendency/summary", h.GetPartIIISummary)
+
+	// Vol. III Ch. 16 — Commercial Capital (opens Part IV)
+	s.HandleFunc("POST /v1/merchant/commercial-capital", h.CreateCommercialCapital)
+	s.HandleFunc("GET /v1/merchant/commercial-capital", h.ListCommercialCapitals)
+	s.HandleFunc("GET /v1/merchant/commercial-capital/{id}", h.GetCommercialCapital)
 }

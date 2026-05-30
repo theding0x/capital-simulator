@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
@@ -37,6 +38,7 @@ type Memory struct {
 	counterScenarios   map[tendency.CounteractingScenarioID]tendency.CounteractingScenario
 	crises             map[tendency.CrisisID]tendency.Crisis
 	contradictions     map[tendency.InternalContradictionID]tendency.InternalContradiction
+	commercialCapitals map[merchant.CommercialCapitalID]merchant.CommercialCapital
 }
 
 // NewMemory returns an empty in-memory store.
@@ -65,6 +67,7 @@ func NewMemory() *Memory {
 		counterScenarios:   make(map[tendency.CounteractingScenarioID]tendency.CounteractingScenario),
 		crises:             make(map[tendency.CrisisID]tendency.Crisis),
 		contradictions:     make(map[tendency.InternalContradictionID]tendency.InternalContradiction),
+		commercialCapitals: make(map[merchant.CommercialCapitalID]merchant.CommercialCapital),
 	}
 }
 
@@ -977,6 +980,51 @@ func (m *Memory) ListInternalContradictions(_ context.Context) ([]tendency.Inter
 	out := make([]tendency.InternalContradiction, 0, len(m.contradictions))
 	for _, c := range m.contradictions {
 		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCommercialCapital stores cc, assigning an ID and timestamp when absent.
+func (m *Memory) CreateCommercialCapital(_ context.Context, cc merchant.CommercialCapital) (merchant.CommercialCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if cc.ID.IsZero() {
+		cc.ID = merchant.NewCommercialCapitalID()
+	}
+	if _, exists := m.commercialCapitals[cc.ID]; exists {
+		return merchant.CommercialCapital{}, ErrAlreadyExists
+	}
+	if cc.CreatedAt.IsZero() {
+		cc.CreatedAt = m.now().UTC()
+	}
+	m.commercialCapitals[cc.ID] = cc
+	return cc, nil
+}
+
+// GetCommercialCapital returns the commercial-capital record with id, or ErrNotFound.
+func (m *Memory) GetCommercialCapital(_ context.Context, id merchant.CommercialCapitalID) (merchant.CommercialCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	cc, ok := m.commercialCapitals[id]
+	if !ok {
+		return merchant.CommercialCapital{}, ErrNotFound
+	}
+	return cc, nil
+}
+
+// ListCommercialCapitals returns all stored commercial-capital records, newest first.
+func (m *Memory) ListCommercialCapitals(_ context.Context) ([]merchant.CommercialCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]merchant.CommercialCapital, 0, len(m.commercialCapitals))
+	for _, cc := range m.commercialCapitals {
+		out = append(out, cc)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)
