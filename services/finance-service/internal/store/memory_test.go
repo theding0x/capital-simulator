@@ -2135,3 +2135,168 @@ func TestCh18SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// --- MoneyDealingCapital store tests (Ch. 19) ---
+
+// TestMemory_MoneyDealingCapitalRoundTrip creates a record, gets it back, and
+// asserts all fields including the OperationKinds slice are identical.
+func TestMemory_MoneyDealingCapitalRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	md, err := merchant.NewMoneyDealingCapital(500000, 1500, []merchant.MoneyOperationKind{
+		merchant.KindReceipt, merchant.KindPayment, merchant.KindExchange,
+	})
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+
+	created, err := m.CreateMoneyDealingCapital(ctx, md)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Error("store must assign a non-zero ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("store must assign a non-zero CreatedAt")
+	}
+	if created.MoneyDealingProfit != 75000 {
+		t.Errorf("MoneyDealingProfit = %d, want 75000", created.MoneyDealingProfit)
+	}
+	if created.NewValueCreated != 0 {
+		t.Errorf("NewValueCreated = %d, want 0", created.NewValueCreated)
+	}
+
+	got, err := m.GetMoneyDealingCapital(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID {
+		t.Errorf("ID mismatch: got %s, want %s", got.ID, created.ID)
+	}
+	if got.MoneyDealingProfit != created.MoneyDealingProfit {
+		t.Errorf("MoneyDealingProfit mismatch: got %d, want %d", got.MoneyDealingProfit, created.MoneyDealingProfit)
+	}
+	// Assert OperationKinds slice equality element-by-element.
+	if len(got.OperationKinds) != len(created.OperationKinds) {
+		t.Fatalf("OperationKinds len: got %d, want %d", len(got.OperationKinds), len(created.OperationKinds))
+	}
+	for i := range created.OperationKinds {
+		if got.OperationKinds[i] != created.OperationKinds[i] {
+			t.Errorf("OperationKinds[%d]: got %d, want %d", i, got.OperationKinds[i], created.OperationKinds[i])
+		}
+	}
+}
+
+// TestMemory_GetMoneyDealingCapitalNotFound returns ErrNotFound for a missing ID.
+func TestMemory_GetMoneyDealingCapitalNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	_, err := m.GetMoneyDealingCapital(context.Background(), merchant.MoneyDealingCapitalID("missing"))
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+// TestMemory_CreateMoneyDealingCapitalDuplicate returns ErrAlreadyExists on a
+// preset-ID collision.
+func TestMemory_CreateMoneyDealingCapitalDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	md, err := merchant.NewMoneyDealingCapital(500000, 1500, []merchant.MoneyOperationKind{merchant.KindReceipt})
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	md.ID = merchant.MoneyDealingCapitalID("5eed000000000000001901")
+
+	if _, err := m.CreateMoneyDealingCapital(ctx, md); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateMoneyDealingCapital(ctx, md); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("duplicate create: err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+// TestMemory_ListMoneyDealingCapitalsNeverNil asserts List returns a non-nil
+// empty slice when the store is empty.
+func TestMemory_ListMoneyDealingCapitalsNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListMoneyDealingCapitals(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("List returned nil, want non-nil empty slice")
+	}
+}
+
+// TestMemory_ListMoneyDealingCapitals_NewestFirst inserts two records and
+// asserts the list is ordered newest-first.
+func TestMemory_ListMoneyDealingCapitals_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	first, err := merchant.NewMoneyDealingCapital(200000, 1500, []merchant.MoneyOperationKind{merchant.KindSafekeeping})
+	if err != nil {
+		t.Fatalf("new first: %v", err)
+	}
+	second, err := merchant.NewMoneyDealingCapital(300000, 1500, []merchant.MoneyOperationKind{merchant.KindBookkeeping})
+	if err != nil {
+		t.Fatalf("new second: %v", err)
+	}
+
+	createdFirst, err := m.CreateMoneyDealingCapital(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateMoneyDealingCapital(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListMoneyDealingCapitals(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh19SeedIDs asserts the Ch. 19 seed IDs (5eed…<CC=19>01–03) carry the 19
+// token and are unique (mirrors the seed migration 00038_v3_ch19_seed.sql).
+func TestCh19SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000001901",
+		"5eed000000000000001902",
+		"5eed000000000000001903",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "19" {
+			t.Errorf("seed id %q chapter token = %q, want 19", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

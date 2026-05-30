@@ -6,6 +6,7 @@ import (
 	"embed"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"strings"
 	"time"
@@ -2098,13 +2099,112 @@ func scanMerchantTurnover(s rowScanner) (merchant.MerchantTurnover, error) {
 		return merchant.MerchantTurnover{}, err
 	}
 	return merchant.MerchantTurnover{
-		ID:                  merchant.MerchantTurnoverID(id),
-		MoneyAdvanced:       moneyAdvanced,
-		GeneralRateBP:       generalRateBP,
-		TurnoverCount:       turnoverCount,
-		UnitsPerTurnover:    unitsPerTurnover,
+		ID:                   merchant.MerchantTurnoverID(id),
+		MoneyAdvanced:        moneyAdvanced,
+		GeneralRateBP:        generalRateBP,
+		TurnoverCount:        turnoverCount,
+		UnitsPerTurnover:     unitsPerTurnover,
 		AnnualMerchantProfit: annualMerchantProfit,
-		MarkupPerUnit:       markupPerUnit,
-		CreatedAt:           createdAt,
+		MarkupPerUnit:        markupPerUnit,
+		CreatedAt:            createdAt,
+	}, nil
+}
+
+// ── Vol. III Ch. 19 — Money-Dealing Capital ──────────────────────────────────
+
+// CreateMoneyDealingCapital persists md, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateMoneyDealingCapital(ctx context.Context, md merchant.MoneyDealingCapital) (merchant.MoneyDealingCapital, error) {
+	if md.ID.IsZero() {
+		md.ID = merchant.NewMoneyDealingCapitalID()
+	}
+	if md.CreatedAt.IsZero() {
+		md.CreatedAt = m.now().UTC()
+	}
+	kindsJSON, err := json.Marshal(md.OperationKinds)
+	if err != nil {
+		return merchant.MoneyDealingCapital{}, err
+	}
+	const q = `INSERT INTO money_dealing_capitals
+		(id, money_advanced, general_rate_bp, operation_kinds, money_dealing_profit, new_value_created, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(md.ID),
+		md.MoneyAdvanced,
+		md.GeneralRateBP,
+		string(kindsJSON),
+		md.MoneyDealingProfit,
+		md.NewValueCreated,
+		md.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return merchant.MoneyDealingCapital{}, ErrAlreadyExists
+		}
+		return merchant.MoneyDealingCapital{}, err
+	}
+	return md, nil
+}
+
+// GetMoneyDealingCapital returns the money-dealing-capital record with id, or ErrNotFound.
+func (m *MySQL) GetMoneyDealingCapital(ctx context.Context, id merchant.MoneyDealingCapitalID) (merchant.MoneyDealingCapital, error) {
+	const q = `SELECT id, money_advanced, general_rate_bp, operation_kinds, money_dealing_profit, new_value_created, created_at
+		FROM money_dealing_capitals WHERE id = ?`
+	return scanMoneyDealingCapital(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListMoneyDealingCapitals returns all stored money-dealing-capital records, newest first.
+func (m *MySQL) ListMoneyDealingCapitals(ctx context.Context) ([]merchant.MoneyDealingCapital, error) {
+	const q = `SELECT id, money_advanced, general_rate_bp, operation_kinds, money_dealing_profit, new_value_created, created_at
+		FROM money_dealing_capitals ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]merchant.MoneyDealingCapital, 0)
+	for rows.Next() {
+		md, err := scanMoneyDealingCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, md)
+	}
+	return out, rows.Err()
+}
+
+func scanMoneyDealingCapital(s rowScanner) (merchant.MoneyDealingCapital, error) {
+	var (
+		id                                        string
+		moneyAdvanced, generalRateBP              int64
+		operationKindsStr                         string
+		moneyDealingProfit, newValueCreated       int64
+		createdAt                                 time.Time
+	)
+	err := s.Scan(&id, &moneyAdvanced, &generalRateBP, &operationKindsStr,
+		&moneyDealingProfit, &newValueCreated, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return merchant.MoneyDealingCapital{}, ErrNotFound
+		}
+		return merchant.MoneyDealingCapital{}, err
+	}
+	var kinds []merchant.MoneyOperationKind
+	if err := json.Unmarshal([]byte(operationKindsStr), &kinds); err != nil {
+		return merchant.MoneyDealingCapital{}, fmt.Errorf("store: money_dealing_capitals: unmarshal operation_kinds: %w", err)
+	}
+	for _, k := range kinds {
+		if !k.IsValid() {
+			return merchant.MoneyDealingCapital{}, fmt.Errorf("store: money_dealing_capitals: invalid operation_kind %d", k)
+		}
+	}
+	return merchant.MoneyDealingCapital{
+		ID:                 merchant.MoneyDealingCapitalID(id),
+		MoneyAdvanced:      moneyAdvanced,
+		GeneralRateBP:      generalRateBP,
+		OperationKinds:     kinds,
+		MoneyDealingProfit: moneyDealingProfit,
+		NewValueCreated:    newValueCreated,
+		CreatedAt:          createdAt,
 	}, nil
 }

@@ -2300,4 +2300,20 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  // Vol. III Ch. 19 — Money-Dealing Capital
+  createMoneyDealingCapital: (body: {
+    money_advanced: number;
+    general_rate_bp: number;
+    operation_kinds: number[];
+  }) =>
+    http<import("./types").MoneyDealingCapitalResponse>("/v1/merchant/money-dealing", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listMoneyDealingCapitals: () =>
+    http<{ items: import("./types").MoneyDealingCapitalResponse[] }>("/v1/merchant/money-dealing").then(
+      (r) => r.items ?? [],
+    ),
+  getMoneyDealingCapital: (id: string) =>
+    http<import("./types").MoneyDealingCapitalResponse>(`/v1/merchant/money-dealing/${id}`),
 };

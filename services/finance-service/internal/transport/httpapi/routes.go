@@ -115,4 +115,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/merchant/turnover", h.ListMerchantTurnovers)
 	s.HandleFunc("GET /v1/merchant/turnover/{id}", h.GetMerchantTurnover)
 	s.HandleFunc("POST /v1/merchant/turnover-effect", h.ComputeTurnoverEffect)
+
+	// Vol. III Ch. 19 — Money-Dealing Capital
+	s.HandleFunc("POST /v1/merchant/money-dealing", h.CreateMoneyDealingCapital)
+	s.HandleFunc("GET /v1/merchant/money-dealing", h.ListMoneyDealingCapitals)
+	s.HandleFunc("GET /v1/merchant/money-dealing/{id}", h.GetMoneyDealingCapital)
 }

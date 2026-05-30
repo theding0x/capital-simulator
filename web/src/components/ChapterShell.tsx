@@ -73,6 +73,7 @@ import { Ch15InternalContradictions } from "../chapters/vol3/Ch15InternalContrad
 import { Ch16CommercialCapital } from "../chapters/vol3/Ch16CommercialCapital";
 import { Ch17CommercialProfit } from "../chapters/vol3/Ch17CommercialProfit";
 import { Ch18MerchantTurnover } from "../chapters/vol3/Ch18MerchantTurnover";
+import { Ch19MoneyDealingCapital } from "../chapters/vol3/Ch19MoneyDealingCapital";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -164,6 +165,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch16": Ch16CommercialCapital as AnyPanel,
   "v3-ch17": Ch17CommercialProfit as AnyPanel,
   "v3-ch18": Ch18MerchantTurnover as AnyPanel,
+  "v3-ch19": Ch19MoneyDealingCapital as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -238,6 +240,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch16": "Merchant's capital is nothing but capital functioning within the sphere of circulation … whose exclusive activity consists in performing this exchange process.",
   "v3-ch17": "The merchant buys and sells for many industrial capitalists, and thereby also takes over the purchases and sales for the whole society.",
   "v3-ch18": "The faster the merchant turns his capital, the smaller is the addition to the price of each individual article — but the annual profit on the total capital invested remains the same.",
+  "v3-ch19": "The money-dealer's capital does not create any new value. It only contributes to equalising the general rate of profit by participating in its formation as a factor.",
 };
 
 export function ChapterShell({
