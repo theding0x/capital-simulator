@@ -104,4 +104,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/merchant/commercial-capital", h.CreateCommercialCapital)
 	s.HandleFunc("GET /v1/merchant/commercial-capital", h.ListCommercialCapitals)
 	s.HandleFunc("GET /v1/merchant/commercial-capital/{id}", h.GetCommercialCapital)
+
+	// Vol. III Ch. 17 — Commercial Profit
+	s.HandleFunc("POST /v1/merchant/commercial-profit", h.CreateCommercialProfit)
+	s.HandleFunc("GET /v1/merchant/commercial-profit", h.ListCommercialProfits)
+	s.HandleFunc("GET /v1/merchant/commercial-profit/{id}", h.GetCommercialProfit)
 }

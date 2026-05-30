@@ -1860,3 +1860,143 @@ func TestCh16SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// --- CommercialProfit store tests (Ch. 17) ---
+
+func TestMemory_CommercialProfitRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Marx 720+180 fixture: productive=720000, commercial=180000, surplus=144000.
+	cp, err := merchant.NewCommercialProfit(720000, 180000, 144000)
+	if err != nil {
+		t.Fatalf("new commercial profit: %v", err)
+	}
+	created, err := m.CreateCommercialProfit(ctx, cp)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	// Central invariant: commercial profit creates no new value.
+	if created.NewValueCreated != 0 {
+		t.Errorf("NewValueCreated = %d, want 0", created.NewValueCreated)
+	}
+
+	got, err := m.GetCommercialProfit(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetCommercialProfitNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetCommercialProfit(context.Background(), merchant.CommercialProfitID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateCommercialProfitDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	cp, err := merchant.NewCommercialProfit(720000, 180000, 144000)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	cp.ID = merchant.CommercialProfitID("5eed000000000000001701")
+
+	if _, err := m.CreateCommercialProfit(ctx, cp); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateCommercialProfit(ctx, cp); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListCommercialProfitsNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListCommercialProfits(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListCommercialProfits_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Row 1: 720+180 fixture; Row 2: same capitals, halved surplus.
+	first, err := merchant.NewCommercialProfit(720000, 180000, 144000)
+	if err != nil {
+		t.Fatalf("new first: %v", err)
+	}
+	second, err := merchant.NewCommercialProfit(720000, 180000, 72000)
+	if err != nil {
+		t.Fatalf("new second: %v", err)
+	}
+
+	createdFirst, err := m.CreateCommercialProfit(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateCommercialProfit(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListCommercialProfits(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh17SeedIDs asserts the Ch. 17 seed IDs (5eed…<CC=17>01–03) carry the 17
+// token and are unique (mirrors the seed migration 00034_v3_ch17_seed.sql).
+func TestCh17SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000001701",
+		"5eed000000000000001702",
+		"5eed000000000000001703",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "17" {
+			t.Errorf("seed id %q chapter token = %q, want 17", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

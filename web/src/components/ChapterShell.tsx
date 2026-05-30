@@ -71,6 +71,7 @@ import { Ch13FallingProfitLaw } from "../chapters/vol3/Ch13FallingProfitLaw";
 import { Ch14CounteractingForces } from "../chapters/vol3/Ch14CounteractingForces";
 import { Ch15InternalContradictions } from "../chapters/vol3/Ch15InternalContradictions";
 import { Ch16CommercialCapital } from "../chapters/vol3/Ch16CommercialCapital";
+import { Ch17CommercialProfit } from "../chapters/vol3/Ch17CommercialProfit";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -160,6 +161,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch14": Ch14CounteractingForces as AnyPanel,
   "v3-ch15": Ch15InternalContradictions as AnyPanel,
   "v3-ch16": Ch16CommercialCapital as AnyPanel,
+  "v3-ch17": Ch17CommercialProfit as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -232,6 +234,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch14": "The same influences which produce a tendency in the general rate of profit to fall, also call forth counter-effects, which hamper, retard, and partly paralyse this fall.",
   "v3-ch15": "The real barrier of capitalist production is capital itself.",
   "v3-ch16": "Merchant's capital is nothing but capital functioning within the sphere of circulation … whose exclusive activity consists in performing this exchange process.",
+  "v3-ch17": "The merchant buys and sells for many industrial capitalists, and thereby also takes over the purchases and sales for the whole society.",
 };
 
 export function ChapterShell({

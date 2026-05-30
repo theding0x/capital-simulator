@@ -94,6 +94,10 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/merchant/commercial-capital", h.CreateCommercialCapital)
 	mux.HandleFunc("GET /v1/merchant/commercial-capital", h.ListCommercialCapitals)
 	mux.HandleFunc("GET /v1/merchant/commercial-capital/{id}", h.GetCommercialCapital)
+	// Vol. III Ch. 17 — Commercial Profit
+	mux.HandleFunc("POST /v1/merchant/commercial-profit", h.CreateCommercialProfit)
+	mux.HandleFunc("GET /v1/merchant/commercial-profit", h.ListCommercialProfits)
+	mux.HandleFunc("GET /v1/merchant/commercial-profit/{id}", h.GetCommercialProfit)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

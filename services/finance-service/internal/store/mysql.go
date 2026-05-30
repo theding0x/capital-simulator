@@ -1936,6 +1936,88 @@ func scanCommercialCapital(s rowScanner) (merchant.CommercialCapital, error) {
 	}, nil
 }
 
+// CreateCommercialProfit persists cp, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateCommercialProfit(ctx context.Context, cp merchant.CommercialProfit) (merchant.CommercialProfit, error) {
+	if cp.ID.IsZero() {
+		cp.ID = merchant.NewCommercialProfitID()
+	}
+	if cp.CreatedAt.IsZero() {
+		cp.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO commercial_profits
+		(id, productive_capital, commercial_capital, surplus_value, unadjusted_rate_bp, adjusted_rate_bp, new_value_created, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(cp.ID),
+		cp.ProductiveCapital, cp.CommercialCapital, cp.SurplusValue,
+		cp.UnadjustedRateBP, cp.AdjustedRateBP, cp.NewValueCreated,
+		cp.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return merchant.CommercialProfit{}, ErrAlreadyExists
+		}
+		return merchant.CommercialProfit{}, err
+	}
+	return cp, nil
+}
+
+// GetCommercialProfit returns the commercial-profit record with id, or ErrNotFound.
+func (m *MySQL) GetCommercialProfit(ctx context.Context, id merchant.CommercialProfitID) (merchant.CommercialProfit, error) {
+	const q = `SELECT id, productive_capital, commercial_capital, surplus_value, unadjusted_rate_bp, adjusted_rate_bp, new_value_created, created_at
+		FROM commercial_profits WHERE id = ?`
+	return scanCommercialProfit(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCommercialProfits returns all stored commercial-profit records, newest first.
+func (m *MySQL) ListCommercialProfits(ctx context.Context) ([]merchant.CommercialProfit, error) {
+	const q = `SELECT id, productive_capital, commercial_capital, surplus_value, unadjusted_rate_bp, adjusted_rate_bp, new_value_created, created_at
+		FROM commercial_profits ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]merchant.CommercialProfit, 0)
+	for rows.Next() {
+		cp, err := scanCommercialProfit(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, cp)
+	}
+	return out, rows.Err()
+}
+
+func scanCommercialProfit(s rowScanner) (merchant.CommercialProfit, error) {
+	var (
+		id                                                           string
+		productiveCapital, commercialCapital, surplusValue           int64
+		unadjustedRateBP, adjustedRateBP, newValueCreated           int64
+		createdAt                                                    time.Time
+	)
+	err := s.Scan(&id, &productiveCapital, &commercialCapital, &surplusValue,
+		&unadjustedRateBP, &adjustedRateBP, &newValueCreated, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return merchant.CommercialProfit{}, ErrNotFound
+		}
+		return merchant.CommercialProfit{}, err
+	}
+	return merchant.CommercialProfit{
+		ID:                merchant.CommercialProfitID(id),
+		ProductiveCapital: productiveCapital,
+		CommercialCapital: commercialCapital,
+		SurplusValue:      surplusValue,
+		UnadjustedRateBP:  unadjustedRateBP,
+		AdjustedRateBP:    adjustedRateBP,
+		NewValueCreated:   newValueCreated,
+		CreatedAt:         createdAt,
+	}, nil
+}
+
 // isDuplicate reports whether err is a MySQL duplicate-key error (1062).
 func isDuplicate(err error) bool {
 	if err == nil {
