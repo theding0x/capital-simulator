@@ -77,6 +77,12 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("GET /v1/tendency/trajectory/{id}", h.GetCompositionTrajectory)
 	mux.HandleFunc("POST /v1/tendency/rate-mass", h.CreateRateMassContradiction)
 	mux.HandleFunc("GET /v1/tendency/rate-mass/{id}", h.GetRateMassContradiction)
+	// Vol. III Ch. 14 — Counteracting Influences
+	mux.HandleFunc("POST /v1/tendency/counteracting-force", h.CreateCounteractingForce)
+	mux.HandleFunc("GET /v1/tendency/counteracting-force/{id}", h.GetCounteractingForce)
+	mux.HandleFunc("POST /v1/tendency/scenario", h.CreateCounteractingScenario)
+	mux.HandleFunc("GET /v1/tendency/scenario", h.ListCounteractingScenarios)
+	mux.HandleFunc("GET /v1/tendency/scenario/{id}", h.GetCounteractingScenario)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

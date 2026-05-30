@@ -3437,3 +3437,35 @@ export interface RateMassContradictionResponse {
   mass_change: number; // signed
   created_at: string;
 }
+
+// --- finance-service types (Vol. III Ch. 14: Counteracting Influences) --------
+
+// CounteractingForceKind mirrors tendency.CounteractingForceKind.
+export type CounteractingForceKind =
+  | "intensified_exploitation"
+  | "depressed_wages"
+  | "cheaper_constant_capital"
+  | "relative_overpopulation"
+  | "foreign_trade"
+  | "stock_capital";
+
+// CounteractingForceResponse mirrors tendency.CounteractingForce.
+export interface CounteractingForceResponse {
+  id: string;
+  kind: CounteractingForceKind;
+  excluded_from_general_rate: boolean;
+  note: string;
+  created_at: string;
+}
+
+// CounteractingScenarioResponse mirrors tendency.CounteractingScenario.
+export interface CounteractingScenarioResponse {
+  id: string;
+  label: string;
+  forces: CounteractingForceResponse[];
+  base_trajectory: CompositionTrajectoryResponse;
+  initial_profit_rate: number; // basis points
+  final_profit_rate: number; // basis points
+  modified_rates: number[]; // basis points per period
+  created_at: string;
+}

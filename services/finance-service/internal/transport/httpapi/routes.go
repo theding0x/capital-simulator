@@ -84,4 +84,11 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/tendency/trajectory/{id}", h.GetCompositionTrajectory)
 	s.HandleFunc("POST /v1/tendency/rate-mass", h.CreateRateMassContradiction)
 	s.HandleFunc("GET /v1/tendency/rate-mass/{id}", h.GetRateMassContradiction)
+
+	// Vol. III Ch. 14 — Counteracting Influences
+	s.HandleFunc("POST /v1/tendency/counteracting-force", h.CreateCounteractingForce)
+	s.HandleFunc("GET /v1/tendency/counteracting-force/{id}", h.GetCounteractingForce)
+	s.HandleFunc("POST /v1/tendency/scenario", h.CreateCounteractingScenario)
+	s.HandleFunc("GET /v1/tendency/scenario", h.ListCounteractingScenarios)
+	s.HandleFunc("GET /v1/tendency/scenario/{id}", h.GetCounteractingScenario)
 }

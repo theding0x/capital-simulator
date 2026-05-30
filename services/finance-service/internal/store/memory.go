@@ -33,6 +33,8 @@ type Memory struct {
 	priceChanges       map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange
 	trajectories       map[tendency.CompositionTrajectoryID]tendency.CompositionTrajectory
 	rateMasses         map[tendency.RateMassContradictionID]tendency.RateMassContradiction
+	counterForces      map[tendency.CounteractingForceID]tendency.CounteractingForce
+	counterScenarios   map[tendency.CounteractingScenarioID]tendency.CounteractingScenario
 }
 
 // NewMemory returns an empty in-memory store.
@@ -57,6 +59,8 @@ func NewMemory() *Memory {
 		priceChanges:       make(map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange),
 		trajectories:       make(map[tendency.CompositionTrajectoryID]tendency.CompositionTrajectory),
 		rateMasses:         make(map[tendency.RateMassContradictionID]tendency.RateMassContradiction),
+		counterForces:      make(map[tendency.CounteractingForceID]tendency.CounteractingForce),
+		counterScenarios:   make(map[tendency.CounteractingScenarioID]tendency.CounteractingScenario),
 	}
 }
 
@@ -798,6 +802,87 @@ func (m *Memory) ListRateMassContradictions(_ context.Context) ([]tendency.RateM
 	out := make([]tendency.RateMassContradiction, 0, len(m.rateMasses))
 	for _, r := range m.rateMasses {
 		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCounteractingForce stores f, assigning an ID and timestamp when absent.
+func (m *Memory) CreateCounteractingForce(_ context.Context, f tendency.CounteractingForce) (tendency.CounteractingForce, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if f.ID.IsZero() {
+		f.ID = tendency.NewCounteractingForceID()
+	}
+	if _, exists := m.counterForces[f.ID]; exists {
+		return tendency.CounteractingForce{}, ErrAlreadyExists
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+	m.counterForces[f.ID] = f
+	return f, nil
+}
+
+// GetCounteractingForce returns the force with id, or ErrNotFound.
+func (m *Memory) GetCounteractingForce(_ context.Context, id tendency.CounteractingForceID) (tendency.CounteractingForce, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	f, ok := m.counterForces[id]
+	if !ok {
+		return tendency.CounteractingForce{}, ErrNotFound
+	}
+	return f, nil
+}
+
+// CreateCounteractingScenario stores s, assigning an ID and timestamp when absent.
+func (m *Memory) CreateCounteractingScenario(_ context.Context, s tendency.CounteractingScenario) (tendency.CounteractingScenario, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID.IsZero() {
+		s.ID = tendency.NewCounteractingScenarioID()
+	}
+	if _, exists := m.counterScenarios[s.ID]; exists {
+		return tendency.CounteractingScenario{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	if s.Forces == nil {
+		s.Forces = []tendency.CounteractingForce{}
+	}
+	if s.ModifiedRates == nil {
+		s.ModifiedRates = []int64{}
+	}
+	m.counterScenarios[s.ID] = s
+	return s, nil
+}
+
+// GetCounteractingScenario returns the scenario with id, or ErrNotFound.
+func (m *Memory) GetCounteractingScenario(_ context.Context, id tendency.CounteractingScenarioID) (tendency.CounteractingScenario, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	s, ok := m.counterScenarios[id]
+	if !ok {
+		return tendency.CounteractingScenario{}, ErrNotFound
+	}
+	return s, nil
+}
+
+// ListCounteractingScenarios returns all stored scenarios, newest first.
+func (m *Memory) ListCounteractingScenarios(_ context.Context) ([]tendency.CounteractingScenario, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]tendency.CounteractingScenario, 0, len(m.counterScenarios))
+	for _, s := range m.counterScenarios {
+		out = append(out, s)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)
