@@ -37,6 +37,13 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/profit/price-fluctuation", h.CreatePriceFluctuationAnalysis)
 	mux.HandleFunc("GET /v1/profit/price-fluctuation", h.ListPriceFluctuationAnalyses)
 	mux.HandleFunc("GET /v1/profit/price-fluctuation/{id}", h.GetPriceFluctuationAnalysis)
+	mux.HandleFunc("POST /v1/profit/composition-effect", h.CreateCompositionEffect)
+	mux.HandleFunc("GET /v1/profit/composition-effect", h.ListCompositionEffects)
+	mux.HandleFunc("GET /v1/profit/composition-effect/{id}", h.GetCompositionEffect)
+	mux.HandleFunc("POST /v1/profit/magnitude-change", h.CreateMagnitudeChange)
+	mux.HandleFunc("GET /v1/profit/magnitude-change", h.ListMagnitudeChanges)
+	mux.HandleFunc("GET /v1/profit/magnitude-change/{id}", h.GetMagnitudeChange)
+	mux.HandleFunc("GET /v1/profit/summary", h.GetPartISummary)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

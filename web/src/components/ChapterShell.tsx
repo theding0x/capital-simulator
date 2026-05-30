@@ -61,6 +61,7 @@ import { Ch03ProfitRateRelation } from "../chapters/vol3/Ch03ProfitRateRelation"
 import { Ch04TurnoverEffect } from "../chapters/vol3/Ch04TurnoverEffect";
 import { Ch05ConstantCapitalEconomy } from "../chapters/vol3/Ch05ConstantCapitalEconomy";
 import { Ch06PriceFluctuation } from "../chapters/vol3/Ch06PriceFluctuation";
+import { Ch07SupplementaryRemarks } from "../chapters/vol3/Ch07SupplementaryRemarks";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -140,6 +141,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch04": Ch04TurnoverEffect as AnyPanel,
   "v3-ch05": Ch05ConstantCapitalEconomy as AnyPanel,
   "v3-ch06": Ch06PriceFluctuation as AnyPanel,
+  "v3-ch07": Ch07SupplementaryRemarks as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -202,6 +204,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch04": "The shorter the period of turnover ... the larger, therefore, the appropriated surplus-value, provided other conditions remain the same.",
   "v3-ch05": "Every economy in the conditions of production ... increases the rate of profit, since it reduces the value of the constant capital, while leaving the surplus-value untouched.",
   "v3-ch06": "The rate of profit ... may rise or fall in consequence of fluctuations in the prices of raw materials, even when these fluctuations do not affect the rate of surplus-value in the least.",
+  "v3-ch07": "The rate of profit ... depends on so many factors that one might say the rate of profit is not directly determinable at all — yet a mere change in the money-value of capital leaves it wholly untouched.",
 };
 
 export function ChapterShell({

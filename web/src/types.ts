@@ -3160,3 +3160,58 @@ export interface CapitalReleaseResponse {
   original_price_per_unit: number;
   new_price_per_unit: number;
 }
+
+// Vol. III Ch. 7 — Supplementary Remarks (on the rate of profit). Two threads:
+// the organic-composition channel (two capitals of equal s and v but different c
+// show different rates of profit) and the refutation of Rodbertus (a nominal
+// money-value change, or a proportional change at constant composition, leaves
+// the rate untouched; only an organic change moves it). Rates are basis points
+// (10000 bp = 100%); magnitudes are LabourMinutes (£).
+
+export interface OrganicCompositionEffectV3 {
+  s_a: number;
+  v_a: number;
+  c_a: number;
+  s_b: number;
+  v_b: number;
+  c_b: number;
+}
+
+export interface CompositionEffectAnalysisResponse {
+  id: string;
+  effect: OrganicCompositionEffectV3;
+  profit_rate_a: number;
+  profit_rate_b: number;
+  rate_difference: number;
+  created_at: string;
+}
+
+export type MagnitudeChangeKind =
+  | "money_value_change"
+  | "proportional_change"
+  | "organic_change";
+
+export interface CapitalMagnitudeChangeV3 {
+  kind: MagnitudeChangeKind;
+  original_capital: number;
+  original_profit: number;
+  factor: number;
+}
+
+export interface MagnitudeChangeAnalysisResponse {
+  id: string;
+  change: CapitalMagnitudeChangeV3;
+  old_rate: number;
+  new_rate: number;
+  rate_unchanged: boolean;
+  created_at: string;
+}
+
+// The Part I summary names the determinants of the rate of profit established
+// across Chs. 1–6 and gathers the rate-of-profit analyses recorded so far.
+export interface PartISummaryResponse {
+  id: string;
+  determinants: string[];
+  analyses: ProfitRateAnalysisResponse[];
+  created_at: string;
+}

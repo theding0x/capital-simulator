@@ -2039,4 +2039,44 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // Vol. III Ch. 7 — Supplementary Remarks (on the rate of profit)
+  listCompositionEffects: () =>
+    http<{ items: import("./types").CompositionEffectAnalysisResponse[] }>("/v1/profit/composition-effect").then((r) => r.items),
+
+  getCompositionEffect: (id: string) =>
+    http<import("./types").CompositionEffectAnalysisResponse>(`/v1/profit/composition-effect/${id}`),
+
+  computeCompositionEffect: (input: {
+    s_a: number;
+    v_a: number;
+    c_a: number;
+    s_b: number;
+    v_b: number;
+    c_b: number;
+  }) =>
+    http<import("./types").CompositionEffectAnalysisResponse>("/v1/profit/composition-effect", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listMagnitudeChanges: () =>
+    http<{ items: import("./types").MagnitudeChangeAnalysisResponse[] }>("/v1/profit/magnitude-change").then((r) => r.items),
+
+  getMagnitudeChange: (id: string) =>
+    http<import("./types").MagnitudeChangeAnalysisResponse>(`/v1/profit/magnitude-change/${id}`),
+
+  computeMagnitudeChange: (input: {
+    kind: import("./types").MagnitudeChangeKind;
+    original_capital: number;
+    original_profit: number;
+    factor: number;
+  }) =>
+    http<import("./types").MagnitudeChangeAnalysisResponse>("/v1/profit/magnitude-change", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  getPartISummary: () =>
+    http<import("./types").PartISummaryResponse>("/v1/profit/summary"),
 };
