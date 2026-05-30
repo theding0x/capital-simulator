@@ -249,4 +249,14 @@ type Store interface {
 	// ListCommercialProfits returns all stored commercial-profit records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListCommercialProfits(ctx context.Context) ([]merchant.CommercialProfit, error)
+
+	// CreateMerchantTurnover persists a merchant-turnover record (Vol. III Ch. 18 — annual profit
+	// invariant to turnover; per-unit markup = profit / (turnover × units)), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateMerchantTurnover(ctx context.Context, mt merchant.MerchantTurnover) (merchant.MerchantTurnover, error)
+	// GetMerchantTurnover returns the merchant-turnover record with the given ID, or ErrNotFound.
+	GetMerchantTurnover(ctx context.Context, id merchant.MerchantTurnoverID) (merchant.MerchantTurnover, error)
+	// ListMerchantTurnovers returns all stored merchant-turnover records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListMerchantTurnovers(ctx context.Context) ([]merchant.MerchantTurnover, error)
 }

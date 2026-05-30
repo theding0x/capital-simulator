@@ -40,6 +40,7 @@ type Memory struct {
 	contradictions     map[tendency.InternalContradictionID]tendency.InternalContradiction
 	commercialCapitals  map[merchant.CommercialCapitalID]merchant.CommercialCapital
 	commercialProfits   map[merchant.CommercialProfitID]merchant.CommercialProfit
+	turnoversM          map[merchant.MerchantTurnoverID]merchant.MerchantTurnover
 }
 
 // NewMemory returns an empty in-memory store.
@@ -70,6 +71,7 @@ func NewMemory() *Memory {
 		contradictions:     make(map[tendency.InternalContradictionID]tendency.InternalContradiction),
 		commercialCapitals:  make(map[merchant.CommercialCapitalID]merchant.CommercialCapital),
 		commercialProfits:   make(map[merchant.CommercialProfitID]merchant.CommercialProfit),
+		turnoversM:          make(map[merchant.MerchantTurnoverID]merchant.MerchantTurnover),
 	}
 }
 
@@ -1072,6 +1074,51 @@ func (m *Memory) ListCommercialProfits(_ context.Context) ([]merchant.Commercial
 	out := make([]merchant.CommercialProfit, 0, len(m.commercialProfits))
 	for _, cp := range m.commercialProfits {
 		out = append(out, cp)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateMerchantTurnover stores mt, assigning an ID and timestamp when absent.
+func (m *Memory) CreateMerchantTurnover(_ context.Context, mt merchant.MerchantTurnover) (merchant.MerchantTurnover, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if mt.ID.IsZero() {
+		mt.ID = merchant.NewMerchantTurnoverID()
+	}
+	if _, exists := m.turnoversM[mt.ID]; exists {
+		return merchant.MerchantTurnover{}, ErrAlreadyExists
+	}
+	if mt.CreatedAt.IsZero() {
+		mt.CreatedAt = m.now().UTC()
+	}
+	m.turnoversM[mt.ID] = mt
+	return mt, nil
+}
+
+// GetMerchantTurnover returns the merchant-turnover record with id, or ErrNotFound.
+func (m *Memory) GetMerchantTurnover(_ context.Context, id merchant.MerchantTurnoverID) (merchant.MerchantTurnover, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	mt, ok := m.turnoversM[id]
+	if !ok {
+		return merchant.MerchantTurnover{}, ErrNotFound
+	}
+	return mt, nil
+}
+
+// ListMerchantTurnovers returns all stored merchant-turnover records, newest first.
+func (m *Memory) ListMerchantTurnovers(_ context.Context) ([]merchant.MerchantTurnover, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]merchant.MerchantTurnover, 0, len(m.turnoversM))
+	for _, mt := range m.turnoversM {
+		out = append(out, mt)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)
