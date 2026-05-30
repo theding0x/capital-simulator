@@ -1466,3 +1466,256 @@ func TestCh14SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// --- Crisis store tests (Ch. 15) ---
+
+func TestMemory_CrisisRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// §crisis-A: 30% writedown on a 1000 bp pre-crisis rate restores it to 1429.
+	c, err := tendency.NewCrisis(30, 1000)
+	if err != nil {
+		t.Fatalf("new crisis: %v", err)
+	}
+	created, err := m.CreateCrisis(ctx, c)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if created.PostCrisisProfitRate != 1429 {
+		t.Errorf("PostCrisisProfitRate = %d, want 1429", created.PostCrisisProfitRate)
+	}
+
+	got, err := m.GetCrisis(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetCrisisNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetCrisis(context.Background(), tendency.CrisisID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateCrisisDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	c, err := tendency.NewCrisis(30, 1000)
+	if err != nil {
+		t.Fatalf("new crisis: %v", err)
+	}
+	c.ID = tendency.CrisisID("5eed000000000000001501")
+
+	if _, err := m.CreateCrisis(ctx, c); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateCrisis(ctx, c); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListCrisesNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListCrises(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListCrises_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	first, err := tendency.NewCrisis(20, 800)
+	if err != nil {
+		t.Fatalf("new first: %v", err)
+	}
+	second, err := tendency.NewCrisis(50, 600)
+	if err != nil {
+		t.Fatalf("new second: %v", err)
+	}
+
+	createdFirst, err := m.CreateCrisis(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateCrisis(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListCrises(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// --- InternalContradiction store tests (Ch. 15) ---
+
+func TestMemory_InternalContradictionRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// §I falling rate / rising mass — coexistent by construction.
+	c, err := tendency.NewInternalContradiction(tendency.KindFallingRateRisingMass, "Marx §I")
+	if err != nil {
+		t.Fatalf("new contradiction: %v", err)
+	}
+	created, err := m.CreateInternalContradiction(ctx, c)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if !created.IsCoexistent {
+		t.Error("IsCoexistent = false, want true")
+	}
+
+	got, err := m.GetInternalContradiction(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetInternalContradictionNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetInternalContradiction(context.Background(), tendency.InternalContradictionID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateInternalContradictionDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	c, err := tendency.NewInternalContradiction(tendency.KindConcentrationCentralisation, "")
+	if err != nil {
+		t.Fatalf("new contradiction: %v", err)
+	}
+	c.ID = tendency.InternalContradictionID("5eed000000000000001507")
+
+	if _, err := m.CreateInternalContradiction(ctx, c); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateInternalContradiction(ctx, c); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListInternalContradictionsNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListInternalContradictions(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListInternalContradictions_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	first, err := tendency.NewInternalContradiction(tendency.KindFallingRateRisingMass, "")
+	if err != nil {
+		t.Fatalf("new first: %v", err)
+	}
+	second, err := tendency.NewInternalContradiction(tendency.KindOverproductionUnderConsumption, "")
+	if err != nil {
+		t.Fatalf("new second: %v", err)
+	}
+
+	createdFirst, err := m.CreateInternalContradiction(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateInternalContradiction(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListInternalContradictions(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh15SeedIDs asserts the Ch. 15 seed IDs (5eed…<CC=15>01–07) carry the 15
+// token and are unique (mirrors the seed migration 00030_v3_ch15_seed.sql:
+// crises 1501–1503, contradictions 1504–1507).
+func TestCh15SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000001501",
+		"5eed000000000000001502",
+		"5eed000000000000001503",
+		"5eed000000000000001504",
+		"5eed000000000000001505",
+		"5eed000000000000001506",
+		"5eed000000000000001507",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "15" {
+			t.Errorf("seed id %q chapter token = %q, want 15", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

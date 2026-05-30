@@ -1707,6 +1707,156 @@ func scanCounteractingScenario(s rowScanner) (tendency.CounteractingScenario, er
 	}, nil
 }
 
+// CreateCrisis persists c, assigning an ID and timestamp when absent. The
+// derived post-crisis rate is stored as a scalar column for query efficiency.
+func (m *MySQL) CreateCrisis(ctx context.Context, c tendency.Crisis) (tendency.Crisis, error) {
+	if c.ID.IsZero() {
+		c.ID = tendency.NewCrisisID()
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO crises
+		(id, constant_capital_writedown, pre_crisis_profit_rate, post_crisis_profit_rate, created_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(c.ID), c.ConstantCapitalWritedown, c.PreCrisisProfitRate, c.PostCrisisProfitRate, c.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return tendency.Crisis{}, ErrAlreadyExists
+		}
+		return tendency.Crisis{}, err
+	}
+	return c, nil
+}
+
+// GetCrisis returns the crisis with id, or ErrNotFound.
+func (m *MySQL) GetCrisis(ctx context.Context, id tendency.CrisisID) (tendency.Crisis, error) {
+	const q = `SELECT id, constant_capital_writedown, pre_crisis_profit_rate, post_crisis_profit_rate, created_at
+		FROM crises WHERE id = ?`
+	return scanCrisis(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCrises returns all stored crises, newest first.
+func (m *MySQL) ListCrises(ctx context.Context) ([]tendency.Crisis, error) {
+	const q = `SELECT id, constant_capital_writedown, pre_crisis_profit_rate, post_crisis_profit_rate, created_at
+		FROM crises ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]tendency.Crisis, 0)
+	for rows.Next() {
+		c, err := scanCrisis(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func scanCrisis(s rowScanner) (tendency.Crisis, error) {
+	var (
+		id                                       string
+		writedown, preCrisisRate, postCrisisRate int64
+		createdAt                                time.Time
+	)
+	err := s.Scan(&id, &writedown, &preCrisisRate, &postCrisisRate, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return tendency.Crisis{}, ErrNotFound
+		}
+		return tendency.Crisis{}, err
+	}
+	return tendency.Crisis{
+		ID:                       tendency.CrisisID(id),
+		ConstantCapitalWritedown: writedown,
+		PreCrisisProfitRate:      preCrisisRate,
+		PostCrisisProfitRate:     postCrisisRate,
+		CreatedAt:                createdAt,
+	}, nil
+}
+
+// CreateInternalContradiction persists c, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateInternalContradiction(ctx context.Context, c tendency.InternalContradiction) (tendency.InternalContradiction, error) {
+	if c.ID.IsZero() {
+		c.ID = tendency.NewInternalContradictionID()
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO internal_contradictions
+		(id, kind, is_coexistent, note, created_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(c.ID), string(c.Kind), c.IsCoexistent, c.Note, c.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return tendency.InternalContradiction{}, ErrAlreadyExists
+		}
+		return tendency.InternalContradiction{}, err
+	}
+	return c, nil
+}
+
+// GetInternalContradiction returns the contradiction with id, or ErrNotFound.
+func (m *MySQL) GetInternalContradiction(ctx context.Context, id tendency.InternalContradictionID) (tendency.InternalContradiction, error) {
+	const q = `SELECT id, kind, is_coexistent, note, created_at
+		FROM internal_contradictions WHERE id = ?`
+	return scanInternalContradiction(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListInternalContradictions returns all stored contradictions, newest first.
+func (m *MySQL) ListInternalContradictions(ctx context.Context) ([]tendency.InternalContradiction, error) {
+	const q = `SELECT id, kind, is_coexistent, note, created_at
+		FROM internal_contradictions ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]tendency.InternalContradiction, 0)
+	for rows.Next() {
+		c, err := scanInternalContradiction(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func scanInternalContradiction(s rowScanner) (tendency.InternalContradiction, error) {
+	var (
+		id, kind     string
+		isCoexistent bool
+		note         string
+		createdAt    time.Time
+	)
+	err := s.Scan(&id, &kind, &isCoexistent, &note, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return tendency.InternalContradiction{}, ErrNotFound
+		}
+		return tendency.InternalContradiction{}, err
+	}
+	return tendency.InternalContradiction{
+		ID:           tendency.InternalContradictionID(id),
+		Kind:         tendency.ContradictionKind(kind),
+		IsCoexistent: isCoexistent,
+		Note:         note,
+		CreatedAt:    createdAt,
+	}, nil
+}
+
 // isDuplicate reports whether err is a MySQL duplicate-key error (1062).
 func isDuplicate(err error) bool {
 	if err == nil {

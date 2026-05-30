@@ -3469,3 +3469,58 @@ export interface CounteractingScenarioResponse {
   modified_rates: number[]; // basis points per period
   created_at: string;
 }
+
+// --- finance-service types (Vol. III Ch. 15: Internal Contradictions of the Law) ---
+
+// ContradictionKind mirrors tendency.ContradictionKind.
+export type ContradictionKind =
+  | "falling_rate_rising_mass"
+  | "overproduction_underconsumption"
+  | "overaccumulation_relative_overpopulation"
+  | "concentration_centralisation";
+
+// InternalContradictionResponse mirrors tendency.InternalContradiction.
+export interface InternalContradictionResponse {
+  id: string;
+  kind: ContradictionKind;
+  is_coexistent: boolean;
+  note: string;
+  created_at: string;
+}
+
+// CrisisResponse mirrors tendency.Crisis.
+export interface CrisisResponse {
+  id: string;
+  constant_capital_writedown: number; // percent integer 1-99
+  pre_crisis_profit_rate: number; // basis points
+  post_crisis_profit_rate: number; // basis points; always > pre
+  created_at: string;
+}
+
+// CapitalConcentrationResponse mirrors tendency.CapitalConcentration (value object).
+export interface CapitalConcentrationResponse {
+  initial_c: number; // LabourMinutes
+  surplus_value_rate: number; // basis points
+  periods: number;
+  final_c: number; // derived
+  path: number[]; // per-period values including initial_c as [0]
+}
+
+// CapitalCentralisationResponse mirrors tendency.CapitalCentralisation (value object).
+export interface CapitalCentralisationResponse {
+  absorbed_capitals: number; // count
+  absorbed_size: number; // LabourMinutes each
+  resulting_capital: number; // derived
+}
+
+// PartIIISummaryResponse mirrors tendency.PartIIISummary.
+export interface PartIIISummaryResponse {
+  trajectory_count: number;
+  scenario_count: number;
+  crisis_count: number;
+  contradiction_count: number;
+  latest_trajectory?: CompositionTrajectoryResponse;
+  latest_scenario?: CounteractingScenarioResponse;
+  latest_crisis?: CrisisResponse;
+  latest_contradiction?: InternalContradictionResponse;
+}

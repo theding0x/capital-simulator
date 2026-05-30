@@ -213,4 +213,20 @@ type Store interface {
 	GetCounteractingScenario(ctx context.Context, id tendency.CounteractingScenarioID) (tendency.CounteractingScenario, error)
 	// ListCounteractingScenarios returns all stored scenarios, newest first.
 	ListCounteractingScenarios(ctx context.Context) ([]tendency.CounteractingScenario, error)
+
+	// CreateCrisis persists a crisis record (Vol. III Ch. 15), assigning an ID
+	// and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCrisis(ctx context.Context, c tendency.Crisis) (tendency.Crisis, error)
+	// GetCrisis returns the crisis with the given ID, or ErrNotFound.
+	GetCrisis(ctx context.Context, id tendency.CrisisID) (tendency.Crisis, error)
+	// ListCrises returns all stored crises, newest first.
+	ListCrises(ctx context.Context) ([]tendency.Crisis, error)
+
+	// CreateInternalContradiction persists an internal contradiction (Vol. III Ch. 15),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateInternalContradiction(ctx context.Context, c tendency.InternalContradiction) (tendency.InternalContradiction, error)
+	// GetInternalContradiction returns the contradiction with the given ID, or ErrNotFound.
+	GetInternalContradiction(ctx context.Context, id tendency.InternalContradictionID) (tendency.InternalContradiction, error)
+	// ListInternalContradictions returns all stored contradictions, newest first.
+	ListInternalContradictions(ctx context.Context) ([]tendency.InternalContradiction, error)
 }

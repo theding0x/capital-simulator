@@ -126,7 +126,7 @@ export const CHAPTERS: ChapterDef[] = [
   // Part III — The Law of the Tendential Fall in the Rate of Profit
   { id: "v3-ch13", volume: 3, number: 13, title: "The Law as Such",                                           part: "Part III — The Law of the Tendential Fall in the Rate of Profit",   circuitNode: ["delta-M", "whole"],               status: "done"    },
   { id: "v3-ch14", volume: 3, number: 14, title: "Counteracting Influences",                                  part: "Part III — The Law of the Tendential Fall in the Rate of Profit",   circuitNode: ["delta-M"],                        status: "done"    },
-  { id: "v3-ch15", volume: 3, number: 15, title: "Internal Contradictions of the Law",                        part: "Part III — The Law of the Tendential Fall in the Rate of Profit",   circuitNode: ["delta-M", "whole"],               status: "pending" },
+  { id: "v3-ch15", volume: 3, number: 15, title: "Internal Contradictions of the Law",                        part: "Part III — The Law of the Tendential Fall in the Rate of Profit",   circuitNode: ["delta-M", "whole"],               status: "done"    },
   // Part IV — Conversion of Commodity-Capital and Money-Capital into Commercial Capital
   { id: "v3-ch16", volume: 3, number: 16, title: "Commercial Capital",                                        part: "Part IV — Conversion of Commodity-Capital and Money-Capital into Commercial Capital", circuitNode: ["C-M-prime", "delta-M"],   status: "pending" },
   { id: "v3-ch17", volume: 3, number: 17, title: "Commercial Profit",                                         part: "Part IV — Conversion of Commodity-Capital and Money-Capital into Commercial Capital", circuitNode: ["C-M-prime", "delta-M"],   status: "pending" },
