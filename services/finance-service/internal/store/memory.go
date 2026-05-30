@@ -28,6 +28,7 @@ type Memory struct {
 	marketValues       map[avgprofit.MarketValueID]avgprofit.MarketValue
 	surplusProfits     map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit
 	equalisations      map[avgprofit.EqualisationID]avgprofit.Equalisation
+	wageEffects        map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis
 }
 
 // NewMemory returns an empty in-memory store.
@@ -48,6 +49,7 @@ func NewMemory() *Memory {
 		marketValues:       make(map[avgprofit.MarketValueID]avgprofit.MarketValue),
 		surplusProfits:     make(map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit),
 		equalisations:      make(map[avgprofit.EqualisationID]avgprofit.Equalisation),
+		wageEffects:        make(map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis),
 	}
 }
 
@@ -619,4 +621,52 @@ func (m *Memory) GetEqualisation(_ context.Context, id avgprofit.EqualisationID)
 		return avgprofit.Equalisation{}, ErrNotFound
 	}
 	return e, nil
+}
+
+// CreateWageEffectAnalysis stores a, assigning an ID and timestamp when absent.
+func (m *Memory) CreateWageEffectAnalysis(_ context.Context, a avgprofit.WageEffectAnalysis) (avgprofit.WageEffectAnalysis, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if a.ID.IsZero() {
+		a.ID = avgprofit.NewWageEffectAnalysisID()
+	}
+	if _, exists := m.wageEffects[a.ID]; exists {
+		return avgprofit.WageEffectAnalysis{}, ErrAlreadyExists
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	if a.Outcomes == nil {
+		a.Outcomes = []avgprofit.SphereWageOutcome{}
+	}
+	m.wageEffects[a.ID] = a
+	return a, nil
+}
+
+// GetWageEffectAnalysis returns the analysis with id, or ErrNotFound.
+func (m *Memory) GetWageEffectAnalysis(_ context.Context, id avgprofit.WageEffectAnalysisID) (avgprofit.WageEffectAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	a, ok := m.wageEffects[id]
+	if !ok {
+		return avgprofit.WageEffectAnalysis{}, ErrNotFound
+	}
+	return a, nil
+}
+
+// ListWageEffectAnalyses returns all stored analyses, newest first.
+func (m *Memory) ListWageEffectAnalyses(_ context.Context) ([]avgprofit.WageEffectAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]avgprofit.WageEffectAnalysis, 0, len(m.wageEffects))
+	for _, a := range m.wageEffects {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
 }

@@ -361,6 +361,9 @@ func main() {
 	srv.Handle("/v1/avgprofit/surplus-profit/{rest...}", financeProxy)
 	srv.Handle("/v1/avgprofit/capital-flow", financeProxy)
 	srv.Handle("/v1/avgprofit/equalisation/{rest...}", financeProxy)
+	// Vol. III Ch. 11 — Effects of General Wage Fluctuations on Prices of Production → finance-service
+	srv.Handle("/v1/avgprofit/wage-effect", financeProxy)
+	srv.Handle("/v1/avgprofit/wage-effect/{rest...}", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)

@@ -62,6 +62,10 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("GET /v1/avgprofit/surplus-profit/{id}", h.GetSurplusProfit)
 	mux.HandleFunc("POST /v1/avgprofit/capital-flow", h.CreateCapitalFlow)
 	mux.HandleFunc("GET /v1/avgprofit/equalisation/{id}", h.GetEqualisation)
+	// Vol. III Ch. 11 — Effects of General Wage Fluctuations on Prices of Production
+	mux.HandleFunc("POST /v1/avgprofit/wage-effect", h.CreateWageEffectAnalysis)
+	mux.HandleFunc("GET /v1/avgprofit/wage-effect", h.ListWageEffectAnalyses)
+	mux.HandleFunc("GET /v1/avgprofit/wage-effect/{id}", h.GetWageEffectAnalysis)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

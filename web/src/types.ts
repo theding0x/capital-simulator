@@ -3334,3 +3334,32 @@ export interface EqualisationResponse {
   flow: CapitalFlowResponse;
   created_at: string;
 }
+
+// SphereWageOutcomeResponse mirrors avgprofit.SphereWageOutcome.
+// old_price, new_price, price_change are in centi-units (÷100 for display).
+export interface SphereWageOutcomeResponse {
+  sphere_name: string;
+  constant_capital: number;
+  variable_capital: number;
+  wage_factor: number;
+  composition: "higher" | "average" | "lower";
+  old_price: number;    // centi-units
+  new_price: number;    // centi-units
+  price_change: number; // signed centi-units
+  direction: "rises" | "falls" | "unchanged";
+}
+
+// WageEffectAnalysisResponse mirrors avgprofit.WageEffectAnalysis.
+export interface WageEffectAnalysisResponse {
+  id: string;
+  base_constant: number;
+  base_variable: number;
+  s_rate: number;
+  wage_factor: number;
+  kind: "rise" | "fall" | "";
+  old_general_rate: number; // basis points
+  new_general_rate: number; // basis points
+  average_outcome: SphereWageOutcomeResponse;
+  outcomes: SphereWageOutcomeResponse[];
+  created_at: string;
+}

@@ -157,4 +157,14 @@ type Store interface {
 	CreateEqualisation(ctx context.Context, e avgprofit.Equalisation) (avgprofit.Equalisation, error)
 	// GetEqualisation returns the record with the given ID, or ErrNotFound.
 	GetEqualisation(ctx context.Context, id avgprofit.EqualisationID) (avgprofit.Equalisation, error)
+
+	// CreateWageEffectAnalysis persists a wage-effect analysis (Vol. III Ch. 11) —
+	// the shift in prices of production across spheres caused by a general wage
+	// fluctuation — assigning an ID and created-at timestamp when absent. Returns
+	// ErrAlreadyExists on ID collision.
+	CreateWageEffectAnalysis(ctx context.Context, a avgprofit.WageEffectAnalysis) (avgprofit.WageEffectAnalysis, error)
+	// GetWageEffectAnalysis returns the analysis with the given ID, or ErrNotFound.
+	GetWageEffectAnalysis(ctx context.Context, id avgprofit.WageEffectAnalysisID) (avgprofit.WageEffectAnalysis, error)
+	// ListWageEffectAnalyses returns all stored analyses, newest first.
+	ListWageEffectAnalyses(ctx context.Context) ([]avgprofit.WageEffectAnalysis, error)
 }
