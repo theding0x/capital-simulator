@@ -2352,4 +2352,30 @@ export const financeApi = {
     ),
   getInterestBearingCapital: (id: string) =>
     http<import("./types").InterestBearingCapital>(`/v1/credit/interest-bearing-capital/${id}`),
+
+  // Vol. III Ch. 22 — Rate of Interest
+  createRateOfInterest: (body: {
+    rate_bp: number;
+    average_profit_rate_bp: number;
+    cycle_phase: number;
+    period: string;
+  }) =>
+    http<import("./types").RateOfInterest>("/v1/credit/rate-of-interest", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listRatesOfInterest: () =>
+    http<{ items: import("./types").RateOfInterest[] }>("/v1/credit/rate-of-interest").then(
+      (r) => r.items ?? [],
+    ),
+  getRateOfInterest: (id: string) =>
+    http<import("./types").RateOfInterest>(`/v1/credit/rate-of-interest/${id}`),
+  computeInterestRateAnalysis: (body: {
+    average_profit_rate_bp: number;
+    interest_rate_bp: number;
+  }) =>
+    http<import("./types").InterestRateAnalysis>("/v1/credit/interest-rate-analysis", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };

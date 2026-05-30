@@ -76,6 +76,7 @@ import { Ch18MerchantTurnover } from "../chapters/vol3/Ch18MerchantTurnover";
 import { Ch19MoneyDealingCapital } from "../chapters/vol3/Ch19MoneyDealingCapital";
 import { Ch20HistoricalMerchantCapital } from "../chapters/vol3/Ch20HistoricalMerchantCapital";
 import { Ch21InterestBearingCapital } from "../chapters/vol3/Ch21InterestBearingCapital";
+import { Ch22RateOfInterest } from "../chapters/vol3/Ch22RateOfInterest";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -170,6 +171,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch19": Ch19MoneyDealingCapital as AnyPanel,
   "v3-ch20": Ch20HistoricalMerchantCapital as AnyPanel,
   "v3-ch21": Ch21InterestBearingCapital as AnyPanel,
+  "v3-ch22": Ch22RateOfInterest as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -247,6 +249,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch19": "The money-dealer's capital does not create any new value. It only contributes to equalising the general rate of profit by participating in its formation as a factor.",
   "v3-ch20": "Merchant's capital is older than the capitalist mode of production, is in fact historically the oldest free state of existence of capital.",
   "v3-ch21": "In the formula M—M′ we have the irrational form of capital, the perversion and objectification of production relations in their highest degree.",
+  "v3-ch22": "The average rate of interest prevailing in a given country — as distinct from the continually fluctuating market rates — cannot be determined by any law. In this sphere there is no law except that of supply and demand.",
 };
 
 export function ChapterShell({

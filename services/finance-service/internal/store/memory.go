@@ -45,6 +45,7 @@ type Memory struct {
 	moneyDealingCapitals       map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital
 	historicalMerchantCapitals map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital
 	interestBearingCapitals    map[credit.InterestBearingCapitalID]credit.InterestBearingCapital
+	ratesOfInterest            map[credit.RateOfInterestID]credit.RateOfInterest
 }
 
 // NewMemory returns an empty in-memory store.
@@ -79,6 +80,7 @@ func NewMemory() *Memory {
 		moneyDealingCapitals:       make(map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital),
 		historicalMerchantCapitals: make(map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital),
 		interestBearingCapitals:    make(map[credit.InterestBearingCapitalID]credit.InterestBearingCapital),
+		ratesOfInterest:            make(map[credit.RateOfInterestID]credit.RateOfInterest),
 	}
 }
 
@@ -1263,6 +1265,54 @@ func (m *Memory) ListInterestBearingCapitals(_ context.Context) ([]credit.Intere
 		out = append(out, ibc)
 	}
 	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateRateOfInterest stores r, assigning an ID and timestamp when absent.
+func (m *Memory) CreateRateOfInterest(_ context.Context, r credit.RateOfInterest) (credit.RateOfInterest, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if r.ID.IsZero() {
+		r.ID = credit.NewRateOfInterestID()
+	}
+	if _, exists := m.ratesOfInterest[r.ID]; exists {
+		return credit.RateOfInterest{}, ErrAlreadyExists
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	m.ratesOfInterest[r.ID] = r
+	return r, nil
+}
+
+// GetRateOfInterest returns the rate-of-interest record with id, or ErrNotFound.
+func (m *Memory) GetRateOfInterest(_ context.Context, id credit.RateOfInterestID) (credit.RateOfInterest, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	r, ok := m.ratesOfInterest[id]
+	if !ok {
+		return credit.RateOfInterest{}, ErrNotFound
+	}
+	return r, nil
+}
+
+// ListRatesOfInterest returns all stored rate-of-interest records, newest first.
+func (m *Memory) ListRatesOfInterest(_ context.Context) ([]credit.RateOfInterest, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.RateOfInterest, 0, len(m.ratesOfInterest))
+	for _, r := range m.ratesOfInterest {
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
 		return out[i].CreatedAt.After(out[j].CreatedAt)
 	})
 	return out, nil
