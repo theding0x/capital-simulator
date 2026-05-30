@@ -386,6 +386,117 @@ func (m *MySQL) ListPriceFluctuationAnalyses(ctx context.Context) ([]profit.Pric
 	return out, rows.Err()
 }
 
+// CreateCompositionEffect persists a, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateCompositionEffect(ctx context.Context, a profit.CompositionEffectAnalysis) (profit.CompositionEffectAnalysis, error) {
+	if a.ID.IsZero() {
+		a.ID = profit.NewCompositionEffectID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO composition_effects
+		(id, s_a, v_a, c_a, s_b, v_b, c_b, profit_rate_a_bp, profit_rate_b_bp, rate_difference_bp, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID),
+		int64(a.Effect.SA), int64(a.Effect.VA), int64(a.Effect.CA),
+		int64(a.Effect.SB), int64(a.Effect.VB), int64(a.Effect.CB),
+		a.ProfitRateA, a.ProfitRateB, a.RateDifference,
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return profit.CompositionEffectAnalysis{}, ErrAlreadyExists
+		}
+		return profit.CompositionEffectAnalysis{}, err
+	}
+	return a, nil
+}
+
+// GetCompositionEffect returns the comparison with id, or ErrNotFound.
+func (m *MySQL) GetCompositionEffect(ctx context.Context, id profit.CompositionEffectID) (profit.CompositionEffectAnalysis, error) {
+	const q = `SELECT id, s_a, v_a, c_a, s_b, v_b, c_b, profit_rate_a_bp, profit_rate_b_bp, rate_difference_bp, created_at
+		FROM composition_effects WHERE id = ?`
+	return scanCompositionEffect(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCompositionEffects returns all stored comparisons, newest first.
+func (m *MySQL) ListCompositionEffects(ctx context.Context) ([]profit.CompositionEffectAnalysis, error) {
+	const q = `SELECT id, s_a, v_a, c_a, s_b, v_b, c_b, profit_rate_a_bp, profit_rate_b_bp, rate_difference_bp, created_at
+		FROM composition_effects ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []profit.CompositionEffectAnalysis
+	for rows.Next() {
+		a, err := scanCompositionEffect(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
+// CreateMagnitudeChange persists a, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateMagnitudeChange(ctx context.Context, a profit.MagnitudeChangeAnalysis) (profit.MagnitudeChangeAnalysis, error) {
+	if a.ID.IsZero() {
+		a.ID = profit.NewMagnitudeChangeID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO magnitude_changes
+		(id, kind, original_capital, original_profit, factor, old_rate_bp, new_rate_bp, rate_unchanged, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID), string(a.Change.Kind),
+		int64(a.Change.OriginalCapital), int64(a.Change.OriginalProfit), a.Change.Factor,
+		a.OldRate, a.NewRate, a.RateUnchanged,
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return profit.MagnitudeChangeAnalysis{}, ErrAlreadyExists
+		}
+		return profit.MagnitudeChangeAnalysis{}, err
+	}
+	return a, nil
+}
+
+// GetMagnitudeChange returns the change with id, or ErrNotFound.
+func (m *MySQL) GetMagnitudeChange(ctx context.Context, id profit.MagnitudeChangeID) (profit.MagnitudeChangeAnalysis, error) {
+	const q = `SELECT id, kind, original_capital, original_profit, factor, old_rate_bp, new_rate_bp, rate_unchanged, created_at
+		FROM magnitude_changes WHERE id = ?`
+	return scanMagnitudeChange(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListMagnitudeChanges returns all stored changes, newest first.
+func (m *MySQL) ListMagnitudeChanges(ctx context.Context) ([]profit.MagnitudeChangeAnalysis, error) {
+	const q = `SELECT id, kind, original_capital, original_profit, factor, old_rate_bp, new_rate_bp, rate_unchanged, created_at
+		FROM magnitude_changes ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []profit.MagnitudeChangeAnalysis
+	for rows.Next() {
+		a, err := scanMagnitudeChange(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
 // rowScanner is satisfied by both *sql.Row and *sql.Rows.
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -582,6 +693,67 @@ func scanPriceFluctuationAnalysis(s rowScanner) (profit.PriceFluctuationAnalysis
 		},
 		OldProfitRate: oldBP,
 		NewProfitRate: newBP,
+		CreatedAt:     createdAt,
+	}, nil
+}
+
+func scanCompositionEffect(s rowScanner) (profit.CompositionEffectAnalysis, error) {
+	var (
+		id                           string
+		sa, va, ca, sb, vb, cb       int64
+		profitA, profitB, difference int64
+		createdAt                    time.Time
+	)
+	err := s.Scan(&id, &sa, &va, &ca, &sb, &vb, &cb, &profitA, &profitB, &difference, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return profit.CompositionEffectAnalysis{}, ErrNotFound
+		}
+		return profit.CompositionEffectAnalysis{}, err
+	}
+	return profit.CompositionEffectAnalysis{
+		ID: profit.CompositionEffectID(id),
+		Effect: profit.OrganicCompositionEffect{
+			SA: profit.SurplusValue(sa),
+			VA: profit.VariableCapital(va),
+			CA: profit.ConstantCapital(ca),
+			SB: profit.SurplusValue(sb),
+			VB: profit.VariableCapital(vb),
+			CB: profit.ConstantCapital(cb),
+		},
+		ProfitRateA:    profitA,
+		ProfitRateB:    profitB,
+		RateDifference: difference,
+		CreatedAt:      createdAt,
+	}, nil
+}
+
+func scanMagnitudeChange(s rowScanner) (profit.MagnitudeChangeAnalysis, error) {
+	var (
+		id, kind                        string
+		originalCapital, originalProfit int64
+		factor, oldRate, newRate        int64
+		rateUnchanged                   bool
+		createdAt                       time.Time
+	)
+	err := s.Scan(&id, &kind, &originalCapital, &originalProfit, &factor, &oldRate, &newRate, &rateUnchanged, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return profit.MagnitudeChangeAnalysis{}, ErrNotFound
+		}
+		return profit.MagnitudeChangeAnalysis{}, err
+	}
+	return profit.MagnitudeChangeAnalysis{
+		ID: profit.MagnitudeChangeID(id),
+		Change: profit.CapitalMagnitudeChange{
+			Kind:            profit.MagnitudeChangeKind(kind),
+			OriginalCapital: profit.TotalCapital(originalCapital),
+			OriginalProfit:  profit.SurplusValue(originalProfit),
+			Factor:          factor,
+		},
+		OldRate:       oldRate,
+		NewRate:       newRate,
+		RateUnchanged: rateUnchanged,
 		CreatedAt:     createdAt,
 	}, nil
 }

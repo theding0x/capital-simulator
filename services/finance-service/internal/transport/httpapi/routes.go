@@ -36,4 +36,13 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/profit/price-fluctuation", h.CreatePriceFluctuationAnalysis)
 	s.HandleFunc("GET /v1/profit/price-fluctuation", h.ListPriceFluctuationAnalyses)
 	s.HandleFunc("GET /v1/profit/price-fluctuation/{id}", h.GetPriceFluctuationAnalysis)
+
+	// Vol. III Ch. 7 — Supplementary Remarks (on the rate of profit)
+	s.HandleFunc("POST /v1/profit/composition-effect", h.CreateCompositionEffect)
+	s.HandleFunc("GET /v1/profit/composition-effect", h.ListCompositionEffects)
+	s.HandleFunc("GET /v1/profit/composition-effect/{id}", h.GetCompositionEffect)
+	s.HandleFunc("POST /v1/profit/magnitude-change", h.CreateMagnitudeChange)
+	s.HandleFunc("GET /v1/profit/magnitude-change", h.ListMagnitudeChanges)
+	s.HandleFunc("GET /v1/profit/magnitude-change/{id}", h.GetMagnitudeChange)
+	s.HandleFunc("GET /v1/profit/summary", h.GetPartISummary)
 }

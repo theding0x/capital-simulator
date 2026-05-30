@@ -11,26 +11,30 @@ import (
 
 // Memory is an in-memory Store for unit tests and local development.
 type Memory struct {
-	mu          sync.RWMutex
-	now         func() time.Time
-	costPrices  map[profit.CostPriceID]profit.CostPrice
-	profitRates map[profit.ProfitRateID]profit.ProfitRateAnalysis
-	variations  map[profit.VariationAnalysisID]profit.VariationAnalysis
-	turnovers   map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
-	economies   map[profit.EconomyAnalysisID]profit.EconomyAnalysis
-	priceFlux   map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
+	mu           sync.RWMutex
+	now          func() time.Time
+	costPrices   map[profit.CostPriceID]profit.CostPrice
+	profitRates  map[profit.ProfitRateID]profit.ProfitRateAnalysis
+	variations   map[profit.VariationAnalysisID]profit.VariationAnalysis
+	turnovers    map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
+	economies    map[profit.EconomyAnalysisID]profit.EconomyAnalysis
+	priceFlux    map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
+	compositions map[profit.CompositionEffectID]profit.CompositionEffectAnalysis
+	magnitudes   map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis
 }
 
 // NewMemory returns an empty in-memory store.
 func NewMemory() *Memory {
 	return &Memory{
-		now:         time.Now,
-		costPrices:  make(map[profit.CostPriceID]profit.CostPrice),
-		profitRates: make(map[profit.ProfitRateID]profit.ProfitRateAnalysis),
-		variations:  make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
-		turnovers:   make(map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis),
-		economies:   make(map[profit.EconomyAnalysisID]profit.EconomyAnalysis),
-		priceFlux:   make(map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis),
+		now:          time.Now,
+		costPrices:   make(map[profit.CostPriceID]profit.CostPrice),
+		profitRates:  make(map[profit.ProfitRateID]profit.ProfitRateAnalysis),
+		variations:   make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
+		turnovers:    make(map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis),
+		economies:    make(map[profit.EconomyAnalysisID]profit.EconomyAnalysis),
+		priceFlux:    make(map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis),
+		compositions: make(map[profit.CompositionEffectID]profit.CompositionEffectAnalysis),
+		magnitudes:   make(map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis),
 	}
 }
 
@@ -296,6 +300,96 @@ func (m *Memory) ListEconomyAnalyses(_ context.Context) ([]profit.EconomyAnalysi
 
 	out := make([]profit.EconomyAnalysis, 0, len(m.economies))
 	for _, a := range m.economies {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCompositionEffect stores a, assigning an ID and timestamp when absent.
+func (m *Memory) CreateCompositionEffect(_ context.Context, a profit.CompositionEffectAnalysis) (profit.CompositionEffectAnalysis, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if a.ID.IsZero() {
+		a.ID = profit.NewCompositionEffectID()
+	}
+	if _, exists := m.compositions[a.ID]; exists {
+		return profit.CompositionEffectAnalysis{}, ErrAlreadyExists
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	m.compositions[a.ID] = a
+	return a, nil
+}
+
+// GetCompositionEffect returns the comparison with id, or ErrNotFound.
+func (m *Memory) GetCompositionEffect(_ context.Context, id profit.CompositionEffectID) (profit.CompositionEffectAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	a, ok := m.compositions[id]
+	if !ok {
+		return profit.CompositionEffectAnalysis{}, ErrNotFound
+	}
+	return a, nil
+}
+
+// ListCompositionEffects returns all stored comparisons, newest first.
+func (m *Memory) ListCompositionEffects(_ context.Context) ([]profit.CompositionEffectAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]profit.CompositionEffectAnalysis, 0, len(m.compositions))
+	for _, a := range m.compositions {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateMagnitudeChange stores a, assigning an ID and timestamp when absent.
+func (m *Memory) CreateMagnitudeChange(_ context.Context, a profit.MagnitudeChangeAnalysis) (profit.MagnitudeChangeAnalysis, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if a.ID.IsZero() {
+		a.ID = profit.NewMagnitudeChangeID()
+	}
+	if _, exists := m.magnitudes[a.ID]; exists {
+		return profit.MagnitudeChangeAnalysis{}, ErrAlreadyExists
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	m.magnitudes[a.ID] = a
+	return a, nil
+}
+
+// GetMagnitudeChange returns the change with id, or ErrNotFound.
+func (m *Memory) GetMagnitudeChange(_ context.Context, id profit.MagnitudeChangeID) (profit.MagnitudeChangeAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	a, ok := m.magnitudes[id]
+	if !ok {
+		return profit.MagnitudeChangeAnalysis{}, ErrNotFound
+	}
+	return a, nil
+}
+
+// ListMagnitudeChanges returns all stored changes, newest first.
+func (m *Memory) ListMagnitudeChanges(_ context.Context) ([]profit.MagnitudeChangeAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]profit.MagnitudeChangeAnalysis, 0, len(m.magnitudes))
+	for _, a := range m.magnitudes {
 		out = append(out, a)
 	}
 	sort.Slice(out, func(i, j int) bool {

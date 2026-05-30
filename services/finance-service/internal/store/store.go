@@ -87,4 +87,24 @@ type Store interface {
 	GetPriceFluctuationAnalysis(ctx context.Context, id profit.PriceFluctuationAnalysisID) (profit.PriceFluctuationAnalysis, error)
 	// ListPriceFluctuationAnalyses returns all stored analyses, newest first.
 	ListPriceFluctuationAnalyses(ctx context.Context) ([]profit.PriceFluctuationAnalysis, error)
+
+	// CreateCompositionEffect persists an organic-composition comparison (Vol. III
+	// Ch. 7) — two capitals of equal s and v but different c, and the gap in their
+	// rates of profit — assigning an ID and created-at timestamp when absent. It
+	// returns ErrAlreadyExists if the ID collides.
+	CreateCompositionEffect(ctx context.Context, a profit.CompositionEffectAnalysis) (profit.CompositionEffectAnalysis, error)
+	// GetCompositionEffect returns the comparison with the given ID, or ErrNotFound.
+	GetCompositionEffect(ctx context.Context, id profit.CompositionEffectID) (profit.CompositionEffectAnalysis, error)
+	// ListCompositionEffects returns all stored comparisons, newest first.
+	ListCompositionEffects(ctx context.Context) ([]profit.CompositionEffectAnalysis, error)
+
+	// CreateMagnitudeChange persists a capital-magnitude change (Vol. III Ch. 7) —
+	// a change in the size of capital and what becomes of its rate of profit —
+	// assigning an ID and created-at timestamp when absent. It returns
+	// ErrAlreadyExists if the ID collides.
+	CreateMagnitudeChange(ctx context.Context, a profit.MagnitudeChangeAnalysis) (profit.MagnitudeChangeAnalysis, error)
+	// GetMagnitudeChange returns the change with the given ID, or ErrNotFound.
+	GetMagnitudeChange(ctx context.Context, id profit.MagnitudeChangeID) (profit.MagnitudeChangeAnalysis, error)
+	// ListMagnitudeChanges returns all stored changes, newest first.
+	ListMagnitudeChanges(ctx context.Context) ([]profit.MagnitudeChangeAnalysis, error)
 }
