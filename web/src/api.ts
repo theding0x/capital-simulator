@@ -2335,4 +2335,21 @@ export const financeApi = {
     ),
   getHistoricalMerchantCapital: (id: string) =>
     http<import("./types").HistoricalMerchantCapitalResponse>(`/v1/merchant/historical-forms/${id}`),
+
+  // Vol. III Ch. 21 — Interest-Bearing Capital
+  createInterestBearingCapital: (body: {
+    money_advanced: number;
+    interest_rate_bp: number;
+    loan_term_days: number;
+  }) =>
+    http<import("./types").InterestBearingCapital>("/v1/credit/interest-bearing-capital", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listInterestBearingCapitals: () =>
+    http<{ items: import("./types").InterestBearingCapital[] }>("/v1/credit/interest-bearing-capital").then(
+      (r) => r.items ?? [],
+    ),
+  getInterestBearingCapital: (id: string) =>
+    http<import("./types").InterestBearingCapital>(`/v1/credit/interest-bearing-capital/${id}`),
 };

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
@@ -14,68 +15,70 @@ import (
 
 // Memory is an in-memory Store for unit tests and local development.
 type Memory struct {
-	mu                 sync.RWMutex
-	now                func() time.Time
-	costPrices         map[profit.CostPriceID]profit.CostPrice
-	profitRates        map[profit.ProfitRateID]profit.ProfitRateAnalysis
-	variations         map[profit.VariationAnalysisID]profit.VariationAnalysis
-	turnovers          map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
-	economies          map[profit.EconomyAnalysisID]profit.EconomyAnalysis
-	priceFlux          map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
-	compositions       map[profit.CompositionEffectID]profit.CompositionEffectAnalysis
-	magnitudes         map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis
-	spheres            map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere
-	generalRates       map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate
-	pricesOfProduction map[avgprofit.PriceOfProductionID]avgprofit.PriceOfProduction
-	marketValues       map[avgprofit.MarketValueID]avgprofit.MarketValue
-	surplusProfits     map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit
-	equalisations      map[avgprofit.EqualisationID]avgprofit.Equalisation
-	wageEffects        map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis
-	priceChanges       map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange
-	trajectories       map[tendency.CompositionTrajectoryID]tendency.CompositionTrajectory
-	rateMasses         map[tendency.RateMassContradictionID]tendency.RateMassContradiction
-	counterForces      map[tendency.CounteractingForceID]tendency.CounteractingForce
-	counterScenarios   map[tendency.CounteractingScenarioID]tendency.CounteractingScenario
-	crises             map[tendency.CrisisID]tendency.Crisis
-	contradictions     map[tendency.InternalContradictionID]tendency.InternalContradiction
-	commercialCapitals  map[merchant.CommercialCapitalID]merchant.CommercialCapital
-	commercialProfits   map[merchant.CommercialProfitID]merchant.CommercialProfit
-	turnoversM          map[merchant.MerchantTurnoverID]merchant.MerchantTurnover
-	moneyDealingCapitals         map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital
-	historicalMerchantCapitals   map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital
+	mu                         sync.RWMutex
+	now                        func() time.Time
+	costPrices                 map[profit.CostPriceID]profit.CostPrice
+	profitRates                map[profit.ProfitRateID]profit.ProfitRateAnalysis
+	variations                 map[profit.VariationAnalysisID]profit.VariationAnalysis
+	turnovers                  map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
+	economies                  map[profit.EconomyAnalysisID]profit.EconomyAnalysis
+	priceFlux                  map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
+	compositions               map[profit.CompositionEffectID]profit.CompositionEffectAnalysis
+	magnitudes                 map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis
+	spheres                    map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere
+	generalRates               map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate
+	pricesOfProduction         map[avgprofit.PriceOfProductionID]avgprofit.PriceOfProduction
+	marketValues               map[avgprofit.MarketValueID]avgprofit.MarketValue
+	surplusProfits             map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit
+	equalisations              map[avgprofit.EqualisationID]avgprofit.Equalisation
+	wageEffects                map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis
+	priceChanges               map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange
+	trajectories               map[tendency.CompositionTrajectoryID]tendency.CompositionTrajectory
+	rateMasses                 map[tendency.RateMassContradictionID]tendency.RateMassContradiction
+	counterForces              map[tendency.CounteractingForceID]tendency.CounteractingForce
+	counterScenarios           map[tendency.CounteractingScenarioID]tendency.CounteractingScenario
+	crises                     map[tendency.CrisisID]tendency.Crisis
+	contradictions             map[tendency.InternalContradictionID]tendency.InternalContradiction
+	commercialCapitals         map[merchant.CommercialCapitalID]merchant.CommercialCapital
+	commercialProfits          map[merchant.CommercialProfitID]merchant.CommercialProfit
+	turnoversM                 map[merchant.MerchantTurnoverID]merchant.MerchantTurnover
+	moneyDealingCapitals       map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital
+	historicalMerchantCapitals map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital
+	interestBearingCapitals    map[credit.InterestBearingCapitalID]credit.InterestBearingCapital
 }
 
 // NewMemory returns an empty in-memory store.
 func NewMemory() *Memory {
 	return &Memory{
-		now:                time.Now,
-		costPrices:         make(map[profit.CostPriceID]profit.CostPrice),
-		profitRates:        make(map[profit.ProfitRateID]profit.ProfitRateAnalysis),
-		variations:         make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
-		turnovers:          make(map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis),
-		economies:          make(map[profit.EconomyAnalysisID]profit.EconomyAnalysis),
-		priceFlux:          make(map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis),
-		compositions:       make(map[profit.CompositionEffectID]profit.CompositionEffectAnalysis),
-		magnitudes:         make(map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis),
-		spheres:            make(map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere),
-		generalRates:       make(map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate),
-		pricesOfProduction: make(map[avgprofit.PriceOfProductionID]avgprofit.PriceOfProduction),
-		marketValues:       make(map[avgprofit.MarketValueID]avgprofit.MarketValue),
-		surplusProfits:     make(map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit),
-		equalisations:      make(map[avgprofit.EqualisationID]avgprofit.Equalisation),
-		wageEffects:        make(map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis),
-		priceChanges:       make(map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange),
-		trajectories:       make(map[tendency.CompositionTrajectoryID]tendency.CompositionTrajectory),
-		rateMasses:         make(map[tendency.RateMassContradictionID]tendency.RateMassContradiction),
-		counterForces:      make(map[tendency.CounteractingForceID]tendency.CounteractingForce),
-		counterScenarios:   make(map[tendency.CounteractingScenarioID]tendency.CounteractingScenario),
-		crises:             make(map[tendency.CrisisID]tendency.Crisis),
-		contradictions:     make(map[tendency.InternalContradictionID]tendency.InternalContradiction),
-		commercialCapitals:   make(map[merchant.CommercialCapitalID]merchant.CommercialCapital),
-		commercialProfits:    make(map[merchant.CommercialProfitID]merchant.CommercialProfit),
-		turnoversM:           make(map[merchant.MerchantTurnoverID]merchant.MerchantTurnover),
+		now:                        time.Now,
+		costPrices:                 make(map[profit.CostPriceID]profit.CostPrice),
+		profitRates:                make(map[profit.ProfitRateID]profit.ProfitRateAnalysis),
+		variations:                 make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
+		turnovers:                  make(map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis),
+		economies:                  make(map[profit.EconomyAnalysisID]profit.EconomyAnalysis),
+		priceFlux:                  make(map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis),
+		compositions:               make(map[profit.CompositionEffectID]profit.CompositionEffectAnalysis),
+		magnitudes:                 make(map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis),
+		spheres:                    make(map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere),
+		generalRates:               make(map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate),
+		pricesOfProduction:         make(map[avgprofit.PriceOfProductionID]avgprofit.PriceOfProduction),
+		marketValues:               make(map[avgprofit.MarketValueID]avgprofit.MarketValue),
+		surplusProfits:             make(map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit),
+		equalisations:              make(map[avgprofit.EqualisationID]avgprofit.Equalisation),
+		wageEffects:                make(map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis),
+		priceChanges:               make(map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange),
+		trajectories:               make(map[tendency.CompositionTrajectoryID]tendency.CompositionTrajectory),
+		rateMasses:                 make(map[tendency.RateMassContradictionID]tendency.RateMassContradiction),
+		counterForces:              make(map[tendency.CounteractingForceID]tendency.CounteractingForce),
+		counterScenarios:           make(map[tendency.CounteractingScenarioID]tendency.CounteractingScenario),
+		crises:                     make(map[tendency.CrisisID]tendency.Crisis),
+		contradictions:             make(map[tendency.InternalContradictionID]tendency.InternalContradiction),
+		commercialCapitals:         make(map[merchant.CommercialCapitalID]merchant.CommercialCapital),
+		commercialProfits:          make(map[merchant.CommercialProfitID]merchant.CommercialProfit),
+		turnoversM:                 make(map[merchant.MerchantTurnoverID]merchant.MerchantTurnover),
 		moneyDealingCapitals:       make(map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital),
 		historicalMerchantCapitals: make(map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital),
+		interestBearingCapitals:    make(map[credit.InterestBearingCapitalID]credit.InterestBearingCapital),
 	}
 }
 
@@ -1213,6 +1216,51 @@ func (m *Memory) ListHistoricalMerchantCapitals(_ context.Context) ([]merchant.H
 	out := make([]merchant.HistoricalMerchantCapital, 0, len(m.historicalMerchantCapitals))
 	for _, hm := range m.historicalMerchantCapitals {
 		out = append(out, hm)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateInterestBearingCapital stores ibc, assigning an ID and timestamp when absent.
+func (m *Memory) CreateInterestBearingCapital(_ context.Context, ibc credit.InterestBearingCapital) (credit.InterestBearingCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if ibc.ID.IsZero() {
+		ibc.ID = credit.NewInterestBearingCapitalID()
+	}
+	if _, exists := m.interestBearingCapitals[ibc.ID]; exists {
+		return credit.InterestBearingCapital{}, ErrAlreadyExists
+	}
+	if ibc.CreatedAt.IsZero() {
+		ibc.CreatedAt = m.now().UTC()
+	}
+	m.interestBearingCapitals[ibc.ID] = ibc
+	return ibc, nil
+}
+
+// GetInterestBearingCapital returns the interest-bearing-capital record with id, or ErrNotFound.
+func (m *Memory) GetInterestBearingCapital(_ context.Context, id credit.InterestBearingCapitalID) (credit.InterestBearingCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	ibc, ok := m.interestBearingCapitals[id]
+	if !ok {
+		return credit.InterestBearingCapital{}, ErrNotFound
+	}
+	return ibc, nil
+}
+
+// ListInterestBearingCapitals returns all stored interest-bearing-capital records, newest first.
+func (m *Memory) ListInterestBearingCapitals(_ context.Context) ([]credit.InterestBearingCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.InterestBearingCapital, 0, len(m.interestBearingCapitals))
+	for _, ibc := range m.interestBearingCapitals {
+		out = append(out, ibc)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)
