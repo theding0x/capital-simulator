@@ -364,6 +364,11 @@ func main() {
 	// Vol. III Ch. 11 — Effects of General Wage Fluctuations on Prices of Production → finance-service
 	srv.Handle("/v1/avgprofit/wage-effect", financeProxy)
 	srv.Handle("/v1/avgprofit/wage-effect/{rest...}", financeProxy)
+	// Vol. III Ch. 12 — Supplementary Remarks (on prices of production) → finance-service
+	srv.Handle("/v1/avgprofit/price-change", financeProxy)
+	srv.Handle("/v1/avgprofit/price-change/{rest...}", financeProxy)
+	srv.Handle("/v1/avgprofit/compensation-ground", financeProxy)
+	srv.Handle("/v1/avgprofit/summary", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)

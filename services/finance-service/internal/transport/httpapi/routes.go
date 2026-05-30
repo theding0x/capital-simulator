@@ -71,4 +71,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/avgprofit/wage-effect", h.CreateWageEffectAnalysis)
 	s.HandleFunc("GET /v1/avgprofit/wage-effect", h.ListWageEffectAnalyses)
 	s.HandleFunc("GET /v1/avgprofit/wage-effect/{id}", h.GetWageEffectAnalysis)
+
+	// Vol. III Ch. 12 — Supplementary Remarks (on prices of production)
+	s.HandleFunc("POST /v1/avgprofit/price-change", h.CreatePriceOfProductionChange)
+	s.HandleFunc("GET /v1/avgprofit/price-change/{id}", h.GetPriceOfProductionChange)
+	s.HandleFunc("POST /v1/avgprofit/compensation-ground", h.ComputeCompensationGround)
+	s.HandleFunc("GET /v1/avgprofit/summary", h.GetPartIISummary)
 }

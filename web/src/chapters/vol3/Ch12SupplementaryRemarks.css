@@ -1,0 +1,221 @@
+.v3-ch12 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.v3-ch12-intro p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.v3-ch12-error {
+  color: var(--colour-error, #c0392b);
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0;
+}
+
+.v3-ch12-section {
+  background: var(--colour-surface, #fff);
+  border: 1px solid var(--colour-border, #e0e0e0);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.v3-ch12-section h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.v3-ch12-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: flex-end;
+}
+
+.v3-ch12-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--colour-muted, #666);
+}
+
+.v3-ch12-form input[type="number"] {
+  width: 7rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--colour-border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch12-form input[type="text"] {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--colour-border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch12-grow {
+  flex: 1 1 18rem;
+}
+
+.v3-ch12-causes {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: 1px solid var(--colour-border, #e0e0e0);
+  border-radius: 4px;
+  padding: 0.6rem 0.8rem;
+  margin: 0;
+}
+
+.v3-ch12-causes legend {
+  font-size: 0.78rem;
+  color: var(--colour-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0 0.3rem;
+}
+
+.v3-ch12-radio {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.5rem !important;
+  font-size: 0.85rem !important;
+  color: var(--colour-text, #222) !important;
+  cursor: pointer;
+}
+
+.v3-ch12-btn {
+  padding: 0.4rem 1rem;
+  background: var(--colour-primary, #2c3e50);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.v3-ch12-btn:hover {
+  opacity: 0.88;
+}
+
+/* Derived flags */
+.v3-ch12-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.v3-ch12-flag {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.v3-ch12-flag.on  { background: #d1fae5; color: #065f46; }
+.v3-ch12-flag.off { background: #f3f4f6; color: #6b7280; }
+
+/* Compensation myth-buster */
+.v3-ch12-myth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.v3-ch12-myth-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.v3-ch12-myth-label {
+  min-width: 9rem;
+  font-size: 0.78rem;
+  color: var(--colour-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.v3-ch12-myth-value {
+  font-weight: 600;
+}
+
+.v3-ch12-myth-appears {
+  color: #b45309;
+  font-style: italic;
+}
+
+.v3-ch12-myth-actual {
+  color: #065f46;
+  font-weight: 600;
+}
+
+.v3-ch12-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.v3-ch12-tag-yes { background: #fee2e2; color: #991b1b; }
+.v3-ch12-tag-no  { background: #d1fae5; color: #065f46; }
+
+/* Part II summary */
+.v3-ch12-banner {
+  padding: 0.6rem 0.9rem;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 0.9rem;
+}
+
+.v3-ch12-banner.ok  { background: #d1fae5; color: #065f46; }
+.v3-ch12-banner.bad { background: #fee2e2; color: #991b1b; }
+
+.v3-ch12-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+}
+
+.v3-ch12-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--colour-bg, #f9fafb);
+  border: 1px solid var(--colour-border, #eee);
+  border-radius: 4px;
+  padding: 0.5rem 0.7rem;
+}
+
+.v3-ch12-stat-label {
+  font-size: 0.74rem;
+  color: var(--colour-muted, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.v3-ch12-stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.v3-ch12-counts {
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  color: var(--colour-muted, #666);
+}

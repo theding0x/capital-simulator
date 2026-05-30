@@ -861,6 +861,58 @@ func TestMemory_ListWageEffectAnalysesNeverNil(t *testing.T) {
 	}
 }
 
+// --- PriceOfProductionChange store tests (Ch. 12) ---
+
+func TestMemory_PriceOfProductionChangeRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Cotton: general-rate change, old price 122 → new price 130.
+	c := avgprofit.ComputePriceOfProductionChange("cotton", avgprofit.CauseGeneralRateChange, 122, 130)
+	created, err := m.CreatePriceOfProductionChange(ctx, c)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+
+	got, err := m.GetPriceOfProductionChange(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetPriceOfProductionChangeNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetPriceOfProductionChange(context.Background(), avgprofit.PriceOfProductionChangeID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreatePriceOfProductionChangeDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	c := avgprofit.ComputePriceOfProductionChange("cotton", avgprofit.CauseGeneralRateChange, 122, 130)
+	c.ID = avgprofit.PriceOfProductionChangeID("fixed-ppc-id-ch12")
+
+	if _, err := m.CreatePriceOfProductionChange(ctx, c); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreatePriceOfProductionChange(ctx, c); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
 func TestMemory_ListWageEffectAnalyses_NewestFirst(t *testing.T) {
 	t.Parallel()
 	m := NewMemory()
