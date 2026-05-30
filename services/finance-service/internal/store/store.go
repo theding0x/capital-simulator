@@ -136,4 +136,25 @@ type Store interface {
 	GetPriceOfProduction(ctx context.Context, id avgprofit.PriceOfProductionID) (avgprofit.PriceOfProduction, error)
 	// ListPricesOfProduction returns all stored records, newest first.
 	ListPricesOfProduction(ctx context.Context) ([]avgprofit.PriceOfProduction, error)
+
+	// CreateMarketValue persists a market-value record (Vol. III Ch. 10) —
+	// the value set by bulk production conditions in a branch — assigning an ID
+	// and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateMarketValue(ctx context.Context, v avgprofit.MarketValue) (avgprofit.MarketValue, error)
+	// GetMarketValue returns the record with the given ID, or ErrNotFound.
+	GetMarketValue(ctx context.Context, id avgprofit.MarketValueID) (avgprofit.MarketValue, error)
+
+	// CreateSurplusProfit persists a surplus-profit record (Vol. III Ch. 10) —
+	// the signed extra profit of a below-market-value firm — assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateSurplusProfit(ctx context.Context, s avgprofit.SurplusProfit) (avgprofit.SurplusProfit, error)
+	// GetSurplusProfit returns the record with the given ID, or ErrNotFound.
+	GetSurplusProfit(ctx context.Context, id avgprofit.SurplusProfitID) (avgprofit.SurplusProfit, error)
+
+	// CreateEqualisation persists an equalisation record (Vol. III Ch. 10) —
+	// a sphere's competitive convergence toward the general rate — assigning an ID
+	// and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateEqualisation(ctx context.Context, e avgprofit.Equalisation) (avgprofit.Equalisation, error)
+	// GetEqualisation returns the record with the given ID, or ErrNotFound.
+	GetEqualisation(ctx context.Context, id avgprofit.EqualisationID) (avgprofit.Equalisation, error)
 }

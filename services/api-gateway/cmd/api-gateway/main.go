@@ -354,6 +354,13 @@ func main() {
 	srv.Handle("/v1/avgprofit/price-of-production", financeProxy)
 	srv.Handle("/v1/avgprofit/price-of-production/{rest...}", financeProxy)
 	srv.Handle("/v1/avgprofit/social-aggregate", financeProxy)
+	// Vol. III Ch. 10 — Equalisation of the General Rate of Profit Through Competition → finance-service
+	srv.Handle("/v1/avgprofit/market-value", financeProxy)
+	srv.Handle("/v1/avgprofit/market-value/{rest...}", financeProxy)
+	srv.Handle("/v1/avgprofit/surplus-profit", financeProxy)
+	srv.Handle("/v1/avgprofit/surplus-profit/{rest...}", financeProxy)
+	srv.Handle("/v1/avgprofit/capital-flow", financeProxy)
+	srv.Handle("/v1/avgprofit/equalisation/{rest...}", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)

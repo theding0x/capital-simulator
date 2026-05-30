@@ -12,19 +12,22 @@ import (
 
 // Memory is an in-memory Store for unit tests and local development.
 type Memory struct {
-	mu                sync.RWMutex
-	now               func() time.Time
-	costPrices        map[profit.CostPriceID]profit.CostPrice
-	profitRates       map[profit.ProfitRateID]profit.ProfitRateAnalysis
-	variations        map[profit.VariationAnalysisID]profit.VariationAnalysis
-	turnovers         map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
-	economies         map[profit.EconomyAnalysisID]profit.EconomyAnalysis
-	priceFlux         map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
-	compositions      map[profit.CompositionEffectID]profit.CompositionEffectAnalysis
-	magnitudes        map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis
-	spheres           map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere
-	generalRates      map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate
+	mu                 sync.RWMutex
+	now                func() time.Time
+	costPrices         map[profit.CostPriceID]profit.CostPrice
+	profitRates        map[profit.ProfitRateID]profit.ProfitRateAnalysis
+	variations         map[profit.VariationAnalysisID]profit.VariationAnalysis
+	turnovers          map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
+	economies          map[profit.EconomyAnalysisID]profit.EconomyAnalysis
+	priceFlux          map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
+	compositions       map[profit.CompositionEffectID]profit.CompositionEffectAnalysis
+	magnitudes         map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis
+	spheres            map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere
+	generalRates       map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate
 	pricesOfProduction map[avgprofit.PriceOfProductionID]avgprofit.PriceOfProduction
+	marketValues       map[avgprofit.MarketValueID]avgprofit.MarketValue
+	surplusProfits     map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit
+	equalisations      map[avgprofit.EqualisationID]avgprofit.Equalisation
 }
 
 // NewMemory returns an empty in-memory store.
@@ -42,6 +45,9 @@ func NewMemory() *Memory {
 		spheres:            make(map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere),
 		generalRates:       make(map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate),
 		pricesOfProduction: make(map[avgprofit.PriceOfProductionID]avgprofit.PriceOfProduction),
+		marketValues:       make(map[avgprofit.MarketValueID]avgprofit.MarketValue),
+		surplusProfits:     make(map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit),
+		equalisations:      make(map[avgprofit.EqualisationID]avgprofit.Equalisation),
 	}
 }
 
@@ -523,4 +529,94 @@ func (m *Memory) ListPricesOfProduction(_ context.Context) ([]avgprofit.PriceOfP
 		return out[i].CreatedAt.After(out[j].CreatedAt)
 	})
 	return out, nil
+}
+
+// CreateMarketValue stores v, assigning an ID and timestamp when absent.
+func (m *Memory) CreateMarketValue(_ context.Context, v avgprofit.MarketValue) (avgprofit.MarketValue, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if v.ID.IsZero() {
+		v.ID = avgprofit.NewMarketValueID()
+	}
+	if _, exists := m.marketValues[v.ID]; exists {
+		return avgprofit.MarketValue{}, ErrAlreadyExists
+	}
+	if v.CreatedAt.IsZero() {
+		v.CreatedAt = m.now().UTC()
+	}
+	m.marketValues[v.ID] = v
+	return v, nil
+}
+
+// GetMarketValue returns the market-value record with id, or ErrNotFound.
+func (m *Memory) GetMarketValue(_ context.Context, id avgprofit.MarketValueID) (avgprofit.MarketValue, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	v, ok := m.marketValues[id]
+	if !ok {
+		return avgprofit.MarketValue{}, ErrNotFound
+	}
+	return v, nil
+}
+
+// CreateSurplusProfit stores s, assigning an ID and timestamp when absent.
+func (m *Memory) CreateSurplusProfit(_ context.Context, s avgprofit.SurplusProfit) (avgprofit.SurplusProfit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID.IsZero() {
+		s.ID = avgprofit.NewSurplusProfitID()
+	}
+	if _, exists := m.surplusProfits[s.ID]; exists {
+		return avgprofit.SurplusProfit{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	m.surplusProfits[s.ID] = s
+	return s, nil
+}
+
+// GetSurplusProfit returns the surplus-profit record with id, or ErrNotFound.
+func (m *Memory) GetSurplusProfit(_ context.Context, id avgprofit.SurplusProfitID) (avgprofit.SurplusProfit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	s, ok := m.surplusProfits[id]
+	if !ok {
+		return avgprofit.SurplusProfit{}, ErrNotFound
+	}
+	return s, nil
+}
+
+// CreateEqualisation stores e, assigning an ID and timestamp when absent.
+func (m *Memory) CreateEqualisation(_ context.Context, e avgprofit.Equalisation) (avgprofit.Equalisation, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if e.ID.IsZero() {
+		e.ID = avgprofit.NewEqualisationID()
+	}
+	if _, exists := m.equalisations[e.ID]; exists {
+		return avgprofit.Equalisation{}, ErrAlreadyExists
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = m.now().UTC()
+	}
+	m.equalisations[e.ID] = e
+	return e, nil
+}
+
+// GetEqualisation returns the equalisation record with id, or ErrNotFound.
+func (m *Memory) GetEqualisation(_ context.Context, id avgprofit.EqualisationID) (avgprofit.Equalisation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	e, ok := m.equalisations[id]
+	if !ok {
+		return avgprofit.Equalisation{}, ErrNotFound
+	}
+	return e, nil
 }

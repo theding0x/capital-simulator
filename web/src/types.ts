@@ -3289,3 +3289,48 @@ export interface SocialCapitalAggregateResponse {
   sum_average_profits: number;
   value_conserved: boolean;
 }
+
+// MarketValueResponse mirrors avgprofit.MarketValue.
+export interface MarketValueResponse {
+  id: string;
+  sphere_name: string;
+  bulk_condition_value: number;
+  best_condition_value: number;
+  worst_condition_value: number;
+  value: number; // == bulk_condition_value
+  created_at: string;
+}
+
+// SurplusProfitResponse mirrors avgprofit.SurplusProfit.
+export interface SurplusProfitResponse {
+  id: string;
+  firm_name: string;
+  individual_value: number;
+  market_value: number;
+  output_qty: number;
+  general_rate: number;
+  amount: number; // signed: positive = extra profit, negative = shortfall
+  created_at: string;
+}
+
+// CapitalFlowResponse mirrors avgprofit.CapitalFlow.
+export interface CapitalFlowResponse {
+  sphere_name: string;
+  current_sphere_rate: number;
+  general_rate: number;
+  market_price: number;
+  market_value: number;
+  direction: "inflow" | "outflow" | "stable";
+}
+
+// EqualisationResponse mirrors avgprofit.Equalisation.
+export interface EqualisationResponse {
+  id: string;
+  sphere_name: string;
+  initial_rate: number;
+  target_rate: number;
+  direction: "inflow" | "outflow" | "stable";
+  is_converging: boolean;
+  flow: CapitalFlowResponse;
+  created_at: string;
+}
