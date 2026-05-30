@@ -103,6 +103,10 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("GET /v1/merchant/turnover", h.ListMerchantTurnovers)
 	mux.HandleFunc("GET /v1/merchant/turnover/{id}", h.GetMerchantTurnover)
 	mux.HandleFunc("POST /v1/merchant/turnover-effect", h.ComputeTurnoverEffect)
+	// Vol. III Ch. 19 — Money-Dealing Capital
+	mux.HandleFunc("POST /v1/merchant/money-dealing", h.CreateMoneyDealingCapital)
+	mux.HandleFunc("GET /v1/merchant/money-dealing", h.ListMoneyDealingCapitals)
+	mux.HandleFunc("GET /v1/merchant/money-dealing/{id}", h.GetMoneyDealingCapital)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

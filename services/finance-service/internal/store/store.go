@@ -259,4 +259,15 @@ type Store interface {
 	// ListMerchantTurnovers returns all stored merchant-turnover records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListMerchantTurnovers(ctx context.Context) ([]merchant.MerchantTurnover, error)
+
+	// CreateMoneyDealingCapital persists a money-dealing-capital record (Vol. III Ch. 19 —
+	// technical monetary operations: receipt/payment/exchange/safekeeping/bookkeeping;
+	// MoneyDealingProfit = roundHalfUp(money_advanced×rate); NewValueCreated == 0), assigning an
+	// ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateMoneyDealingCapital(ctx context.Context, m merchant.MoneyDealingCapital) (merchant.MoneyDealingCapital, error)
+	// GetMoneyDealingCapital returns the money-dealing-capital record with the given ID, or ErrNotFound.
+	GetMoneyDealingCapital(ctx context.Context, id merchant.MoneyDealingCapitalID) (merchant.MoneyDealingCapital, error)
+	// ListMoneyDealingCapitals returns all stored money-dealing-capital records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListMoneyDealingCapitals(ctx context.Context) ([]merchant.MoneyDealingCapital, error)
 }

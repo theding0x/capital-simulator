@@ -3619,3 +3619,26 @@ export interface MerchantPriceOfProductionResponse {
   average_profit: number;      // pence; >=0
   price_of_production: number; // pence; = cost_price + average_profit
 }
+
+// MoneyOperationKind mirrors merchant.MoneyOperationKind (Vol. III Ch. 19).
+// 1=Receipt, 2=Payment, 3=Exchange, 4=Safekeeping, 5=Bookkeeping.
+export type MoneyOperationKind = 1 | 2 | 3 | 4 | 5;
+
+// MoneyDealingCapitalResponse mirrors merchant.MoneyDealingCapital (Vol. III Ch. 19).
+// MoneyDealingProfit = roundHalfUp(money_advanced * general_rate_bp, 10000).
+// NewValueCreated is always 0 — money-dealing capital appropriates but does not create surplus-value.
+export interface MoneyDealingCapitalResponse {
+  id: string;
+  money_advanced: number;       // pence; > 0
+  general_rate_bp: number;      // bp; > 0
+  operation_kinds: MoneyOperationKind[]; // each 1–5
+  money_dealing_profit: number; // pence; derived
+  new_value_created: number;    // always 0
+  created_at: string;
+}
+
+// MoneyDealingCircuitResponse mirrors merchant.MoneyDealingCircuit (value object, M—M′ circuit).
+export interface MoneyDealingCircuitResponse {
+  money_advanced: number; // pence; > 0
+  money_returned: number; // pence; > money_advanced
+}
