@@ -1182,6 +1182,121 @@ func scanEqualisation(s rowScanner) (avgprofit.Equalisation, error) {
 	}, nil
 }
 
+// CreateWageEffectAnalysis persists a, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateWageEffectAnalysis(ctx context.Context, a avgprofit.WageEffectAnalysis) (avgprofit.WageEffectAnalysis, error) {
+	if a.ID.IsZero() {
+		a.ID = avgprofit.NewWageEffectAnalysisID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	if a.Outcomes == nil {
+		a.Outcomes = []avgprofit.SphereWageOutcome{}
+	}
+
+	outcomesJSON, err := json.Marshal(a.Outcomes)
+	if err != nil {
+		return avgprofit.WageEffectAnalysis{}, err
+	}
+	avgOutcomeJSON, err := json.Marshal(a.AverageOutcome)
+	if err != nil {
+		return avgprofit.WageEffectAnalysis{}, err
+	}
+
+	const q = `INSERT INTO wage_effect_analyses
+		(id, base_constant, base_variable, s_rate, wage_factor, old_general_rate, new_general_rate,
+		 kind, average_outcome_json, outcomes_json, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(a.ID),
+		int64(a.BaseConstant), int64(a.BaseVariable), int64(a.SRate),
+		a.WageFactor, int64(a.OldGeneralRate), int64(a.NewGeneralRate),
+		string(a.Kind), string(avgOutcomeJSON), string(outcomesJSON),
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return avgprofit.WageEffectAnalysis{}, ErrAlreadyExists
+		}
+		return avgprofit.WageEffectAnalysis{}, err
+	}
+	return a, nil
+}
+
+// GetWageEffectAnalysis returns the analysis with id, or ErrNotFound.
+func (m *MySQL) GetWageEffectAnalysis(ctx context.Context, id avgprofit.WageEffectAnalysisID) (avgprofit.WageEffectAnalysis, error) {
+	const q = `SELECT id, base_constant, base_variable, s_rate, wage_factor,
+		old_general_rate, new_general_rate, kind, average_outcome_json, outcomes_json, created_at
+		FROM wage_effect_analyses WHERE id = ?`
+	return scanWageEffectAnalysis(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListWageEffectAnalyses returns all stored analyses, newest first.
+func (m *MySQL) ListWageEffectAnalyses(ctx context.Context) ([]avgprofit.WageEffectAnalysis, error) {
+	const q = `SELECT id, base_constant, base_variable, s_rate, wage_factor,
+		old_general_rate, new_general_rate, kind, average_outcome_json, outcomes_json, created_at
+		FROM wage_effect_analyses ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []avgprofit.WageEffectAnalysis
+	for rows.Next() {
+		a, err := scanWageEffectAnalysis(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
+func scanWageEffectAnalysis(s rowScanner) (avgprofit.WageEffectAnalysis, error) {
+	var (
+		id, kind, avgOutcomeJSON, outcomesJSON  string
+		baseC, baseV, sRate, wageFactor         int64
+		oldRate, newRate                        int64
+		createdAt                               time.Time
+	)
+	err := s.Scan(&id, &baseC, &baseV, &sRate, &wageFactor,
+		&oldRate, &newRate, &kind, &avgOutcomeJSON, &outcomesJSON, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return avgprofit.WageEffectAnalysis{}, ErrNotFound
+		}
+		return avgprofit.WageEffectAnalysis{}, err
+	}
+
+	var avgOutcome avgprofit.SphereWageOutcome
+	if err := json.Unmarshal([]byte(avgOutcomeJSON), &avgOutcome); err != nil {
+		return avgprofit.WageEffectAnalysis{}, err
+	}
+
+	var outcomes []avgprofit.SphereWageOutcome
+	if err := json.Unmarshal([]byte(outcomesJSON), &outcomes); err != nil {
+		return avgprofit.WageEffectAnalysis{}, err
+	}
+	if outcomes == nil {
+		outcomes = []avgprofit.SphereWageOutcome{}
+	}
+
+	return avgprofit.WageEffectAnalysis{
+		ID:             avgprofit.WageEffectAnalysisID(id),
+		BaseConstant:   avgprofit.ConstantCapital(baseC),
+		BaseVariable:   avgprofit.VariableCapital(baseV),
+		SRate:          avgprofit.RateOfSurplusValue(sRate),
+		WageFactor:     wageFactor,
+		OldGeneralRate: avgprofit.SphereProfitRate(oldRate),
+		NewGeneralRate: avgprofit.SphereProfitRate(newRate),
+		Kind:           avgprofit.WageFluctuationKind(kind),
+		AverageOutcome: avgOutcome,
+		Outcomes:       outcomes,
+		CreatedAt:      createdAt,
+	}, nil
+}
+
 // isDuplicate reports whether err is a MySQL duplicate-key error (1062).
 func isDuplicate(err error) bool {
 	if err == nil {

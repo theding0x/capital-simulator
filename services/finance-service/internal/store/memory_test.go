@@ -767,3 +767,130 @@ func TestMemory_CreateEqualisationDuplicate(t *testing.T) {
 		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
 	}
 }
+
+// --- WageEffectAnalysis store tests (Ch. 11) ---
+
+func TestMemory_WageEffectAnalysisRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// §main fixture: base 80c+20v, s'=100%, factor 125 (wage rise).
+	spheres := []avgprofit.SphereInput{
+		{Name: "lower", C: 50, V: 50},
+		{Name: "higher", C: 92, V: 8},
+	}
+	a := avgprofit.ComputeWageEffectAnalysis(80, 20, 10000, 125, spheres)
+
+	created, err := m.CreateWageEffectAnalysis(ctx, a)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if created.OldGeneralRate != 2000 {
+		t.Errorf("OldGeneralRate = %d, want 2000", created.OldGeneralRate)
+	}
+	if created.NewGeneralRate != 1429 {
+		t.Errorf("NewGeneralRate = %d, want 1429", created.NewGeneralRate)
+	}
+	if len(created.Outcomes) != 2 {
+		t.Fatalf("Outcomes len = %d, want 2", len(created.Outcomes))
+	}
+
+	got, err := m.GetWageEffectAnalysis(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID {
+		t.Errorf("round-trip ID mismatch: got %s, want %s", got.ID, created.ID)
+	}
+	if got.OldGeneralRate != created.OldGeneralRate || got.NewGeneralRate != created.NewGeneralRate {
+		t.Errorf("round-trip rate mismatch: got old=%d new=%d, want old=%d new=%d",
+			got.OldGeneralRate, got.NewGeneralRate, created.OldGeneralRate, created.NewGeneralRate)
+	}
+	if len(got.Outcomes) != len(created.Outcomes) {
+		t.Errorf("Outcomes len mismatch: got %d, want %d", len(got.Outcomes), len(created.Outcomes))
+	}
+	for i, o := range got.Outcomes {
+		if o != created.Outcomes[i] {
+			t.Errorf("Outcomes[%d] mismatch:\n got  %+v\n want %+v", i, o, created.Outcomes[i])
+		}
+	}
+	if got.AverageOutcome != created.AverageOutcome {
+		t.Errorf("AverageOutcome mismatch:\n got  %+v\n want %+v", got.AverageOutcome, created.AverageOutcome)
+	}
+}
+
+func TestMemory_GetWageEffectAnalysisNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetWageEffectAnalysis(context.Background(), avgprofit.WageEffectAnalysisID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateWageEffectAnalysisDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	a := avgprofit.ComputeWageEffectAnalysis(80, 20, 10000, 125, nil)
+	a.ID = avgprofit.WageEffectAnalysisID("fixed-wage-id-ch11")
+
+	if _, err := m.CreateWageEffectAnalysis(ctx, a); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateWageEffectAnalysis(ctx, a); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListWageEffectAnalysesNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListWageEffectAnalyses(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListWageEffectAnalyses_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Create two analyses; the second should appear first in the list.
+	aFirst := avgprofit.ComputeWageEffectAnalysis(80, 20, 10000, 125, nil)
+	aSecond := avgprofit.ComputeWageEffectAnalysis(80, 20, 10000, 75, nil)
+
+	createdFirst, err := m.CreateWageEffectAnalysis(ctx, aFirst)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateWageEffectAnalysis(ctx, aSecond)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListWageEffectAnalyses(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both have the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}

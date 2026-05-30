@@ -2124,4 +2124,21 @@ export const financeApi = {
     http<import("./types").EqualisationResponse>("/v1/avgprofit/capital-flow", { method: "POST", body: JSON.stringify(input) }),
   getEqualisation: (id: string) =>
     http<import("./types").EqualisationResponse>(`/v1/avgprofit/equalisation/${id}`),
+
+  // Vol. III Ch. 11 — Effects of General Wage Fluctuations on Prices of Production
+  createWageEffectAnalysis: (input: {
+    base_constant: number;
+    base_variable: number;
+    s_rate: number;
+    wage_factor: number;
+    spheres: { name: string; c: number; v: number }[];
+  }) =>
+    http<import("./types").WageEffectAnalysisResponse>("/v1/avgprofit/wage-effect", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  listWageEffectAnalyses: () =>
+    http<{ items: import("./types").WageEffectAnalysisResponse[] }>("/v1/avgprofit/wage-effect").then((r) => r.items),
+  getWageEffectAnalysis: (id: string) =>
+    http<import("./types").WageEffectAnalysisResponse>(`/v1/avgprofit/wage-effect/${id}`),
 };
