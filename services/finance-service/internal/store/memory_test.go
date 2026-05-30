@@ -2000,3 +2000,138 @@ func TestCh17SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// --- MerchantTurnover store tests (Ch. 18) ---
+
+func TestMemory_MerchantTurnoverRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	mt, err := merchant.NewMerchantTurnover(100000, 1500, 1, 300)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	created, err := m.CreateMerchantTurnover(ctx, mt)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+
+	got, err := m.GetMerchantTurnover(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetMerchantTurnoverNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetMerchantTurnover(context.Background(), merchant.MerchantTurnoverID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateMerchantTurnoverDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	mt, err := merchant.NewMerchantTurnover(100000, 1500, 1, 300)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	mt.ID = merchant.MerchantTurnoverID("5eed000000000000001801")
+
+	if _, err := m.CreateMerchantTurnover(ctx, mt); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateMerchantTurnover(ctx, mt); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListMerchantTurnoversNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListMerchantTurnovers(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListMerchantTurnovers_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Row 1: 1-turnover fixture; Row 2: 5-turnover fixture.
+	first, err := merchant.NewMerchantTurnover(100000, 1500, 1, 300)
+	if err != nil {
+		t.Fatalf("new first: %v", err)
+	}
+	second, err := merchant.NewMerchantTurnover(100000, 1500, 5, 300)
+	if err != nil {
+		t.Fatalf("new second: %v", err)
+	}
+
+	createdFirst, err := m.CreateMerchantTurnover(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateMerchantTurnover(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListMerchantTurnovers(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh18SeedIDs asserts the Ch. 18 seed IDs (5eed…<CC=18>01–03) carry the 18
+// token and are unique (mirrors the seed migration 00036_v3_ch18_seed.sql).
+func TestCh18SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000001801",
+		"5eed000000000000001802",
+		"5eed000000000000001803",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "18" {
+			t.Errorf("seed id %q chapter token = %q, want 18", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

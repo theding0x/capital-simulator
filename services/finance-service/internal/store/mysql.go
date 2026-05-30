@@ -2026,3 +2026,85 @@ func isDuplicate(err error) bool {
 	s := err.Error()
 	return strings.Contains(s, "1062") || strings.Contains(s, "Duplicate entry")
 }
+
+// CreateMerchantTurnover persists mt, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateMerchantTurnover(ctx context.Context, mt merchant.MerchantTurnover) (merchant.MerchantTurnover, error) {
+	if mt.ID.IsZero() {
+		mt.ID = merchant.NewMerchantTurnoverID()
+	}
+	if mt.CreatedAt.IsZero() {
+		mt.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO merchant_turnovers
+		(id, money_advanced, general_rate_bp, turnover_count, units_per_turnover, annual_merchant_profit, markup_per_unit, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(mt.ID),
+		mt.MoneyAdvanced, mt.GeneralRateBP, mt.TurnoverCount, mt.UnitsPerTurnover,
+		mt.AnnualMerchantProfit, mt.MarkupPerUnit,
+		mt.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return merchant.MerchantTurnover{}, ErrAlreadyExists
+		}
+		return merchant.MerchantTurnover{}, err
+	}
+	return mt, nil
+}
+
+// GetMerchantTurnover returns the merchant-turnover record with id, or ErrNotFound.
+func (m *MySQL) GetMerchantTurnover(ctx context.Context, id merchant.MerchantTurnoverID) (merchant.MerchantTurnover, error) {
+	const q = `SELECT id, money_advanced, general_rate_bp, turnover_count, units_per_turnover, annual_merchant_profit, markup_per_unit, created_at
+		FROM merchant_turnovers WHERE id = ?`
+	return scanMerchantTurnover(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListMerchantTurnovers returns all stored merchant-turnover records, newest first.
+func (m *MySQL) ListMerchantTurnovers(ctx context.Context) ([]merchant.MerchantTurnover, error) {
+	const q = `SELECT id, money_advanced, general_rate_bp, turnover_count, units_per_turnover, annual_merchant_profit, markup_per_unit, created_at
+		FROM merchant_turnovers ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]merchant.MerchantTurnover, 0)
+	for rows.Next() {
+		mt, err := scanMerchantTurnover(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, mt)
+	}
+	return out, rows.Err()
+}
+
+func scanMerchantTurnover(s rowScanner) (merchant.MerchantTurnover, error) {
+	var (
+		id                                                                    string
+		moneyAdvanced, generalRateBP, turnoverCount, unitsPerTurnover        int64
+		annualMerchantProfit, markupPerUnit                                  int64
+		createdAt                                                             time.Time
+	)
+	err := s.Scan(&id, &moneyAdvanced, &generalRateBP, &turnoverCount, &unitsPerTurnover,
+		&annualMerchantProfit, &markupPerUnit, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return merchant.MerchantTurnover{}, ErrNotFound
+		}
+		return merchant.MerchantTurnover{}, err
+	}
+	return merchant.MerchantTurnover{
+		ID:                  merchant.MerchantTurnoverID(id),
+		MoneyAdvanced:       moneyAdvanced,
+		GeneralRateBP:       generalRateBP,
+		TurnoverCount:       turnoverCount,
+		UnitsPerTurnover:    unitsPerTurnover,
+		AnnualMerchantProfit: annualMerchantProfit,
+		MarkupPerUnit:       markupPerUnit,
+		CreatedAt:           createdAt,
+	}, nil
+}

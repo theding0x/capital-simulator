@@ -3585,3 +3585,37 @@ export interface WholesaleRetailSpreadResponse {
   retail_price: number;    // pence; >wholesale
   spread_pence: number;    // = retail - wholesale
 }
+
+// MerchantTurnoverResponse mirrors merchant.MerchantTurnover (Vol. III Ch. 18).
+export interface MerchantTurnoverResponse {
+  id: string;
+  money_advanced: number;          // pence; >0
+  general_rate_bp: number;         // bp; >0
+  turnover_count: number;          // count; >=1
+  units_per_turnover: number;      // count; >0
+  annual_merchant_profit: number;  // pence; derived = roundHalfUp(money_advanced*general_rate_bp, 10000)
+  markup_per_unit: number;         // pence; derived (integer div) — inversely proportional to turnover
+  created_at: string;
+}
+
+// TurnoverPointResponse mirrors merchant.TurnoverPoint (value object).
+export interface TurnoverPointResponse {
+  turnover_count: number;  // count
+  total_units: number;     // = turnover_count * units_per_turnover
+  markup_per_unit: number; // pence; annual_merchant_profit / total_units (integer div)
+}
+
+// TurnoverEffectAnalysisResponse mirrors merchant.TurnoverEffectAnalysis (value object, not persisted).
+export interface TurnoverEffectAnalysisResponse {
+  money_advanced: number;
+  general_rate_bp: number;
+  annual_merchant_profit: number;
+  points: TurnoverPointResponse[];
+}
+
+// MerchantPriceOfProductionResponse mirrors merchant.MerchantPriceOfProduction (value object).
+export interface MerchantPriceOfProductionResponse {
+  cost_price: number;          // pence; >=0
+  average_profit: number;      // pence; >=0
+  price_of_production: number; // pence; = cost_price + average_profit
+}

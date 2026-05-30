@@ -2272,4 +2272,32 @@ export const financeApi = {
     ),
   getCommercialProfit: (id: string) =>
     http<import("./types").CommercialProfitResponse>(`/v1/merchant/commercial-profit/${id}`),
+
+  // Vol. III Ch. 18 — Merchant Turnover
+  createMerchantTurnover: (body: {
+    money_advanced: number;
+    general_rate_bp: number;
+    turnover_count: number;
+    units_per_turnover: number;
+  }) =>
+    http<import("./types").MerchantTurnoverResponse>("/v1/merchant/turnover", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listMerchantTurnovers: () =>
+    http<{ items: import("./types").MerchantTurnoverResponse[] }>("/v1/merchant/turnover").then(
+      (r) => r.items ?? [],
+    ),
+  getMerchantTurnover: (id: string) =>
+    http<import("./types").MerchantTurnoverResponse>(`/v1/merchant/turnover/${id}`),
+  computeTurnoverEffect: (body: {
+    money_advanced: number;
+    general_rate_bp: number;
+    units_per_turnover: number;
+    turnover_counts: number[];
+  }) =>
+    http<import("./types").TurnoverEffectAnalysisResponse>("/v1/merchant/turnover-effect", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };

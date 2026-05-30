@@ -391,6 +391,10 @@ func main() {
 	// Vol. III Ch. 17 — Commercial Profit → finance-service
 	srv.Handle("/v1/merchant/commercial-profit", financeProxy)
 	srv.Handle("/v1/merchant/commercial-profit/{rest...}", financeProxy)
+	// Vol. III Ch. 18 — Merchant Turnover → finance-service
+	srv.Handle("/v1/merchant/turnover", financeProxy)
+	srv.Handle("/v1/merchant/turnover/{rest...}", financeProxy)
+	srv.Handle("/v1/merchant/turnover-effect", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)
