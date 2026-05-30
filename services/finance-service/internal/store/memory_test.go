@@ -393,6 +393,177 @@ func TestMemory_ListProductionSpheresNeverNil(t *testing.T) {
 	}
 }
 
+// --- GeneralProfitRate store tests (Ch. 9) ---
+
+func TestMemory_GeneralProfitRateRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Five-sphere fixture: ΣS=110, ΣC=500 → Rate=2200.
+	spheres := []avgprofit.ProductionSphere{
+		avgprofit.ComputeProductionSphere("Sphere I (80c+20v)", 100, 20, 10000),
+		avgprofit.ComputeProductionSphere("Sphere II (70c+30v)", 100, 30, 10000),
+		avgprofit.ComputeProductionSphere("Sphere III (60c+40v)", 100, 40, 10000),
+		avgprofit.ComputeProductionSphere("Sphere IV (85c+15v)", 100, 15, 10000),
+		avgprofit.ComputeProductionSphere("Sphere V (95c+5v)", 100, 5, 10000),
+	}
+	g := avgprofit.ComputeGeneralProfitRate(spheres)
+	created, err := m.CreateGeneralProfitRate(ctx, g)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if created.Rate != 2200 {
+		t.Errorf("Rate = %d, want 2200", created.Rate)
+	}
+
+	got, err := m.GetGeneralProfitRate(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID || got.Rate != created.Rate {
+		t.Errorf("round-trip mismatch: got ID=%s Rate=%d, want ID=%s Rate=%d",
+			got.ID, got.Rate, created.ID, created.Rate)
+	}
+}
+
+func TestMemory_GetGeneralProfitRateNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetGeneralProfitRate(context.Background(), avgprofit.GeneralProfitRateID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateGeneralProfitRateDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	g := avgprofit.ComputeGeneralProfitRate(nil)
+	g.ID = avgprofit.GeneralProfitRateID("fixed-gpr-id-ch09")
+
+	if _, err := m.CreateGeneralProfitRate(ctx, g); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateGeneralProfitRate(ctx, g); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+// --- PriceOfProduction store tests (Ch. 9) ---
+
+func TestMemory_PriceOfProductionRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Sphere I (80c+20v): k=100, rate=2200, value=120, price=122, deviation=+2.
+	pop := avgprofit.ComputePriceOfProduction("Sphere I (80c+20v)", 100, 2200, 120)
+	created, err := m.CreatePriceOfProduction(ctx, pop)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if created.Price != 122 {
+		t.Errorf("Price = %d, want 122", created.Price)
+	}
+	if created.Deviation != 2 {
+		t.Errorf("Deviation = %d, want +2", created.Deviation)
+	}
+
+	got, err := m.GetPriceOfProduction(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID || got.Price != created.Price || got.Deviation != created.Deviation {
+		t.Errorf("round-trip mismatch: got %+v, want ID=%s Price=%d Deviation=%d",
+			got, created.ID, created.Price, created.Deviation)
+	}
+}
+
+func TestMemory_GetPriceOfProductionNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetPriceOfProduction(context.Background(), avgprofit.PriceOfProductionID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreatePriceOfProductionDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	pop := avgprofit.ComputePriceOfProduction("Sphere I", 100, 2200, 120)
+	pop.ID = avgprofit.PriceOfProductionID("fixed-pop-id-ch09")
+
+	if _, err := m.CreatePriceOfProduction(ctx, pop); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreatePriceOfProduction(ctx, pop); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListPricesOfProductionNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListPricesOfProduction(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListPricesOfProduction_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Create Sphere I then Sphere III; list should return Sphere III first (newest).
+	popI := avgprofit.ComputePriceOfProduction("Sphere I (80c+20v)", 100, 2200, 120)
+	popIII := avgprofit.ComputePriceOfProduction("Sphere III (60c+40v)", 100, 2200, 140)
+
+	createdI, err := m.CreatePriceOfProduction(ctx, popI)
+	if err != nil {
+		t.Fatalf("create I: %v", err)
+	}
+	createdIII, err := m.CreatePriceOfProduction(ctx, popIII)
+	if err != nil {
+		t.Fatalf("create III: %v", err)
+	}
+
+	out, err := m.ListPricesOfProduction(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Newest first: III was created after I, so III should come first (unless same
+	// nanosecond tick — in that case ordering is allowed to be either way).
+	if !createdIII.CreatedAt.After(createdI.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdIII.ID {
+		t.Errorf("first item id = %s, want Sphere III (%s)", out[0].ID, createdIII.ID)
+	}
+}
+
 func TestMemory_ListProductionSpheres_NewestFirst(t *testing.T) {
 	t.Parallel()
 	m := NewMemory()

@@ -63,6 +63,7 @@ import { Ch05ConstantCapitalEconomy } from "../chapters/vol3/Ch05ConstantCapital
 import { Ch06PriceFluctuation } from "../chapters/vol3/Ch06PriceFluctuation";
 import { Ch07SupplementaryRemarks } from "../chapters/vol3/Ch07SupplementaryRemarks";
 import { Ch08CompositionDifferences } from "../chapters/vol3/Ch08CompositionDifferences";
+import { Ch09GeneralRateOfProfit } from "../chapters/vol3/Ch09GeneralRateOfProfit";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -144,6 +145,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch06": Ch06PriceFluctuation as AnyPanel,
   "v3-ch07": Ch07SupplementaryRemarks as AnyPanel,
   "v3-ch08": Ch08CompositionDifferences as AnyPanel,
+  "v3-ch09": Ch09GeneralRateOfProfit as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -208,6 +210,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch06": "The rate of profit ... may rise or fall in consequence of fluctuations in the prices of raw materials, even when these fluctuations do not affect the rate of surplus-value in the least.",
   "v3-ch07": "The rate of profit ... depends on so many factors that one might say the rate of profit is not directly determinable at all — yet a mere change in the money-value of capital leaves it wholly untouched.",
   "v3-ch08": "Equal capitals in different branches of production ... produce very different rates of profit, corresponding to the different organic compositions of these capitals.",
+  "v3-ch09": "The different rates of profit in the various branches of production are, through competition, levelled into a general rate of profit. The price at which the commodities are sold ... is their price of production.",
 };
 
 export function ChapterShell({

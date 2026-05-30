@@ -12,32 +12,36 @@ import (
 
 // Memory is an in-memory Store for unit tests and local development.
 type Memory struct {
-	mu           sync.RWMutex
-	now          func() time.Time
-	costPrices   map[profit.CostPriceID]profit.CostPrice
-	profitRates  map[profit.ProfitRateID]profit.ProfitRateAnalysis
-	variations   map[profit.VariationAnalysisID]profit.VariationAnalysis
-	turnovers    map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
-	economies    map[profit.EconomyAnalysisID]profit.EconomyAnalysis
-	priceFlux    map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
-	compositions map[profit.CompositionEffectID]profit.CompositionEffectAnalysis
-	magnitudes   map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis
-	spheres      map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere
+	mu                sync.RWMutex
+	now               func() time.Time
+	costPrices        map[profit.CostPriceID]profit.CostPrice
+	profitRates       map[profit.ProfitRateID]profit.ProfitRateAnalysis
+	variations        map[profit.VariationAnalysisID]profit.VariationAnalysis
+	turnovers         map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
+	economies         map[profit.EconomyAnalysisID]profit.EconomyAnalysis
+	priceFlux         map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
+	compositions      map[profit.CompositionEffectID]profit.CompositionEffectAnalysis
+	magnitudes        map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis
+	spheres           map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere
+	generalRates      map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate
+	pricesOfProduction map[avgprofit.PriceOfProductionID]avgprofit.PriceOfProduction
 }
 
 // NewMemory returns an empty in-memory store.
 func NewMemory() *Memory {
 	return &Memory{
-		now:          time.Now,
-		costPrices:   make(map[profit.CostPriceID]profit.CostPrice),
-		profitRates:  make(map[profit.ProfitRateID]profit.ProfitRateAnalysis),
-		variations:   make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
-		turnovers:    make(map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis),
-		economies:    make(map[profit.EconomyAnalysisID]profit.EconomyAnalysis),
-		priceFlux:    make(map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis),
-		compositions: make(map[profit.CompositionEffectID]profit.CompositionEffectAnalysis),
-		magnitudes:   make(map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis),
-		spheres:      make(map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere),
+		now:                time.Now,
+		costPrices:         make(map[profit.CostPriceID]profit.CostPrice),
+		profitRates:        make(map[profit.ProfitRateID]profit.ProfitRateAnalysis),
+		variations:         make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
+		turnovers:          make(map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis),
+		economies:          make(map[profit.EconomyAnalysisID]profit.EconomyAnalysis),
+		priceFlux:          make(map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis),
+		compositions:       make(map[profit.CompositionEffectID]profit.CompositionEffectAnalysis),
+		magnitudes:         make(map[profit.MagnitudeChangeID]profit.MagnitudeChangeAnalysis),
+		spheres:            make(map[avgprofit.ProductionSphereID]avgprofit.ProductionSphere),
+		generalRates:       make(map[avgprofit.GeneralProfitRateID]avgprofit.GeneralProfitRate),
+		pricesOfProduction: make(map[avgprofit.PriceOfProductionID]avgprofit.PriceOfProduction),
 	}
 }
 
@@ -439,6 +443,81 @@ func (m *Memory) ListProductionSpheres(_ context.Context) ([]avgprofit.Productio
 	out := make([]avgprofit.ProductionSphere, 0, len(m.spheres))
 	for _, s := range m.spheres {
 		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateGeneralProfitRate stores g, assigning an ID and timestamp when absent.
+func (m *Memory) CreateGeneralProfitRate(_ context.Context, g avgprofit.GeneralProfitRate) (avgprofit.GeneralProfitRate, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if g.ID.IsZero() {
+		g.ID = avgprofit.NewGeneralProfitRateID()
+	}
+	if _, exists := m.generalRates[g.ID]; exists {
+		return avgprofit.GeneralProfitRate{}, ErrAlreadyExists
+	}
+	if g.CreatedAt.IsZero() {
+		g.CreatedAt = m.now().UTC()
+	}
+	m.generalRates[g.ID] = g
+	return g, nil
+}
+
+// GetGeneralProfitRate returns the general rate with id, or ErrNotFound.
+func (m *Memory) GetGeneralProfitRate(_ context.Context, id avgprofit.GeneralProfitRateID) (avgprofit.GeneralProfitRate, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	g, ok := m.generalRates[id]
+	if !ok {
+		return avgprofit.GeneralProfitRate{}, ErrNotFound
+	}
+	return g, nil
+}
+
+// CreatePriceOfProduction stores p, assigning an ID and timestamp when absent.
+func (m *Memory) CreatePriceOfProduction(_ context.Context, p avgprofit.PriceOfProduction) (avgprofit.PriceOfProduction, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if p.ID.IsZero() {
+		p.ID = avgprofit.NewPriceOfProductionID()
+	}
+	if _, exists := m.pricesOfProduction[p.ID]; exists {
+		return avgprofit.PriceOfProduction{}, ErrAlreadyExists
+	}
+	if p.CreatedAt.IsZero() {
+		p.CreatedAt = m.now().UTC()
+	}
+	m.pricesOfProduction[p.ID] = p
+	return p, nil
+}
+
+// GetPriceOfProduction returns the record with id, or ErrNotFound.
+func (m *Memory) GetPriceOfProduction(_ context.Context, id avgprofit.PriceOfProductionID) (avgprofit.PriceOfProduction, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	p, ok := m.pricesOfProduction[id]
+	if !ok {
+		return avgprofit.PriceOfProduction{}, ErrNotFound
+	}
+	return p, nil
+}
+
+// ListPricesOfProduction returns all stored records, newest first.
+func (m *Memory) ListPricesOfProduction(_ context.Context) ([]avgprofit.PriceOfProduction, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]avgprofit.PriceOfProduction, 0, len(m.pricesOfProduction))
+	for _, p := range m.pricesOfProduction {
+		out = append(out, p)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)
