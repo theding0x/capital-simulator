@@ -2208,3 +2208,89 @@ func scanMoneyDealingCapital(s rowScanner) (merchant.MoneyDealingCapital, error)
 		CreatedAt:          createdAt,
 	}, nil
 }
+
+// CreateHistoricalMerchantCapital persists hm, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateHistoricalMerchantCapital(ctx context.Context, hm merchant.HistoricalMerchantCapital) (merchant.HistoricalMerchantCapital, error) {
+	if hm.ID.IsZero() {
+		hm.ID = merchant.NewHistoricalMerchantCapitalID()
+	}
+	if hm.CreatedAt.IsZero() {
+		hm.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO historical_merchant_capitals
+		(id, name, stage, profit_source, wage_labour, subordination_index, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(hm.ID),
+		hm.Name,
+		int64(hm.Stage),
+		hm.ProfitSource,
+		hm.WageLabour,
+		hm.SubordinationIndex,
+		hm.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return merchant.HistoricalMerchantCapital{}, ErrAlreadyExists
+		}
+		return merchant.HistoricalMerchantCapital{}, err
+	}
+	return hm, nil
+}
+
+// GetHistoricalMerchantCapital returns the historical-merchant-capital record with id, or ErrNotFound.
+func (m *MySQL) GetHistoricalMerchantCapital(ctx context.Context, id merchant.HistoricalMerchantCapitalID) (merchant.HistoricalMerchantCapital, error) {
+	const q = `SELECT id, name, stage, profit_source, wage_labour, subordination_index, created_at
+		FROM historical_merchant_capitals WHERE id = ?`
+	return scanHistoricalMerchantCapital(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListHistoricalMerchantCapitals returns all stored historical-merchant-capital records, newest first.
+func (m *MySQL) ListHistoricalMerchantCapitals(ctx context.Context) ([]merchant.HistoricalMerchantCapital, error) {
+	const q = `SELECT id, name, stage, profit_source, wage_labour, subordination_index, created_at
+		FROM historical_merchant_capitals ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]merchant.HistoricalMerchantCapital, 0)
+	for rows.Next() {
+		hm, err := scanHistoricalMerchantCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, hm)
+	}
+	return out, rows.Err()
+}
+
+func scanHistoricalMerchantCapital(s rowScanner) (merchant.HistoricalMerchantCapital, error) {
+	var (
+		id                 string
+		name               string
+		stageInt           int64
+		profitSource       string
+		wageLabour         bool
+		subordinationIndex int64
+		createdAt          time.Time
+	)
+	err := s.Scan(&id, &name, &stageInt, &profitSource, &wageLabour, &subordinationIndex, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return merchant.HistoricalMerchantCapital{}, ErrNotFound
+		}
+		return merchant.HistoricalMerchantCapital{}, err
+	}
+	return merchant.HistoricalMerchantCapital{
+		ID:                 merchant.HistoricalMerchantCapitalID(id),
+		Name:               name,
+		Stage:              merchant.DevelopmentStage(stageInt),
+		ProfitSource:       profitSource,
+		WageLabour:         wageLabour,
+		SubordinationIndex: subordinationIndex,
+		CreatedAt:          createdAt,
+	}, nil
+}

@@ -2300,3 +2300,203 @@ func TestCh19SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// ── Vol. III Ch. 20 — Historical Facts about Merchant's Capital ─────────────
+
+// TestMemory_HistoricalMerchantCapitalRoundTrip creates a Venice record, gets
+// it back, and verifies all fields including Stage, WageLabour, and
+// SubordinationIndex round-trip identically.
+func TestMemory_HistoricalMerchantCapitalRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	hm, err := merchant.NewHistoricalMerchantCapital(
+		"Venice carrying trade",
+		merchant.StagePreCapitalist,
+		"unequal_exchange",
+		false,
+		500,
+	)
+	if err != nil {
+		t.Fatalf("NewHistoricalMerchantCapital: %v", err)
+	}
+
+	created, err := m.CreateHistoricalMerchantCapital(ctx, hm)
+	if err != nil {
+		t.Fatalf("CreateHistoricalMerchantCapital: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Error("store did not assign an ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("store did not assign CreatedAt")
+	}
+	if created.Stage != merchant.StagePreCapitalist {
+		t.Errorf("Stage = %d, want %d", created.Stage, merchant.StagePreCapitalist)
+	}
+	if created.WageLabour {
+		t.Error("WageLabour = true, want false")
+	}
+	if created.SubordinationIndex != 500 {
+		t.Errorf("SubordinationIndex = %d, want 500", created.SubordinationIndex)
+	}
+
+	got, err := m.GetHistoricalMerchantCapital(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("GetHistoricalMerchantCapital: %v", err)
+	}
+	if got.ID != created.ID {
+		t.Errorf("ID mismatch: got %s, want %s", got.ID, created.ID)
+	}
+	if got.Name != created.Name {
+		t.Errorf("Name mismatch: got %q, want %q", got.Name, created.Name)
+	}
+	if got.Stage != created.Stage {
+		t.Errorf("Stage mismatch: got %d, want %d", got.Stage, created.Stage)
+	}
+	if got.WageLabour != created.WageLabour {
+		t.Errorf("WageLabour mismatch: got %v, want %v", got.WageLabour, created.WageLabour)
+	}
+	if got.SubordinationIndex != created.SubordinationIndex {
+		t.Errorf("SubordinationIndex mismatch: got %d, want %d", got.SubordinationIndex, created.SubordinationIndex)
+	}
+	if got.ProfitSource != created.ProfitSource {
+		t.Errorf("ProfitSource mismatch: got %q, want %q", got.ProfitSource, created.ProfitSource)
+	}
+}
+
+// TestMemory_GetHistoricalMerchantCapitalNotFound returns ErrNotFound for a
+// missing ID.
+func TestMemory_GetHistoricalMerchantCapitalNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	_, err := m.GetHistoricalMerchantCapital(context.Background(), merchant.HistoricalMerchantCapitalID("missing"))
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+// TestMemory_CreateHistoricalMerchantCapitalDuplicate returns ErrAlreadyExists
+// when the same preset ID is stored twice.
+func TestMemory_CreateHistoricalMerchantCapitalDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	hm, err := merchant.NewHistoricalMerchantCapital(
+		"Venice carrying trade",
+		merchant.StagePreCapitalist,
+		"unequal_exchange",
+		false,
+		500,
+	)
+	if err != nil {
+		t.Fatalf("NewHistoricalMerchantCapital: %v", err)
+	}
+	hm.ID = merchant.HistoricalMerchantCapitalID("5eed000000000000002001")
+
+	if _, err := m.CreateHistoricalMerchantCapital(ctx, hm); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateHistoricalMerchantCapital(ctx, hm); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create: err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+// TestMemory_ListHistoricalMerchantCapitalsNeverNil asserts List returns a
+// non-nil empty slice when the store is empty.
+func TestMemory_ListHistoricalMerchantCapitalsNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListHistoricalMerchantCapitals(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("List returned nil, want non-nil empty slice")
+	}
+	if len(out) != 0 {
+		t.Errorf("len = %d, want 0 for empty store", len(out))
+	}
+}
+
+// TestMemory_ListHistoricalMerchantCapitals_NewestFirst inserts two records and
+// asserts the list is ordered newest-first (created_at DESC).
+func TestMemory_ListHistoricalMerchantCapitals_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	first, err := merchant.NewHistoricalMerchantCapital(
+		"Venice carrying trade",
+		merchant.StagePreCapitalist,
+		"unequal_exchange",
+		false,
+		500,
+	)
+	if err != nil {
+		t.Fatalf("new first: %v", err)
+	}
+	second, err := merchant.NewHistoricalMerchantCapital(
+		"Subordination under industrial capital",
+		merchant.StageSubordinated,
+		"industrial_subordination",
+		true,
+		7000,
+	)
+	if err != nil {
+		t.Fatalf("new second: %v", err)
+	}
+
+	createdFirst, err := m.CreateHistoricalMerchantCapital(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateHistoricalMerchantCapital(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListHistoricalMerchantCapitals(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh20SeedIDs asserts the Ch. 20 seed IDs (5eed…<CC=20>01–04) carry the 20
+// token and are unique (mirrors the seed migration 00040_v3_ch20_seed.sql).
+// Four rows: Venice, Genoa, Dutch carrying trade, Subordination under industrial capital.
+func TestCh20SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000002001",
+		"5eed000000000000002002",
+		"5eed000000000000002003",
+		"5eed000000000000002004",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "20" {
+			t.Errorf("seed id %q chapter token = %q, want 20", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

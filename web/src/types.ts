@@ -3642,3 +3642,29 @@ export interface MoneyDealingCircuitResponse {
   money_advanced: number; // pence; > 0
   money_returned: number; // pence; > money_advanced
 }
+
+// DevelopmentStage mirrors merchant.DevelopmentStage (Vol. III Ch. 20).
+// 1=pre_capitalist, 2=transition, 3=subordinated.
+export type DevelopmentStage = 1 | 2 | 3;
+
+// HistoricalMerchantCapitalResponse mirrors merchant.HistoricalMerchantCapital (Vol. III Ch. 20).
+// Invariant 1: pre-capitalist forms (stage=1) cannot employ wage-labour.
+// Invariant 2 (inverse-development law): SubordinationIndex rises with Stage.
+export interface HistoricalMerchantCapitalResponse {
+  id: string;
+  name: string;
+  stage: DevelopmentStage;
+  profit_source: string;
+  wage_labour: boolean;
+  subordination_index: number; // bp [0, 10000]
+  created_at: string;
+}
+
+// HistoricalTradingSystemResponse mirrors merchant.HistoricalTradingSystem (Vol. III Ch. 20).
+// Named historical exemplar (Venice/Genoa/Dutch) — value object, not persisted.
+export interface HistoricalTradingSystemResponse {
+  name: string;
+  stage: DevelopmentStage;
+  profit_source: string;
+  wage_labour: boolean;
+}

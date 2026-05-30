@@ -41,7 +41,8 @@ type Memory struct {
 	commercialCapitals  map[merchant.CommercialCapitalID]merchant.CommercialCapital
 	commercialProfits   map[merchant.CommercialProfitID]merchant.CommercialProfit
 	turnoversM          map[merchant.MerchantTurnoverID]merchant.MerchantTurnover
-	moneyDealingCapitals map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital
+	moneyDealingCapitals         map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital
+	historicalMerchantCapitals   map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital
 }
 
 // NewMemory returns an empty in-memory store.
@@ -73,7 +74,8 @@ func NewMemory() *Memory {
 		commercialCapitals:   make(map[merchant.CommercialCapitalID]merchant.CommercialCapital),
 		commercialProfits:    make(map[merchant.CommercialProfitID]merchant.CommercialProfit),
 		turnoversM:           make(map[merchant.MerchantTurnoverID]merchant.MerchantTurnover),
-		moneyDealingCapitals: make(map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital),
+		moneyDealingCapitals:       make(map[merchant.MoneyDealingCapitalID]merchant.MoneyDealingCapital),
+		historicalMerchantCapitals: make(map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital),
 	}
 }
 
@@ -1166,6 +1168,51 @@ func (m *Memory) ListMoneyDealingCapitals(_ context.Context) ([]merchant.MoneyDe
 	out := make([]merchant.MoneyDealingCapital, 0, len(m.moneyDealingCapitals))
 	for _, md := range m.moneyDealingCapitals {
 		out = append(out, md)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateHistoricalMerchantCapital stores hm, assigning an ID and timestamp when absent.
+func (m *Memory) CreateHistoricalMerchantCapital(_ context.Context, hm merchant.HistoricalMerchantCapital) (merchant.HistoricalMerchantCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if hm.ID.IsZero() {
+		hm.ID = merchant.NewHistoricalMerchantCapitalID()
+	}
+	if _, exists := m.historicalMerchantCapitals[hm.ID]; exists {
+		return merchant.HistoricalMerchantCapital{}, ErrAlreadyExists
+	}
+	if hm.CreatedAt.IsZero() {
+		hm.CreatedAt = m.now().UTC()
+	}
+	m.historicalMerchantCapitals[hm.ID] = hm
+	return hm, nil
+}
+
+// GetHistoricalMerchantCapital returns the historical-merchant-capital record with id, or ErrNotFound.
+func (m *Memory) GetHistoricalMerchantCapital(_ context.Context, id merchant.HistoricalMerchantCapitalID) (merchant.HistoricalMerchantCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	hm, ok := m.historicalMerchantCapitals[id]
+	if !ok {
+		return merchant.HistoricalMerchantCapital{}, ErrNotFound
+	}
+	return hm, nil
+}
+
+// ListHistoricalMerchantCapitals returns all stored historical-merchant-capital records, newest first.
+func (m *Memory) ListHistoricalMerchantCapitals(_ context.Context) ([]merchant.HistoricalMerchantCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]merchant.HistoricalMerchantCapital, 0, len(m.historicalMerchantCapitals))
+	for _, hm := range m.historicalMerchantCapitals {
+		out = append(out, hm)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)
