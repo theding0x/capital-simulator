@@ -167,4 +167,12 @@ type Store interface {
 	GetWageEffectAnalysis(ctx context.Context, id avgprofit.WageEffectAnalysisID) (avgprofit.WageEffectAnalysis, error)
 	// ListWageEffectAnalyses returns all stored analyses, newest first.
 	ListWageEffectAnalyses(ctx context.Context) ([]avgprofit.WageEffectAnalysis, error)
+
+	// CreatePriceOfProductionChange persists a price-of-production change (Vol. III
+	// Ch. 12) — a movement in a sphere's price of production and which of the two
+	// admissible causes produced it — assigning an ID and created-at timestamp when
+	// absent. Returns ErrAlreadyExists on ID collision.
+	CreatePriceOfProductionChange(ctx context.Context, c avgprofit.PriceOfProductionChange) (avgprofit.PriceOfProductionChange, error)
+	// GetPriceOfProductionChange returns the change with the given ID, or ErrNotFound.
+	GetPriceOfProductionChange(ctx context.Context, id avgprofit.PriceOfProductionChangeID) (avgprofit.PriceOfProductionChange, error)
 }

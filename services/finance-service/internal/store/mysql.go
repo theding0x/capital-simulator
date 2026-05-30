@@ -1297,6 +1297,67 @@ func scanWageEffectAnalysis(s rowScanner) (avgprofit.WageEffectAnalysis, error) 
 	}, nil
 }
 
+// CreatePriceOfProductionChange persists c, assigning an ID and timestamp when absent.
+func (m *MySQL) CreatePriceOfProductionChange(ctx context.Context, c avgprofit.PriceOfProductionChange) (avgprofit.PriceOfProductionChange, error) {
+	if c.ID.IsZero() {
+		c.ID = avgprofit.NewPriceOfProductionChangeID()
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO price_of_production_changes
+		(id, sphere_name, cause, rate_changed, value_changed, price_changed, old_price, new_price, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(c.ID), c.SphereName, string(c.Cause),
+		c.RateChanged, c.ValueChanged, c.PriceChanged,
+		int64(c.OldPrice), int64(c.NewPrice), c.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return avgprofit.PriceOfProductionChange{}, ErrAlreadyExists
+		}
+		return avgprofit.PriceOfProductionChange{}, err
+	}
+	return c, nil
+}
+
+// GetPriceOfProductionChange returns the change with id, or ErrNotFound.
+func (m *MySQL) GetPriceOfProductionChange(ctx context.Context, id avgprofit.PriceOfProductionChangeID) (avgprofit.PriceOfProductionChange, error) {
+	const q = `SELECT id, sphere_name, cause, rate_changed, value_changed, price_changed, old_price, new_price, created_at
+		FROM price_of_production_changes WHERE id = ?`
+	return scanPriceOfProductionChange(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+func scanPriceOfProductionChange(s rowScanner) (avgprofit.PriceOfProductionChange, error) {
+	var (
+		id, sphereName, cause                  string
+		rateChanged, valueChanged, priceChanged bool
+		oldPrice, newPrice                     int64
+		createdAt                              time.Time
+	)
+	err := s.Scan(&id, &sphereName, &cause, &rateChanged, &valueChanged, &priceChanged,
+		&oldPrice, &newPrice, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return avgprofit.PriceOfProductionChange{}, ErrNotFound
+		}
+		return avgprofit.PriceOfProductionChange{}, err
+	}
+	return avgprofit.PriceOfProductionChange{
+		ID:           avgprofit.PriceOfProductionChangeID(id),
+		SphereName:   sphereName,
+		Cause:        avgprofit.PriceChangeCause(cause),
+		RateChanged:  rateChanged,
+		ValueChanged: valueChanged,
+		PriceChanged: priceChanged,
+		OldPrice:     avgprofit.ProductionPrice(oldPrice),
+		NewPrice:     avgprofit.ProductionPrice(newPrice),
+		CreatedAt:    createdAt,
+	}, nil
+}
+
 // isDuplicate reports whether err is a MySQL duplicate-key error (1062).
 func isDuplicate(err error) bool {
 	if err == nil {

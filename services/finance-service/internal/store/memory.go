@@ -29,6 +29,7 @@ type Memory struct {
 	surplusProfits     map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit
 	equalisations      map[avgprofit.EqualisationID]avgprofit.Equalisation
 	wageEffects        map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis
+	priceChanges       map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange
 }
 
 // NewMemory returns an empty in-memory store.
@@ -50,6 +51,7 @@ func NewMemory() *Memory {
 		surplusProfits:     make(map[avgprofit.SurplusProfitID]avgprofit.SurplusProfit),
 		equalisations:      make(map[avgprofit.EqualisationID]avgprofit.Equalisation),
 		wageEffects:        make(map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis),
+		priceChanges:       make(map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange),
 	}
 }
 
@@ -669,4 +671,34 @@ func (m *Memory) ListWageEffectAnalyses(_ context.Context) ([]avgprofit.WageEffe
 		return out[i].CreatedAt.After(out[j].CreatedAt)
 	})
 	return out, nil
+}
+
+// CreatePriceOfProductionChange stores c, assigning an ID and timestamp when absent.
+func (m *Memory) CreatePriceOfProductionChange(_ context.Context, c avgprofit.PriceOfProductionChange) (avgprofit.PriceOfProductionChange, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if c.ID.IsZero() {
+		c.ID = avgprofit.NewPriceOfProductionChangeID()
+	}
+	if _, exists := m.priceChanges[c.ID]; exists {
+		return avgprofit.PriceOfProductionChange{}, ErrAlreadyExists
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+	m.priceChanges[c.ID] = c
+	return c, nil
+}
+
+// GetPriceOfProductionChange returns the change with id, or ErrNotFound.
+func (m *Memory) GetPriceOfProductionChange(_ context.Context, id avgprofit.PriceOfProductionChangeID) (avgprofit.PriceOfProductionChange, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	c, ok := m.priceChanges[id]
+	if !ok {
+		return avgprofit.PriceOfProductionChange{}, ErrNotFound
+	}
+	return c, nil
 }

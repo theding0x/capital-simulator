@@ -3363,3 +3363,44 @@ export interface WageEffectAnalysisResponse {
   outcomes: SphereWageOutcomeResponse[];
   created_at: string;
 }
+
+// --- finance-service types (Vol. III Ch. 12: Supplementary Remarks) -----------
+
+// PriceOfProductionChangeResponse mirrors avgprofit.PriceOfProductionChange.
+export interface PriceOfProductionChangeResponse {
+  id: string;
+  sphere_name: string;
+  cause: "general_rate_change" | "individual_value_change" | "both" | "";
+  rate_changed: boolean;
+  value_changed: boolean;
+  price_changed: boolean;
+  old_price: number; // whole units
+  new_price: number; // whole units
+  created_at: string;
+}
+
+// CompensationGroundResponse mirrors avgprofit.CompensationGround.
+export interface CompensationGroundResponse {
+  reason: string;
+  appears_to_be: string;
+  actually_is: string; // always "share in aggregate surplus-value"
+  creates_value: boolean; // always false
+}
+
+// PartIISummaryResponse mirrors avgprofit.PartIISummary.
+export interface PartIISummaryResponse {
+  id: string;
+  general_rate: number; // basis points
+  sphere_count: number;
+  prices_of_production_count: number;
+  wage_effect_count: number;
+  total_values: number;
+  total_prices_of_production: number;
+  value_conserved: boolean;
+  average_composition_check: {
+    total_surplus_value: number;
+    total_average_profit: number;
+    surplus_value_equals_average_profit: boolean;
+  };
+  created_at: string;
+}

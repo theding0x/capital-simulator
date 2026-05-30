@@ -66,6 +66,7 @@ import { Ch08CompositionDifferences } from "../chapters/vol3/Ch08CompositionDiff
 import { Ch09GeneralRateOfProfit } from "../chapters/vol3/Ch09GeneralRateOfProfit";
 import { Ch10Equalisation } from "../chapters/vol3/Ch10Equalisation";
 import { Ch11WageFluctuations } from "../chapters/vol3/Ch11WageFluctuations";
+import { Ch12SupplementaryRemarks } from "../chapters/vol3/Ch12SupplementaryRemarks";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -150,6 +151,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch09": Ch09GeneralRateOfProfit as AnyPanel,
   "v3-ch10": Ch10Equalisation as AnyPanel,
   "v3-ch11": Ch11WageFluctuations as AnyPanel,
+  "v3-ch12": Ch12SupplementaryRemarks as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -217,6 +219,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch09": "The different rates of profit in the various branches of production are, through competition, levelled into a general rate of profit. The price at which the commodities are sold ... is their price of production.",
   "v3-ch10": "Competition can only equalise the deviating profit rates into a general rate by transforming the values of commodities into prices of production. As soon as profit is distributed uniformly, it is distributed as such regardless of its origin.",
   "v3-ch11": "A general rise in wages ... would therefore lower the general rate of profit but would not alter the values of commodities.",
+  "v3-ch12": "The price of production of a commodity may vary for only two reasons: first, a change in the general rate of profit; second, a change in the value of the commodity itself. The grounds advanced for a higher price create no value — they are but a claim to a larger share of the aggregate surplus-value.",
 };
 
 export function ChapterShell({

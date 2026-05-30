@@ -2141,4 +2141,25 @@ export const financeApi = {
     http<{ items: import("./types").WageEffectAnalysisResponse[] }>("/v1/avgprofit/wage-effect").then((r) => r.items),
   getWageEffectAnalysis: (id: string) =>
     http<import("./types").WageEffectAnalysisResponse>(`/v1/avgprofit/wage-effect/${id}`),
+
+  // Vol. III Ch. 12 — Supplementary Remarks (on prices of production)
+  createPriceOfProductionChange: (input: {
+    sphere_name: string;
+    cause: "general_rate_change" | "individual_value_change" | "both" | "";
+    old_price: number;
+    new_price: number;
+  }) =>
+    http<import("./types").PriceOfProductionChangeResponse>("/v1/avgprofit/price-change", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  getPriceOfProductionChange: (id: string) =>
+    http<import("./types").PriceOfProductionChangeResponse>(`/v1/avgprofit/price-change/${id}`),
+  createCompensationGround: (input: { reason: string; appears_to_be: string }) =>
+    http<import("./types").CompensationGroundResponse>("/v1/avgprofit/compensation-ground", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  getPartIISummary: () =>
+    http<import("./types").PartIISummaryResponse>("/v1/avgprofit/summary"),
 };
