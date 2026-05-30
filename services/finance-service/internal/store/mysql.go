@@ -13,6 +13,7 @@ import (
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
 //go:embed migrations
@@ -818,9 +819,9 @@ func scanMagnitudeChange(s rowScanner) (profit.MagnitudeChangeAnalysis, error) {
 
 func scanProductionSphere(s rowScanner) (avgprofit.ProductionSphere, error) {
 	var (
-		id, name                                                      string
-		c, v, sRate, cc, sv, ipr, varPct, lpi                        int64
-		createdAt                                                     time.Time
+		id, name                              string
+		c, v, sRate, cc, sv, ipr, varPct, lpi int64
+		createdAt                             time.Time
 	)
 	err := s.Scan(&id, &name, &c, &v, &sRate, &cc, &sv, &ipr, &varPct, &lpi, &createdAt)
 	if err != nil {
@@ -940,9 +941,9 @@ func (m *MySQL) ListPricesOfProduction(ctx context.Context) ([]avgprofit.PriceOf
 
 func scanGeneralProfitRate(s rowScanner) (avgprofit.GeneralProfitRate, error) {
 	var (
-		id, spheresJSON                           string
-		rate, sumS, sumC, avgVarPct               int64
-		createdAt                                 time.Time
+		id, spheresJSON             string
+		rate, sumS, sumC, avgVarPct int64
+		createdAt                   time.Time
 	)
 	err := s.Scan(&id, &rate, &sumS, &sumC, &avgVarPct, &spheresJSON, &createdAt)
 	if err != nil {
@@ -971,10 +972,10 @@ func scanGeneralProfitRate(s rowScanner) (avgprofit.GeneralProfitRate, error) {
 
 func scanPriceOfProduction(s rowScanner) (avgprofit.PriceOfProduction, error) {
 	var (
-		id, sphereName, composition                          string
-		costPrice, generalRate, commodityValue               int64
-		averageProfit, price, deviation                      int64
-		createdAt                                            time.Time
+		id, sphereName, composition            string
+		costPrice, generalRate, commodityValue int64
+		averageProfit, price, deviation        int64
+		createdAt                              time.Time
 	)
 	err := s.Scan(&id, &sphereName, &costPrice, &generalRate, &commodityValue,
 		&averageProfit, &price, &deviation, &composition, &createdAt)
@@ -1101,9 +1102,9 @@ func (m *MySQL) GetEqualisation(ctx context.Context, id avgprofit.EqualisationID
 
 func scanMarketValue(s rowScanner) (avgprofit.MarketValue, error) {
 	var (
-		id, sphereName                         string
-		bulk, best, worst, value               int64
-		createdAt                              time.Time
+		id, sphereName           string
+		bulk, best, worst, value int64
+		createdAt                time.Time
 	)
 	err := s.Scan(&id, &sphereName, &bulk, &best, &worst, &value, &createdAt)
 	if err != nil {
@@ -1125,7 +1126,7 @@ func scanMarketValue(s rowScanner) (avgprofit.MarketValue, error) {
 
 func scanSurplusProfit(s rowScanner) (avgprofit.SurplusProfit, error) {
 	var (
-		id, firmName                                       string
+		id, firmName                                      string
 		indVal, marketVal, outputQty, generalRate, amount int64
 		createdAt                                         time.Time
 	)
@@ -1150,11 +1151,11 @@ func scanSurplusProfit(s rowScanner) (avgprofit.SurplusProfit, error) {
 
 func scanEqualisation(s rowScanner) (avgprofit.Equalisation, error) {
 	var (
-		id, sphereName, direction      string
-		initialRate, targetRate        int64
-		isConverging                   bool
-		marketPrice, marketValue       int64
-		createdAt                      time.Time
+		id, sphereName, direction string
+		initialRate, targetRate   int64
+		isConverging              bool
+		marketPrice, marketValue  int64
+		createdAt                 time.Time
 	)
 	err := s.Scan(&id, &sphereName, &initialRate, &targetRate, &direction, &isConverging, &marketPrice, &marketValue, &createdAt)
 	if err != nil {
@@ -1255,10 +1256,10 @@ func (m *MySQL) ListWageEffectAnalyses(ctx context.Context) ([]avgprofit.WageEff
 
 func scanWageEffectAnalysis(s rowScanner) (avgprofit.WageEffectAnalysis, error) {
 	var (
-		id, kind, avgOutcomeJSON, outcomesJSON  string
-		baseC, baseV, sRate, wageFactor         int64
-		oldRate, newRate                        int64
-		createdAt                               time.Time
+		id, kind, avgOutcomeJSON, outcomesJSON string
+		baseC, baseV, sRate, wageFactor        int64
+		oldRate, newRate                       int64
+		createdAt                              time.Time
 	)
 	err := s.Scan(&id, &baseC, &baseV, &sRate, &wageFactor,
 		&oldRate, &newRate, &kind, &avgOutcomeJSON, &outcomesJSON, &createdAt)
@@ -1332,10 +1333,10 @@ func (m *MySQL) GetPriceOfProductionChange(ctx context.Context, id avgprofit.Pri
 
 func scanPriceOfProductionChange(s rowScanner) (avgprofit.PriceOfProductionChange, error) {
 	var (
-		id, sphereName, cause                  string
+		id, sphereName, cause                   string
 		rateChanged, valueChanged, priceChanged bool
-		oldPrice, newPrice                     int64
-		createdAt                              time.Time
+		oldPrice, newPrice                      int64
+		createdAt                               time.Time
 	)
 	err := s.Scan(&id, &sphereName, &cause, &rateChanged, &valueChanged, &priceChanged,
 		&oldPrice, &newPrice, &createdAt)
@@ -1355,6 +1356,178 @@ func scanPriceOfProductionChange(s rowScanner) (avgprofit.PriceOfProductionChang
 		OldPrice:     avgprofit.ProductionPrice(oldPrice),
 		NewPrice:     avgprofit.ProductionPrice(newPrice),
 		CreatedAt:    createdAt,
+	}, nil
+}
+
+// CreateCompositionTrajectory persists t, assigning an ID and timestamp when
+// absent. Periods are stored as JSON TEXT; ProfitRates is derived on read.
+func (m *MySQL) CreateCompositionTrajectory(ctx context.Context, t tendency.CompositionTrajectory) (tendency.CompositionTrajectory, error) {
+	if t.ID.IsZero() {
+		t.ID = tendency.NewCompositionTrajectoryID()
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = m.now().UTC()
+	}
+	if t.Periods == nil {
+		t.Periods = []tendency.TrajectoryPeriod{}
+	}
+	t.ProfitRates = t.DeriveProfitRates()
+
+	periodsJSON, err := json.Marshal(t.Periods)
+	if err != nil {
+		return tendency.CompositionTrajectory{}, err
+	}
+
+	const q = `INSERT INTO composition_trajectories
+		(id, label, surplus_value_rate, periods_json, created_at)
+		VALUES (?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(t.ID), t.Label, t.SurplusValueRate, string(periodsJSON), t.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return tendency.CompositionTrajectory{}, ErrAlreadyExists
+		}
+		return tendency.CompositionTrajectory{}, err
+	}
+	return t, nil
+}
+
+// GetCompositionTrajectory returns the trajectory with id, or ErrNotFound.
+func (m *MySQL) GetCompositionTrajectory(ctx context.Context, id tendency.CompositionTrajectoryID) (tendency.CompositionTrajectory, error) {
+	const q = `SELECT id, label, surplus_value_rate, periods_json, created_at
+		FROM composition_trajectories WHERE id = ?`
+	return scanCompositionTrajectory(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCompositionTrajectories returns all stored trajectories, newest first.
+func (m *MySQL) ListCompositionTrajectories(ctx context.Context) ([]tendency.CompositionTrajectory, error) {
+	const q = `SELECT id, label, surplus_value_rate, periods_json, created_at
+		FROM composition_trajectories ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]tendency.CompositionTrajectory, 0)
+	for rows.Next() {
+		t, err := scanCompositionTrajectory(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, rows.Err()
+}
+
+func scanCompositionTrajectory(s rowScanner) (tendency.CompositionTrajectory, error) {
+	var (
+		id, label, periodsJSON string
+		surplusValueRate       int64
+		createdAt              time.Time
+	)
+	err := s.Scan(&id, &label, &surplusValueRate, &periodsJSON, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return tendency.CompositionTrajectory{}, ErrNotFound
+		}
+		return tendency.CompositionTrajectory{}, err
+	}
+	var periods []tendency.TrajectoryPeriod
+	if err := json.Unmarshal([]byte(periodsJSON), &periods); err != nil {
+		return tendency.CompositionTrajectory{}, err
+	}
+	if periods == nil {
+		periods = []tendency.TrajectoryPeriod{}
+	}
+	t := tendency.CompositionTrajectory{
+		ID:               tendency.CompositionTrajectoryID(id),
+		Label:            label,
+		SurplusValueRate: surplusValueRate,
+		Periods:          periods,
+		CreatedAt:        createdAt,
+	}
+	t.ProfitRates = t.DeriveProfitRates()
+	return t, nil
+}
+
+// CreateRateMassContradiction persists r, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateRateMassContradiction(ctx context.Context, r tendency.RateMassContradiction) (tendency.RateMassContradiction, error) {
+	if r.ID.IsZero() {
+		r.ID = tendency.NewRateMassContradictionID()
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO rate_mass_contradictions
+		(id, old_c, old_rate, new_c, new_rate, old_mass, new_mass, mass_change, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(r.ID), r.OldC, r.OldRate, r.NewC, r.NewRate,
+		r.OldMass, r.NewMass, r.MassChange, r.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return tendency.RateMassContradiction{}, ErrAlreadyExists
+		}
+		return tendency.RateMassContradiction{}, err
+	}
+	return r, nil
+}
+
+// GetRateMassContradiction returns the record with id, or ErrNotFound.
+func (m *MySQL) GetRateMassContradiction(ctx context.Context, id tendency.RateMassContradictionID) (tendency.RateMassContradiction, error) {
+	const q = `SELECT id, old_c, old_rate, new_c, new_rate, old_mass, new_mass, mass_change, created_at
+		FROM rate_mass_contradictions WHERE id = ?`
+	return scanRateMassContradiction(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListRateMassContradictions returns all stored records, newest first.
+func (m *MySQL) ListRateMassContradictions(ctx context.Context) ([]tendency.RateMassContradiction, error) {
+	const q = `SELECT id, old_c, old_rate, new_c, new_rate, old_mass, new_mass, mass_change, created_at
+		FROM rate_mass_contradictions ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]tendency.RateMassContradiction, 0)
+	for rows.Next() {
+		r, err := scanRateMassContradiction(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func scanRateMassContradiction(s rowScanner) (tendency.RateMassContradiction, error) {
+	var (
+		id                                                       string
+		oldC, oldRate, newC, newRate, oldMass, newMass, massChng int64
+		createdAt                                                time.Time
+	)
+	err := s.Scan(&id, &oldC, &oldRate, &newC, &newRate, &oldMass, &newMass, &massChng, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return tendency.RateMassContradiction{}, ErrNotFound
+		}
+		return tendency.RateMassContradiction{}, err
+	}
+	return tendency.RateMassContradiction{
+		ID:         tendency.RateMassContradictionID(id),
+		OldC:       oldC,
+		OldRate:    oldRate,
+		NewC:       newC,
+		NewRate:    newRate,
+		OldMass:    oldMass,
+		NewMass:    newMass,
+		MassChange: massChng,
+		CreatedAt:  createdAt,
 	}, nil
 }
 

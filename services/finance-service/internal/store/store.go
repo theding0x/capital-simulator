@@ -15,6 +15,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
 // Sentinel errors that callers can branch on with errors.Is.
@@ -175,4 +176,25 @@ type Store interface {
 	CreatePriceOfProductionChange(ctx context.Context, c avgprofit.PriceOfProductionChange) (avgprofit.PriceOfProductionChange, error)
 	// GetPriceOfProductionChange returns the change with the given ID, or ErrNotFound.
 	GetPriceOfProductionChange(ctx context.Context, id avgprofit.PriceOfProductionChangeID) (avgprofit.PriceOfProductionChange, error)
+
+	// CreateCompositionTrajectory persists a composition trajectory (Vol. III Ch. 13)
+	// — the time-series of rising c/v with constant s′ and the falling rate of profit
+	// it produces — assigning an ID and created-at timestamp when absent. The derived
+	// ProfitRates slice is recomputed from Periods on store. Returns ErrAlreadyExists
+	// on ID collision.
+	CreateCompositionTrajectory(ctx context.Context, t tendency.CompositionTrajectory) (tendency.CompositionTrajectory, error)
+	// GetCompositionTrajectory returns the trajectory with the given ID, or ErrNotFound.
+	GetCompositionTrajectory(ctx context.Context, id tendency.CompositionTrajectoryID) (tendency.CompositionTrajectory, error)
+	// ListCompositionTrajectories returns all stored trajectories, newest first.
+	ListCompositionTrajectories(ctx context.Context) ([]tendency.CompositionTrajectory, error)
+
+	// CreateRateMassContradiction persists a rate-mass contradiction (Vol. III Ch. 13)
+	// — the falling rate of profit against the (possibly growing) mass of profit —
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists
+	// on ID collision.
+	CreateRateMassContradiction(ctx context.Context, r tendency.RateMassContradiction) (tendency.RateMassContradiction, error)
+	// GetRateMassContradiction returns the record with the given ID, or ErrNotFound.
+	GetRateMassContradiction(ctx context.Context, id tendency.RateMassContradictionID) (tendency.RateMassContradiction, error)
+	// ListRateMassContradictions returns all stored records, newest first.
+	ListRateMassContradictions(ctx context.Context) ([]tendency.RateMassContradiction, error)
 }

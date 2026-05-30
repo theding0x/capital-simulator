@@ -71,6 +71,12 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("GET /v1/avgprofit/price-change/{id}", h.GetPriceOfProductionChange)
 	mux.HandleFunc("POST /v1/avgprofit/compensation-ground", h.ComputeCompensationGround)
 	mux.HandleFunc("GET /v1/avgprofit/summary", h.GetPartIISummary)
+	// Vol. III Ch. 13 — The Law As Such (Tendential Fall in the Rate of Profit)
+	mux.HandleFunc("POST /v1/tendency/trajectory", h.CreateCompositionTrajectory)
+	mux.HandleFunc("GET /v1/tendency/trajectory", h.ListCompositionTrajectories)
+	mux.HandleFunc("GET /v1/tendency/trajectory/{id}", h.GetCompositionTrajectory)
+	mux.HandleFunc("POST /v1/tendency/rate-mass", h.CreateRateMassContradiction)
+	mux.HandleFunc("GET /v1/tendency/rate-mass/{id}", h.GetRateMassContradiction)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

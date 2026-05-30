@@ -369,6 +369,11 @@ func main() {
 	srv.Handle("/v1/avgprofit/price-change/{rest...}", financeProxy)
 	srv.Handle("/v1/avgprofit/compensation-ground", financeProxy)
 	srv.Handle("/v1/avgprofit/summary", financeProxy)
+	// Vol. III Ch. 13 — The Law As Such (Tendential Fall in the Rate of Profit) → finance-service
+	srv.Handle("/v1/tendency/trajectory", financeProxy)
+	srv.Handle("/v1/tendency/trajectory/{rest...}", financeProxy)
+	srv.Handle("/v1/tendency/rate-mass", financeProxy)
+	srv.Handle("/v1/tendency/rate-mass/{rest...}", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)

@@ -124,7 +124,7 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "v3-ch11", volume: 3, number: 11, title: "Effects of General Wage Fluctuations on Prices of Production", part: "Part II — Conversion of Profit into Average Profit",             circuitNode: ["delta-M"],                        status: "done"    },
   { id: "v3-ch12", volume: 3, number: 12, title: "Supplementary Remarks",                                     part: "Part II — Conversion of Profit into Average Profit",                circuitNode: ["delta-M"],                        status: "done"    },
   // Part III — The Law of the Tendential Fall in the Rate of Profit
-  { id: "v3-ch13", volume: 3, number: 13, title: "The Law as Such",                                           part: "Part III — The Law of the Tendential Fall in the Rate of Profit",   circuitNode: ["delta-M", "whole"],               status: "pending" },
+  { id: "v3-ch13", volume: 3, number: 13, title: "The Law as Such",                                           part: "Part III — The Law of the Tendential Fall in the Rate of Profit",   circuitNode: ["delta-M", "whole"],               status: "done"    },
   { id: "v3-ch14", volume: 3, number: 14, title: "Counteracting Influences",                                  part: "Part III — The Law of the Tendential Fall in the Rate of Profit",   circuitNode: ["delta-M"],                        status: "pending" },
   { id: "v3-ch15", volume: 3, number: 15, title: "Internal Contradictions of the Law",                        part: "Part III — The Law of the Tendential Fall in the Rate of Profit",   circuitNode: ["delta-M", "whole"],               status: "pending" },
   // Part IV — Conversion of Commodity-Capital and Money-Capital into Commercial Capital

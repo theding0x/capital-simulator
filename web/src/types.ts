@@ -3404,3 +3404,36 @@ export interface PartIISummaryResponse {
   };
   created_at: string;
 }
+
+// --- finance-service types (Vol. III Ch. 13: The Law as Such) ----------------
+
+// TrajectoryPeriodResponse mirrors tendency.TrajectoryPeriod.
+export interface TrajectoryPeriodResponse {
+  constant_capital: number; // c; LabourMinutes
+  variable_capital: number; // v; LabourMinutes
+  surplus_value: number; // s; LabourMinutes
+  profit_rate: number; // p' in basis points
+}
+
+// CompositionTrajectoryResponse mirrors tendency.CompositionTrajectory.
+export interface CompositionTrajectoryResponse {
+  id: string;
+  label: string;
+  surplus_value_rate: number; // s' in basis points
+  periods: TrajectoryPeriodResponse[];
+  profit_rates: number[]; // derived basis-point rates
+  created_at: string;
+}
+
+// RateMassContradictionResponse mirrors tendency.RateMassContradiction.
+export interface RateMassContradictionResponse {
+  id: string;
+  old_c: number;
+  old_rate: number; // basis points
+  new_c: number;
+  new_rate: number; // basis points
+  old_mass: number;
+  new_mass: number;
+  mass_change: number; // signed
+  created_at: string;
+}

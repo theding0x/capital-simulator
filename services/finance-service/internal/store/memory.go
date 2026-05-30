@@ -8,6 +8,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
 // Memory is an in-memory Store for unit tests and local development.
@@ -30,6 +31,8 @@ type Memory struct {
 	equalisations      map[avgprofit.EqualisationID]avgprofit.Equalisation
 	wageEffects        map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis
 	priceChanges       map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange
+	trajectories       map[tendency.CompositionTrajectoryID]tendency.CompositionTrajectory
+	rateMasses         map[tendency.RateMassContradictionID]tendency.RateMassContradiction
 }
 
 // NewMemory returns an empty in-memory store.
@@ -52,6 +55,8 @@ func NewMemory() *Memory {
 		equalisations:      make(map[avgprofit.EqualisationID]avgprofit.Equalisation),
 		wageEffects:        make(map[avgprofit.WageEffectAnalysisID]avgprofit.WageEffectAnalysis),
 		priceChanges:       make(map[avgprofit.PriceOfProductionChangeID]avgprofit.PriceOfProductionChange),
+		trajectories:       make(map[tendency.CompositionTrajectoryID]tendency.CompositionTrajectory),
+		rateMasses:         make(map[tendency.RateMassContradictionID]tendency.RateMassContradiction),
 	}
 }
 
@@ -701,4 +706,101 @@ func (m *Memory) GetPriceOfProductionChange(_ context.Context, id avgprofit.Pric
 		return avgprofit.PriceOfProductionChange{}, ErrNotFound
 	}
 	return c, nil
+}
+
+// CreateCompositionTrajectory stores t, assigning an ID and timestamp when
+// absent. It ensures Periods is non-nil and re-derives ProfitRates before store.
+func (m *Memory) CreateCompositionTrajectory(_ context.Context, t tendency.CompositionTrajectory) (tendency.CompositionTrajectory, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if t.ID.IsZero() {
+		t.ID = tendency.NewCompositionTrajectoryID()
+	}
+	if _, exists := m.trajectories[t.ID]; exists {
+		return tendency.CompositionTrajectory{}, ErrAlreadyExists
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = m.now().UTC()
+	}
+	if t.Periods == nil {
+		t.Periods = []tendency.TrajectoryPeriod{}
+	}
+	t.ProfitRates = t.DeriveProfitRates()
+	m.trajectories[t.ID] = t
+	return t, nil
+}
+
+// GetCompositionTrajectory returns the trajectory with id, or ErrNotFound.
+func (m *Memory) GetCompositionTrajectory(_ context.Context, id tendency.CompositionTrajectoryID) (tendency.CompositionTrajectory, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	t, ok := m.trajectories[id]
+	if !ok {
+		return tendency.CompositionTrajectory{}, ErrNotFound
+	}
+	t.ProfitRates = t.DeriveProfitRates()
+	return t, nil
+}
+
+// ListCompositionTrajectories returns all stored trajectories, newest first.
+func (m *Memory) ListCompositionTrajectories(_ context.Context) ([]tendency.CompositionTrajectory, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]tendency.CompositionTrajectory, 0, len(m.trajectories))
+	for _, t := range m.trajectories {
+		t.ProfitRates = t.DeriveProfitRates()
+		out = append(out, t)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateRateMassContradiction stores r, assigning an ID and timestamp when absent.
+func (m *Memory) CreateRateMassContradiction(_ context.Context, r tendency.RateMassContradiction) (tendency.RateMassContradiction, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if r.ID.IsZero() {
+		r.ID = tendency.NewRateMassContradictionID()
+	}
+	if _, exists := m.rateMasses[r.ID]; exists {
+		return tendency.RateMassContradiction{}, ErrAlreadyExists
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	m.rateMasses[r.ID] = r
+	return r, nil
+}
+
+// GetRateMassContradiction returns the record with id, or ErrNotFound.
+func (m *Memory) GetRateMassContradiction(_ context.Context, id tendency.RateMassContradictionID) (tendency.RateMassContradiction, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	r, ok := m.rateMasses[id]
+	if !ok {
+		return tendency.RateMassContradiction{}, ErrNotFound
+	}
+	return r, nil
+}
+
+// ListRateMassContradictions returns all stored records, newest first.
+func (m *Memory) ListRateMassContradictions(_ context.Context) ([]tendency.RateMassContradiction, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]tendency.RateMassContradiction, 0, len(m.rateMasses))
+	for _, r := range m.rateMasses {
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
 }

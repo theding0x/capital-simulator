@@ -7,6 +7,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
 func TestMemory_CostPriceRoundTrip(t *testing.T) {
@@ -944,5 +945,260 @@ func TestMemory_ListWageEffectAnalyses_NewestFirst(t *testing.T) {
 	}
 	if out[0].ID != createdSecond.ID {
 		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// --- CompositionTrajectory store tests (Ch. 13) ---
+
+// ch13LawSteps mirrors the §law fixture: s′=100%, v=100, c rising 50→400.
+var ch13LawSteps = [][2]int64{{50, 100}, {100, 100}, {200, 100}, {300, 100}, {400, 100}}
+
+// ch13WantRates are the round-half-up rates the §law fixture produces.
+var ch13WantRates = []int64{6667, 5000, 3333, 2500, 2000}
+
+func TestMemory_CompositionTrajectoryRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	tr := tendency.BuildCompositionTrajectory("Marx §law s'=100%", 10000, ch13LawSteps)
+	created, err := m.CreateCompositionTrajectory(ctx, tr)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if len(created.ProfitRates) != len(ch13WantRates) {
+		t.Fatalf("ProfitRates len = %d, want %d", len(created.ProfitRates), len(ch13WantRates))
+	}
+	for i, want := range ch13WantRates {
+		if created.ProfitRates[i] != want {
+			t.Errorf("created ProfitRates[%d] = %d, want %d", i, created.ProfitRates[i], want)
+		}
+	}
+
+	got, err := m.GetCompositionTrajectory(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID || got.Label != created.Label || got.SurplusValueRate != created.SurplusValueRate {
+		t.Errorf("round-trip scalar mismatch:\n got  %+v\n want %+v", got, created)
+	}
+	if !got.CreatedAt.Equal(created.CreatedAt) {
+		t.Errorf("round-trip CreatedAt mismatch: got %v, want %v", got.CreatedAt, created.CreatedAt)
+	}
+	if len(got.Periods) != len(created.Periods) {
+		t.Fatalf("round-trip Periods len = %d, want %d", len(got.Periods), len(created.Periods))
+	}
+	for i := range created.Periods {
+		if got.Periods[i] != created.Periods[i] {
+			t.Errorf("round-trip Periods[%d] mismatch:\n got  %+v\n want %+v", i, got.Periods[i], created.Periods[i])
+		}
+	}
+	// Derived ProfitRates survives the round-trip (re-derived on Get).
+	if len(got.ProfitRates) != len(created.ProfitRates) {
+		t.Fatalf("round-trip ProfitRates len = %d, want %d", len(got.ProfitRates), len(created.ProfitRates))
+	}
+	for i := range created.ProfitRates {
+		if got.ProfitRates[i] != created.ProfitRates[i] {
+			t.Errorf("round-trip ProfitRates[%d] = %d, want %d", i, got.ProfitRates[i], created.ProfitRates[i])
+		}
+	}
+}
+
+func TestMemory_GetCompositionTrajectoryNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetCompositionTrajectory(context.Background(), tendency.CompositionTrajectoryID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateCompositionTrajectoryDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	tr := tendency.BuildCompositionTrajectory("law", 10000, ch13LawSteps)
+	tr.ID = tendency.CompositionTrajectoryID("fixed-traj-id-ch13")
+
+	if _, err := m.CreateCompositionTrajectory(ctx, tr); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateCompositionTrajectory(ctx, tr); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListCompositionTrajectoriesNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListCompositionTrajectories(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListCompositionTrajectories_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	first := tendency.BuildCompositionTrajectory("first", 10000, [][2]int64{{50, 100}})
+	second := tendency.BuildCompositionTrajectory("second", 10000, [][2]int64{{400, 100}})
+
+	createdFirst, err := m.CreateCompositionTrajectory(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateCompositionTrajectory(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListCompositionTrajectories(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// --- RateMassContradiction store tests (Ch. 13) ---
+
+func TestMemory_RateMassContradictionRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Rate halves (20%→10%), capital doubles → mass preserved (MassChange 0).
+	rm := tendency.ComputeRateMassContradiction(1_000_000, 2000, 2_000_000, 1000)
+	created, err := m.CreateRateMassContradiction(ctx, rm)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if created.OldMass != 200000 || created.NewMass != 200000 || created.MassChange != 0 {
+		t.Errorf("masses = old %d new %d change %d, want 200000/200000/0",
+			created.OldMass, created.NewMass, created.MassChange)
+	}
+
+	got, err := m.GetRateMassContradiction(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetRateMassContradictionNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetRateMassContradiction(context.Background(), tendency.RateMassContradictionID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateRateMassContradictionDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	rm := tendency.ComputeRateMassContradiction(1_000_000, 2000, 3_000_000, 1000)
+	rm.ID = tendency.RateMassContradictionID("fixed-ratemass-id-ch13")
+
+	if _, err := m.CreateRateMassContradiction(ctx, rm); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateRateMassContradiction(ctx, rm); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListRateMassContradictionsNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListRateMassContradictions(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListRateMassContradictions_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	first := tendency.ComputeRateMassContradiction(1_000_000, 2000, 2_000_000, 1000)
+	second := tendency.ComputeRateMassContradiction(1_000_000, 2000, 3_000_000, 1000)
+
+	createdFirst, err := m.CreateRateMassContradiction(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateRateMassContradiction(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListRateMassContradictions(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh13SeedIDs asserts the Ch. 13 seed IDs follow the 5eed…<CC=13> convention
+// and are unique (mirrors the seed migration 00026_v3_ch13_seed.sql).
+func TestCh13SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000001301",
+		"5eed000000000000001302",
+		"5eed000000000000001303",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "13" {
+			t.Errorf("seed id %q chapter token = %q, want 13", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
 	}
 }
