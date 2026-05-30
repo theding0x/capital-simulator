@@ -1868,7 +1868,7 @@ func (m *MySQL) CreateCommercialCapital(ctx context.Context, cc merchant.Commerc
 	}
 
 	const q = `INSERT INTO commercial_capitals
-		(id, money_advanced, commodity_description, function, surplus_value_produced, created_at)
+		(id, money_advanced, commodity_description, ` + "`function`" + `, surplus_value_produced, created_at)
 		VALUES (?, ?, ?, ?, ?, ?)`
 	_, err := m.db.ExecContext(ctx, q,
 		string(cc.ID), cc.MoneyAdvanced, cc.CommodityDescription,
@@ -1885,14 +1885,14 @@ func (m *MySQL) CreateCommercialCapital(ctx context.Context, cc merchant.Commerc
 
 // GetCommercialCapital returns the commercial-capital record with id, or ErrNotFound.
 func (m *MySQL) GetCommercialCapital(ctx context.Context, id merchant.CommercialCapitalID) (merchant.CommercialCapital, error) {
-	const q = `SELECT id, money_advanced, commodity_description, function, surplus_value_produced, created_at
+	const q = `SELECT id, money_advanced, commodity_description, ` + "`function`" + `, surplus_value_produced, created_at
 		FROM commercial_capitals WHERE id = ?`
 	return scanCommercialCapital(m.db.QueryRowContext(ctx, q, string(id)))
 }
 
 // ListCommercialCapitals returns all stored commercial-capital records, newest first.
 func (m *MySQL) ListCommercialCapitals(ctx context.Context) ([]merchant.CommercialCapital, error) {
-	const q = `SELECT id, money_advanced, commodity_description, function, surplus_value_produced, created_at
+	const q = `SELECT id, money_advanced, commodity_description, ` + "`function`" + `, surplus_value_produced, created_at
 		FROM commercial_capitals ORDER BY created_at DESC, id ASC`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
