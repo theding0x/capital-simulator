@@ -2087,4 +2087,27 @@ export const financeApi = {
     http<import("./types").ProductionSphereResponse>(`/v1/avgprofit/spheres/${id}`),
   createProductionSphere: (input: { name: string; c: number; v: number; s_rate: number }) =>
     http<import("./types").ProductionSphereResponse>("/v1/avgprofit/spheres", { method: "POST", body: JSON.stringify(input) }),
+
+  // Vol. III Ch. 9 — Formation of a General Rate of Profit
+  computeGeneralProfitRate: (input: { spheres: { name: string; c: number; v: number; s_rate: number }[] }) =>
+    http<import("./types").GeneralProfitRateResponse>("/v1/avgprofit/general-rate", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  getGeneralProfitRate: (id: string) =>
+    http<import("./types").GeneralProfitRateResponse>(`/v1/avgprofit/general-rate/${id}`),
+  createPriceOfProduction: (input: { sphere_name: string; cost_price: number; general_rate: number; commodity_value: number }) =>
+    http<import("./types").PriceOfProductionResponse>("/v1/avgprofit/price-of-production", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  listPricesOfProduction: () =>
+    http<{ items: import("./types").PriceOfProductionResponse[] }>("/v1/avgprofit/price-of-production").then((r) => r.items),
+  getPriceOfProduction: (id: string) =>
+    http<import("./types").PriceOfProductionResponse>(`/v1/avgprofit/price-of-production/${id}`),
+  computeSocialAggregate: (input: { spheres: { name: string; c: number; v: number; s_rate: number }[] }) =>
+    http<import("./types").SocialCapitalAggregateResponse>("/v1/avgprofit/social-aggregate", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

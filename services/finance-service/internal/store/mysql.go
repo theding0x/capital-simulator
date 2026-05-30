@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"encoding/json"
 	"errors"
 	"io/fs"
 	"strings"
@@ -840,6 +841,160 @@ func scanProductionSphere(s rowScanner) (avgprofit.ProductionSphere, error) {
 		VariablePercent:      varPct,
 		LabourPowerIndex:     avgprofit.LabourPowerIndex(lpi),
 		CreatedAt:            createdAt,
+	}, nil
+}
+
+// CreateGeneralProfitRate persists g, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateGeneralProfitRate(ctx context.Context, g avgprofit.GeneralProfitRate) (avgprofit.GeneralProfitRate, error) {
+	if g.ID.IsZero() {
+		g.ID = avgprofit.NewGeneralProfitRateID()
+	}
+	if g.CreatedAt.IsZero() {
+		g.CreatedAt = m.now().UTC()
+	}
+
+	spheresJSON, err := json.Marshal(g.Spheres)
+	if err != nil {
+		return avgprofit.GeneralProfitRate{}, err
+	}
+
+	const q = `INSERT INTO general_profit_rates
+		(id, rate, sum_surplus_values, sum_total_capitals, average_variable_percent, spheres_json, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(g.ID),
+		int64(g.Rate), int64(g.SumSurplusValues), int64(g.SumTotalCapitals),
+		g.AverageVariablePercent, string(spheresJSON),
+		g.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return avgprofit.GeneralProfitRate{}, ErrAlreadyExists
+		}
+		return avgprofit.GeneralProfitRate{}, err
+	}
+	return g, nil
+}
+
+// GetGeneralProfitRate returns the general rate with id, or ErrNotFound.
+func (m *MySQL) GetGeneralProfitRate(ctx context.Context, id avgprofit.GeneralProfitRateID) (avgprofit.GeneralProfitRate, error) {
+	const q = `SELECT id, rate, sum_surplus_values, sum_total_capitals, average_variable_percent, spheres_json, created_at
+		FROM general_profit_rates WHERE id = ?`
+	return scanGeneralProfitRate(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// CreatePriceOfProduction persists p, assigning an ID and timestamp when absent.
+func (m *MySQL) CreatePriceOfProduction(ctx context.Context, p avgprofit.PriceOfProduction) (avgprofit.PriceOfProduction, error) {
+	if p.ID.IsZero() {
+		p.ID = avgprofit.NewPriceOfProductionID()
+	}
+	if p.CreatedAt.IsZero() {
+		p.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO prices_of_production
+		(id, sphere_name, cost_price, general_rate, commodity_value, average_profit, price, deviation, composition, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(p.ID), p.SphereName,
+		int64(p.CostPrice), int64(p.GeneralRate), int64(p.CommodityValue),
+		int64(p.AverageProfit), int64(p.Price), int64(p.Deviation),
+		string(p.Composition), p.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return avgprofit.PriceOfProduction{}, ErrAlreadyExists
+		}
+		return avgprofit.PriceOfProduction{}, err
+	}
+	return p, nil
+}
+
+// GetPriceOfProduction returns the record with id, or ErrNotFound.
+func (m *MySQL) GetPriceOfProduction(ctx context.Context, id avgprofit.PriceOfProductionID) (avgprofit.PriceOfProduction, error) {
+	const q = `SELECT id, sphere_name, cost_price, general_rate, commodity_value, average_profit, price, deviation, composition, created_at
+		FROM prices_of_production WHERE id = ?`
+	return scanPriceOfProduction(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListPricesOfProduction returns all stored records, newest first.
+func (m *MySQL) ListPricesOfProduction(ctx context.Context) ([]avgprofit.PriceOfProduction, error) {
+	const q = `SELECT id, sphere_name, cost_price, general_rate, commodity_value, average_profit, price, deviation, composition, created_at
+		FROM prices_of_production ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []avgprofit.PriceOfProduction
+	for rows.Next() {
+		p, err := scanPriceOfProduction(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
+func scanGeneralProfitRate(s rowScanner) (avgprofit.GeneralProfitRate, error) {
+	var (
+		id, spheresJSON                           string
+		rate, sumS, sumC, avgVarPct               int64
+		createdAt                                 time.Time
+	)
+	err := s.Scan(&id, &rate, &sumS, &sumC, &avgVarPct, &spheresJSON, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return avgprofit.GeneralProfitRate{}, ErrNotFound
+		}
+		return avgprofit.GeneralProfitRate{}, err
+	}
+	var spheres []avgprofit.ProductionSphere
+	if err := json.Unmarshal([]byte(spheresJSON), &spheres); err != nil {
+		return avgprofit.GeneralProfitRate{}, err
+	}
+	if spheres == nil {
+		spheres = []avgprofit.ProductionSphere{}
+	}
+	return avgprofit.GeneralProfitRate{
+		ID:                     avgprofit.GeneralProfitRateID(id),
+		Spheres:                spheres,
+		Rate:                   avgprofit.SphereProfitRate(rate),
+		SumSurplusValues:       avgprofit.SurplusValue(sumS),
+		SumTotalCapitals:       avgprofit.TotalCapital(sumC),
+		AverageVariablePercent: avgVarPct,
+		CreatedAt:              createdAt,
+	}, nil
+}
+
+func scanPriceOfProduction(s rowScanner) (avgprofit.PriceOfProduction, error) {
+	var (
+		id, sphereName, composition                          string
+		costPrice, generalRate, commodityValue               int64
+		averageProfit, price, deviation                      int64
+		createdAt                                            time.Time
+	)
+	err := s.Scan(&id, &sphereName, &costPrice, &generalRate, &commodityValue,
+		&averageProfit, &price, &deviation, &composition, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return avgprofit.PriceOfProduction{}, ErrNotFound
+		}
+		return avgprofit.PriceOfProduction{}, err
+	}
+	return avgprofit.PriceOfProduction{
+		ID:             avgprofit.PriceOfProductionID(id),
+		SphereName:     sphereName,
+		CostPrice:      avgprofit.CostPrice(costPrice),
+		GeneralRate:    avgprofit.SphereProfitRate(generalRate),
+		CommodityValue: avgprofit.CommodityValue(commodityValue),
+		AverageProfit:  avgprofit.Profit(averageProfit),
+		Price:          avgprofit.ProductionPrice(price),
+		Deviation:      avgprofit.ValueDeviation(deviation),
+		Composition:    avgprofit.CompositionKind(composition),
+		CreatedAt:      createdAt,
 	}, nil
 }
 

@@ -1,0 +1,211 @@
+.v3-ch09 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.v3-ch09-intro p {
+  margin: 0 0 0.6rem;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+.v3-ch09-builder,
+.v3-ch09-result,
+.v3-ch09-seeded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--rule, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  background: var(--surface, rgba(0, 0, 0, 0.02));
+}
+
+.v3-ch09 h4 {
+  margin: 0;
+}
+
+.v3-ch09-input-table,
+.v3-ch09-pop-table {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  width: 100%;
+}
+
+.v3-ch09-input-table th,
+.v3-ch09-input-table td,
+.v3-ch09-pop-table th,
+.v3-ch09-pop-table td {
+  border: 1px solid var(--rule, rgba(0, 0, 0, 0.12));
+  padding: 0.3rem 0.55rem;
+  text-align: right;
+}
+
+.v3-ch09-input-table th,
+.v3-ch09-pop-table th {
+  color: var(--ink-muted);
+  font-weight: 600;
+  background: var(--surface, rgba(0, 0, 0, 0.02));
+}
+
+.v3-ch09-input-table td:first-child,
+.v3-ch09-input-table th:first-child,
+.v3-ch09-pop-table td:first-child,
+.v3-ch09-pop-table th:first-child {
+  text-align: left;
+}
+
+.v3-ch09-input-table tfoot td,
+.v3-ch09-input-table tfoot th {
+  font-weight: 700;
+  background: var(--surface, rgba(0, 0, 0, 0.04));
+}
+
+.v3-ch09-name-input {
+  width: 180px;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--rule, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  font-size: 0.78rem;
+  background: var(--bg, #fff);
+}
+
+.v3-ch09-num-input {
+  width: 70px;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--rule, rgba(0, 0, 0, 0.2));
+  border-radius: 4px;
+  font-size: 0.78rem;
+  text-align: right;
+  background: var(--bg, #fff);
+}
+
+.v3-ch09-preview {
+  color: var(--ink-muted);
+}
+
+.v3-ch09-preview-rate {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.v3-ch09-compute-btn {
+  align-self: flex-start;
+  border: 1px solid var(--red, #b3242b);
+  background: var(--red, #b3242b);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.v3-ch09-compute-btn:hover {
+  opacity: 0.9;
+}
+
+.v3-ch09-error {
+  color: var(--red, #b3242b);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Rate banner */
+.v3-ch09-rate-banner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.v3-ch09-rate-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--rule, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  background: var(--bg, #fff);
+}
+
+.v3-ch09-stat-label {
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+}
+
+.v3-ch09-stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.v3-ch09-headline {
+  font-size: 1.5rem;
+  border-left: 4px solid var(--red, #b3242b);
+  padding-left: 0.4rem;
+}
+
+/* Deviation colours */
+.v3-ch09-positive {
+  color: #1a7f4b;
+  font-weight: 600;
+}
+
+.v3-ch09-negative {
+  color: var(--red, #b3242b);
+  font-weight: 600;
+}
+
+/* Composition tags */
+.v3-ch09-tag {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.v3-ch09-tag-higher {
+  background: rgba(27, 127, 75, 0.12);
+  color: #1a7f4b;
+}
+
+.v3-ch09-tag-lower {
+  background: rgba(179, 36, 43, 0.1);
+  color: var(--red, #b3242b);
+}
+
+.v3-ch09-tag-average {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--ink-muted);
+}
+
+/* Row tinting */
+.v3-ch09-row-higher {
+  background: rgba(27, 127, 75, 0.04);
+}
+
+.v3-ch09-row-lower {
+  background: rgba(179, 36, 43, 0.04);
+}
+
+/* Conservation banner */
+.v3-ch09-conservation {
+  padding: 0.65rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.v3-ch09-conserved {
+  background: rgba(27, 127, 75, 0.1);
+  color: #1a7f4b;
+  border: 1px solid rgba(27, 127, 75, 0.25);
+}
+
+.v3-ch09-not-conserved {
+  background: rgba(179, 36, 43, 0.08);
+  color: var(--red, #b3242b);
+  border: 1px solid rgba(179, 36, 43, 0.2);
+}

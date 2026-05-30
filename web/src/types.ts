@@ -3241,3 +3241,51 @@ export interface OrganicCompositionResponse {
   constant_percent: number;
   variable_percent: number;
 }
+
+// Vol. III Ch. 9 — Formation of a General Rate of Profit.
+
+// GeneralProfitRateResponse mirrors avgprofit.GeneralProfitRate.
+export interface GeneralProfitRateResponse {
+  id: string;
+  spheres: ProductionSphereResponse[];
+  rate: number;                    // p̄′ in basis points
+  sum_surplus_values: number;
+  sum_total_capitals: number;
+  average_variable_percent: number;
+  created_at: string;
+}
+
+// PriceOfProductionResponse mirrors avgprofit.PriceOfProduction.
+export interface PriceOfProductionResponse {
+  id: string;
+  sphere_name: string;
+  cost_price: number;
+  general_rate: number;
+  commodity_value: number;
+  average_profit: number;
+  price: number;
+  deviation: number;               // signed: price − value
+  composition: string;             // "higher" | "lower" | "average" | ""
+  created_at: string;
+}
+
+// ValuePriceDeviationResponse mirrors avgprofit.ValuePriceDeviation.
+export interface ValuePriceDeviationResponse {
+  value: number;
+  price_of_production: number;
+  deviation: number;               // signed: price − value
+}
+
+// SocialCapitalAggregateResponse mirrors avgprofit.SocialCapitalAggregate.
+export interface SocialCapitalAggregateResponse {
+  spheres: ProductionSphereResponse[];
+  weighted_general_rate: number;
+  sum_surplus_values: number;
+  sum_total_capitals: number;
+  average_variable_percent: number;
+  prices_of_production: PriceOfProductionResponse[];
+  total_values: number;
+  total_prices_of_production: number;
+  sum_average_profits: number;
+  value_conserved: boolean;
+}

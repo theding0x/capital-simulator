@@ -348,9 +348,12 @@ func main() {
 	// Vol. III Ch. 8 — Different Compositions of Capitals in Different Branches → finance-service
 	srv.Handle("/v1/avgprofit/spheres", financeProxy)
 	srv.Handle("/v1/avgprofit/spheres/{rest...}", financeProxy)
-	// Vol. III, Ch. 9 — General Rate of Profit + Prices of Production → finance-service
-	// srv.Handle("/v1/general-profit-rate", financeProxy)
-	// srv.Handle("/v1/prices-of-production", financeProxy)
+	// Vol. III Ch. 9 — Formation of a General Rate of Profit → finance-service
+	srv.Handle("/v1/avgprofit/general-rate", financeProxy)
+	srv.Handle("/v1/avgprofit/general-rate/{rest...}", financeProxy)
+	srv.Handle("/v1/avgprofit/price-of-production", financeProxy)
+	srv.Handle("/v1/avgprofit/price-of-production/{rest...}", financeProxy)
+	srv.Handle("/v1/avgprofit/social-aggregate", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)

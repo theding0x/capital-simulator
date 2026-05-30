@@ -118,4 +118,22 @@ type Store interface {
 	GetProductionSphere(ctx context.Context, id avgprofit.ProductionSphereID) (avgprofit.ProductionSphere, error)
 	// ListProductionSpheres returns all stored spheres, newest first.
 	ListProductionSpheres(ctx context.Context) ([]avgprofit.ProductionSphere, error)
+
+	// CreateGeneralProfitRate persists a general-rate computation (Vol. III Ch. 9)
+	// — the capital-weighted general rate over a set of production spheres —
+	// assigning an ID and created-at timestamp when absent. It returns
+	// ErrAlreadyExists if the ID collides.
+	CreateGeneralProfitRate(ctx context.Context, g avgprofit.GeneralProfitRate) (avgprofit.GeneralProfitRate, error)
+	// GetGeneralProfitRate returns the general rate with the given ID, or ErrNotFound.
+	GetGeneralProfitRate(ctx context.Context, id avgprofit.GeneralProfitRateID) (avgprofit.GeneralProfitRate, error)
+
+	// CreatePriceOfProduction persists a price-of-production record (Vol. III Ch. 9)
+	// — a sphere's cost-price, general rate, average profit, price, and deviation
+	// from value — assigning an ID and created-at timestamp when absent. It returns
+	// ErrAlreadyExists if the ID collides.
+	CreatePriceOfProduction(ctx context.Context, p avgprofit.PriceOfProduction) (avgprofit.PriceOfProduction, error)
+	// GetPriceOfProduction returns the record with the given ID, or ErrNotFound.
+	GetPriceOfProduction(ctx context.Context, id avgprofit.PriceOfProductionID) (avgprofit.PriceOfProduction, error)
+	// ListPricesOfProduction returns all stored records, newest first.
+	ListPricesOfProduction(ctx context.Context) ([]avgprofit.PriceOfProduction, error)
 }

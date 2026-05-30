@@ -50,4 +50,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/avgprofit/spheres", h.CreateProductionSphere)
 	s.HandleFunc("GET /v1/avgprofit/spheres", h.ListProductionSpheres)
 	s.HandleFunc("GET /v1/avgprofit/spheres/{id}", h.GetProductionSphere)
+
+	// Vol. III Ch. 9 — Formation of a General Rate of Profit
+	s.HandleFunc("POST /v1/avgprofit/general-rate", h.CreateGeneralProfitRate)
+	s.HandleFunc("GET /v1/avgprofit/general-rate/{id}", h.GetGeneralProfitRate)
+	s.HandleFunc("POST /v1/avgprofit/price-of-production", h.CreatePriceOfProduction)
+	s.HandleFunc("GET /v1/avgprofit/price-of-production", h.ListPricesOfProduction)
+	s.HandleFunc("GET /v1/avgprofit/price-of-production/{id}", h.GetPriceOfProduction)
+	s.HandleFunc("POST /v1/avgprofit/social-aggregate", h.ComputeSocialAggregate)
 }
