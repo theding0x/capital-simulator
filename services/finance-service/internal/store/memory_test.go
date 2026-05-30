@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 )
 
@@ -325,5 +326,105 @@ func TestMemory_ListEconomyAnalysesNeverNil(t *testing.T) {
 	}
 	if out == nil {
 		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+// --- ProductionSphere store tests (Ch. 8) ---
+
+func TestMemory_ProductionSphereRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Sphere A: 600c + 100v, s' = 100%.
+	sp := avgprofit.ComputeProductionSphere("Sphere A (600c+100v)", 700, 100, 10000)
+	created, err := m.CreateProductionSphere(ctx, sp)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+
+	got, err := m.GetProductionSphere(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetProductionSphereNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetProductionSphere(context.Background(), avgprofit.ProductionSphereID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateProductionSphereDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+	sp := avgprofit.ComputeProductionSphere("Sphere B (100c+600v)", 700, 600, 10000)
+	sp.ID = avgprofit.ProductionSphereID("fixed-sphere-id-ch08")
+
+	if _, err := m.CreateProductionSphere(ctx, sp); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateProductionSphere(ctx, sp); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListProductionSpheresNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListProductionSpheres(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListProductionSpheres_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Create Sphere A then Sphere B; list should return B first (newest).
+	spA := avgprofit.ComputeProductionSphere("Sphere A", 700, 100, 10000)
+	spB := avgprofit.ComputeProductionSphere("Sphere B", 700, 600, 10000)
+
+	createdA, err := m.CreateProductionSphere(ctx, spA)
+	if err != nil {
+		t.Fatalf("create A: %v", err)
+	}
+	createdB, err := m.CreateProductionSphere(ctx, spB)
+	if err != nil {
+		t.Fatalf("create B: %v", err)
+	}
+
+	out, err := m.ListProductionSpheres(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Newest first: B was created after A, so B should come first (unless same
+	// nanosecond tick — in that case ordering is allowed to be either way).
+	if !createdB.CreatedAt.After(createdA.CreatedAt) {
+		// Same nanosecond: skip ordering assertion.
+		return
+	}
+	if out[0].ID != createdB.ID {
+		t.Errorf("first item id = %s, want B (%s)", out[0].ID, createdB.ID)
 	}
 }

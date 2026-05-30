@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 )
 
@@ -107,4 +108,14 @@ type Store interface {
 	GetMagnitudeChange(ctx context.Context, id profit.MagnitudeChangeID) (profit.MagnitudeChangeAnalysis, error)
 	// ListMagnitudeChanges returns all stored changes, newest first.
 	ListMagnitudeChanges(ctx context.Context) ([]profit.MagnitudeChangeAnalysis, error)
+
+	// CreateProductionSphere persists a production-sphere analysis (Vol. III Ch. 8)
+	// — a branch of production with its organic composition and individual rate of
+	// profit — assigning an ID and created-at timestamp when absent. It returns
+	// ErrAlreadyExists if the ID collides.
+	CreateProductionSphere(ctx context.Context, s avgprofit.ProductionSphere) (avgprofit.ProductionSphere, error)
+	// GetProductionSphere returns the sphere with the given ID, or ErrNotFound.
+	GetProductionSphere(ctx context.Context, id avgprofit.ProductionSphereID) (avgprofit.ProductionSphere, error)
+	// ListProductionSpheres returns all stored spheres, newest first.
+	ListProductionSpheres(ctx context.Context) ([]avgprofit.ProductionSphere, error)
 }

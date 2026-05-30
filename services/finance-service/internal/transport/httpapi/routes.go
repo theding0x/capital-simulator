@@ -45,4 +45,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/profit/magnitude-change", h.ListMagnitudeChanges)
 	s.HandleFunc("GET /v1/profit/magnitude-change/{id}", h.GetMagnitudeChange)
 	s.HandleFunc("GET /v1/profit/summary", h.GetPartISummary)
+
+	// Vol. III Ch. 8 — Different Compositions of Capitals in Different Branches
+	s.HandleFunc("POST /v1/avgprofit/spheres", h.CreateProductionSphere)
+	s.HandleFunc("GET /v1/avgprofit/spheres", h.ListProductionSpheres)
+	s.HandleFunc("GET /v1/avgprofit/spheres/{id}", h.GetProductionSphere)
 }

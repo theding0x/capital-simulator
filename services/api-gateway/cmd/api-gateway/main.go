@@ -345,6 +345,9 @@ func main() {
 	srv.Handle("/v1/profit/magnitude-change", financeProxy)
 	srv.Handle("/v1/profit/magnitude-change/{rest...}", financeProxy)
 	srv.Handle("/v1/profit/summary", financeProxy)
+	// Vol. III Ch. 8 — Different Compositions of Capitals in Different Branches → finance-service
+	srv.Handle("/v1/avgprofit/spheres", financeProxy)
+	srv.Handle("/v1/avgprofit/spheres/{rest...}", financeProxy)
 	// Vol. III, Ch. 9 — General Rate of Profit + Prices of Production → finance-service
 	// srv.Handle("/v1/general-profit-rate", financeProxy)
 	// srv.Handle("/v1/prices-of-production", financeProxy)
