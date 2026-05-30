@@ -31,4 +31,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/profit/economy", h.CreateEconomyAnalysis)
 	s.HandleFunc("GET /v1/profit/economy", h.ListEconomyAnalyses)
 	s.HandleFunc("GET /v1/profit/economy/{id}", h.GetEconomyAnalysis)
+
+	// Vol. III Ch. 6 — The Effect of Price Fluctuation on the Rate of Profit
+	s.HandleFunc("POST /v1/profit/price-fluctuation", h.CreatePriceFluctuationAnalysis)
+	s.HandleFunc("GET /v1/profit/price-fluctuation", h.ListPriceFluctuationAnalyses)
+	s.HandleFunc("GET /v1/profit/price-fluctuation/{id}", h.GetPriceFluctuationAnalysis)
 }

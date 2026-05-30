@@ -3122,3 +3122,41 @@ export interface WasteReductionResponse {
   recovered_waste: number;
   price_per_unit: number;
 }
+
+// Vol. III Ch. 6 — The Effect of Price Fluctuation on the Rate of Profit. The
+// rate of profit p' = s/(c+v) moves with the price of the raw material that makes
+// up the circulating part of c, though that price-movement adds no surplus-value.
+// Only the circulating raw-material component fluctuates; the fixed component and
+// v and s are held fixed. price_factor is the new raw-material price as a
+// percentage of its original level (100 = unchanged, 200 = doubled, 50 = halved).
+// Rates are basis points (10000 bp = 100%); magnitudes are LabourMinutes (£).
+
+export type PriceFluctuationKind = "rise" | "fall";
+
+export interface ConstantCapitalPriceEffectV3 {
+  fixed_capital: number;
+  original_material_capital: number;
+  price_factor: number;
+  variable_capital: number;
+  surplus_value: number;
+}
+
+export interface PriceFluctuationAnalysisResponse {
+  id: string;
+  kind: PriceFluctuationKind;
+  effect: ConstantCapitalPriceEffectV3;
+  old_profit_rate: number;
+  new_profit_rate: number;
+  created_at: string;
+}
+
+// §II — the capital tied up in a stock of raw material. A price fall releases
+// capital previously advanced to hold the stock; a price rise ties up more. For a
+// given movement, released and tied-up are the same magnitude with opposite sign:
+// stock_months × stock_units × (price delta).
+export interface CapitalReleaseResponse {
+  stock_months: number;
+  stock_units: number;
+  original_price_per_unit: number;
+  new_price_per_unit: number;
+}

@@ -2020,4 +2020,23 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // Vol. III Ch. 6 — The Effect of Price Fluctuation on the Rate of Profit
+  listPriceFluctuationAnalyses: () =>
+    http<{ items: import("./types").PriceFluctuationAnalysisResponse[] }>("/v1/profit/price-fluctuation").then((r) => r.items),
+
+  getPriceFluctuationAnalysis: (id: string) =>
+    http<import("./types").PriceFluctuationAnalysisResponse>(`/v1/profit/price-fluctuation/${id}`),
+
+  createPriceFluctuationAnalysis: (input: {
+    fixed: number;
+    original_material: number;
+    price_factor: number;
+    variable: number;
+    surplus_value: number;
+  }) =>
+    http<import("./types").PriceFluctuationAnalysisResponse>("/v1/profit/price-fluctuation", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
 };

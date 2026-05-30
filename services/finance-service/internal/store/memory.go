@@ -18,6 +18,7 @@ type Memory struct {
 	variations  map[profit.VariationAnalysisID]profit.VariationAnalysis
 	turnovers   map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis
 	economies   map[profit.EconomyAnalysisID]profit.EconomyAnalysis
+	priceFlux   map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis
 }
 
 // NewMemory returns an empty in-memory store.
@@ -29,6 +30,7 @@ func NewMemory() *Memory {
 		variations:  make(map[profit.VariationAnalysisID]profit.VariationAnalysis),
 		turnovers:   make(map[profit.TurnoverAnalysisID]profit.TurnoverAnalysis),
 		economies:   make(map[profit.EconomyAnalysisID]profit.EconomyAnalysis),
+		priceFlux:   make(map[profit.PriceFluctuationAnalysisID]profit.PriceFluctuationAnalysis),
 	}
 }
 
@@ -204,6 +206,51 @@ func (m *Memory) ListTurnoverAnalyses(_ context.Context) ([]profit.TurnoverAnaly
 
 	out := make([]profit.TurnoverAnalysis, 0, len(m.turnovers))
 	for _, a := range m.turnovers {
+		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreatePriceFluctuationAnalysis stores a, assigning an ID and timestamp when absent.
+func (m *Memory) CreatePriceFluctuationAnalysis(_ context.Context, a profit.PriceFluctuationAnalysis) (profit.PriceFluctuationAnalysis, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if a.ID.IsZero() {
+		a.ID = profit.NewPriceFluctuationAnalysisID()
+	}
+	if _, exists := m.priceFlux[a.ID]; exists {
+		return profit.PriceFluctuationAnalysis{}, ErrAlreadyExists
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	m.priceFlux[a.ID] = a
+	return a, nil
+}
+
+// GetPriceFluctuationAnalysis returns the analysis with id, or ErrNotFound.
+func (m *Memory) GetPriceFluctuationAnalysis(_ context.Context, id profit.PriceFluctuationAnalysisID) (profit.PriceFluctuationAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	a, ok := m.priceFlux[id]
+	if !ok {
+		return profit.PriceFluctuationAnalysis{}, ErrNotFound
+	}
+	return a, nil
+}
+
+// ListPriceFluctuationAnalyses returns all stored analyses, newest first.
+func (m *Memory) ListPriceFluctuationAnalyses(_ context.Context) ([]profit.PriceFluctuationAnalysis, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]profit.PriceFluctuationAnalysis, 0, len(m.priceFlux))
+	for _, a := range m.priceFlux {
 		out = append(out, a)
 	}
 	sort.Slice(out, func(i, j int) bool {
