@@ -3547,3 +3547,41 @@ export interface MerchantCircuitResponse {
   commodity_value: number; // pence
   money_returned: number; // pence; must exceed money_advanced
 }
+
+// ── Vol. III Ch. 17 — Commercial Profit ─────────────────────────────────────
+
+// CommercialProfitResponse mirrors merchant.CommercialProfit.
+export interface CommercialProfitResponse {
+  id: string;
+  productive_capital: number; // pence; >0
+  commercial_capital: number; // pence; >0
+  surplus_value: number;      // pence; >=0
+  unadjusted_rate_bp: number; // s/productive_capital in bp, round-half-up
+  adjusted_rate_bp: number;   // s/(productive+commercial) in bp — always <= unadjusted
+  new_value_created: number;  // always 0
+  created_at: string;
+}
+
+// AdjustedGeneralRateResponse mirrors merchant.AdjustedGeneralRate (value object).
+export interface AdjustedGeneralRateResponse {
+  productive_capital: number;
+  commercial_capital: number;
+  surplus_value: number;
+  unadjusted_rate_bp: number;
+  adjusted_rate_bp: number;
+}
+
+// CommercialWorkerResponse mirrors merchant.CommercialWorker (value object).
+export interface CommercialWorkerResponse {
+  necessary_labour_minutes: number; // LabourMinutes; >0
+  workday_minutes: number;          // LabourMinutes; >=necessary
+  unpaid_labour_minutes: number;    // = workday - necessary
+  new_value_created: number;        // always 0
+}
+
+// WholesaleRetailSpreadResponse mirrors merchant.WholesaleRetailSpread (value object).
+export interface WholesaleRetailSpreadResponse {
+  wholesale_price: number; // pence; >0
+  retail_price: number;    // pence; >wholesale
+  spread_pence: number;    // = retail - wholesale
+}

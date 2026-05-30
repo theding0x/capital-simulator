@@ -388,6 +388,9 @@ func main() {
 	// Vol. III Ch. 16 — Commercial Capital (Part IV opens) → finance-service
 	srv.Handle("/v1/merchant/commercial-capital", financeProxy)
 	srv.Handle("/v1/merchant/commercial-capital/{rest...}", financeProxy)
+	// Vol. III Ch. 17 — Commercial Profit → finance-service
+	srv.Handle("/v1/merchant/commercial-profit", financeProxy)
+	srv.Handle("/v1/merchant/commercial-profit/{rest...}", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)

@@ -239,4 +239,14 @@ type Store interface {
 	// ListCommercialCapitals returns all stored commercial-capital records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListCommercialCapitals(ctx context.Context) ([]merchant.CommercialCapital, error)
+
+	// CreateCommercialProfit persists a commercial-profit record (Vol. III Ch. 17 — the adjusted
+	// general rate of profit once commercial capital is included in the denominator), assigning an
+	// ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCommercialProfit(ctx context.Context, cp merchant.CommercialProfit) (merchant.CommercialProfit, error)
+	// GetCommercialProfit returns the commercial-profit record with the given ID, or ErrNotFound.
+	GetCommercialProfit(ctx context.Context, id merchant.CommercialProfitID) (merchant.CommercialProfit, error)
+	// ListCommercialProfits returns all stored commercial-profit records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCommercialProfits(ctx context.Context) ([]merchant.CommercialProfit, error)
 }

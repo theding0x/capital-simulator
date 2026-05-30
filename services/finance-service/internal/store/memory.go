@@ -38,7 +38,8 @@ type Memory struct {
 	counterScenarios   map[tendency.CounteractingScenarioID]tendency.CounteractingScenario
 	crises             map[tendency.CrisisID]tendency.Crisis
 	contradictions     map[tendency.InternalContradictionID]tendency.InternalContradiction
-	commercialCapitals map[merchant.CommercialCapitalID]merchant.CommercialCapital
+	commercialCapitals  map[merchant.CommercialCapitalID]merchant.CommercialCapital
+	commercialProfits   map[merchant.CommercialProfitID]merchant.CommercialProfit
 }
 
 // NewMemory returns an empty in-memory store.
@@ -67,7 +68,8 @@ func NewMemory() *Memory {
 		counterScenarios:   make(map[tendency.CounteractingScenarioID]tendency.CounteractingScenario),
 		crises:             make(map[tendency.CrisisID]tendency.Crisis),
 		contradictions:     make(map[tendency.InternalContradictionID]tendency.InternalContradiction),
-		commercialCapitals: make(map[merchant.CommercialCapitalID]merchant.CommercialCapital),
+		commercialCapitals:  make(map[merchant.CommercialCapitalID]merchant.CommercialCapital),
+		commercialProfits:   make(map[merchant.CommercialProfitID]merchant.CommercialProfit),
 	}
 }
 
@@ -1025,6 +1027,51 @@ func (m *Memory) ListCommercialCapitals(_ context.Context) ([]merchant.Commercia
 	out := make([]merchant.CommercialCapital, 0, len(m.commercialCapitals))
 	for _, cc := range m.commercialCapitals {
 		out = append(out, cc)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCommercialProfit stores cp, assigning an ID and timestamp when absent.
+func (m *Memory) CreateCommercialProfit(_ context.Context, cp merchant.CommercialProfit) (merchant.CommercialProfit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if cp.ID.IsZero() {
+		cp.ID = merchant.NewCommercialProfitID()
+	}
+	if _, exists := m.commercialProfits[cp.ID]; exists {
+		return merchant.CommercialProfit{}, ErrAlreadyExists
+	}
+	if cp.CreatedAt.IsZero() {
+		cp.CreatedAt = m.now().UTC()
+	}
+	m.commercialProfits[cp.ID] = cp
+	return cp, nil
+}
+
+// GetCommercialProfit returns the commercial-profit record with id, or ErrNotFound.
+func (m *Memory) GetCommercialProfit(_ context.Context, id merchant.CommercialProfitID) (merchant.CommercialProfit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	cp, ok := m.commercialProfits[id]
+	if !ok {
+		return merchant.CommercialProfit{}, ErrNotFound
+	}
+	return cp, nil
+}
+
+// ListCommercialProfits returns all stored commercial-profit records, newest first.
+func (m *Memory) ListCommercialProfits(_ context.Context) ([]merchant.CommercialProfit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]merchant.CommercialProfit, 0, len(m.commercialProfits))
+	for _, cp := range m.commercialProfits {
+		out = append(out, cp)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.After(out[j].CreatedAt)

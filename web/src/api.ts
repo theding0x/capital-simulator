@@ -2255,4 +2255,21 @@ export const financeApi = {
     ),
   getCommercialCapital: (id: string) =>
     http<import("./types").CommercialCapitalResponse>(`/v1/merchant/commercial-capital/${id}`),
+
+  // Vol. III Ch. 17 — Commercial Profit
+  createCommercialProfit: (body: {
+    productive_capital: number;
+    commercial_capital: number;
+    surplus_value: number;
+  }) =>
+    http<import("./types").CommercialProfitResponse>("/v1/merchant/commercial-profit", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listCommercialProfits: () =>
+    http<{ items: import("./types").CommercialProfitResponse[] }>("/v1/merchant/commercial-profit").then(
+      (r) => r.items ?? [],
+    ),
+  getCommercialProfit: (id: string) =>
+    http<import("./types").CommercialProfitResponse>(`/v1/merchant/commercial-profit/${id}`),
 };
