@@ -398,6 +398,9 @@ func main() {
 	// Vol. III Ch. 19 — Money-Dealing Capital → finance-service
 	srv.Handle("/v1/merchant/money-dealing", financeProxy)
 	srv.Handle("/v1/merchant/money-dealing/{rest...}", financeProxy)
+	// Vol. III Ch. 20 — Historical Facts about Merchant's Capital → finance-service
+	srv.Handle("/v1/merchant/historical-forms", financeProxy)
+	srv.Handle("/v1/merchant/historical-forms/{rest...}", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)

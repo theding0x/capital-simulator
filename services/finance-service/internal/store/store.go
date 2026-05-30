@@ -270,4 +270,15 @@ type Store interface {
 	// ListMoneyDealingCapitals returns all stored money-dealing-capital records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListMoneyDealingCapitals(ctx context.Context) ([]merchant.MoneyDealingCapital, error)
+
+	// CreateHistoricalMerchantCapital persists a historical-merchant-capital record (Vol. III Ch. 20 —
+	// historical forms from Venice/Genoa/Dutch carrying trade through subordination under industrial
+	// capital; DevelopmentStage 1–3; SubordinationIndex bp [0,10000]; COMPLETES Part IV), assigning
+	// an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateHistoricalMerchantCapital(ctx context.Context, m merchant.HistoricalMerchantCapital) (merchant.HistoricalMerchantCapital, error)
+	// GetHistoricalMerchantCapital returns the historical-merchant-capital record with the given ID, or ErrNotFound.
+	GetHistoricalMerchantCapital(ctx context.Context, id merchant.HistoricalMerchantCapitalID) (merchant.HistoricalMerchantCapital, error)
+	// ListHistoricalMerchantCapitals returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListHistoricalMerchantCapitals(ctx context.Context) ([]merchant.HistoricalMerchantCapital, error)
 }

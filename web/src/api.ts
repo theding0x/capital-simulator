@@ -2316,4 +2316,23 @@ export const financeApi = {
     ),
   getMoneyDealingCapital: (id: string) =>
     http<import("./types").MoneyDealingCapitalResponse>(`/v1/merchant/money-dealing/${id}`),
+
+  // Vol. III Ch. 20 — Historical Facts about Merchant's Capital
+  createHistoricalMerchantCapital: (body: {
+    name: string;
+    stage: import("./types").DevelopmentStage;
+    profit_source: string;
+    wage_labour: boolean;
+    subordination_index: number;
+  }) =>
+    http<import("./types").HistoricalMerchantCapitalResponse>("/v1/merchant/historical-forms", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listHistoricalMerchantCapitals: () =>
+    http<{ items: import("./types").HistoricalMerchantCapitalResponse[] }>("/v1/merchant/historical-forms").then(
+      (r) => r.items ?? [],
+    ),
+  getHistoricalMerchantCapital: (id: string) =>
+    http<import("./types").HistoricalMerchantCapitalResponse>(`/v1/merchant/historical-forms/${id}`),
 };

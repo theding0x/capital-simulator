@@ -120,4 +120,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/merchant/money-dealing", h.CreateMoneyDealingCapital)
 	s.HandleFunc("GET /v1/merchant/money-dealing", h.ListMoneyDealingCapitals)
 	s.HandleFunc("GET /v1/merchant/money-dealing/{id}", h.GetMoneyDealingCapital)
+
+	// Vol. III Ch. 20 — Historical Facts about Merchant's Capital (COMPLETES Part IV)
+	s.HandleFunc("POST /v1/merchant/historical-forms", h.CreateHistoricalMerchantCapital)
+	s.HandleFunc("GET /v1/merchant/historical-forms", h.ListHistoricalMerchantCapitals)
+	s.HandleFunc("GET /v1/merchant/historical-forms/{id}", h.GetHistoricalMerchantCapital)
 }

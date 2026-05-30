@@ -1,0 +1,204 @@
+/* Vol. III Ch. 20 — Historical Facts about Merchant's Capital */
+/* Conventions mirror Ch19MoneyDealingCapital.css */
+
+.v3-ch20 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text, #1a1a1a);
+}
+
+.v3-ch20-intro p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--text-secondary, #444);
+}
+
+.v3-ch20-section {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3-ch20-section h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch20-subintro {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #666);
+}
+
+/* ── Timeline ─────────────────────────────────────────────────── */
+
+.v3-ch20-timeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.v3-ch20-timeline-item {
+  border-radius: 6px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 1px solid transparent;
+}
+
+/* Stage colour bands */
+.v3-ch20-stage--pre {
+  background: #fdf6ec;
+  border-color: #f5c97a;
+}
+.v3-ch20-stage--trans {
+  background: #eef5fb;
+  border-color: #7ab4f5;
+}
+.v3-ch20-stage--sub {
+  background: #eefaf2;
+  border-color: #6ec98c;
+}
+
+.v3-ch20-timeline-stage {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #666);
+}
+
+.v3-ch20-timeline-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text, #1a1a1a);
+}
+
+.v3-ch20-timeline-source {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #555);
+  font-style: italic;
+}
+
+.v3-ch20-timeline-index {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 0.35rem;
+}
+
+.v3-ch20-index-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #777);
+}
+
+.v3-ch20-index-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent, #2563eb);
+  font-variant-numeric: tabular-nums;
+}
+
+.v3-ch20-timeline-wage {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #666);
+}
+
+/* ── Create form ─────────────────────────────────────────────── */
+
+.v3-ch20-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.v3-ch20-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #555);
+  font-weight: 500;
+}
+
+.v3-ch20-form input[type="text"],
+.v3-ch20-form input[type="number"],
+.v3-ch20-form select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: var(--input-bg, #fff);
+  color: var(--text, #1a1a1a);
+}
+
+.v3-ch20-wage-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.4rem !important;
+  font-size: 0.85rem !important;
+  cursor: pointer;
+}
+
+.v3-ch20-wage-label--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.v3-ch20-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--warning, #b45309);
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+}
+
+.v3-ch20-bp-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #777);
+  font-weight: 400;
+}
+
+.v3-ch20-btn {
+  align-self: flex-start;
+  padding: 0.4rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent, #2563eb);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.v3-ch20-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.v3-ch20-btn:hover:not(:disabled) {
+  background: var(--accent-dark, #1d4ed8);
+}
+
+.v3-ch20-error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--error, #dc2626);
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+}
