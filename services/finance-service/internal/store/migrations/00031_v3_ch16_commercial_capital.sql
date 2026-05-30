@@ -5,7 +5,7 @@ CREATE TABLE commercial_capitals (
     id                     VARCHAR(24)   NOT NULL,
     money_advanced         BIGINT        NOT NULL,
     commodity_description  VARCHAR(255)  NOT NULL DEFAULT '',
-    function               TINYINT       NOT NULL DEFAULT 0,
+    `function`             TINYINT       NOT NULL DEFAULT 0,
     surplus_value_produced BIGINT        NOT NULL DEFAULT 0,
     created_at             DATETIME(6)   NOT NULL,
     PRIMARY KEY (id),
