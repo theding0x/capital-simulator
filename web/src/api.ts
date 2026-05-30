@@ -2238,4 +2238,21 @@ export const financeApi = {
     http<import("./types").InternalContradictionResponse>(`/v1/tendency/contradiction/${id}`),
   getPartIIISummary: () =>
     http<import("./types").PartIIISummaryResponse>("/v1/tendency/summary"),
+
+  // Vol. III Ch. 16 — Commercial Capital
+  createCommercialCapital: (body: {
+    money_advanced: number;
+    commodity_description: string;
+    function: number;
+  }) =>
+    http<import("./types").CommercialCapitalResponse>("/v1/merchant/commercial-capital", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listCommercialCapitals: () =>
+    http<{ items: import("./types").CommercialCapitalResponse[] }>("/v1/merchant/commercial-capital").then(
+      (r) => r.items ?? [],
+    ),
+  getCommercialCapital: (id: string) =>
+    http<import("./types").CommercialCapitalResponse>(`/v1/merchant/commercial-capital/${id}`),
 };

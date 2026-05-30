@@ -90,6 +90,10 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/tendency/contradiction", h.CreateInternalContradiction)
 	mux.HandleFunc("GET /v1/tendency/contradiction/{id}", h.GetInternalContradiction)
 	mux.HandleFunc("GET /v1/tendency/summary", h.GetPartIIISummary)
+	// Vol. III Ch. 16 — Commercial Capital (opens Part IV)
+	mux.HandleFunc("POST /v1/merchant/commercial-capital", h.CreateCommercialCapital)
+	mux.HandleFunc("GET /v1/merchant/commercial-capital", h.ListCommercialCapitals)
+	mux.HandleFunc("GET /v1/merchant/commercial-capital/{id}", h.GetCommercialCapital)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

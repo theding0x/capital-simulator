@@ -3524,3 +3524,26 @@ export interface PartIIISummaryResponse {
   latest_crisis?: CrisisResponse;
   latest_contradiction?: InternalContradictionResponse;
 }
+
+// --- finance-service types (Vol. III Ch. 16: Commercial Capital) --------------
+
+// CommercialCapitalFunction mirrors merchant.CommercialCapitalFunction.
+// 0=realisation, 1=storage, 2=transport, 3=distribution.
+export type CommercialCapitalFunction = 0 | 1 | 2 | 3;
+
+// CommercialCapitalResponse mirrors merchant.CommercialCapital.
+export interface CommercialCapitalResponse {
+  id: string;
+  money_advanced: number; // pence; >0
+  commodity_description: string;
+  function: CommercialCapitalFunction;
+  surplus_value_produced: number; // always 0 — commercial capital produces no surplus-value
+  created_at: string;
+}
+
+// MerchantCircuitResponse mirrors merchant.MerchantCircuit (value object).
+export interface MerchantCircuitResponse {
+  money_advanced: number; // pence
+  commodity_value: number; // pence
+  money_returned: number; // pence; must exceed money_advanced
+}

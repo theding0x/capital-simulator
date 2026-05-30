@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
@@ -1712,6 +1713,146 @@ func TestCh15SeedIDs(t *testing.T) {
 		}
 		if cc := id[len(prefix) : len(prefix)+2]; cc != "15" {
 			t.Errorf("seed id %q chapter token = %q, want 15", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}
+
+// --- CommercialCapital store tests (Ch. 16) ---
+
+func TestMemory_CommercialCapitalRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// Marx §1 linen-merchant fixture: £3,000 advanced, realisation function.
+	cc, err := merchant.NewCommercialCapital(300000, "30,000 yards linen at 10p", merchant.FunctionRealisation)
+	if err != nil {
+		t.Fatalf("new commercial capital: %v", err)
+	}
+	created, err := m.CreateCommercialCapital(ctx, cc)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	// Central invariant: commercial capital creates no surplus-value.
+	if created.SurplusValueProduced != 0 {
+		t.Errorf("SurplusValueProduced = %d, want 0", created.SurplusValueProduced)
+	}
+
+	got, err := m.GetCommercialCapital(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetCommercialCapitalNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetCommercialCapital(context.Background(), merchant.CommercialCapitalID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateCommercialCapitalDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	cc, err := merchant.NewCommercialCapital(300000, "linen", merchant.FunctionRealisation)
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	cc.ID = merchant.CommercialCapitalID("5eed000000000000001601")
+
+	if _, err := m.CreateCommercialCapital(ctx, cc); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateCommercialCapital(ctx, cc); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListCommercialCapitalsNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListCommercialCapitals(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+}
+
+func TestMemory_ListCommercialCapitals_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// §1 realisation, §2 storage — second should appear first in the list.
+	first, err := merchant.NewCommercialCapital(300000, "linen (realisation)", merchant.FunctionRealisation)
+	if err != nil {
+		t.Fatalf("new first: %v", err)
+	}
+	second, err := merchant.NewCommercialCapital(300000, "linen (storage)", merchant.FunctionStorage)
+	if err != nil {
+		t.Fatalf("new second: %v", err)
+	}
+
+	createdFirst, err := m.CreateCommercialCapital(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateCommercialCapital(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListCommercialCapitals(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh16SeedIDs asserts the Ch. 16 seed IDs (5eed…<CC=16>01–03) carry the 16
+// token and are unique (mirrors the seed migration 00032_v3_ch16_seed.sql).
+func TestCh16SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000001601",
+		"5eed000000000000001602",
+		"5eed000000000000001603",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "16" {
+			t.Errorf("seed id %q chapter token = %q, want 16", id, cc)
 		}
 		if _, dup := seen[id]; dup {
 			t.Errorf("duplicate seed id %q", id)

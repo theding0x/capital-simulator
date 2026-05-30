@@ -385,6 +385,9 @@ func main() {
 	srv.Handle("/v1/tendency/contradiction", financeProxy)
 	srv.Handle("/v1/tendency/contradiction/{rest...}", financeProxy)
 	srv.Handle("/v1/tendency/summary", financeProxy)
+	// Vol. III Ch. 16 — Commercial Capital (Part IV opens) → finance-service
+	srv.Handle("/v1/merchant/commercial-capital", financeProxy)
+	srv.Handle("/v1/merchant/commercial-capital/{rest...}", financeProxy)
 	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
 	// srv.Handle("/v1/interest-rates", financeProxy)
 	// srv.Handle("/v1/credit", financeProxy)
