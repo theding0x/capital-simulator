@@ -490,4 +490,15 @@ type Store interface {
 	// ListRatesOfExchange returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListRatesOfExchange(ctx context.Context) ([]credit.RateOfExchange, error)
+
+	// CreateUsurersCapital persists a usurers-capital record (Vol. III Ch. 36 —
+	// Pre-Capitalist Relationships; Stage.IsValid(); WageLabour==false for Antiquity/Mediaeval;
+	// InterestRateBP>=0; StageSubordinated requires SubordinatedTo=="industrial_capital"),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateUsurersCapital(ctx context.Context, u credit.UsurersCapital) (credit.UsurersCapital, error)
+	// GetUsurersCapital returns the record with the given ID, or ErrNotFound.
+	GetUsurersCapital(ctx context.Context, id credit.UsurersCapitalID) (credit.UsurersCapital, error)
+	// ListUsurersCapitals returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListUsurersCapitals(ctx context.Context) ([]credit.UsurersCapital, error)
 }
