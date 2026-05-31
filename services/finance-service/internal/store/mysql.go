@@ -3560,3 +3560,113 @@ func scanRealCapitalAccumulation(s rowScanner) (credit.RealCapitalAccumulation, 
 		CreatedAt:                 createdAt,
 	}, nil
 }
+
+// ── Vol. III Ch. 31 — Money-Capital and Real Capital, II (FloatingCapital) ──
+
+// CreateFloatingCapital inserts f, assigning an ID and timestamp when absent (Vol. III Ch. 31).
+func (m *MySQL) CreateFloatingCapital(ctx context.Context, f credit.FloatingCapital) (credit.FloatingCapital, error) {
+	if f.ID.IsZero() {
+		f.ID = credit.NewFloatingCapitalID()
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO floating_capitals (` +
+		"`id`, `name`, `amount`, `source`, `velocity_money_amount`, `velocity_times_lent`, `velocity_loan_capital_created`, `reserve_saving_amount`, `reserve_saving_description`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(f.ID),
+		f.Name,
+		f.Amount,
+		int(f.Source),
+		f.Velocity.MoneyAmount,
+		f.Velocity.TimesLent,
+		f.Velocity.LoanCapitalCreated,
+		f.ReserveSaving.Amount,
+		f.ReserveSaving.Description,
+		f.Description,
+		f.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.FloatingCapital{}, ErrAlreadyExists
+		}
+		return credit.FloatingCapital{}, err
+	}
+	return f, nil
+}
+
+// GetFloatingCapital returns the record with id, or ErrNotFound.
+func (m *MySQL) GetFloatingCapital(ctx context.Context, id credit.FloatingCapitalID) (credit.FloatingCapital, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `amount`, `source`, `velocity_money_amount`, `velocity_times_lent`, `velocity_loan_capital_created`, `reserve_saving_amount`, `reserve_saving_description`, `description`, `created_at` " +
+		"FROM `floating_capitals` WHERE `id` = ?"
+	return scanFloatingCapital(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListFloatingCapitals returns all stored records, newest first.
+func (m *MySQL) ListFloatingCapitals(ctx context.Context) ([]credit.FloatingCapital, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `amount`, `source`, `velocity_money_amount`, `velocity_times_lent`, `velocity_loan_capital_created`, `reserve_saving_amount`, `reserve_saving_description`, `description`, `created_at` " +
+		"FROM `floating_capitals` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.FloatingCapital, 0)
+	for rows.Next() {
+		f, err := scanFloatingCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, f)
+	}
+	return out, rows.Err()
+}
+
+func scanFloatingCapital(s rowScanner) (credit.FloatingCapital, error) {
+	var (
+		id                         string
+		name                       string
+		amount                     int64
+		source                     int
+		velocityMoneyAmount        int64
+		velocityTimesLent          int64
+		velocityLoanCapitalCreated int64
+		reserveSavingAmount        int64
+		reserveSavingDescription   string
+		description                string
+		createdAt                  time.Time
+	)
+	err := s.Scan(
+		&id, &name, &amount, &source,
+		&velocityMoneyAmount, &velocityTimesLent, &velocityLoanCapitalCreated,
+		&reserveSavingAmount, &reserveSavingDescription,
+		&description, &createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.FloatingCapital{}, ErrNotFound
+		}
+		return credit.FloatingCapital{}, err
+	}
+	return credit.FloatingCapital{
+		ID:     credit.FloatingCapitalID(id),
+		Name:   name,
+		Amount: amount,
+		Source: credit.FloatingCapitalSource(source),
+		Velocity: credit.LoanCapitalVelocity{
+			MoneyAmount:        velocityMoneyAmount,
+			TimesLent:          velocityTimesLent,
+			LoanCapitalCreated: velocityLoanCapitalCreated,
+		},
+		ReserveSaving: credit.CirculationReserveSaving{
+			Amount:      reserveSavingAmount,
+			Description: reserveSavingDescription,
+		},
+		Description: description,
+		CreatedAt:   createdAt,
+	}, nil
+}

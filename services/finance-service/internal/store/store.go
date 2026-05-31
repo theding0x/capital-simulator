@@ -424,4 +424,16 @@ type Store interface {
 	// ListRealCapitalAccumulations returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListRealCapitalAccumulations(ctx context.Context) ([]credit.RealCapitalAccumulation, error)
+
+	// CreateFloatingCapital persists a floating-capital record (Vol. III Ch. 31 —
+	// Money-Capital and Real Capital, II; Amount>=0; Source ∈ {1,2}; embedded
+	// LoanCapitalVelocity with TimesLent>=1 and LoanCapitalCreated==MoneyAmount×TimesLent;
+	// embedded CirculationReserveSaving with Amount>=0), assigning an ID and created-at
+	// timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateFloatingCapital(ctx context.Context, f credit.FloatingCapital) (credit.FloatingCapital, error)
+	// GetFloatingCapital returns the record with the given ID, or ErrNotFound.
+	GetFloatingCapital(ctx context.Context, id credit.FloatingCapitalID) (credit.FloatingCapital, error)
+	// ListFloatingCapitals returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListFloatingCapitals(ctx context.Context) ([]credit.FloatingCapital, error)
 }

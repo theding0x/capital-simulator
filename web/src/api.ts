@@ -2511,6 +2511,18 @@ export const financeApi = {
     http<import("./types").RealCapitalAccumulation>(
       `/v1/credit/real-capital-accumulation/${id}`,
     ),
+  // Vol. III Ch. 31 — Money-Capital and Real Capital, II
+  createFloatingCapital: (body: import("./types").CreateFloatingCapitalInput) =>
+    http<import("./types").FloatingCapital>("/v1/credit/floating-capital", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listFloatingCapitals: () =>
+    http<{ items: import("./types").FloatingCapital[] }>(
+      "/v1/credit/floating-capital",
+    ).then((r) => r.items ?? []),
+  getFloatingCapital: (id: string) =>
+    http<import("./types").FloatingCapital>(`/v1/credit/floating-capital/${id}`),
   // Vol. III Ch. 29 — Component Parts of Bank Capital
   createBankCapital: (body: import("./types").CreateBankCapitalInput) =>
     http<import("./types").BankCapital>("/v1/credit/bank-capital", {
