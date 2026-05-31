@@ -2452,3 +2452,98 @@ func scanRateOfInterest(s rowScanner) (credit.RateOfInterest, error) {
 		CreatedAt:           createdAt,
 	}, nil
 }
+
+// CreateProfitDivision inserts pd, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateProfitDivision(ctx context.Context, pd credit.ProfitDivision) (credit.ProfitDivision, error) {
+	if pd.ID.IsZero() {
+		pd.ID = credit.NewProfitDivisionID()
+	}
+	if pd.CreatedAt.IsZero() {
+		pd.CreatedAt = time.Now().UTC()
+	}
+	const q = `INSERT INTO profit_divisions (` +
+		"`id`, `total_profit_bp`, `interest_bp`, `profit_of_enterprise_bp`, " +
+		"`ownership_form`, `wages_labour_minutes`, `mystification_index`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(pd.ID),
+		pd.TotalProfitBP,
+		pd.InterestBP,
+		pd.ProfitOfEnterpriseBP,
+		int(pd.OwnershipForm),
+		pd.WagesOfSuperintendence.LabourMinutes,
+		int64(pd.MystificationIndex),
+		pd.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.ProfitDivision{}, ErrAlreadyExists
+		}
+		return credit.ProfitDivision{}, err
+	}
+	return pd, nil
+}
+
+// GetProfitDivision returns the profit-division record with id, or ErrNotFound.
+func (m *MySQL) GetProfitDivision(ctx context.Context, id credit.ProfitDivisionID) (credit.ProfitDivision, error) {
+	const q = `SELECT ` +
+		"`id`, `total_profit_bp`, `interest_bp`, `profit_of_enterprise_bp`, " +
+		"`ownership_form`, `wages_labour_minutes`, `mystification_index`, `created_at` " +
+		"FROM `profit_divisions` WHERE `id` = ?"
+	return scanProfitDivision(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListProfitDivisions returns all stored profit-division records, newest first.
+func (m *MySQL) ListProfitDivisions(ctx context.Context) ([]credit.ProfitDivision, error) {
+	const q = `SELECT ` +
+		"`id`, `total_profit_bp`, `interest_bp`, `profit_of_enterprise_bp`, " +
+		"`ownership_form`, `wages_labour_minutes`, `mystification_index`, `created_at` " +
+		"FROM `profit_divisions` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.ProfitDivision, 0)
+	for rows.Next() {
+		pd, err := scanProfitDivision(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, pd)
+	}
+	return out, rows.Err()
+}
+
+func scanProfitDivision(s rowScanner) (credit.ProfitDivision, error) {
+	var (
+		id                   string
+		totalBP, interestBP  int64
+		enterpriseBP         int64
+		ownershipForm        int
+		labourMinutes        int64
+		mystificationIndex   int64
+		createdAt            time.Time
+	)
+	err := s.Scan(&id, &totalBP, &interestBP, &enterpriseBP,
+		&ownershipForm, &labourMinutes, &mystificationIndex, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.ProfitDivision{}, ErrNotFound
+		}
+		return credit.ProfitDivision{}, err
+	}
+	return credit.ProfitDivision{
+		ID:                   credit.ProfitDivisionID(id),
+		TotalProfitBP:        totalBP,
+		InterestBP:           interestBP,
+		ProfitOfEnterpriseBP: enterpriseBP,
+		OwnershipForm:        credit.CapitalOwnershipForm(ownershipForm),
+		WagesOfSuperintendence: credit.WagesOfSuperintendence{
+			LabourMinutes: labourMinutes,
+		},
+		MystificationIndex: credit.MystificationIndex(mystificationIndex),
+		CreatedAt:          createdAt,
+	}, nil
+}

@@ -2378,4 +2378,23 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  // Vol. III Ch. 23 — Interest and Profit of Enterprise
+  createProfitDivision: (body: {
+    total_profit_bp: number;
+    interest_bp: number;
+    ownership_form: number;
+    wages_labour_minutes: number;
+    mystification_index: number;
+  }) =>
+    http<import("./types").ProfitDivision>("/v1/credit/profit-division", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listProfitDivisions: () =>
+    http<{ items: import("./types").ProfitDivision[] }>("/v1/credit/profit-division").then(
+      (r) => r.items ?? [],
+    ),
+  getProfitDivision: (id: string) =>
+    http<import("./types").ProfitDivision>(`/v1/credit/profit-division/${id}`),
 };
