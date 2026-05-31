@@ -4365,3 +4365,50 @@ export interface CreateCapitalisedRentPriceInput {
   annual_rent_labour_minutes: number;
   interest_rate_bp: number;
 }
+
+// Vol. III Ch. 39 — Differential Rent I
+export type SoilGrade = 1 | 2 | 3 | 4;
+export interface DifferentialRentIEntry {
+  id: string;
+  table_id: string;
+  grade: SoilGrade;
+  capital_advanced_bp: number;
+  output_quarters: number;
+  price_of_production_bp: number;
+  surplus_product_qtrs: number;
+  money_rent_bp: number;
+  created_at: string;
+}
+export interface DifferentialRentITable {
+  id: string;
+  description: string;
+  total_rental_bp: number;
+  regulating_grade: SoilGrade;
+  created_at: string;
+}
+export interface DifferentialRentITableWithEntries {
+  table: DifferentialRentITable;
+  entries: DifferentialRentIEntry[];
+}
+export interface LocationRentFactor {
+  id: string;
+  parcel_id: string;
+  transport_cost_bp: number;
+  rent_equivalent_bp: number;
+  created_at: string;
+}
+export interface CreateDifferentialRentIEntryInput {
+  grade: SoilGrade;
+  capital_advanced_bp: number;
+  output_quarters: number;
+  price_of_production_bp: number;
+}
+export interface CreateDifferentialRentITableInput {
+  description: string;
+  entries: CreateDifferentialRentIEntryInput[];
+}
+export interface CreateLocationRentFactorInput {
+  parcel_id: string;
+  transport_cost_bp: number;
+  rent_equivalent_bp: number;
+}

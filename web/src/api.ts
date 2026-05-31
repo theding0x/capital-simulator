@@ -2719,4 +2719,30 @@ export const financeApi = {
     http<{ items: import("./types").CapitalisedRentPrice[] }>("/v1/rent/capitalised-prices").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 39 — Differential Rent I
+  createDR1Table: (body: import("./types").CreateDifferentialRentITableInput) =>
+    http<import("./types").DifferentialRentITableWithEntries>("/v1/rent/dr1-tables", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listDR1Tables: () =>
+    http<{ items: import("./types").DifferentialRentITable[] }>("/v1/rent/dr1-tables").then(
+      (r) => r.items ?? [],
+    ),
+  getDR1Table: (id: string) =>
+    http<import("./types").DifferentialRentITableWithEntries>(`/v1/rent/dr1-tables/${id}`),
+  listDR1Entries: (id: string) =>
+    http<{ items: import("./types").DifferentialRentIEntry[] }>(`/v1/rent/dr1-tables/${id}/entries`).then(
+      (r) => r.items ?? [],
+    ),
+  createLocationRentFactor: (body: import("./types").CreateLocationRentFactorInput) =>
+    http<import("./types").LocationRentFactor>("/v1/rent/location-rent-factors", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listLocationRentFactors: () =>
+    http<{ items: import("./types").LocationRentFactor[] }>("/v1/rent/location-rent-factors").then(
+      (r) => r.items ?? [],
+    ),
 };

@@ -234,4 +234,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/differential-rents", h.ListDifferentialRents)
 	s.HandleFunc("POST /v1/rent/capitalised-prices", h.CreateCapitalisedRentPrice)
 	s.HandleFunc("GET /v1/rent/capitalised-prices", h.ListCapitalisedRentPrices)
+
+	// Vol. III Ch. 39 — Differential Rent I (First Form)
+	s.HandleFunc("POST /v1/rent/dr1-tables", h.CreateDifferentialRentITable)
+	s.HandleFunc("GET /v1/rent/dr1-tables", h.ListDifferentialRentITables)
+	s.HandleFunc("GET /v1/rent/dr1-tables/{id}", h.GetDifferentialRentITable)
+	s.HandleFunc("GET /v1/rent/dr1-tables/{id}/entries", h.ListDifferentialRentIEntries)
+	s.HandleFunc("POST /v1/rent/location-rent-factors", h.CreateLocationRentFactor)
+	s.HandleFunc("GET /v1/rent/location-rent-factors", h.ListLocationRentFactors)
 }

@@ -4787,3 +4787,218 @@ func scanCapitalisedRentPrice(s rowScanner) (rent.CapitalisedRentPrice, error) {
 		CreatedAt:                     createdAt,
 	}, nil
 }
+
+// CreateDifferentialRentITable persists tbl and entries (Vol. III Ch. 39).
+// Entries are stored as entries_json on the parent row.
+func (m *MySQL) CreateDifferentialRentITable(ctx context.Context, tbl rent.DifferentialRentITable, entries []rent.DifferentialRentIEntry) (rent.DifferentialRentITable, []rent.DifferentialRentIEntry, error) {
+	if tbl.ID == "" {
+		tbl.ID = rent.NewDifferentialRentITableID()
+	}
+	if tbl.CreatedAt.IsZero() {
+		tbl.CreatedAt = m.now().UTC()
+	}
+	filled := make([]rent.DifferentialRentIEntry, len(entries))
+	for i, e := range entries {
+		if e.ID == "" {
+			e.ID = rent.NewDifferentialRentIEntryID()
+		}
+		if e.CreatedAt.IsZero() {
+			e.CreatedAt = m.now().UTC()
+		}
+		e.TableID = string(tbl.ID)
+		filled[i] = e
+	}
+	if filled == nil {
+		filled = []rent.DifferentialRentIEntry{}
+	}
+	entriesJSON, err := json.Marshal(filled)
+	if err != nil {
+		return rent.DifferentialRentITable{}, nil, err
+	}
+	const q = `INSERT INTO ` + "`dr1_tables`" +
+		` (` + "`id`, `description`, `total_rental_bp`, `regulating_grade`, `entries_json`, `created_at`" + `)` +
+		` VALUES (?,?,?,?,?,?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(tbl.ID),
+		tbl.Description,
+		tbl.TotalRentalBP,
+		int(tbl.RegulatingGrade),
+		string(entriesJSON),
+		tbl.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.DifferentialRentITable{}, nil, ErrAlreadyExists
+		}
+		return rent.DifferentialRentITable{}, nil, err
+	}
+	return tbl, filled, nil
+}
+
+// GetDifferentialRentITable returns the table header and entries, or ErrNotFound (Vol. III Ch. 39).
+func (m *MySQL) GetDifferentialRentITable(ctx context.Context, id rent.DifferentialRentITableID) (rent.DifferentialRentITable, []rent.DifferentialRentIEntry, error) {
+	const q = `SELECT ` +
+		"`id`, `description`, `total_rental_bp`, `regulating_grade`, `entries_json`, `created_at` " +
+		"FROM `dr1_tables` WHERE `id` = ?"
+	tbl, entriesJSON, err := scanDR1TableRow(m.db.QueryRowContext(ctx, q, string(id)))
+	if err != nil {
+		return rent.DifferentialRentITable{}, nil, err
+	}
+	entries, err := unmarshalDR1Entries(entriesJSON)
+	if err != nil {
+		return rent.DifferentialRentITable{}, nil, err
+	}
+	return tbl, entries, nil
+}
+
+// ListDifferentialRentITables returns all headers, newest first (Vol. III Ch. 39).
+func (m *MySQL) ListDifferentialRentITables(ctx context.Context) ([]rent.DifferentialRentITable, error) {
+	const q = `SELECT ` +
+		"`id`, `description`, `total_rental_bp`, `regulating_grade`, `created_at` " +
+		"FROM `dr1_tables` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.DifferentialRentITable, 0)
+	for rows.Next() {
+		var (
+			id              string
+			description     string
+			totalRentalBP   int64
+			regulatingGrade int
+			createdAt       time.Time
+		)
+		if err := rows.Scan(&id, &description, &totalRentalBP, &regulatingGrade, &createdAt); err != nil {
+			return nil, err
+		}
+		out = append(out, rent.DifferentialRentITable{
+			ID:              rent.DifferentialRentITableID(id),
+			Description:     description,
+			TotalRentalBP:   totalRentalBP,
+			RegulatingGrade: rent.SoilGrade(regulatingGrade),
+			CreatedAt:       createdAt,
+		})
+	}
+	return out, rows.Err()
+}
+
+// ListDifferentialRentIEntries returns entries for tableID, or ErrNotFound (Vol. III Ch. 39).
+func (m *MySQL) ListDifferentialRentIEntries(ctx context.Context, tableID rent.DifferentialRentITableID) ([]rent.DifferentialRentIEntry, error) {
+	const q = `SELECT ` +
+		"`entries_json` " +
+		"FROM `dr1_tables` WHERE `id` = ?"
+	var entriesJSON string
+	err := m.db.QueryRowContext(ctx, q, string(tableID)).Scan(&entriesJSON)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return unmarshalDR1Entries(entriesJSON)
+}
+
+// CreateLocationRentFactor persists f, assigning an ID and timestamp when absent (Vol. III Ch. 39).
+func (m *MySQL) CreateLocationRentFactor(ctx context.Context, f rent.LocationRentFactor) (rent.LocationRentFactor, error) {
+	if f.ID == "" {
+		f.ID = rent.NewLocationRentFactorID()
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO ` + "`location_rent_factors`" +
+		` (` + "`id`, `parcel_id`, `transport_cost_bp`, `rent_equivalent_bp`, `created_at`" + `)` +
+		` VALUES (?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(f.ID),
+		f.ParcelID,
+		f.TransportCostBP,
+		f.RentEquivalentBP,
+		f.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.LocationRentFactor{}, ErrAlreadyExists
+		}
+		return rent.LocationRentFactor{}, err
+	}
+	return f, nil
+}
+
+// ListLocationRentFactors returns all stored records, newest first (Vol. III Ch. 39).
+func (m *MySQL) ListLocationRentFactors(ctx context.Context) ([]rent.LocationRentFactor, error) {
+	const q = `SELECT ` +
+		"`id`, `parcel_id`, `transport_cost_bp`, `rent_equivalent_bp`, `created_at` " +
+		"FROM `location_rent_factors` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.LocationRentFactor, 0)
+	for rows.Next() {
+		var (
+			id               string
+			parcelID         string
+			transportCostBP  int64
+			rentEquivalentBP int64
+			createdAt        time.Time
+		)
+		if err := rows.Scan(&id, &parcelID, &transportCostBP, &rentEquivalentBP, &createdAt); err != nil {
+			return nil, err
+		}
+		out = append(out, rent.LocationRentFactor{
+			ID:               rent.LocationRentFactorID(id),
+			ParcelID:         parcelID,
+			TransportCostBP:  transportCostBP,
+			RentEquivalentBP: rentEquivalentBP,
+			CreatedAt:        createdAt,
+		})
+	}
+	return out, rows.Err()
+}
+
+// scanDR1TableRow scans id, description, total_rental_bp, regulating_grade, entries_json, created_at.
+func scanDR1TableRow(s rowScanner) (rent.DifferentialRentITable, string, error) {
+	var (
+		id              string
+		description     string
+		totalRentalBP   int64
+		regulatingGrade int
+		entriesJSON     string
+		createdAt       time.Time
+	)
+	err := s.Scan(&id, &description, &totalRentalBP, &regulatingGrade, &entriesJSON, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.DifferentialRentITable{}, "", ErrNotFound
+		}
+		return rent.DifferentialRentITable{}, "", err
+	}
+	return rent.DifferentialRentITable{
+		ID:              rent.DifferentialRentITableID(id),
+		Description:     description,
+		TotalRentalBP:   totalRentalBP,
+		RegulatingGrade: rent.SoilGrade(regulatingGrade),
+		CreatedAt:       createdAt,
+	}, entriesJSON, nil
+}
+
+// unmarshalDR1Entries parses the entries_json column into a non-nil slice.
+func unmarshalDR1Entries(raw string) ([]rent.DifferentialRentIEntry, error) {
+	if raw == "" || raw == "[]" || raw == "null" {
+		return []rent.DifferentialRentIEntry{}, nil
+	}
+	var entries []rent.DifferentialRentIEntry
+	if err := json.Unmarshal([]byte(raw), &entries); err != nil {
+		return nil, fmt.Errorf("store: dr1_tables: unmarshal entries_json: %w", err)
+	}
+	if entries == nil {
+		entries = []rent.DifferentialRentIEntry{}
+	}
+	return entries, nil
+}
