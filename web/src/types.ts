@@ -3668,3 +3668,27 @@ export interface HistoricalTradingSystemResponse {
   profit_source: string;
   wage_labour: boolean;
 }
+
+// InterestBearingCapital mirrors credit.InterestBearingCapital (Vol. III Ch. 21).
+// Interest-bearing capital advances money at an interest rate for a loan term.
+// InterestEarned = roundHalfUp(money_advanced * interest_rate_bp, 10000).
+// MoneyReturned = money_advanced + interest_earned.
+// new_value_created is always 0 — interest-bearing capital creates no new value.
+export interface InterestBearingCapital {
+  id: string;
+  money_advanced: number;    // pence; > 0
+  interest_rate_bp: number;  // bp; > 0
+  loan_term_days: number;    // > 0
+  interest_earned: number;   // pence; derived
+  money_returned: number;    // pence; derived
+  new_value_created: number; // always 0
+  created_at: string;
+}
+
+// MoneyCapitalCircuit mirrors credit.MoneyCapitalCircuit (Vol. III Ch. 21).
+// The M—M′ circuit of interest-bearing capital. Invariant: money_returned == money_advanced + interest_earned.
+export interface MoneyCapitalCircuit {
+  money_advanced: number;  // pence; > 0
+  interest_earned: number; // pence; >= 0
+  money_returned: number;  // pence; = money_advanced + interest_earned
+}

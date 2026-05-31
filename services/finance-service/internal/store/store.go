@@ -14,6 +14,7 @@ import (
 	"errors"
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
@@ -281,4 +282,15 @@ type Store interface {
 	// ListHistoricalMerchantCapitals returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListHistoricalMerchantCapitals(ctx context.Context) ([]merchant.HistoricalMerchantCapital, error)
+
+	// CreateInterestBearingCapital persists an interest-bearing-capital record (Vol. III Ch. 21 —
+	// opens Part V; M—M′ circuit; InterestEarned=roundHalfUp(money_advanced×rate_bp, 10000);
+	// MoneyReturned=MoneyAdvanced+InterestEarned; NewValueCreated==0), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateInterestBearingCapital(ctx context.Context, ibc credit.InterestBearingCapital) (credit.InterestBearingCapital, error)
+	// GetInterestBearingCapital returns the interest-bearing-capital record with the given ID, or ErrNotFound.
+	GetInterestBearingCapital(ctx context.Context, id credit.InterestBearingCapitalID) (credit.InterestBearingCapital, error)
+	// ListInterestBearingCapitals returns all stored interest-bearing-capital records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListInterestBearingCapitals(ctx context.Context) ([]credit.InterestBearingCapital, error)
 }

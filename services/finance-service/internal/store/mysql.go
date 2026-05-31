@@ -13,6 +13,7 @@ import (
 
 	pkgmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
@@ -1994,10 +1995,10 @@ func (m *MySQL) ListCommercialProfits(ctx context.Context) ([]merchant.Commercia
 
 func scanCommercialProfit(s rowScanner) (merchant.CommercialProfit, error) {
 	var (
-		id                                                           string
-		productiveCapital, commercialCapital, surplusValue           int64
-		unadjustedRateBP, adjustedRateBP, newValueCreated           int64
-		createdAt                                                    time.Time
+		id                                                 string
+		productiveCapital, commercialCapital, surplusValue int64
+		unadjustedRateBP, adjustedRateBP, newValueCreated  int64
+		createdAt                                          time.Time
 	)
 	err := s.Scan(&id, &productiveCapital, &commercialCapital, &surplusValue,
 		&unadjustedRateBP, &adjustedRateBP, &newValueCreated, &createdAt)
@@ -2085,10 +2086,10 @@ func (m *MySQL) ListMerchantTurnovers(ctx context.Context) ([]merchant.MerchantT
 
 func scanMerchantTurnover(s rowScanner) (merchant.MerchantTurnover, error) {
 	var (
-		id                                                                    string
-		moneyAdvanced, generalRateBP, turnoverCount, unitsPerTurnover        int64
-		annualMerchantProfit, markupPerUnit                                  int64
-		createdAt                                                             time.Time
+		id                                                            string
+		moneyAdvanced, generalRateBP, turnoverCount, unitsPerTurnover int64
+		annualMerchantProfit, markupPerUnit                           int64
+		createdAt                                                     time.Time
 	)
 	err := s.Scan(&id, &moneyAdvanced, &generalRateBP, &turnoverCount, &unitsPerTurnover,
 		&annualMerchantProfit, &markupPerUnit, &createdAt)
@@ -2175,11 +2176,11 @@ func (m *MySQL) ListMoneyDealingCapitals(ctx context.Context) ([]merchant.MoneyD
 
 func scanMoneyDealingCapital(s rowScanner) (merchant.MoneyDealingCapital, error) {
 	var (
-		id                                        string
-		moneyAdvanced, generalRateBP              int64
-		operationKindsStr                         string
-		moneyDealingProfit, newValueCreated       int64
-		createdAt                                 time.Time
+		id                                  string
+		moneyAdvanced, generalRateBP        int64
+		operationKindsStr                   string
+		moneyDealingProfit, newValueCreated int64
+		createdAt                           time.Time
 	)
 	err := s.Scan(&id, &moneyAdvanced, &generalRateBP, &operationKindsStr,
 		&moneyDealingProfit, &newValueCreated, &createdAt)
@@ -2292,5 +2293,91 @@ func scanHistoricalMerchantCapital(s rowScanner) (merchant.HistoricalMerchantCap
 		WageLabour:         wageLabour,
 		SubordinationIndex: subordinationIndex,
 		CreatedAt:          createdAt,
+	}, nil
+}
+
+// CreateInterestBearingCapital persists ibc, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateInterestBearingCapital(ctx context.Context, ibc credit.InterestBearingCapital) (credit.InterestBearingCapital, error) {
+	if ibc.ID.IsZero() {
+		ibc.ID = credit.NewInterestBearingCapitalID()
+	}
+	if ibc.CreatedAt.IsZero() {
+		ibc.CreatedAt = m.now().UTC()
+	}
+
+	const q = `INSERT INTO interest_bearing_capitals
+		(id, money_advanced, interest_rate_bp, loan_term_days, interest_earned, money_returned, new_value_created, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(ibc.ID),
+		ibc.MoneyAdvanced,
+		ibc.InterestRateBP,
+		ibc.LoanTermDays,
+		ibc.InterestEarned,
+		ibc.MoneyReturned,
+		ibc.NewValueCreated,
+		ibc.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.InterestBearingCapital{}, ErrAlreadyExists
+		}
+		return credit.InterestBearingCapital{}, err
+	}
+	return ibc, nil
+}
+
+// GetInterestBearingCapital returns the interest-bearing-capital record with id, or ErrNotFound.
+func (m *MySQL) GetInterestBearingCapital(ctx context.Context, id credit.InterestBearingCapitalID) (credit.InterestBearingCapital, error) {
+	const q = `SELECT id, money_advanced, interest_rate_bp, loan_term_days, interest_earned, money_returned, new_value_created, created_at
+		FROM interest_bearing_capitals WHERE id = ?`
+	return scanInterestBearingCapital(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListInterestBearingCapitals returns all stored interest-bearing-capital records, newest first.
+func (m *MySQL) ListInterestBearingCapitals(ctx context.Context) ([]credit.InterestBearingCapital, error) {
+	const q = `SELECT id, money_advanced, interest_rate_bp, loan_term_days, interest_earned, money_returned, new_value_created, created_at
+		FROM interest_bearing_capitals ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.InterestBearingCapital, 0)
+	for rows.Next() {
+		ibc, err := scanInterestBearingCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, ibc)
+	}
+	return out, rows.Err()
+}
+
+func scanInterestBearingCapital(s rowScanner) (credit.InterestBearingCapital, error) {
+	var (
+		id                                             string
+		moneyAdvanced, interestRateBP, loanTermDays    int64
+		interestEarned, moneyReturned, newValueCreated int64
+		createdAt                                      time.Time
+	)
+	err := s.Scan(&id, &moneyAdvanced, &interestRateBP, &loanTermDays,
+		&interestEarned, &moneyReturned, &newValueCreated, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.InterestBearingCapital{}, ErrNotFound
+		}
+		return credit.InterestBearingCapital{}, err
+	}
+	return credit.InterestBearingCapital{
+		ID:              credit.InterestBearingCapitalID(id),
+		MoneyAdvanced:   moneyAdvanced,
+		InterestRateBP:  interestRateBP,
+		LoanTermDays:    loanTermDays,
+		InterestEarned:  interestEarned,
+		MoneyReturned:   moneyReturned,
+		NewValueCreated: newValueCreated,
+		CreatedAt:       createdAt,
 	}, nil
 }

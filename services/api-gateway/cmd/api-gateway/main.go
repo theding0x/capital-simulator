@@ -401,9 +401,9 @@ func main() {
 	// Vol. III Ch. 20 — Historical Facts about Merchant's Capital → finance-service
 	srv.Handle("/v1/merchant/historical-forms", financeProxy)
 	srv.Handle("/v1/merchant/historical-forms/{rest...}", financeProxy)
-	// Vol. III, Ch. 21-25 — Interest-Bearing Capital + Credit → finance-service
-	// srv.Handle("/v1/interest-rates", financeProxy)
-	// srv.Handle("/v1/credit", financeProxy)
+	// Vol. III Ch. 21 — Interest-Bearing Capital (opens Part V) → finance-service
+	srv.Handle("/v1/credit/interest-bearing-capital", financeProxy)
+	srv.Handle("/v1/credit/interest-bearing-capital/{rest...}", financeProxy)
 	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
 	// srv.Handle("/v1/ground-rent", financeProxy)
 	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)
