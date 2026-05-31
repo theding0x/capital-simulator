@@ -412,4 +412,16 @@ type Store interface {
 	// ListFictitiousCapitalValuations returns all stored valuations, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListFictitiousCapitalValuations(ctx context.Context) ([]credit.FictitiousCapitalValuation, error)
+
+	// CreateRealCapitalAccumulation persists a real-capital-accumulation observation
+	// (Vol. III Ch. 30 — whether money-capital accumulation corresponds to real-capital
+	// accumulation across the industrial cycle; Phase.IsValid(); CreditLimit.ReserveCapital>=0;
+	// the two growth rates may diverge), assigning an ID and created-at timestamp when absent.
+	// Returns ErrAlreadyExists on ID collision.
+	CreateRealCapitalAccumulation(ctx context.Context, a credit.RealCapitalAccumulation) (credit.RealCapitalAccumulation, error)
+	// GetRealCapitalAccumulation returns the record with the given ID, or ErrNotFound.
+	GetRealCapitalAccumulation(ctx context.Context, id credit.RealCapitalAccumulationID) (credit.RealCapitalAccumulation, error)
+	// ListRealCapitalAccumulations returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRealCapitalAccumulations(ctx context.Context) ([]credit.RealCapitalAccumulation, error)
 }

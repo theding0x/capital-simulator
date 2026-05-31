@@ -3944,6 +3944,63 @@ export interface CreateCurrencyObservationInput {
   description: string;
 }
 
+// ── Vol. III Ch. 30 — Money-Capital and Real Capital, I ──────────────────────
+
+// AccumulationCorrespondence mirrors credit.AccumulationCorrespondence (Vol. III Ch. 30).
+// The two growth rates MAY diverge — there is no equality invariant; either may be
+// negative (the crisis configuration: money-capital grows while real capital shrinks).
+export interface AccumulationCorrespondence {
+  money_capital_growth_bp: number; // bp; may be positive or negative
+  real_capital_growth_bp: number;  // bp; may be positive or negative
+  corresponds: boolean;            // true when the two accumulations align
+  explanation: string;
+}
+
+// CommercialCreditCircuit mirrors credit.CommercialCreditCircuit (Vol. III Ch. 30).
+// A value type — the chain of bills producers draw on one another (spinner →
+// weaver → manufacturer → exporter). total_bills_amount > 0.
+export interface CommercialCreditCircuit {
+  id: string;
+  stages: string[];
+  total_bills_amount: number; // pence; > 0
+  description: string;
+}
+
+// RealCapitalAccumulation mirrors credit.RealCapitalAccumulation (Vol. III Ch. 30).
+// Invariants:
+//   phase ∈ {1,2,3,4,5}
+//   credit_limit.reserve_capital >= 0
+export interface RealCapitalAccumulation {
+  id: string;
+  name: string;
+  phase: number; // 1..5
+  accumulation_correspondence: AccumulationCorrespondence;
+  credit_limit: {
+    reserve_capital: number; // pence; >= 0
+    description: string;
+  };
+  commercial_credit_contracts: boolean;
+  cause_is_money_scarcity: boolean;
+  description: string;
+  created_at: string;
+}
+
+// CreateRealCapitalAccumulationInput is the flat request body for
+// POST /v1/credit/real-capital-accumulation.
+export interface CreateRealCapitalAccumulationInput {
+  name: string;
+  phase: number;
+  money_capital_growth_bp: number;
+  real_capital_growth_bp: number;
+  corresponds: boolean;
+  correspondence_explanation: string;
+  reserve_capital: number;
+  credit_limit_description: string;
+  commercial_credit_contracts: boolean;
+  cause_is_money_scarcity: boolean;
+  description: string;
+}
+
 // ── Vol. III Ch. 29 — Component Parts of Bank Capital ────────────────────────
 
 // BankCapitalComponentKind mirrors credit.BankCapitalComponentKind (Vol. III Ch. 29).
