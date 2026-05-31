@@ -54,6 +54,8 @@ type Memory struct {
 	stockCompanies             map[credit.StockCompanyID]credit.StockCompany
 	cooperativeFactories       map[credit.CooperativeFactoryID]credit.CooperativeFactory
 	currencyObservations       map[credit.CurrencyObservationID]credit.CurrencyObservation
+	bankCapitals               map[credit.BankCapitalID]credit.BankCapital
+	fictitiousValuations       map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation
 }
 
 // NewMemory returns an empty in-memory store.
@@ -97,6 +99,8 @@ func NewMemory() *Memory {
 		stockCompanies:             make(map[credit.StockCompanyID]credit.StockCompany),
 		cooperativeFactories:       make(map[credit.CooperativeFactoryID]credit.CooperativeFactory),
 		currencyObservations:       make(map[credit.CurrencyObservationID]credit.CurrencyObservation),
+		bankCapitals:               make(map[credit.BankCapitalID]credit.BankCapital),
+		fictitiousValuations:       make(map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation),
 	}
 }
 
@@ -1708,6 +1712,114 @@ func (m *Memory) ListCurrencyObservations(_ context.Context) ([]credit.CurrencyO
 	out := make([]credit.CurrencyObservation, 0, len(m.currencyObservations))
 	for _, o := range m.currencyObservations {
 		out = append(out, o)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// cloneBankComponents returns a deep copy of the component slice (nil → empty),
+// so the in-memory store never aliases the caller's slice — matching the
+// JSON round-trip behaviour of the MySQL store.
+func cloneBankComponents(in []credit.BankCapitalComponent) []credit.BankCapitalComponent {
+	out := make([]credit.BankCapitalComponent, len(in))
+	copy(out, in)
+	return out
+}
+
+// CreateBankCapital stores bc, assigning an ID and timestamp when absent (Vol. III Ch. 29).
+func (m *Memory) CreateBankCapital(_ context.Context, bc credit.BankCapital) (credit.BankCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if bc.ID.IsZero() {
+		bc.ID = credit.NewBankCapitalID()
+	}
+	if _, exists := m.bankCapitals[bc.ID]; exists {
+		return credit.BankCapital{}, ErrAlreadyExists
+	}
+	if bc.CreatedAt.IsZero() {
+		bc.CreatedAt = m.now().UTC()
+	}
+	bc.Components = cloneBankComponents(bc.Components)
+	m.bankCapitals[bc.ID] = bc
+	return bc, nil
+}
+
+// GetBankCapital returns the bank-capital record with id, or ErrNotFound.
+func (m *Memory) GetBankCapital(_ context.Context, id credit.BankCapitalID) (credit.BankCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	bc, ok := m.bankCapitals[id]
+	if !ok {
+		return credit.BankCapital{}, ErrNotFound
+	}
+	bc.Components = cloneBankComponents(bc.Components)
+	return bc, nil
+}
+
+// ListBankCapitals returns all stored bank-capital records, newest first.
+func (m *Memory) ListBankCapitals(_ context.Context) ([]credit.BankCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.BankCapital, 0, len(m.bankCapitals))
+	for _, bc := range m.bankCapitals {
+		bc.Components = cloneBankComponents(bc.Components)
+		out = append(out, bc)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateFictitiousCapitalValuation stores v, assigning an ID and timestamp when absent (Vol. III Ch. 29).
+func (m *Memory) CreateFictitiousCapitalValuation(_ context.Context, v credit.FictitiousCapitalValuation) (credit.FictitiousCapitalValuation, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if v.ID.IsZero() {
+		v.ID = credit.NewFictitiousCapitalValuationID()
+	}
+	if _, exists := m.fictitiousValuations[v.ID]; exists {
+		return credit.FictitiousCapitalValuation{}, ErrAlreadyExists
+	}
+	if v.CreatedAt.IsZero() {
+		v.CreatedAt = m.now().UTC()
+	}
+	m.fictitiousValuations[v.ID] = v
+	return v, nil
+}
+
+// GetFictitiousCapitalValuation returns the valuation with id, or ErrNotFound.
+func (m *Memory) GetFictitiousCapitalValuation(_ context.Context, id credit.FictitiousCapitalValuationID) (credit.FictitiousCapitalValuation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	v, ok := m.fictitiousValuations[id]
+	if !ok {
+		return credit.FictitiousCapitalValuation{}, ErrNotFound
+	}
+	return v, nil
+}
+
+// ListFictitiousCapitalValuations returns all stored valuations, newest first.
+func (m *Memory) ListFictitiousCapitalValuations(_ context.Context) ([]credit.FictitiousCapitalValuation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.FictitiousCapitalValuation, 0, len(m.fictitiousValuations))
+	for _, v := range m.fictitiousValuations {
+		out = append(out, v)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

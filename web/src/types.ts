@@ -3943,3 +3943,74 @@ export interface CreateCurrencyObservationInput {
   reserve_description: string;
   description: string;
 }
+
+// ── Vol. III Ch. 29 — Component Parts of Bank Capital ────────────────────────
+
+// BankCapitalComponentKind mirrors credit.BankCapitalComponentKind (Vol. III Ch. 29).
+//   1=cash, 2=bill of exchange, 3=government bond, 4=stock, 5=mortgage.
+export type BankCapitalComponentKind = 1 | 2 | 3 | 4 | 5;
+
+// BankCapitalComponent mirrors credit.BankCapitalComponent (Vol. III Ch. 29).
+export interface BankCapitalComponent {
+  amount: number; // pence
+  kind: BankCapitalComponentKind;
+  description: string;
+}
+
+// BankCapital mirrors credit.BankCapital (Vol. III Ch. 29).
+// Invariant: total_capital == cash_amount + securities_amount (server-computed).
+export interface BankCapital {
+  id: string;
+  name: string;
+  cash_amount: number;       // pence; gold + notes
+  securities_amount: number; // pence; bills + public securities
+  total_capital: number;     // DERIVED: cash + securities
+  components: BankCapitalComponent[];
+  description: string;
+  created_at: string;
+}
+
+// CreateBankCapitalInput is the request body for POST /v1/credit/bank-capital.
+export interface CreateBankCapitalInput {
+  name: string;
+  cash_amount: number;
+  securities_amount: number;
+  components: BankCapitalComponent[];
+  description: string;
+}
+
+// FictitiousCapitalValuation mirrors credit.FictitiousCapitalValuation (Vol. III Ch. 29).
+// Invariants:
+//   interest_rate_bp > 0
+//   market_value == roundHalfUp(annual_income*10000, interest_rate_bp)
+//   market value moves inversely with the rate of interest
+export interface FictitiousCapitalValuation {
+  id: string;
+  name: string;
+  nominal_value: number;    // pence; face / par value
+  annual_income: number;    // pence; yearly yield
+  interest_rate_bp: number; // > 0; prevailing rate in bp
+  dividend_rate_bp: number; // optional; for stocks, in bp
+  market_value: number;     // DERIVED: roundHalfUp(income*10000, rate_bp)
+  description: string;
+  created_at: string;
+}
+
+// CreateFictitiousCapitalValuationInput is the request body for
+// POST /v1/credit/fictitious-capital-valuation.
+export interface CreateFictitiousCapitalValuationInput {
+  name: string;
+  nominal_value: number;
+  annual_income: number;
+  interest_rate_bp: number;
+  dividend_rate_bp: number;
+  description: string;
+}
+
+// DepositEntry mirrors credit.DepositEntry (Vol. III Ch. 29) — a book-entry
+// deposit; the purest form of fictitious bank capital. Value type only.
+export interface DepositEntry {
+  id: string;
+  amount: number; // pence; >= 0
+  description: string;
+}

@@ -390,4 +390,26 @@ type Store interface {
 	// ListCurrencyObservations returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListCurrencyObservations(ctx context.Context) ([]credit.CurrencyObservation, error)
+
+	// CreateBankCapital persists a bank-capital decomposition (Vol. III Ch. 29 —
+	// cash + securities; TotalCapital==CashAmount+SecuritiesAmount; Components is a
+	// list of cash/bill/bond/stock/mortgage parts), assigning an ID and created-at
+	// timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateBankCapital(ctx context.Context, bc credit.BankCapital) (credit.BankCapital, error)
+	// GetBankCapital returns the bank-capital record with the given ID, or ErrNotFound.
+	GetBankCapital(ctx context.Context, id credit.BankCapitalID) (credit.BankCapital, error)
+	// ListBankCapitals returns all stored bank-capital records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListBankCapitals(ctx context.Context) ([]credit.BankCapital, error)
+
+	// CreateFictitiousCapitalValuation persists a security valuation (Vol. III Ch. 29 —
+	// capitalised income; MarketValue==roundHalfUp(AnnualIncome*10000, InterestRateBP);
+	// InterestRateBP>0; market value moves inversely with the rate), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateFictitiousCapitalValuation(ctx context.Context, v credit.FictitiousCapitalValuation) (credit.FictitiousCapitalValuation, error)
+	// GetFictitiousCapitalValuation returns the valuation with the given ID, or ErrNotFound.
+	GetFictitiousCapitalValuation(ctx context.Context, id credit.FictitiousCapitalValuationID) (credit.FictitiousCapitalValuation, error)
+	// ListFictitiousCapitalValuations returns all stored valuations, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListFictitiousCapitalValuations(ctx context.Context) ([]credit.FictitiousCapitalValuation, error)
 }

@@ -171,4 +171,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/currency-observations", h.CreateCurrencyObservation)
 	s.HandleFunc("GET /v1/credit/currency-observations", h.ListCurrencyObservations)
 	s.HandleFunc("GET /v1/credit/currency-observations/{id}", h.GetCurrencyObservation)
+
+	// Vol. III Ch. 29 — Component Parts of Bank Capital
+	s.HandleFunc("POST /v1/credit/bank-capital", h.CreateBankCapital)
+	s.HandleFunc("GET /v1/credit/bank-capital", h.ListBankCapitals)
+	s.HandleFunc("GET /v1/credit/bank-capital/{id}", h.GetBankCapital)
+	s.HandleFunc("POST /v1/credit/fictitious-capital-valuation", h.CreateFictitiousCapitalValuation)
+	s.HandleFunc("GET /v1/credit/fictitious-capital-valuation", h.ListFictitiousCapitalValuations)
+	s.HandleFunc("GET /v1/credit/fictitious-capital-valuation/{id}", h.GetFictitiousCapitalValuation)
 }
