@@ -2874,4 +2874,44 @@ export const financeApi = {
     http<{ items: import("./types").RegulatingPriceShift[] }>("/v1/rent/regulating-price-shifts").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 45 — Absolute Ground-Rent
+  createAgriculturalComposition: (body: import("./types").CreateAgriculturalCompositionInput) =>
+    http<import("./types").AgriculturalComposition>("/v1/rent/compositions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listAgriculturalCompositions: () =>
+    http<{ items: import("./types").AgriculturalComposition[] }>("/v1/rent/compositions").then(
+      (r) => r.items ?? [],
+    ),
+  createValuePriceGap: (body: import("./types").CreateValuePriceGapInput) =>
+    http<import("./types").ValuePriceGap>("/v1/rent/value-gaps", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listValuePriceGaps: () =>
+    http<{ items: import("./types").ValuePriceGap[] }>("/v1/rent/value-gaps").then(
+      (r) => r.items ?? [],
+    ),
+  createAbsoluteRent: (body: import("./types").CreateAbsoluteRentInput) =>
+    http<import("./types").AbsoluteRent>("/v1/rent/absolute-rents", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listAbsoluteRents: () =>
+    http<{ items: import("./types").AbsoluteRent[] }>("/v1/rent/absolute-rents").then(
+      (r) => r.items ?? [],
+    ),
+  getAbsoluteRent: (id: string) =>
+    http<import("./types").AbsoluteRent>(`/v1/rent/absolute-rents/${id}`),
+  createAbsoluteRentLimit: (body: import("./types").CreateAbsoluteRentLimitInput) =>
+    http<import("./types").AbsoluteRentLimit>("/v1/rent/rent-limits", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listAbsoluteRentLimits: () =>
+    http<{ items: import("./types").AbsoluteRentLimit[] }>("/v1/rent/rent-limits").then(
+      (r) => r.items ?? [],
+    ),
 };

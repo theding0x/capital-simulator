@@ -89,6 +89,10 @@ type Memory struct {
 	rentOnWorstSoils           map[rent.RentOnWorstSoilID]rent.RentOnWorstSoil
 	soilImprovementCapitals    map[rent.SoilImprovementCapitalID]rent.SoilImprovementCapital
 	regulatingPriceShifts      map[rent.RegulatingPriceShiftID]rent.RegulatingPriceShift
+	agriculturalCompositions   map[rent.AgriculturalCompositionID]rent.AgriculturalComposition
+	valuePriceGaps             map[rent.ValuePriceGapID]rent.ValuePriceGap
+	absoluteRents              map[rent.AbsoluteRentID]rent.AbsoluteRent
+	absoluteRentLimits         map[rent.AbsoluteRentLimitID]rent.AbsoluteRentLimit
 }
 
 // NewMemory returns an empty in-memory store.
@@ -166,6 +170,10 @@ func NewMemory() *Memory {
 		rentOnWorstSoils:           make(map[rent.RentOnWorstSoilID]rent.RentOnWorstSoil),
 		soilImprovementCapitals:    make(map[rent.SoilImprovementCapitalID]rent.SoilImprovementCapital),
 		regulatingPriceShifts:      make(map[rent.RegulatingPriceShiftID]rent.RegulatingPriceShift),
+		agriculturalCompositions:   make(map[rent.AgriculturalCompositionID]rent.AgriculturalComposition),
+		valuePriceGaps:             make(map[rent.ValuePriceGapID]rent.ValuePriceGap),
+		absoluteRents:              make(map[rent.AbsoluteRentID]rent.AbsoluteRent),
+		absoluteRentLimits:         make(map[rent.AbsoluteRentLimitID]rent.AbsoluteRentLimit),
 	}
 }
 
@@ -3186,6 +3194,164 @@ func (m *Memory) ListRegulatingPriceShifts(_ context.Context) ([]rent.Regulating
 	out := make([]rent.RegulatingPriceShift, 0, len(m.regulatingPriceShifts))
 	for _, s := range m.regulatingPriceShifts {
 		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// ── Vol. III Ch. 45 — Absolute Ground-Rent ──
+
+// CreateAgriculturalComposition stores ac, assigning an ID and timestamp when absent (Vol. III Ch. 45).
+func (m *Memory) CreateAgriculturalComposition(_ context.Context, ac rent.AgriculturalComposition) (rent.AgriculturalComposition, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if ac.ID == "" {
+		ac.ID = rent.NewAgriculturalCompositionID()
+	}
+	if _, exists := m.agriculturalCompositions[ac.ID]; exists {
+		return rent.AgriculturalComposition{}, ErrAlreadyExists
+	}
+	if ac.CreatedAt.IsZero() {
+		ac.CreatedAt = m.now().UTC()
+	}
+	m.agriculturalCompositions[ac.ID] = ac
+	return ac, nil
+}
+
+// ListAgriculturalCompositions returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListAgriculturalCompositions(_ context.Context) ([]rent.AgriculturalComposition, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.AgriculturalComposition, 0, len(m.agriculturalCompositions))
+	for _, ac := range m.agriculturalCompositions {
+		out = append(out, ac)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateValuePriceGap stores g, assigning an ID and timestamp when absent (Vol. III Ch. 45).
+func (m *Memory) CreateValuePriceGap(_ context.Context, g rent.ValuePriceGap) (rent.ValuePriceGap, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if g.ID == "" {
+		g.ID = rent.NewValuePriceGapID()
+	}
+	if _, exists := m.valuePriceGaps[g.ID]; exists {
+		return rent.ValuePriceGap{}, ErrAlreadyExists
+	}
+	if g.CreatedAt.IsZero() {
+		g.CreatedAt = m.now().UTC()
+	}
+	m.valuePriceGaps[g.ID] = g
+	return g, nil
+}
+
+// ListValuePriceGaps returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListValuePriceGaps(_ context.Context) ([]rent.ValuePriceGap, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.ValuePriceGap, 0, len(m.valuePriceGaps))
+	for _, g := range m.valuePriceGaps {
+		out = append(out, g)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateAbsoluteRent stores ar, assigning an ID and timestamp when absent (Vol. III Ch. 45).
+func (m *Memory) CreateAbsoluteRent(_ context.Context, ar rent.AbsoluteRent) (rent.AbsoluteRent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if ar.ID == "" {
+		ar.ID = rent.NewAbsoluteRentID()
+	}
+	if _, exists := m.absoluteRents[ar.ID]; exists {
+		return rent.AbsoluteRent{}, ErrAlreadyExists
+	}
+	if ar.CreatedAt.IsZero() {
+		ar.CreatedAt = m.now().UTC()
+	}
+	m.absoluteRents[ar.ID] = ar
+	return ar, nil
+}
+
+// GetAbsoluteRent returns the record with id, or ErrNotFound (Vol. III Ch. 45).
+func (m *Memory) GetAbsoluteRent(_ context.Context, id rent.AbsoluteRentID) (rent.AbsoluteRent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	ar, ok := m.absoluteRents[id]
+	if !ok {
+		return rent.AbsoluteRent{}, ErrNotFound
+	}
+	return ar, nil
+}
+
+// ListAbsoluteRents returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListAbsoluteRents(_ context.Context) ([]rent.AbsoluteRent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.AbsoluteRent, 0, len(m.absoluteRents))
+	for _, ar := range m.absoluteRents {
+		out = append(out, ar)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateAbsoluteRentLimit stores l, assigning an ID and timestamp when absent (Vol. III Ch. 45).
+func (m *Memory) CreateAbsoluteRentLimit(_ context.Context, l rent.AbsoluteRentLimit) (rent.AbsoluteRentLimit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if l.ID == "" {
+		l.ID = rent.NewAbsoluteRentLimitID()
+	}
+	if _, exists := m.absoluteRentLimits[l.ID]; exists {
+		return rent.AbsoluteRentLimit{}, ErrAlreadyExists
+	}
+	if l.CreatedAt.IsZero() {
+		l.CreatedAt = m.now().UTC()
+	}
+	m.absoluteRentLimits[l.ID] = l
+	return l, nil
+}
+
+// ListAbsoluteRentLimits returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListAbsoluteRentLimits(_ context.Context) ([]rent.AbsoluteRentLimit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.AbsoluteRentLimit, 0, len(m.absoluteRentLimits))
+	for _, l := range m.absoluteRentLimits {
+		out = append(out, l)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

@@ -702,4 +702,38 @@ type Store interface {
 	// ListRegulatingPriceShifts returns all stored regulating-price-shift records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListRegulatingPriceShifts(ctx context.Context) ([]rent.RegulatingPriceShift, error)
+
+	// CreateAgriculturalComposition persists an agricultural-composition record (Vol. III Ch. 45 —
+	// agricultural organic composition vs social average; IsBelowAverage derived server-side),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateAgriculturalComposition(ctx context.Context, ac rent.AgriculturalComposition) (rent.AgriculturalComposition, error)
+	// ListAgriculturalCompositions returns all stored agricultural-composition records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListAgriculturalCompositions(ctx context.Context) ([]rent.AgriculturalComposition, error)
+
+	// CreateValuePriceGap persists a value–price-gap record (Vol. III Ch. 45 —
+	// value minus price of production; gap derived server-side),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateValuePriceGap(ctx context.Context, g rent.ValuePriceGap) (rent.ValuePriceGap, error)
+	// ListValuePriceGaps returns all stored value–price-gap records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListValuePriceGaps(ctx context.Context) ([]rent.ValuePriceGap, error)
+
+	// CreateAbsoluteRent persists an absolute-rent record (Vol. III Ch. 45 —
+	// AbsoluteRentBP=max(0,surplus−average); requires landed-property monopoly),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateAbsoluteRent(ctx context.Context, ar rent.AbsoluteRent) (rent.AbsoluteRent, error)
+	// GetAbsoluteRent returns the absolute-rent record with the given ID, or ErrNotFound.
+	GetAbsoluteRent(ctx context.Context, id rent.AbsoluteRentID) (rent.AbsoluteRent, error)
+	// ListAbsoluteRents returns all stored absolute-rent records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListAbsoluteRents(ctx context.Context) ([]rent.AbsoluteRent, error)
+
+	// CreateAbsoluteRentLimit persists an absolute-rent-limit record (Vol. III Ch. 45 —
+	// upper bound = value–price gap; IsAtLimit=actual>=max),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateAbsoluteRentLimit(ctx context.Context, l rent.AbsoluteRentLimit) (rent.AbsoluteRentLimit, error)
+	// ListAbsoluteRentLimits returns all stored absolute-rent-limit records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListAbsoluteRentLimits(ctx context.Context) ([]rent.AbsoluteRentLimit, error)
 }
