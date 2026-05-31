@@ -2495,4 +2495,34 @@ export const financeApi = {
     ),
   getCurrencyObservation: (id: string) =>
     http<import("./types").CurrencyObservation>(`/v1/credit/currency-observations/${id}`),
+  // Vol. III Ch. 29 — Component Parts of Bank Capital
+  createBankCapital: (body: import("./types").CreateBankCapitalInput) =>
+    http<import("./types").BankCapital>("/v1/credit/bank-capital", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listBankCapitals: () =>
+    http<{ items: import("./types").BankCapital[] }>("/v1/credit/bank-capital").then(
+      (r) => r.items ?? [],
+    ),
+  getBankCapital: (id: string) =>
+    http<import("./types").BankCapital>(`/v1/credit/bank-capital/${id}`),
+  createFictitiousCapitalValuation: (
+    body: import("./types").CreateFictitiousCapitalValuationInput,
+  ) =>
+    http<import("./types").FictitiousCapitalValuation>(
+      "/v1/credit/fictitious-capital-valuation",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+  listFictitiousCapitalValuations: () =>
+    http<{ items: import("./types").FictitiousCapitalValuation[] }>(
+      "/v1/credit/fictitious-capital-valuation",
+    ).then((r) => r.items ?? []),
+  getFictitiousCapitalValuation: (id: string) =>
+    http<import("./types").FictitiousCapitalValuation>(
+      `/v1/credit/fictitious-capital-valuation/${id}`,
+    ),
 };

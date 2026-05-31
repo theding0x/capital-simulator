@@ -3238,3 +3238,208 @@ func scanCurrencyObservation(s rowScanner) (credit.CurrencyObservation, error) {
 		CreatedAt:   createdAt,
 	}, nil
 }
+
+// ── Vol. III Ch. 29 — Component Parts of Bank Capital ─────────────────────────
+
+// CreateBankCapital persists bc, assigning an ID and timestamp when absent (Vol. III Ch. 29).
+func (m *MySQL) CreateBankCapital(ctx context.Context, bc credit.BankCapital) (credit.BankCapital, error) {
+	if bc.ID.IsZero() {
+		bc.ID = credit.NewBankCapitalID()
+	}
+	if bc.CreatedAt.IsZero() {
+		bc.CreatedAt = m.now().UTC()
+	}
+	components := bc.Components
+	if components == nil {
+		components = []credit.BankCapitalComponent{}
+	}
+	componentsJSON, err := json.Marshal(components)
+	if err != nil {
+		return credit.BankCapital{}, err
+	}
+	const q = `INSERT INTO bank_capitals (` +
+		"`id`, `name`, `cash_amount`, `securities_amount`, `total_capital`, `components_json`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?)`
+	_, err = m.db.ExecContext(ctx, q,
+		string(bc.ID),
+		bc.Name,
+		bc.CashAmount,
+		bc.SecuritiesAmount,
+		bc.TotalCapital,
+		string(componentsJSON),
+		bc.Description,
+		bc.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.BankCapital{}, ErrAlreadyExists
+		}
+		return credit.BankCapital{}, err
+	}
+	return bc, nil
+}
+
+// GetBankCapital returns the bank-capital record with id, or ErrNotFound.
+func (m *MySQL) GetBankCapital(ctx context.Context, id credit.BankCapitalID) (credit.BankCapital, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `cash_amount`, `securities_amount`, `total_capital`, `components_json`, `description`, `created_at` " +
+		"FROM `bank_capitals` WHERE `id` = ?"
+	return scanBankCapital(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListBankCapitals returns all stored bank-capital records, newest first.
+func (m *MySQL) ListBankCapitals(ctx context.Context) ([]credit.BankCapital, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `cash_amount`, `securities_amount`, `total_capital`, `components_json`, `description`, `created_at` " +
+		"FROM `bank_capitals` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.BankCapital, 0)
+	for rows.Next() {
+		bc, err := scanBankCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, bc)
+	}
+	return out, rows.Err()
+}
+
+func scanBankCapital(s rowScanner) (credit.BankCapital, error) {
+	var (
+		id               string
+		name             string
+		cashAmount       int64
+		securitiesAmount int64
+		totalCapital     int64
+		componentsStr    string
+		description      string
+		createdAt        time.Time
+	)
+	err := s.Scan(&id, &name, &cashAmount, &securitiesAmount, &totalCapital, &componentsStr, &description, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.BankCapital{}, ErrNotFound
+		}
+		return credit.BankCapital{}, err
+	}
+	var components []credit.BankCapitalComponent
+	if err := json.Unmarshal([]byte(componentsStr), &components); err != nil {
+		return credit.BankCapital{}, fmt.Errorf("store: bank_capitals: unmarshal components_json: %w", err)
+	}
+	if components == nil {
+		components = []credit.BankCapitalComponent{}
+	}
+	for _, c := range components {
+		if !c.Kind.IsValid() {
+			return credit.BankCapital{}, fmt.Errorf("store: bank_capitals: invalid component kind %d", c.Kind)
+		}
+	}
+	return credit.BankCapital{
+		ID:               credit.BankCapitalID(id),
+		Name:             name,
+		CashAmount:       cashAmount,
+		SecuritiesAmount: securitiesAmount,
+		TotalCapital:     totalCapital,
+		Components:       components,
+		Description:      description,
+		CreatedAt:        createdAt,
+	}, nil
+}
+
+// CreateFictitiousCapitalValuation persists v, assigning an ID and timestamp when absent (Vol. III Ch. 29).
+func (m *MySQL) CreateFictitiousCapitalValuation(ctx context.Context, v credit.FictitiousCapitalValuation) (credit.FictitiousCapitalValuation, error) {
+	if v.ID.IsZero() {
+		v.ID = credit.NewFictitiousCapitalValuationID()
+	}
+	if v.CreatedAt.IsZero() {
+		v.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO fictitious_capital_valuations (` +
+		"`id`, `name`, `nominal_value`, `annual_income`, `interest_rate_bp`, `dividend_rate_bp`, `market_value`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(v.ID),
+		v.Name,
+		v.NominalValue,
+		v.AnnualIncome,
+		v.InterestRateBP,
+		v.DividendRateBP,
+		v.MarketValue,
+		v.Description,
+		v.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.FictitiousCapitalValuation{}, ErrAlreadyExists
+		}
+		return credit.FictitiousCapitalValuation{}, err
+	}
+	return v, nil
+}
+
+// GetFictitiousCapitalValuation returns the valuation with id, or ErrNotFound.
+func (m *MySQL) GetFictitiousCapitalValuation(ctx context.Context, id credit.FictitiousCapitalValuationID) (credit.FictitiousCapitalValuation, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `nominal_value`, `annual_income`, `interest_rate_bp`, `dividend_rate_bp`, `market_value`, `description`, `created_at` " +
+		"FROM `fictitious_capital_valuations` WHERE `id` = ?"
+	return scanFictitiousCapitalValuation(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListFictitiousCapitalValuations returns all stored valuations, newest first.
+func (m *MySQL) ListFictitiousCapitalValuations(ctx context.Context) ([]credit.FictitiousCapitalValuation, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `nominal_value`, `annual_income`, `interest_rate_bp`, `dividend_rate_bp`, `market_value`, `description`, `created_at` " +
+		"FROM `fictitious_capital_valuations` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.FictitiousCapitalValuation, 0)
+	for rows.Next() {
+		v, err := scanFictitiousCapitalValuation(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	return out, rows.Err()
+}
+
+func scanFictitiousCapitalValuation(s rowScanner) (credit.FictitiousCapitalValuation, error) {
+	var (
+		id             string
+		name           string
+		nominalValue   int64
+		annualIncome   int64
+		interestRateBP int64
+		dividendRateBP int64
+		marketValue    int64
+		description    string
+		createdAt      time.Time
+	)
+	err := s.Scan(&id, &name, &nominalValue, &annualIncome, &interestRateBP, &dividendRateBP, &marketValue, &description, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.FictitiousCapitalValuation{}, ErrNotFound
+		}
+		return credit.FictitiousCapitalValuation{}, err
+	}
+	return credit.FictitiousCapitalValuation{
+		ID:             credit.FictitiousCapitalValuationID(id),
+		Name:           name,
+		NominalValue:   nominalValue,
+		AnnualIncome:   annualIncome,
+		InterestRateBP: interestRateBP,
+		DividendRateBP: dividendRateBP,
+		MarketValue:    marketValue,
+		Description:    description,
+		CreatedAt:      createdAt,
+	}, nil
+}
