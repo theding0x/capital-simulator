@@ -3742,3 +3742,18 @@ export interface ProfitDivision {
   mystification_index: number;         // bp [0,10000]
   created_at: string;
 }
+
+// CompoundInterestSchedule mirrors credit.CompoundInterestSchedule (Vol. III Ch. 24).
+// FinalValue is derived by integer compound iteration (no float64).
+// new_value_created is always 0 — the fetish form.
+// fetish_form: 1=SimpleInterest, 2=CompoundInterest, 3=MM.
+export interface CompoundInterestSchedule {
+  id: string;
+  principal: number;           // > 0; base amount
+  rate_bp: number;             // > 0; annual interest rate in basis points
+  period_years: number;        // > 0; number of compounding periods
+  final_value: number;         // DERIVED: integer compound
+  new_value_created: number;   // always 0 — fetish form
+  fetish_form: number;         // 1=SimpleInterest, 2=CompoundInterest, 3=MM
+  created_at: string;
+}

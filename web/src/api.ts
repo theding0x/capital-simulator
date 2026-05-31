@@ -2397,4 +2397,22 @@ export const financeApi = {
     ),
   getProfitDivision: (id: string) =>
     http<import("./types").ProfitDivision>(`/v1/credit/profit-division/${id}`),
+
+  // Vol. III Ch. 24 — Compound Interest (Fetish Capital)
+  createCompoundInterestSchedule: (body: {
+    principal: number;
+    rate_bp: number;
+    period_years: number;
+    fetish_form: number;
+  }) =>
+    http<import("./types").CompoundInterestSchedule>("/v1/credit/compound-interest", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listCompoundInterestSchedules: () =>
+    http<{ items: import("./types").CompoundInterestSchedule[] }>("/v1/credit/compound-interest").then(
+      (r) => r.items ?? [],
+    ),
+  getCompoundInterestSchedule: (id: string) =>
+    http<import("./types").CompoundInterestSchedule>(`/v1/credit/compound-interest/${id}`),
 };
