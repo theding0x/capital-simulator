@@ -4456,3 +4456,40 @@ export interface CreateLeaseTermInput {
   duration_years: number;
   fixed_rent_bp: number;
 }
+
+// Vol. III Ch. 41 — DR II Constant Price
+export type CapitalProductivityCase = 1 | 2 | 3 | 4;
+export interface DifferentialRentIIOutcome {
+  id: string;
+  parcel_id: string;
+  case: CapitalProductivityCase;
+  additional_capital_bp: number;
+  new_rent_per_acre_bp: number;
+  total_rental_bp: number;
+  rate_of_surplus_profit_bp: number;
+  created_at: string;
+}
+export interface CreateDifferentialRentIIOutcomeInput {
+  case: CapitalProductivityCase;
+  investments: Array<{
+    parcel_id: string;
+    tranche_number: number;
+    capital_bp: number;
+    output_quarters: number;
+    surplus_profit_bp: number;
+  }>;
+}
+export interface IntensiveExtensiveComparison {
+  id: string;
+  intensive_rent_per_acre_bp: number;
+  extensive_rent_per_acre_bp: number;
+  total_capital_bp: number;
+  total_rental_same_bp: number;
+  created_at: string;
+}
+export interface CreateIntensiveExtensiveComparisonInput {
+  intensive_rent_per_acre_bp: number;
+  extensive_rent_per_acre_bp: number;
+  total_capital_bp: number;
+  total_rental_same_bp: number;
+}

@@ -2767,4 +2767,24 @@ export const financeApi = {
     http<{ items: import("./types").LeaseTerm[] }>("/v1/rent/lease-terms").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 41 — DR II Constant Price of Production
+  createDR2Outcome: (body: import("./types").CreateDifferentialRentIIOutcomeInput) =>
+    http<import("./types").DifferentialRentIIOutcome>("/v1/rent/dr2-outcomes", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listDR2Outcomes: () =>
+    http<{ items: import("./types").DifferentialRentIIOutcome[] }>("/v1/rent/dr2-outcomes").then(
+      (r) => r.items ?? [],
+    ),
+  createIntensiveExtensive: (body: import("./types").CreateIntensiveExtensiveComparisonInput) =>
+    http<import("./types").IntensiveExtensiveComparison>("/v1/rent/intensive-extensive", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listIntensiveExtensive: () =>
+    http<{ items: import("./types").IntensiveExtensiveComparison[] }>("/v1/rent/intensive-extensive").then(
+      (r) => r.items ?? [],
+    ),
 };

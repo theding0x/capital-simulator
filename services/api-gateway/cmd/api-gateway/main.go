@@ -483,6 +483,11 @@ func main() {
 	srv.Handle("/v1/rent/dr2-tables/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/lease-terms", financeProxy)
 	srv.Handle("/v1/rent/lease-terms/{rest...}", financeProxy)
+	// Ch. 41 — DR II constant price: outcomes + intensive/extensive comparison.
+	srv.Handle("/v1/rent/dr2-outcomes", financeProxy)
+	srv.Handle("/v1/rent/dr2-outcomes/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/intensive-extensive", financeProxy)
+	srv.Handle("/v1/rent/intensive-extensive/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 
