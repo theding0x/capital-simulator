@@ -3143,3 +3143,137 @@ func TestCh30SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// --- ClearingHouseSettlement store tests (Ch. 33) ---
+
+func TestMemory_ClearingHouseSettlementRoundTrip(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// London Clearing House 1840s: total_claims=15 000 000 000, money_used=1 000 000 000.
+	s, err := credit.NewClearingHouseSettlement(
+		"London Clearing House 1840s",
+		"Bills cancel in the clearing house; only the net balance requires actual coin.",
+		15_000_000_000,
+		1_000_000_000,
+	)
+	if err != nil {
+		t.Fatalf("new settlement: %v", err)
+	}
+	created, err := m.CreateClearingHouseSettlement(ctx, s)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("expected an assigned ID")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("expected a created-at timestamp")
+	}
+	if created.Name != s.Name {
+		t.Errorf("Name: got %q, want %q", created.Name, s.Name)
+	}
+	if created.Description != s.Description {
+		t.Errorf("Description: got %q, want %q", created.Description, s.Description)
+	}
+	if created.TotalClaims != 15_000_000_000 {
+		t.Errorf("TotalClaims: got %d, want 15000000000", created.TotalClaims)
+	}
+	if created.MoneyUsed != 1_000_000_000 {
+		t.Errorf("MoneyUsed: got %d, want 1000000000", created.MoneyUsed)
+	}
+	if created.NetBalance != 14_000_000_000 {
+		t.Errorf("NetBalance: got %d, want 14000000000", created.NetBalance)
+	}
+
+	got, err := m.GetClearingHouseSettlement(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got  %+v\n want %+v", got, created)
+	}
+}
+
+func TestMemory_GetClearingHouseSettlementNotFound(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	if _, err := m.GetClearingHouseSettlement(context.Background(), credit.ClearingHouseSettlementID("missing")); !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestMemory_CreateClearingHouseSettlementDuplicate(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	s, err := credit.NewClearingHouseSettlement("dupe test", "", 1_000_000, 100_000)
+	if err != nil {
+		t.Fatalf("new settlement: %v", err)
+	}
+	s.ID = credit.ClearingHouseSettlementID("5eed000000000000003300")
+
+	if _, err := m.CreateClearingHouseSettlement(ctx, s); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateClearingHouseSettlement(ctx, s); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("second create err = %v, want ErrAlreadyExists", err)
+	}
+}
+
+func TestMemory_ListClearingHouseSettlementsNeverNil(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	out, err := m.ListClearingHouseSettlements(context.Background())
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("list should return a non-nil slice even when empty")
+	}
+	if len(out) != 0 {
+		t.Errorf("fresh store: list len = %d, want 0", len(out))
+	}
+}
+
+func TestMemory_ListClearingHouseSettlements_NewestFirst(t *testing.T) {
+	t.Parallel()
+	m := NewMemory()
+	ctx := context.Background()
+
+	// London fixture (earlier) then Scotland velocity-9 fixture (later).
+	london, err := credit.NewClearingHouseSettlement("London", "", 15_000_000_000, 1_000_000_000)
+	if err != nil {
+		t.Fatalf("london: %v", err)
+	}
+	scotland, err := credit.NewClearingHouseSettlement("Scotland", "", 900_000, 100_000)
+	if err != nil {
+		t.Fatalf("scotland: %v", err)
+	}
+
+	createdLondon, err := m.CreateClearingHouseSettlement(ctx, london)
+	if err != nil {
+		t.Fatalf("create london: %v", err)
+	}
+	createdScotland, err := m.CreateClearingHouseSettlement(ctx, scotland)
+	if err != nil {
+		t.Fatalf("create scotland: %v", err)
+	}
+
+	out, err := m.ListClearingHouseSettlements(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdScotland.CreatedAt.After(createdLondon.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdScotland.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdScotland.ID)
+	}
+}

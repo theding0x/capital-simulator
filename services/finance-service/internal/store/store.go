@@ -448,4 +448,15 @@ type Store interface {
 	// ListCapitalReleases returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListCapitalReleases(ctx context.Context) ([]credit.CapitalRelease, error)
+
+	// CreateClearingHouseSettlement persists a clearing-house settlement record
+	// (Vol. III Ch. 33 — The Medium of Circulation in the Credit System;
+	// MoneyUsed<=TotalClaims; NetBalance==TotalClaims-MoneyUsed), assigning an ID
+	// and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateClearingHouseSettlement(ctx context.Context, s credit.ClearingHouseSettlement) (credit.ClearingHouseSettlement, error)
+	// GetClearingHouseSettlement returns the record with the given ID, or ErrNotFound.
+	GetClearingHouseSettlement(ctx context.Context, id credit.ClearingHouseSettlementID) (credit.ClearingHouseSettlement, error)
+	// ListClearingHouseSettlements returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListClearingHouseSettlements(ctx context.Context) ([]credit.ClearingHouseSettlement, error)
 }

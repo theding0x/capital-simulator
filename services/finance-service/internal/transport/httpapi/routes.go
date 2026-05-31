@@ -194,4 +194,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/capital-release", h.CreateCapitalRelease)
 	s.HandleFunc("GET /v1/credit/capital-release", h.ListCapitalReleases)
 	s.HandleFunc("GET /v1/credit/capital-release/{id}", h.GetCapitalRelease)
+
+	// Vol. III Ch. 33 — The Medium of Circulation in the Credit System
+	s.HandleFunc("POST /v1/credit/clearing-house-settlements", h.CreateClearingHouseSettlement)
+	s.HandleFunc("GET /v1/credit/clearing-house-settlements", h.ListClearingHouseSettlements)
+	s.HandleFunc("GET /v1/credit/clearing-house-settlements/{id}", h.GetClearingHouseSettlement)
 }

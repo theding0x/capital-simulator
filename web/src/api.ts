@@ -2565,4 +2565,23 @@ export const financeApi = {
     http<import("./types").FictitiousCapitalValuation>(
       `/v1/credit/fictitious-capital-valuation/${id}`,
     ),
+  // Vol. III Ch. 33 — The Medium of Circulation in the Credit System
+  createClearingHouseSettlement: (
+    body: import("./types").CreateClearingHouseSettlementInput,
+  ) =>
+    http<import("./types").ClearingHouseSettlement>(
+      "/v1/credit/clearing-house-settlements",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+  listClearingHouseSettlements: () =>
+    http<{ items: import("./types").ClearingHouseSettlement[] }>(
+      "/v1/credit/clearing-house-settlements",
+    ).then((r) => r.items ?? []),
+  getClearingHouseSettlement: (id: string) =>
+    http<import("./types").ClearingHouseSettlement>(
+      `/v1/credit/clearing-house-settlements/${id}`,
+    ),
 };

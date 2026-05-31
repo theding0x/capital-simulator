@@ -1,0 +1,174 @@
+.v3-ch33 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.v3-ch33-intro {
+  color: var(--text-secondary, #555);
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+
+.v3-ch33-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3-ch33-section h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #222);
+}
+
+.v3-ch33-subintro {
+  font-size: 0.88rem;
+  color: var(--text-secondary, #666);
+  margin: 0;
+}
+
+/* Velocity calculator */
+.v3-ch33-calc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 420px;
+}
+
+.v3-ch33-calc label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.87rem;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch33-calc input {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch33-result {
+  font-size: 0.9rem;
+  color: var(--accent, #2c6e49);
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.v3-ch33-fixture {
+  font-size: 0.82rem;
+  color: var(--text-muted, #888);
+  font-style: italic;
+  margin: 0;
+}
+
+/* Form */
+.v3-ch33-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 520px;
+}
+
+.v3-ch33-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.87rem;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch33-form input {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch33-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+}
+
+.v3-ch33-preview {
+  font-size: 0.86rem;
+  color: var(--accent, #2c6e49);
+  font-style: italic;
+  max-width: 520px;
+}
+
+.v3-ch33-btn {
+  align-self: flex-start;
+  padding: 0.4rem 1rem;
+  background: var(--accent, #2c6e49);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.v3-ch33-btn:hover {
+  opacity: 0.88;
+}
+
+.v3-ch33-error {
+  font-size: 0.85rem;
+  color: var(--error, #c0392b);
+  margin: 0;
+}
+
+/* Settlement cards */
+.v3-ch33-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3-ch33-card {
+  background: var(--surface-alt, #f8f8f6);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-width: 580px;
+}
+
+.v3-ch33-card-name {
+  font-weight: 600;
+  font-size: 0.93rem;
+  color: var(--text-primary, #222);
+}
+
+.v3-ch33-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.v3-ch33-card-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  color: var(--text-secondary, #555);
+  gap: 1rem;
+}
+
+.v3-ch33-saving {
+  font-size: 0.84rem;
+  color: var(--accent, #2c6e49);
+  font-style: italic;
+  border-top: 1px solid var(--border, #eee);
+  padding-top: 0.35rem;
+}
+
+.v3-ch33-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted, #888);
+}

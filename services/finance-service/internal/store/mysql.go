@@ -3771,3 +3771,90 @@ func scanCapitalRelease(s rowScanner) (credit.CapitalRelease, error) {
 		CreatedAt:   createdAt,
 	}, nil
 }
+
+// CreateClearingHouseSettlement inserts s, assigning an ID and timestamp when absent (Vol. III Ch. 33).
+func (m *MySQL) CreateClearingHouseSettlement(ctx context.Context, s credit.ClearingHouseSettlement) (credit.ClearingHouseSettlement, error) {
+	if s.ID.IsZero() {
+		s.ID = credit.NewClearingHouseSettlementID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO clearing_house_settlements ` +
+		"(`id`, `name`, `description`, `total_claims`, `money_used`, `net_balance`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID),
+		s.Name,
+		s.Description,
+		s.TotalClaims,
+		s.MoneyUsed,
+		s.NetBalance,
+		s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.ClearingHouseSettlement{}, ErrAlreadyExists
+		}
+		return credit.ClearingHouseSettlement{}, err
+	}
+	return s, nil
+}
+
+// GetClearingHouseSettlement returns the record with id, or ErrNotFound.
+func (m *MySQL) GetClearingHouseSettlement(ctx context.Context, id credit.ClearingHouseSettlementID) (credit.ClearingHouseSettlement, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `description`, `total_claims`, `money_used`, `net_balance`, `created_at` " +
+		"FROM `clearing_house_settlements` WHERE `id` = ?"
+	return scanClearingHouseSettlement(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListClearingHouseSettlements returns all stored records, newest first.
+func (m *MySQL) ListClearingHouseSettlements(ctx context.Context) ([]credit.ClearingHouseSettlement, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `description`, `total_claims`, `money_used`, `net_balance`, `created_at` " +
+		"FROM `clearing_house_settlements` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.ClearingHouseSettlement, 0)
+	for rows.Next() {
+		s, err := scanClearingHouseSettlement(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func scanClearingHouseSettlement(s rowScanner) (credit.ClearingHouseSettlement, error) {
+	var (
+		id          string
+		name        string
+		description string
+		totalClaims int64
+		moneyUsed   int64
+		netBalance  int64
+		createdAt   time.Time
+	)
+	err := s.Scan(&id, &name, &description, &totalClaims, &moneyUsed, &netBalance, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.ClearingHouseSettlement{}, ErrNotFound
+		}
+		return credit.ClearingHouseSettlement{}, err
+	}
+	return credit.ClearingHouseSettlement{
+		ID:          credit.ClearingHouseSettlementID(id),
+		Name:        name,
+		Description: description,
+		TotalClaims: totalClaims,
+		MoneyUsed:   moneyUsed,
+		NetBalance:  netBalance,
+		CreatedAt:   createdAt,
+	}, nil
+}

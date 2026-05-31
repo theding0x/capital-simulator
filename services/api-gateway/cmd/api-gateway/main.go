@@ -444,6 +444,9 @@ func main() {
 	// Vol. III Ch. 32 — Money-Capital and Real Capital, III (Conclusion) → finance-service
 	srv.Handle("/v1/credit/capital-release", financeProxy)
 	srv.Handle("/v1/credit/capital-release/{rest...}", financeProxy)
+	// Vol. III Ch. 33 — The Medium of Circulation in the Credit System → finance-service
+	srv.Handle("/v1/credit/clearing-house-settlements", financeProxy)
+	srv.Handle("/v1/credit/clearing-house-settlements/{rest...}", financeProxy)
 	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
 	// srv.Handle("/v1/ground-rent", financeProxy)
 	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)
