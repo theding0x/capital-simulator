@@ -80,6 +80,9 @@ type Memory struct {
 	leaseTerms                 map[rent.LeaseTermID]rent.LeaseTerm
 	dr2Outcomes                map[rent.DifferentialRentIIOutcomeID]rent.DifferentialRentIIOutcome
 	intensiveExtensive         map[rent.IntensiveExtensiveComparisonID]rent.IntensiveExtensiveComparison
+	soilExclusionEvents        map[rent.SoilExclusionEventID]rent.SoilExclusionEvent
+	fallingPriceDR2Outcomes    map[rent.FallingPriceDR2OutcomeID]rent.FallingPriceDR2Outcome
+	normalCapitalPerAcre       map[rent.NormalCapitalPerAcreID]rent.NormalCapitalPerAcre
 }
 
 // NewMemory returns an empty in-memory store.
@@ -148,6 +151,9 @@ func NewMemory() *Memory {
 		leaseTerms:                 make(map[rent.LeaseTermID]rent.LeaseTerm),
 		dr2Outcomes:                make(map[rent.DifferentialRentIIOutcomeID]rent.DifferentialRentIIOutcome),
 		intensiveExtensive:         make(map[rent.IntensiveExtensiveComparisonID]rent.IntensiveExtensiveComparison),
+		soilExclusionEvents:        make(map[rent.SoilExclusionEventID]rent.SoilExclusionEvent),
+		fallingPriceDR2Outcomes:    make(map[rent.FallingPriceDR2OutcomeID]rent.FallingPriceDR2Outcome),
+		normalCapitalPerAcre:       make(map[rent.NormalCapitalPerAcreID]rent.NormalCapitalPerAcre),
 	}
 }
 
@@ -2830,6 +2836,126 @@ func (m *Memory) ListIntensiveExtensiveComparisons(_ context.Context) ([]rent.In
 	out := make([]rent.IntensiveExtensiveComparison, 0, len(m.intensiveExtensive))
 	for _, c := range m.intensiveExtensive {
 		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateSoilExclusionEvent stores e, assigning an ID and timestamp when absent (Vol. III Ch. 42).
+func (m *Memory) CreateSoilExclusionEvent(_ context.Context, e rent.SoilExclusionEvent) (rent.SoilExclusionEvent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if e.ID == "" {
+		e.ID = rent.NewSoilExclusionEventID()
+	}
+	if _, exists := m.soilExclusionEvents[e.ID]; exists {
+		return rent.SoilExclusionEvent{}, ErrAlreadyExists
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = m.now().UTC()
+	}
+	m.soilExclusionEvents[e.ID] = e
+	return e, nil
+}
+
+// GetSoilExclusionEvent returns the soil-exclusion event with id, or ErrNotFound (Vol. III Ch. 42).
+func (m *Memory) GetSoilExclusionEvent(_ context.Context, id rent.SoilExclusionEventID) (rent.SoilExclusionEvent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	e, ok := m.soilExclusionEvents[id]
+	if !ok {
+		return rent.SoilExclusionEvent{}, ErrNotFound
+	}
+	return e, nil
+}
+
+// ListSoilExclusionEvents returns all stored soil-exclusion events, newest first. Never returns nil (Vol. III Ch. 42).
+func (m *Memory) ListSoilExclusionEvents(_ context.Context) ([]rent.SoilExclusionEvent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.SoilExclusionEvent, 0, len(m.soilExclusionEvents))
+	for _, e := range m.soilExclusionEvents {
+		out = append(out, e)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateFallingPriceDR2Outcome stores o, assigning an ID and timestamp when absent (Vol. III Ch. 42).
+func (m *Memory) CreateFallingPriceDR2Outcome(_ context.Context, o rent.FallingPriceDR2Outcome) (rent.FallingPriceDR2Outcome, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if o.ID == "" {
+		o.ID = rent.NewFallingPriceDR2OutcomeID()
+	}
+	if _, exists := m.fallingPriceDR2Outcomes[o.ID]; exists {
+		return rent.FallingPriceDR2Outcome{}, ErrAlreadyExists
+	}
+	if o.CreatedAt.IsZero() {
+		o.CreatedAt = m.now().UTC()
+	}
+	m.fallingPriceDR2Outcomes[o.ID] = o
+	return o, nil
+}
+
+// ListFallingPriceDR2Outcomes returns all stored falling-price DR II outcomes, newest first. Never returns nil (Vol. III Ch. 42).
+func (m *Memory) ListFallingPriceDR2Outcomes(_ context.Context) ([]rent.FallingPriceDR2Outcome, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.FallingPriceDR2Outcome, 0, len(m.fallingPriceDR2Outcomes))
+	for _, o := range m.fallingPriceDR2Outcomes {
+		out = append(out, o)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateNormalCapitalPerAcre stores n, assigning an ID and timestamp when absent (Vol. III Ch. 42).
+func (m *Memory) CreateNormalCapitalPerAcre(_ context.Context, n rent.NormalCapitalPerAcre) (rent.NormalCapitalPerAcre, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if n.ID == "" {
+		n.ID = rent.NewNormalCapitalPerAcreID()
+	}
+	if _, exists := m.normalCapitalPerAcre[n.ID]; exists {
+		return rent.NormalCapitalPerAcre{}, ErrAlreadyExists
+	}
+	if n.CreatedAt.IsZero() {
+		n.CreatedAt = m.now().UTC()
+	}
+	m.normalCapitalPerAcre[n.ID] = n
+	return n, nil
+}
+
+// ListNormalCapitalPerAcre returns all stored normal-capital-per-acre records, newest first. Never returns nil (Vol. III Ch. 42).
+func (m *Memory) ListNormalCapitalPerAcre(_ context.Context) ([]rent.NormalCapitalPerAcre, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.NormalCapitalPerAcre, 0, len(m.normalCapitalPerAcre))
+	for _, n := range m.normalCapitalPerAcre {
+		out = append(out, n)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

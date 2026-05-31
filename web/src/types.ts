@@ -4493,3 +4493,49 @@ export interface CreateIntensiveExtensiveComparisonInput {
   total_capital_bp: number;
   total_rental_same_bp: number;
 }
+
+// Vol. III Ch. 42 — DR II Falling Price of Production
+export type FallingPriceVariant = 1 | 2 | 3;
+export interface SoilExclusionEvent {
+  id: string;
+  excluded_grade: number;
+  new_regulating_grade: number;
+  new_price_of_production_bp: number;
+  created_at: string;
+}
+export interface FallingPriceDR2Outcome {
+  id: string;
+  variant: FallingPriceVariant;
+  exclusion_event_id: string;
+  total_money_rental_bp: number;
+  total_grain_rent_qtrs: number;
+  total_output_quarters: number;
+  total_capital_bp: number;
+  created_at: string;
+}
+export interface NormalCapitalPerAcre {
+  id: string;
+  period_label: string;
+  capital_per_acre_bp: number;
+  created_at: string;
+}
+export interface CreateSoilExclusionEventInput {
+  excluded_grade: number;
+  new_regulating_grade: number;
+  new_price_of_production_bp: number;
+}
+export interface CreateFallingPriceDR2OutcomeInput {
+  variant: FallingPriceVariant;
+  exclusion_event_id: string;
+  investments: Array<{
+    parcel_id: string;
+    tranche_number: number;
+    capital_bp: number;
+    output_quarters: number;
+    surplus_profit_bp: number;
+  }>;
+}
+export interface CreateNormalCapitalPerAcreInput {
+  period_label: string;
+  capital_per_acre_bp: number;
+}
