@@ -4167,3 +4167,25 @@ export interface DepositEntry {
   amount: number; // pence; >= 0
   description: string;
 }
+
+// ClearingHouseSettlement mirrors credit.ClearingHouseSettlement (Vol. III Ch. 33).
+// The London Clearing House nets mutual claims among banks; only the net_balance
+// is settled in actual money. money_used <= total_claims always holds.
+export interface ClearingHouseSettlement {
+  id: string;
+  name: string;
+  description: string;
+  total_claims: number; // pence; > 0
+  money_used: number;   // pence; >= 0, <= total_claims
+  net_balance: number;  // pence; = total_claims - money_used
+  created_at: string;
+}
+
+// CreateClearingHouseSettlementInput is the request body for
+// POST /v1/credit/clearing-house-settlements.
+export interface CreateClearingHouseSettlementInput {
+  name: string;
+  description: string;
+  total_claims: number;
+  money_used: number;
+}

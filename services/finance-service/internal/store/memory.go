@@ -57,8 +57,9 @@ type Memory struct {
 	bankCapitals               map[credit.BankCapitalID]credit.BankCapital
 	fictitiousValuations       map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation
 	realCapitalAccumulations   map[credit.RealCapitalAccumulationID]credit.RealCapitalAccumulation
-	floatingCapitals           map[credit.FloatingCapitalID]credit.FloatingCapital
-	capitalReleases            map[credit.CapitalReleaseID]credit.CapitalRelease
+	floatingCapitals              map[credit.FloatingCapitalID]credit.FloatingCapital
+	capitalReleases               map[credit.CapitalReleaseID]credit.CapitalRelease
+	clearingHouseSettlements      map[credit.ClearingHouseSettlementID]credit.ClearingHouseSettlement
 }
 
 // NewMemory returns an empty in-memory store.
@@ -105,8 +106,9 @@ func NewMemory() *Memory {
 		bankCapitals:               make(map[credit.BankCapitalID]credit.BankCapital),
 		fictitiousValuations:       make(map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation),
 		realCapitalAccumulations:   make(map[credit.RealCapitalAccumulationID]credit.RealCapitalAccumulation),
-		floatingCapitals:           make(map[credit.FloatingCapitalID]credit.FloatingCapital),
-		capitalReleases:            make(map[credit.CapitalReleaseID]credit.CapitalRelease),
+		floatingCapitals:              make(map[credit.FloatingCapitalID]credit.FloatingCapital),
+		capitalReleases:               make(map[credit.CapitalReleaseID]credit.CapitalRelease),
+		clearingHouseSettlements:      make(map[credit.ClearingHouseSettlementID]credit.ClearingHouseSettlement),
 	}
 }
 
@@ -1970,6 +1972,54 @@ func (m *Memory) ListCapitalReleases(_ context.Context) ([]credit.CapitalRelease
 	out := make([]credit.CapitalRelease, 0, len(m.capitalReleases))
 	for _, c := range m.capitalReleases {
 		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateClearingHouseSettlement stores s, assigning an ID and timestamp when absent (Vol. III Ch. 33).
+func (m *Memory) CreateClearingHouseSettlement(_ context.Context, s credit.ClearingHouseSettlement) (credit.ClearingHouseSettlement, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID.IsZero() {
+		s.ID = credit.NewClearingHouseSettlementID()
+	}
+	if _, exists := m.clearingHouseSettlements[s.ID]; exists {
+		return credit.ClearingHouseSettlement{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	m.clearingHouseSettlements[s.ID] = s
+	return s, nil
+}
+
+// GetClearingHouseSettlement returns the record with id, or ErrNotFound.
+func (m *Memory) GetClearingHouseSettlement(_ context.Context, id credit.ClearingHouseSettlementID) (credit.ClearingHouseSettlement, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	s, ok := m.clearingHouseSettlements[id]
+	if !ok {
+		return credit.ClearingHouseSettlement{}, ErrNotFound
+	}
+	return s, nil
+}
+
+// ListClearingHouseSettlements returns all stored records, newest first.
+func (m *Memory) ListClearingHouseSettlements(_ context.Context) ([]credit.ClearingHouseSettlement, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.ClearingHouseSettlement, 0, len(m.clearingHouseSettlements))
+	for _, s := range m.clearingHouseSettlements {
+		out = append(out, s)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
