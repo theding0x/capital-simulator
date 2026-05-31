@@ -2914,4 +2914,42 @@ export const financeApi = {
     http<{ items: import("./types").AbsoluteRentLimit[] }>("/v1/rent/rent-limits").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 46 — Building Site Rent, Rent in Mining, Price of Land
+  createBuildingSiteRent: (body: import("./types").CreateBuildingSiteRentInput) =>
+    http<import("./types").BuildingSiteRent>("/v1/rent/building-rents", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listBuildingSiteRents: () =>
+    http<{ items: import("./types").BuildingSiteRent[] }>("/v1/rent/building-rents").then(
+      (r) => r.items ?? [],
+    ),
+  createMiningRent: (body: import("./types").CreateMiningRentInput) =>
+    http<import("./types").MiningRent>("/v1/rent/mining-rents", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listMiningRents: () =>
+    http<{ items: import("./types").MiningRent[] }>("/v1/rent/mining-rents").then(
+      (r) => r.items ?? [],
+    ),
+  createMonopolyPriceRent: (body: import("./types").CreateMonopolyPriceRentInput) =>
+    http<import("./types").MonopolyPriceRent>("/v1/rent/monopoly-rents", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listMonopolyPriceRents: () =>
+    http<{ items: import("./types").MonopolyPriceRent[] }>("/v1/rent/monopoly-rents").then(
+      (r) => r.items ?? [],
+    ),
+  createLandPriceScenario: (body: import("./types").CreateLandPriceScenarioInput) =>
+    http<import("./types").LandPriceScenario>("/v1/rent/land-price-scenarios", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listLandPriceScenarios: () =>
+    http<{ items: import("./types").LandPriceScenario[] }>("/v1/rent/land-price-scenarios").then(
+      (r) => r.items ?? [],
+    ),
 };

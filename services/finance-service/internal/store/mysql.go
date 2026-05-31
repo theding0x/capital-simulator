@@ -6341,3 +6341,299 @@ func scanAbsoluteRentLimit(s rowScanner) (rent.AbsoluteRentLimit, error) {
 		CreatedAt:    createdAt,
 	}, nil
 }
+
+// CreateBuildingSiteRent inserts r, assigning an ID and timestamp when absent (Vol. III Ch. 46).
+func (m *MySQL) CreateBuildingSiteRent(ctx context.Context, r rent.BuildingSiteRent) (rent.BuildingSiteRent, error) {
+	if r.ID == "" {
+		r.ID = rent.NewBuildingSiteRentID()
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `building_site_rents`" +
+		" (`id`, `parcel_id`, `location_grade`, `annual_rent_labour_minutes`, `lease_term_years`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(r.ID), r.ParcelID, r.LocationGrade, r.AnnualRentLabourMinutes, r.LeaseTermYears, r.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.BuildingSiteRent{}, ErrAlreadyExists
+		}
+		return rent.BuildingSiteRent{}, err
+	}
+	return r, nil
+}
+
+// ListBuildingSiteRents returns all stored records, newest first (Vol. III Ch. 46).
+func (m *MySQL) ListBuildingSiteRents(ctx context.Context) ([]rent.BuildingSiteRent, error) {
+	const q = "SELECT `id`, `parcel_id`, `location_grade`, `annual_rent_labour_minutes`, `lease_term_years`, `created_at`" +
+		" FROM `building_site_rents` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.BuildingSiteRent, 0)
+	for rows.Next() {
+		r, err := scanBuildingSiteRent(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func scanBuildingSiteRent(s rowScanner) (rent.BuildingSiteRent, error) {
+	var (
+		id                      string
+		parcelID                string
+		locationGrade           int
+		annualRentLabourMinutes int64
+		leaseTermYears          int
+		createdAt               time.Time
+	)
+	err := s.Scan(&id, &parcelID, &locationGrade, &annualRentLabourMinutes, &leaseTermYears, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.BuildingSiteRent{}, ErrNotFound
+		}
+		return rent.BuildingSiteRent{}, err
+	}
+	return rent.BuildingSiteRent{
+		ID:                      rent.BuildingSiteRentID(id),
+		ParcelID:                parcelID,
+		LocationGrade:           locationGrade,
+		AnnualRentLabourMinutes: annualRentLabourMinutes,
+		LeaseTermYears:          leaseTermYears,
+		CreatedAt:               createdAt,
+	}, nil
+}
+
+// CreateMiningRent inserts r, assigning an ID and timestamp when absent (Vol. III Ch. 46).
+func (m *MySQL) CreateMiningRent(ctx context.Context, r rent.MiningRent) (rent.MiningRent, error) {
+	if r.ID == "" {
+		r.ID = rent.NewMiningRentID()
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `mining_rents`" +
+		" (`id`, `parcel_id`, `ore_grade`, `annual_rent_labour_minutes`, `surplus_profit_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(r.ID), r.ParcelID, r.OreGrade, r.AnnualRentLabourMinutes, r.SurplusProfitBP, r.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.MiningRent{}, ErrAlreadyExists
+		}
+		return rent.MiningRent{}, err
+	}
+	return r, nil
+}
+
+// ListMiningRents returns all stored records, newest first (Vol. III Ch. 46).
+func (m *MySQL) ListMiningRents(ctx context.Context) ([]rent.MiningRent, error) {
+	const q = "SELECT `id`, `parcel_id`, `ore_grade`, `annual_rent_labour_minutes`, `surplus_profit_bp`, `created_at`" +
+		" FROM `mining_rents` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.MiningRent, 0)
+	for rows.Next() {
+		r, err := scanMiningRent(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func scanMiningRent(s rowScanner) (rent.MiningRent, error) {
+	var (
+		id                      string
+		parcelID                string
+		oreGrade                int
+		annualRentLabourMinutes int64
+		surplusProfitBP         int64
+		createdAt               time.Time
+	)
+	err := s.Scan(&id, &parcelID, &oreGrade, &annualRentLabourMinutes, &surplusProfitBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.MiningRent{}, ErrNotFound
+		}
+		return rent.MiningRent{}, err
+	}
+	return rent.MiningRent{
+		ID:                      rent.MiningRentID(id),
+		ParcelID:                parcelID,
+		OreGrade:                oreGrade,
+		AnnualRentLabourMinutes: annualRentLabourMinutes,
+		SurplusProfitBP:         surplusProfitBP,
+		CreatedAt:               createdAt,
+	}, nil
+}
+
+// CreateMonopolyPriceRent inserts r, assigning an ID and timestamp when absent (Vol. III Ch. 46).
+func (m *MySQL) CreateMonopolyPriceRent(ctx context.Context, r rent.MonopolyPriceRent) (rent.MonopolyPriceRent, error) {
+	if r.ID == "" {
+		r.ID = rent.NewMonopolyPriceRentID()
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `monopoly_price_rents`" +
+		" (`id`, `parcel_id`, `product_kind`, `value_labour_minutes`, `monopoly_sale_price_labour_minutes`, `monopoly_rent_labour_minutes`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(r.ID), r.ParcelID, r.ProductKind,
+		r.ValueLabourMinutes, r.MonopolySalePriceLabourMinutes, r.MonopolyRentLabourMinutes,
+		r.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.MonopolyPriceRent{}, ErrAlreadyExists
+		}
+		return rent.MonopolyPriceRent{}, err
+	}
+	return r, nil
+}
+
+// ListMonopolyPriceRents returns all stored records, newest first (Vol. III Ch. 46).
+func (m *MySQL) ListMonopolyPriceRents(ctx context.Context) ([]rent.MonopolyPriceRent, error) {
+	const q = "SELECT `id`, `parcel_id`, `product_kind`, `value_labour_minutes`, `monopoly_sale_price_labour_minutes`, `monopoly_rent_labour_minutes`, `created_at`" +
+		" FROM `monopoly_price_rents` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.MonopolyPriceRent, 0)
+	for rows.Next() {
+		r, err := scanMonopolyPriceRent(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func scanMonopolyPriceRent(s rowScanner) (rent.MonopolyPriceRent, error) {
+	var (
+		id                             string
+		parcelID                       string
+		productKind                    string
+		valueLabourMinutes             int64
+		monopolySalePriceLabourMinutes int64
+		monopolyRentLabourMinutes      int64
+		createdAt                      time.Time
+	)
+	err := s.Scan(&id, &parcelID, &productKind, &valueLabourMinutes, &monopolySalePriceLabourMinutes, &monopolyRentLabourMinutes, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.MonopolyPriceRent{}, ErrNotFound
+		}
+		return rent.MonopolyPriceRent{}, err
+	}
+	return rent.MonopolyPriceRent{
+		ID:                             rent.MonopolyPriceRentID(id),
+		ParcelID:                       parcelID,
+		ProductKind:                    productKind,
+		ValueLabourMinutes:             valueLabourMinutes,
+		MonopolySalePriceLabourMinutes: monopolySalePriceLabourMinutes,
+		MonopolyRentLabourMinutes:      monopolyRentLabourMinutes,
+		CreatedAt:                      createdAt,
+	}, nil
+}
+
+// CreateLandPriceScenario inserts s, assigning an ID and timestamp when absent (Vol. III Ch. 46).
+func (m *MySQL) CreateLandPriceScenario(ctx context.Context, s rent.LandPriceScenario) (rent.LandPriceScenario, error) {
+	if s.ID == "" {
+		s.ID = rent.NewLandPriceScenarioID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `land_price_scenarios`" +
+		" (`id`, `kind`, `parcel_id`, `old_annual_rent_bp`, `new_annual_rent_bp`, `old_interest_rate_bp`, `new_interest_rate_bp`, `old_land_price_bp`, `new_land_price_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID), int(s.Kind), s.ParcelID,
+		s.OldAnnualRentBP, s.NewAnnualRentBP,
+		s.OldInterestRateBP, s.NewInterestRateBP,
+		s.OldLandPriceBP, s.NewLandPriceBP,
+		s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.LandPriceScenario{}, ErrAlreadyExists
+		}
+		return rent.LandPriceScenario{}, err
+	}
+	return s, nil
+}
+
+// ListLandPriceScenarios returns all stored records, newest first (Vol. III Ch. 46).
+func (m *MySQL) ListLandPriceScenarios(ctx context.Context) ([]rent.LandPriceScenario, error) {
+	const q = "SELECT `id`, `kind`, `parcel_id`, `old_annual_rent_bp`, `new_annual_rent_bp`, `old_interest_rate_bp`, `new_interest_rate_bp`, `old_land_price_bp`, `new_land_price_bp`, `created_at`" +
+		" FROM `land_price_scenarios` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.LandPriceScenario, 0)
+	for rows.Next() {
+		s, err := scanLandPriceScenario(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func scanLandPriceScenario(s rowScanner) (rent.LandPriceScenario, error) {
+	var (
+		id                string
+		kind              int
+		parcelID          string
+		oldAnnualRentBP   int64
+		newAnnualRentBP   int64
+		oldInterestRateBP int64
+		newInterestRateBP int64
+		oldLandPriceBP    int64
+		newLandPriceBP    int64
+		createdAt         time.Time
+	)
+	err := s.Scan(&id, &kind, &parcelID, &oldAnnualRentBP, &newAnnualRentBP, &oldInterestRateBP, &newInterestRateBP, &oldLandPriceBP, &newLandPriceBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.LandPriceScenario{}, ErrNotFound
+		}
+		return rent.LandPriceScenario{}, err
+	}
+	return rent.LandPriceScenario{
+		ID:                rent.LandPriceScenarioID(id),
+		Kind:              rent.LandPriceScenarioKind(kind),
+		ParcelID:          parcelID,
+		OldAnnualRentBP:   oldAnnualRentBP,
+		NewAnnualRentBP:   newAnnualRentBP,
+		OldInterestRateBP: oldInterestRateBP,
+		NewInterestRateBP: newInterestRateBP,
+		OldLandPriceBP:    oldLandPriceBP,
+		NewLandPriceBP:    newLandPriceBP,
+		CreatedAt:         createdAt,
+	}, nil
+}

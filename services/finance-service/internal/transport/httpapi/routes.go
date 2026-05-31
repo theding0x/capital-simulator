@@ -290,4 +290,14 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/absolute-rents/{id}", h.GetAbsoluteRent)
 	s.HandleFunc("POST /v1/rent/rent-limits", h.CreateAbsoluteRentLimit)
 	s.HandleFunc("GET /v1/rent/rent-limits", h.ListAbsoluteRentLimits)
+
+	// Vol. III Ch. 46 — Building-Site Rent, Mining Rent, Monopoly-Price Rent, Price of Land
+	s.HandleFunc("POST /v1/rent/building-rents", h.CreateBuildingSiteRent)
+	s.HandleFunc("GET /v1/rent/building-rents", h.ListBuildingSiteRents)
+	s.HandleFunc("POST /v1/rent/mining-rents", h.CreateMiningRent)
+	s.HandleFunc("GET /v1/rent/mining-rents", h.ListMiningRents)
+	s.HandleFunc("POST /v1/rent/monopoly-rents", h.CreateMonopolyPriceRent)
+	s.HandleFunc("GET /v1/rent/monopoly-rents", h.ListMonopolyPriceRents)
+	s.HandleFunc("POST /v1/rent/land-price-scenarios", h.CreateLandPriceScenario)
+	s.HandleFunc("GET /v1/rent/land-price-scenarios", h.ListLandPriceScenarios)
 }
