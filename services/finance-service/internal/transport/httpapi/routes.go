@@ -204,4 +204,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/note-issue-constraints", h.CreateNoteIssueConstraint)
 	s.HandleFunc("GET /v1/credit/note-issue-constraints", h.ListNoteIssueConstraints)
 	s.HandleFunc("GET /v1/credit/note-issue-constraints/{id}", h.GetNoteIssueConstraint)
+
+	// Vol. III Ch. 35 — Precious Metal and Rate of Exchange
+	s.HandleFunc("POST /v1/credit/gold-reserves", h.CreateGoldReserve)
+	s.HandleFunc("GET /v1/credit/gold-reserves", h.ListGoldReserves)
+	s.HandleFunc("GET /v1/credit/gold-reserves/{id}", h.GetGoldReserve)
+	s.HandleFunc("POST /v1/credit/rates-of-exchange", h.CreateRateOfExchange)
+	s.HandleFunc("GET /v1/credit/rates-of-exchange", h.ListRatesOfExchange)
+	s.HandleFunc("GET /v1/credit/rates-of-exchange/{id}", h.GetRateOfExchange)
 }

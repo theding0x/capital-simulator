@@ -4216,3 +4216,37 @@ export interface CreateNoteIssueConstraintInput {
   notes_beyond_max: number;
   description: string;
 }
+
+// GoldReserve mirrors credit.GoldReserve (Vol. III Ch. 35).
+// The BoE gold reserve is the pivot of the credit system; a falling reserve
+// raises the rate of exchange and triggers gold inflows to restore it.
+export interface GoldReserve {
+  id: string;
+  name: string;
+  amount: number;      // pence; central-bank gold stock
+  description: string;
+  created_at: string;
+}
+
+export interface CreateGoldReserveInput {
+  name: string;
+  amount: number;
+  description: string;
+}
+
+// RateOfExchange mirrors credit.RateOfExchange (Vol. III Ch. 35).
+// Tracks deviation from mint parity in basis points (signed; positive = above par).
+// Determined by the balance of PAYMENTS, not the balance of trade.
+export interface RateOfExchange {
+  id: string;
+  name: string;
+  deviation_bp: number;  // signed basis points from mint parity
+  description: string;
+  created_at: string;
+}
+
+export interface CreateRateOfExchangeInput {
+  name: string;
+  deviation_bp: number;
+  description: string;
+}
