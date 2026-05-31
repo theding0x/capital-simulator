@@ -608,4 +608,21 @@ type Store interface {
 	// ListLeaseTerms returns all stored lease-term records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListLeaseTerms(ctx context.Context) ([]rent.LeaseTerm, error)
+
+	// CreateDifferentialRentIIOutcome persists a DR II constant-price outcome (Vol. III Ch. 41 —
+	// Case I–IV; productivity_case column used to avoid MySQL reserved word `CASE`), assigning an
+	// ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateDifferentialRentIIOutcome(ctx context.Context, o rent.DifferentialRentIIOutcome) (rent.DifferentialRentIIOutcome, error)
+	// ListDifferentialRentIIOutcomes returns all stored outcomes, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListDifferentialRentIIOutcomes(ctx context.Context) ([]rent.DifferentialRentIIOutcome, error)
+
+	// CreateIntensiveExtensiveComparison persists an intensive-vs-extensive comparison (Vol. III
+	// Ch. 41 — concentrating capital on fewer acres yields higher rent per acre than dispersing
+	// it at the same total rental), assigning an ID and created-at timestamp when absent.
+	// Returns ErrAlreadyExists on ID collision.
+	CreateIntensiveExtensiveComparison(ctx context.Context, c rent.IntensiveExtensiveComparison) (rent.IntensiveExtensiveComparison, error)
+	// ListIntensiveExtensiveComparisons returns all stored comparisons, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListIntensiveExtensiveComparisons(ctx context.Context) ([]rent.IntensiveExtensiveComparison, error)
 }

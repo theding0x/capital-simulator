@@ -5182,3 +5182,160 @@ func scanLeaseTerm(s rowScanner) (rent.LeaseTerm, error) {
 		CreatedAt:     createdAt,
 	}, nil
 }
+
+// CreateDifferentialRentIIOutcome inserts o, assigning an ID and timestamp when absent (Vol. III Ch. 41).
+// The Case field maps to column `productivity_case` — `CASE` is a MySQL reserved word.
+func (m *MySQL) CreateDifferentialRentIIOutcome(ctx context.Context, o rent.DifferentialRentIIOutcome) (rent.DifferentialRentIIOutcome, error) {
+	if o.ID == "" {
+		o.ID = rent.NewDifferentialRentIIOutcomeID()
+	}
+	if o.CreatedAt.IsZero() {
+		o.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `dr2_outcomes`" +
+		" (`id`, `parcel_id`, `productivity_case`, `additional_capital_bp`, `new_rent_per_acre_bp`, `total_rental_bp`, `rate_of_surplus_profit_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(o.ID),
+		o.ParcelID,
+		int64(o.Case),
+		o.AdditionalCapitalBP,
+		o.NewRentPerAcreBP,
+		o.TotalRentalBP,
+		o.RateOfSurplusProfitBP,
+		o.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.DifferentialRentIIOutcome{}, ErrAlreadyExists
+		}
+		return rent.DifferentialRentIIOutcome{}, err
+	}
+	return o, nil
+}
+
+// ListDifferentialRentIIOutcomes returns all stored outcomes, newest first (Vol. III Ch. 41).
+func (m *MySQL) ListDifferentialRentIIOutcomes(ctx context.Context) ([]rent.DifferentialRentIIOutcome, error) {
+	const q = "SELECT `id`, `parcel_id`, `productivity_case`, `additional_capital_bp`, `new_rent_per_acre_bp`, `total_rental_bp`, `rate_of_surplus_profit_bp`, `created_at`" +
+		" FROM `dr2_outcomes` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.DifferentialRentIIOutcome, 0)
+	for rows.Next() {
+		o, err := scanDR2Outcome(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, o)
+	}
+	return out, rows.Err()
+}
+
+func scanDR2Outcome(s rowScanner) (rent.DifferentialRentIIOutcome, error) {
+	var (
+		id                    string
+		parcelID              string
+		productivityCase      int64
+		additionalCapitalBP   int64
+		newRentPerAcreBP      int64
+		totalRentalBP         int64
+		rateOfSurplusProfitBP int64
+		createdAt             time.Time
+	)
+	err := s.Scan(&id, &parcelID, &productivityCase, &additionalCapitalBP, &newRentPerAcreBP, &totalRentalBP, &rateOfSurplusProfitBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.DifferentialRentIIOutcome{}, ErrNotFound
+		}
+		return rent.DifferentialRentIIOutcome{}, err
+	}
+	return rent.DifferentialRentIIOutcome{
+		ID:                    rent.DifferentialRentIIOutcomeID(id),
+		ParcelID:              parcelID,
+		Case:                  rent.CapitalProductivityCase(productivityCase),
+		AdditionalCapitalBP:   additionalCapitalBP,
+		NewRentPerAcreBP:      newRentPerAcreBP,
+		TotalRentalBP:         totalRentalBP,
+		RateOfSurplusProfitBP: rateOfSurplusProfitBP,
+		CreatedAt:             createdAt,
+	}, nil
+}
+
+// CreateIntensiveExtensiveComparison inserts c, assigning an ID and timestamp when absent (Vol. III Ch. 41).
+func (m *MySQL) CreateIntensiveExtensiveComparison(ctx context.Context, c rent.IntensiveExtensiveComparison) (rent.IntensiveExtensiveComparison, error) {
+	if c.ID == "" {
+		c.ID = rent.NewIntensiveExtensiveComparisonID()
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `intensive_extensive_comparisons`" +
+		" (`id`, `intensive_rent_per_acre_bp`, `extensive_rent_per_acre_bp`, `total_capital_bp`, `total_rental_same_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(c.ID),
+		c.IntensiveRentPerAcreBP,
+		c.ExtensiveRentPerAcreBP,
+		c.TotalCapitalBP,
+		c.TotalRentalSameBP,
+		c.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.IntensiveExtensiveComparison{}, ErrAlreadyExists
+		}
+		return rent.IntensiveExtensiveComparison{}, err
+	}
+	return c, nil
+}
+
+// ListIntensiveExtensiveComparisons returns all stored comparisons, newest first (Vol. III Ch. 41).
+func (m *MySQL) ListIntensiveExtensiveComparisons(ctx context.Context) ([]rent.IntensiveExtensiveComparison, error) {
+	const q = "SELECT `id`, `intensive_rent_per_acre_bp`, `extensive_rent_per_acre_bp`, `total_capital_bp`, `total_rental_same_bp`, `created_at`" +
+		" FROM `intensive_extensive_comparisons` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.IntensiveExtensiveComparison, 0)
+	for rows.Next() {
+		c, err := scanIntensiveExtensiveComparison(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func scanIntensiveExtensiveComparison(s rowScanner) (rent.IntensiveExtensiveComparison, error) {
+	var (
+		id                     string
+		intensiveRentPerAcreBP int64
+		extensiveRentPerAcreBP int64
+		totalCapitalBP         int64
+		totalRentalSameBP      int64
+		createdAt              time.Time
+	)
+	err := s.Scan(&id, &intensiveRentPerAcreBP, &extensiveRentPerAcreBP, &totalCapitalBP, &totalRentalSameBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.IntensiveExtensiveComparison{}, ErrNotFound
+		}
+		return rent.IntensiveExtensiveComparison{}, err
+	}
+	return rent.IntensiveExtensiveComparison{
+		ID:                     rent.IntensiveExtensiveComparisonID(id),
+		IntensiveRentPerAcreBP: intensiveRentPerAcreBP,
+		ExtensiveRentPerAcreBP: extensiveRentPerAcreBP,
+		TotalCapitalBP:         totalCapitalBP,
+		TotalRentalSameBP:      totalRentalSameBP,
+		CreatedAt:              createdAt,
+	}, nil
+}

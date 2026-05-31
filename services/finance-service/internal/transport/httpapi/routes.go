@@ -249,4 +249,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/dr2-tables/{parcel_id}", h.GetDR2Table)
 	s.HandleFunc("POST /v1/rent/lease-terms", h.CreateLeaseTerm)
 	s.HandleFunc("GET /v1/rent/lease-terms", h.ListLeaseTerms)
+
+	// Vol. III Ch. 41 — DR II, First Case: Constant Price of Production
+	s.HandleFunc("POST /v1/rent/dr2-outcomes", h.CreateDR2Outcome)
+	s.HandleFunc("GET /v1/rent/dr2-outcomes", h.ListDR2Outcomes)
+	s.HandleFunc("POST /v1/rent/intensive-extensive", h.CreateIntensiveExtensiveComparison)
+	s.HandleFunc("GET /v1/rent/intensive-extensive", h.ListIntensiveExtensiveComparisons)
 }

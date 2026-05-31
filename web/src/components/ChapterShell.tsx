@@ -95,6 +95,7 @@ import { Ch37Introduction } from "../chapters/vol3/Ch37Introduction";
 import { Ch38GeneralRemarks } from "../chapters/vol3/Ch38GeneralRemarks";
 import { Ch39DifferentialRentI } from "../chapters/vol3/Ch39DifferentialRentI";
 import { Ch40DifferentialRentII } from "../chapters/vol3/Ch40DifferentialRentII";
+import { Ch41DR2ConstantPrice } from "../chapters/vol3/Ch41DR2ConstantPrice";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -208,6 +209,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch38": Ch38GeneralRemarks as AnyPanel,
   "v3-ch39": Ch39DifferentialRentI as AnyPanel,
   "v3-ch40": Ch40DifferentialRentII as AnyPanel,
+  "v3-ch41": Ch41DR2ConstantPrice as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -301,6 +303,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch38": "The surplus profit ... is here a permanent and regular affair, and forms the basis of the differential rent. — Marx, Capital III, Ch. 38.",
   "v3-ch39": "The difference between the price of production yielded by the worst soil and that yielded by any better soil constitutes the differential rent. — Marx, Capital III, Ch. 39.",
   "v3-ch40": "The second form of differential rent... arises from the different distribution of successive capital investments on the same land. — Marx, Capital III, Ch. 40.",
+  "v3-ch41": "With a constant price of production... every additional investment of capital in the soil bearing rent increases the rent per acre, although the rate of this increase need not be proportional to the increase of capital. — Marx, Capital III, Ch. 41.",
 };
 
 export function ChapterShell({
