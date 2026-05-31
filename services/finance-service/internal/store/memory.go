@@ -48,8 +48,9 @@ type Memory struct {
 	ratesOfInterest            map[credit.RateOfInterestID]credit.RateOfInterest
 	profitDivisions             map[credit.ProfitDivisionID]credit.ProfitDivision
 	compoundInterestSchedules  map[credit.CompoundInterestID]credit.CompoundInterestSchedule
-	billsOfExchange            map[credit.BillOfExchangeID]credit.BillOfExchange
-	fictitiousCapitals         map[credit.FictitiousCapitalID]credit.FictitiousCapital
+	billsOfExchange              map[credit.BillOfExchangeID]credit.BillOfExchange
+	fictitiousCapitals           map[credit.FictitiousCapitalID]credit.FictitiousCapital
+	moneyCapitalAccumulations    map[credit.MoneyCapitalAccumulationID]credit.MoneyCapitalAccumulation
 }
 
 // NewMemory returns an empty in-memory store.
@@ -87,8 +88,9 @@ func NewMemory() *Memory {
 		ratesOfInterest:            make(map[credit.RateOfInterestID]credit.RateOfInterest),
 		profitDivisions:            make(map[credit.ProfitDivisionID]credit.ProfitDivision),
 		compoundInterestSchedules:  make(map[credit.CompoundInterestID]credit.CompoundInterestSchedule),
-		billsOfExchange:            make(map[credit.BillOfExchangeID]credit.BillOfExchange),
-		fictitiousCapitals:         make(map[credit.FictitiousCapitalID]credit.FictitiousCapital),
+		billsOfExchange:             make(map[credit.BillOfExchangeID]credit.BillOfExchange),
+		fictitiousCapitals:          make(map[credit.FictitiousCapitalID]credit.FictitiousCapital),
+		moneyCapitalAccumulations:   make(map[credit.MoneyCapitalAccumulationID]credit.MoneyCapitalAccumulation),
 	}
 }
 
@@ -1508,6 +1510,54 @@ func (m *Memory) ListFictitiousCapitals(_ context.Context) ([]credit.FictitiousC
 	out := make([]credit.FictitiousCapital, 0, len(m.fictitiousCapitals))
 	for _, fc := range m.fictitiousCapitals {
 		out = append(out, fc)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateMoneyCapitalAccumulation stores a, assigning an ID and timestamp when absent (Vol. III Ch. 26).
+func (m *Memory) CreateMoneyCapitalAccumulation(_ context.Context, a credit.MoneyCapitalAccumulation) (credit.MoneyCapitalAccumulation, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if a.ID.IsZero() {
+		a.ID = credit.NewMoneyCapitalAccumulationID()
+	}
+	if _, exists := m.moneyCapitalAccumulations[a.ID]; exists {
+		return credit.MoneyCapitalAccumulation{}, ErrAlreadyExists
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	m.moneyCapitalAccumulations[a.ID] = a
+	return a, nil
+}
+
+// GetMoneyCapitalAccumulation returns the record with id, or ErrNotFound.
+func (m *Memory) GetMoneyCapitalAccumulation(_ context.Context, id credit.MoneyCapitalAccumulationID) (credit.MoneyCapitalAccumulation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	a, ok := m.moneyCapitalAccumulations[id]
+	if !ok {
+		return credit.MoneyCapitalAccumulation{}, ErrNotFound
+	}
+	return a, nil
+}
+
+// ListMoneyCapitalAccumulations returns all stored records, newest first.
+func (m *Memory) ListMoneyCapitalAccumulations(_ context.Context) ([]credit.MoneyCapitalAccumulation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.MoneyCapitalAccumulation, 0, len(m.moneyCapitalAccumulations))
+	for _, a := range m.moneyCapitalAccumulations {
+		out = append(out, a)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

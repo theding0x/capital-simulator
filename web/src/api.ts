@@ -2451,4 +2451,15 @@ export const financeApi = {
     ),
   getFictitiousCapital: (id: string) =>
     http<import("./types").FictitiousCapital>(`/v1/credit/fictitious-capital/${id}`),
+  createMoneyCapitalAccumulation: (body: import("./types").CreateMoneyCapitalAccumulationInput) =>
+    http<import("./types").MoneyCapitalAccumulation>("/v1/credit/money-capital-accumulation", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listMoneyCapitalAccumulations: () =>
+    http<{ items: import("./types").MoneyCapitalAccumulation[] }>("/v1/credit/money-capital-accumulation").then(
+      (r) => r.items ?? [],
+    ),
+  getMoneyCapitalAccumulation: (id: string) =>
+    http<import("./types").MoneyCapitalAccumulation>(`/v1/credit/money-capital-accumulation/${id}`),
 };

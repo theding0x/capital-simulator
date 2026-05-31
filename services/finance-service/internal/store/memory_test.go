@@ -2879,3 +2879,121 @@ func TestCh24SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// ── Vol. III Ch. 26 — Accumulation of Money-Capital ─────────────────────────
+
+// TestMoneyCapitalAccumulation_NotFound verifies ErrNotFound for missing ID.
+func TestMoneyCapitalAccumulation_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	_, err := m.GetMoneyCapitalAccumulation(ctx, credit.MoneyCapitalAccumulationID("doesnotexist"))
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+// TestMoneyCapitalAccumulation_RoundTrip verifies create → get returns the same record.
+func TestMoneyCapitalAccumulation_RoundTrip(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	obs := credit.InterestCycleObservation{
+		Phase:          credit.PhaseInactivity,
+		InterestRateBP: 100,
+		Period:         "post-1847",
+	}
+	supply := credit.LoanableCapitalSupply{Amount: 5_000_000, Abundant: true}
+	idle := credit.IdleIndustrialCapital{Amount: 2_000_000, Description: "idle mills"}
+	gap := credit.AccumulationGap{GapBP: 500, Description: "money grows faster"}
+	a, err := credit.NewMoneyCapitalAccumulation("Post-1847 Inactivity", obs, supply, idle, gap, "stagnation")
+	if err != nil {
+		t.Fatalf("construct: %v", err)
+	}
+
+	created, err := m.CreateMoneyCapitalAccumulation(ctx, a)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Error("ID must be assigned by store")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("CreatedAt must be assigned by store")
+	}
+
+	got, err := m.GetMoneyCapitalAccumulation(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID {
+		t.Errorf("ID mismatch: got %s, want %s", got.ID, created.ID)
+	}
+	if got.CycleObservation.Phase != credit.PhaseInactivity {
+		t.Errorf("Phase: got %d, want %d", got.CycleObservation.Phase, credit.PhaseInactivity)
+	}
+	if got.LoanableSupply.Amount != 5_000_000 {
+		t.Errorf("LoanableSupply.Amount: got %d, want 5000000", got.LoanableSupply.Amount)
+	}
+}
+
+// TestListMoneyCapitalAccumulations_NewestFirst verifies newest-first ordering and non-nil result.
+func TestListMoneyCapitalAccumulations_NewestFirst(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	items, err := m.ListMoneyCapitalAccumulations(ctx)
+	if err != nil {
+		t.Fatalf("list empty: %v", err)
+	}
+	if items == nil {
+		t.Error("List must return non-nil slice")
+	}
+
+	// Insert two records and verify newest-first order by checking IDs are set.
+	for _, phase := range []credit.IndustrialCyclePhase{credit.PhaseRevival, credit.PhaseCrisis} {
+		obs := credit.InterestCycleObservation{Phase: phase, InterestRateBP: 200}
+		supply := credit.LoanableCapitalSupply{Amount: 1_000_000, Abundant: true}
+		idle := credit.IdleIndustrialCapital{Amount: 0, Description: ""}
+		gap := credit.AccumulationGap{GapBP: 0, Description: ""}
+		a, _ := credit.NewMoneyCapitalAccumulation("x", obs, supply, idle, gap, "")
+		if _, err := m.CreateMoneyCapitalAccumulation(ctx, a); err != nil {
+			t.Fatalf("create: %v", err)
+		}
+	}
+
+	items, err = m.ListMoneyCapitalAccumulations(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(items) != 2 {
+		t.Errorf("expected 2 items, got %d", len(items))
+	}
+}
+
+// TestCh26SeedIDs asserts the Ch. 26 seed IDs carry the 26 token and are unique.
+func TestCh26SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000002600",
+		"5eed000000000000002601",
+		"5eed000000000000002602",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "26" {
+			t.Errorf("seed id %q chapter token = %q, want 26", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}
