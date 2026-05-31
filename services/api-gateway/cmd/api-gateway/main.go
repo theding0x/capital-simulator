@@ -527,6 +527,12 @@ func main() {
 	srv.Handle("/v1/rent/monopoly-rents/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/land-price-scenarios", financeProxy)
 	srv.Handle("/v1/rent/land-price-scenarios/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/historical-forms", financeProxy)
+	srv.Handle("/v1/rent/historical-forms/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/historical-transitions", financeProxy)
+	srv.Handle("/v1/rent/historical-transitions/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/small-peasant-productions", financeProxy)
+	srv.Handle("/v1/rent/small-peasant-productions/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 

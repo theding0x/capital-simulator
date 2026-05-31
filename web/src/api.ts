@@ -2952,4 +2952,33 @@ export const financeApi = {
     http<{ items: import("./types").LandPriceScenario[] }>("/v1/rent/land-price-scenarios").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 47 — Genesis of Capitalist Ground-Rent
+  createRentHistoricalForm: (body: import("./types").CreateRentHistoricalFormInput) =>
+    http<import("./types").RentHistoricalForm>("/v1/rent/historical-forms", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listRentHistoricalForms: () =>
+    http<{ items: import("./types").RentHistoricalForm[] }>("/v1/rent/historical-forms").then(
+      (r) => r.items ?? [],
+    ),
+  createHistoricalRentTransition: (body: import("./types").CreateHistoricalRentTransitionInput) =>
+    http<import("./types").HistoricalRentTransition>("/v1/rent/historical-transitions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listHistoricalRentTransitions: () =>
+    http<{ items: import("./types").HistoricalRentTransition[] }>("/v1/rent/historical-transitions").then(
+      (r) => r.items ?? [],
+    ),
+  createSmallPeasantProduction: (body: import("./types").CreateSmallPeasantProductionInput) =>
+    http<import("./types").SmallPeasantProduction>("/v1/rent/small-peasant-productions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listSmallPeasantProductions: () =>
+    http<{ items: import("./types").SmallPeasantProduction[] }>("/v1/rent/small-peasant-productions").then(
+      (r) => r.items ?? [],
+    ),
 };

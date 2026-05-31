@@ -764,4 +764,25 @@ type Store interface {
 	// ListLandPriceScenarios returns all stored land-price-scenario records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListLandPriceScenarios(ctx context.Context) ([]rent.LandPriceScenario, error)
+
+	// CreateRentHistoricalForm persists a rent-historical-form record (Vol. III Ch. 47),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateRentHistoricalForm(ctx context.Context, f rent.RentHistoricalForm) (rent.RentHistoricalForm, error)
+	// ListRentHistoricalForms returns all stored rent-historical-form records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRentHistoricalForms(ctx context.Context) ([]rent.RentHistoricalForm, error)
+
+	// CreateHistoricalRentTransition persists a historical-rent-transition record (Vol. III Ch. 47),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateHistoricalRentTransition(ctx context.Context, t rent.HistoricalRentTransition) (rent.HistoricalRentTransition, error)
+	// ListHistoricalRentTransitions returns all stored historical-rent-transition records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListHistoricalRentTransitions(ctx context.Context) ([]rent.HistoricalRentTransition, error)
+
+	// CreateSmallPeasantProduction persists a small-peasant-production record (Vol. III Ch. 47),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateSmallPeasantProduction(ctx context.Context, p rent.SmallPeasantProduction) (rent.SmallPeasantProduction, error)
+	// ListSmallPeasantProductions returns all stored small-peasant-production records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListSmallPeasantProductions(ctx context.Context) ([]rent.SmallPeasantProduction, error)
 }

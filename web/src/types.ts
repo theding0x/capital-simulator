@@ -4703,3 +4703,12 @@ export interface MonopolyPriceRent { id: string; parcel_id: string; product_kind
 export interface CreateMonopolyPriceRentInput { parcel_id: string; product_kind: string; value_labour_minutes: number; monopoly_sale_price_labour_minutes: number; }
 export interface LandPriceScenario { id: string; kind: LandPriceScenarioKind; parcel_id: string; old_annual_rent_bp: number; new_annual_rent_bp: number; old_interest_rate_bp: number; new_interest_rate_bp: number; old_land_price_bp: number; new_land_price_bp: number; created_at: string; }
 export interface CreateLandPriceScenarioInput { kind: LandPriceScenarioKind; parcel_id: string; old_annual_rent_bp: number; new_annual_rent_bp: number; old_interest_rate_bp: number; new_interest_rate_bp: number; old_land_price_bp: number; }
+
+// Vol. III Ch. 47 — Genesis of Capitalist Ground-Rent
+export type RentFormStage = 1 | 2 | 3 | 4;
+export interface RentHistoricalForm { id: string; stage: RentFormStage; name: string; coercion_kind: string; surplus_form: string; example_region: string; example_period: string; created_at: string; }
+export interface CreateRentHistoricalFormInput { stage: RentFormStage; name: string; coercion_kind: string; surplus_form: string; example_region: string; example_period: string; }
+export interface HistoricalRentTransition { id: string; from_stage: RentFormStage; to_stage: RentFormStage; preconditions: string; driving_force: string; created_at: string; }
+export interface CreateHistoricalRentTransitionInput { from_stage: RentFormStage; to_stage: RentFormStage; preconditions: string; driving_force: string; }
+export interface SmallPeasantProduction { id: string; parcel_id: string; total_income_bp: number; rent_component_bp: number; profit_component_bp: number; wages_component_bp: number; is_conflated: boolean; created_at: string; }
+export interface CreateSmallPeasantProductionInput { parcel_id: string; rent_component_bp: number; profit_component_bp: number; wages_component_bp: number; is_conflated: boolean; }
