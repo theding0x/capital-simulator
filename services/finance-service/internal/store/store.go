@@ -654,4 +654,28 @@ type Store interface {
 	// ListNormalCapitalPerAcre returns all stored normal-capital-per-acre records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListNormalCapitalPerAcre(ctx context.Context) ([]rent.NormalCapitalPerAcre, error)
+
+	// CreateRisingPriceDR2Outcome persists a rising-price DR II outcome (Vol. III Ch. 43 —
+	// DR II Third Case; Engels Tables XI–XXIV; shillings + bushels units; Variant 1–5),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateRisingPriceDR2Outcome(ctx context.Context, o rent.RisingPriceDR2Outcome) (rent.RisingPriceDR2Outcome, error)
+	// ListRisingPriceDR2Outcomes returns all stored rising-price DR II outcomes, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRisingPriceDR2Outcomes(ctx context.Context) ([]rent.RisingPriceDR2Outcome, error)
+
+	// CreateRentSequence persists a rent-sequence record (Vol. III Ch. 43 —
+	// arithmetic progression of rents across soil grades; base_rent + (g-1)*increment),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateRentSequence(ctx context.Context, rs rent.RentSequence) (rent.RentSequence, error)
+	// ListRentSequences returns all stored rent-sequence records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRentSequences(ctx context.Context) ([]rent.RentSequence, error)
+
+	// CreateEngelsTableEntry persists one Engels-table soil-grade row (Vol. III Ch. 43 —
+	// Tables XI–XXIV; shillings + bushels; string grade label A–E or 'a'),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateEngelsTableEntry(ctx context.Context, e rent.EngelsTableEntry) (rent.EngelsTableEntry, error)
+	// ListEngelsTableEntries returns all stored Engels-table entries, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListEngelsTableEntries(ctx context.Context) ([]rent.EngelsTableEntry, error)
 }

@@ -5568,3 +5568,231 @@ func scanNormalCapitalPerAcre(s rowScanner) (rent.NormalCapitalPerAcre, error) {
 		CreatedAt:        createdAt,
 	}, nil
 }
+
+// CreateRisingPriceDR2Outcome inserts o, assigning an ID and timestamp when absent (Vol. III Ch. 43).
+func (m *MySQL) CreateRisingPriceDR2Outcome(ctx context.Context, o rent.RisingPriceDR2Outcome) (rent.RisingPriceDR2Outcome, error) {
+	if o.ID == "" {
+		o.ID = rent.NewRisingPriceDR2OutcomeID()
+	}
+	if o.CreatedAt.IsZero() {
+		o.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `rising_price_dr2_outcomes`" +
+		" (`id`, `rising_variant`, `total_capital_shillings`, `total_rent_shillings`, `total_output_bushels`, `price_per_bushel_shillings`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(o.ID),
+		int64(o.Variant),
+		o.TotalCapitalShillings,
+		o.TotalRentShillings,
+		o.TotalOutputBushels,
+		o.PricePerBushelShillings,
+		o.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.RisingPriceDR2Outcome{}, ErrAlreadyExists
+		}
+		return rent.RisingPriceDR2Outcome{}, err
+	}
+	return o, nil
+}
+
+// ListRisingPriceDR2Outcomes returns all stored rising-price DR II outcomes, newest first (Vol. III Ch. 43).
+func (m *MySQL) ListRisingPriceDR2Outcomes(ctx context.Context) ([]rent.RisingPriceDR2Outcome, error) {
+	const q = "SELECT `id`, `rising_variant`, `total_capital_shillings`, `total_rent_shillings`, `total_output_bushels`, `price_per_bushel_shillings`, `created_at`" +
+		" FROM `rising_price_dr2_outcomes` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.RisingPriceDR2Outcome, 0)
+	for rows.Next() {
+		o, err := scanRisingPriceDR2Outcome(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, o)
+	}
+	return out, rows.Err()
+}
+
+func scanRisingPriceDR2Outcome(s rowScanner) (rent.RisingPriceDR2Outcome, error) {
+	var (
+		id                      string
+		risingVariant           int64
+		totalCapitalShillings   int64
+		totalRentShillings      int64
+		totalOutputBushels      int64
+		pricePerBushelShillings int64
+		createdAt               time.Time
+	)
+	err := s.Scan(&id, &risingVariant, &totalCapitalShillings, &totalRentShillings, &totalOutputBushels, &pricePerBushelShillings, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.RisingPriceDR2Outcome{}, ErrNotFound
+		}
+		return rent.RisingPriceDR2Outcome{}, err
+	}
+	return rent.RisingPriceDR2Outcome{
+		ID:                      rent.RisingPriceDR2OutcomeID(id),
+		Variant:                 rent.RisingPriceVariant(risingVariant),
+		TotalCapitalShillings:   totalCapitalShillings,
+		TotalRentShillings:      totalRentShillings,
+		TotalOutputBushels:      totalOutputBushels,
+		PricePerBushelShillings: pricePerBushelShillings,
+		CreatedAt:               createdAt,
+	}, nil
+}
+
+// CreateRentSequence inserts rs, assigning an ID and timestamp when absent (Vol. III Ch. 43).
+func (m *MySQL) CreateRentSequence(ctx context.Context, rs rent.RentSequence) (rent.RentSequence, error) {
+	if rs.ID == "" {
+		rs.ID = rent.NewRentSequenceID()
+	}
+	if rs.CreatedAt.IsZero() {
+		rs.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `rent_sequences`" +
+		" (`id`, `base_rent`, `rent_increment`, `num_grades`, `created_at`)" +
+		" VALUES (?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(rs.ID),
+		rs.BaseRent,
+		rs.Increment,
+		rs.NumGrades,
+		rs.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.RentSequence{}, ErrAlreadyExists
+		}
+		return rent.RentSequence{}, err
+	}
+	return rs, nil
+}
+
+// ListRentSequences returns all stored rent-sequence records, newest first (Vol. III Ch. 43).
+func (m *MySQL) ListRentSequences(ctx context.Context) ([]rent.RentSequence, error) {
+	const q = "SELECT `id`, `base_rent`, `rent_increment`, `num_grades`, `created_at`" +
+		" FROM `rent_sequences` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.RentSequence, 0)
+	for rows.Next() {
+		rs, err := scanRentSequence(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, rs)
+	}
+	return out, rows.Err()
+}
+
+func scanRentSequence(s rowScanner) (rent.RentSequence, error) {
+	var (
+		id            string
+		baseRent      int64
+		rentIncrement int64
+		numGrades     int
+		createdAt     time.Time
+	)
+	err := s.Scan(&id, &baseRent, &rentIncrement, &numGrades, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.RentSequence{}, ErrNotFound
+		}
+		return rent.RentSequence{}, err
+	}
+	return rent.RentSequence{
+		ID:        rent.RentSequenceID(id),
+		BaseRent:  baseRent,
+		Increment: rentIncrement,
+		NumGrades: numGrades,
+		CreatedAt: createdAt,
+	}, nil
+}
+
+// CreateEngelsTableEntry inserts e, assigning an ID and timestamp when absent (Vol. III Ch. 43).
+func (m *MySQL) CreateEngelsTableEntry(ctx context.Context, e rent.EngelsTableEntry) (rent.EngelsTableEntry, error) {
+	if e.ID == "" {
+		e.ID = rent.NewEngelsTableEntryID()
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `engels_table_entries`" +
+		" (`id`, `table_number`, `soil_grade_label`, `output_bushels`, `rent_shillings`, `capital_shillings`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(e.ID),
+		e.TableNumber,
+		e.SoilGradeLabel,
+		e.OutputBushels,
+		e.RentShillings,
+		e.CapitalShillings,
+		e.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.EngelsTableEntry{}, ErrAlreadyExists
+		}
+		return rent.EngelsTableEntry{}, err
+	}
+	return e, nil
+}
+
+// ListEngelsTableEntries returns all stored Engels-table entries, newest first (Vol. III Ch. 43).
+func (m *MySQL) ListEngelsTableEntries(ctx context.Context) ([]rent.EngelsTableEntry, error) {
+	const q = "SELECT `id`, `table_number`, `soil_grade_label`, `output_bushels`, `rent_shillings`, `capital_shillings`, `created_at`" +
+		" FROM `engels_table_entries` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.EngelsTableEntry, 0)
+	for rows.Next() {
+		e, err := scanEngelsTableEntry(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
+func scanEngelsTableEntry(s rowScanner) (rent.EngelsTableEntry, error) {
+	var (
+		id               string
+		tableNumber      int
+		soilGradeLabel   string
+		outputBushels    int64
+		rentShillings    int64
+		capitalShillings int64
+		createdAt        time.Time
+	)
+	err := s.Scan(&id, &tableNumber, &soilGradeLabel, &outputBushels, &rentShillings, &capitalShillings, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.EngelsTableEntry{}, ErrNotFound
+		}
+		return rent.EngelsTableEntry{}, err
+	}
+	return rent.EngelsTableEntry{
+		ID:               rent.EngelsTableEntryID(id),
+		TableNumber:      tableNumber,
+		SoilGradeLabel:   soilGradeLabel,
+		OutputBushels:    outputBushels,
+		RentShillings:    rentShillings,
+		CapitalShillings: capitalShillings,
+		CreatedAt:        createdAt,
+	}, nil
+}

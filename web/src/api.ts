@@ -2816,4 +2816,33 @@ export const financeApi = {
     http<{ items: import("./types").NormalCapitalPerAcre[] }>("/v1/rent/normal-capital").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 43 — DR II Rising Price of Production
+  createRisingPriceDR2Outcome: (body: import("./types").CreateRisingPriceDR2OutcomeInput) =>
+    http<import("./types").RisingPriceDR2Outcome>("/v1/rent/rising-price-outcomes", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listRisingPriceDR2Outcomes: () =>
+    http<{ items: import("./types").RisingPriceDR2Outcome[] }>("/v1/rent/rising-price-outcomes").then(
+      (r) => r.items ?? [],
+    ),
+  createRentSequence: (body: import("./types").CreateRentSequenceInput) =>
+    http<import("./types").CreateRentSequenceResponse>("/v1/rent/rent-sequences", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listRentSequences: () =>
+    http<{ items: import("./types").RentSequence[] }>("/v1/rent/rent-sequences").then(
+      (r) => r.items ?? [],
+    ),
+  createEngelsTableEntry: (body: import("./types").CreateEngelsTableEntryInput) =>
+    http<import("./types").EngelsTableEntry>("/v1/rent/engels-tables", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listEngelsTableEntries: () =>
+    http<{ items: import("./types").EngelsTableEntry[] }>("/v1/rent/engels-tables").then(
+      (r) => r.items ?? [],
+    ),
 };

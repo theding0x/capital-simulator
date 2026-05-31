@@ -263,4 +263,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/dr2-falling-outcomes", h.ListFallingPriceDR2Outcomes)
 	s.HandleFunc("POST /v1/rent/normal-capital", h.CreateNormalCapitalPerAcre)
 	s.HandleFunc("GET /v1/rent/normal-capital", h.ListNormalCapitalPerAcre)
+
+	// Vol. III Ch. 43 — DR II, Third Case: Rising Price of Production
+	s.HandleFunc("POST /v1/rent/rising-price-outcomes", h.CreateRisingPriceDR2Outcome)
+	s.HandleFunc("GET /v1/rent/rising-price-outcomes", h.ListRisingPriceDR2Outcomes)
+	s.HandleFunc("POST /v1/rent/rent-sequences", h.CreateRentSequence)
+	s.HandleFunc("GET /v1/rent/rent-sequences", h.ListRentSequences)
+	s.HandleFunc("POST /v1/rent/engels-tables", h.CreateEngelsTableEntry)
+	s.HandleFunc("GET /v1/rent/engels-tables", h.ListEngelsTableEntries)
 }
