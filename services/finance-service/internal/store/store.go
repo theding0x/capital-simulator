@@ -736,4 +736,32 @@ type Store interface {
 	// ListAbsoluteRentLimits returns all stored absolute-rent-limit records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListAbsoluteRentLimits(ctx context.Context) ([]rent.AbsoluteRentLimit, error)
+
+	// CreateBuildingSiteRent persists a building-site-rent record (Vol. III Ch. 46),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateBuildingSiteRent(ctx context.Context, r rent.BuildingSiteRent) (rent.BuildingSiteRent, error)
+	// ListBuildingSiteRents returns all stored building-site-rent records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListBuildingSiteRents(ctx context.Context) ([]rent.BuildingSiteRent, error)
+
+	// CreateMiningRent persists a mining-rent record (Vol. III Ch. 46),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateMiningRent(ctx context.Context, r rent.MiningRent) (rent.MiningRent, error)
+	// ListMiningRents returns all stored mining-rent records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListMiningRents(ctx context.Context) ([]rent.MiningRent, error)
+
+	// CreateMonopolyPriceRent persists a monopoly-price-rent record (Vol. III Ch. 46),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateMonopolyPriceRent(ctx context.Context, r rent.MonopolyPriceRent) (rent.MonopolyPriceRent, error)
+	// ListMonopolyPriceRents returns all stored monopoly-price-rent records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListMonopolyPriceRents(ctx context.Context) ([]rent.MonopolyPriceRent, error)
+
+	// CreateLandPriceScenario persists a land-price-scenario record (Vol. III Ch. 46),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateLandPriceScenario(ctx context.Context, s rent.LandPriceScenario) (rent.LandPriceScenario, error)
+	// ListLandPriceScenarios returns all stored land-price-scenario records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListLandPriceScenarios(ctx context.Context) ([]rent.LandPriceScenario, error)
 }

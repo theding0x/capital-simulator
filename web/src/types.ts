@@ -4692,3 +4692,14 @@ export interface CreateAbsoluteRentLimitInput {
   max_rent_bp: number;
   actual_rent_bp: number;
 }
+
+// Vol. III Ch. 46 — Building Site Rent, Rent in Mining, Price of Land
+export type LandPriceScenarioKind = 1 | 2 | 3 | 4 | 5;
+export interface BuildingSiteRent { id: string; parcel_id: string; location_grade: number; annual_rent_labour_minutes: number; lease_term_years: number; created_at: string; }
+export interface CreateBuildingSiteRentInput { parcel_id: string; location_grade: number; annual_rent_labour_minutes: number; lease_term_years: number; }
+export interface MiningRent { id: string; parcel_id: string; ore_grade: number; annual_rent_labour_minutes: number; surplus_profit_bp: number; created_at: string; }
+export interface CreateMiningRentInput { parcel_id: string; ore_grade: number; annual_rent_labour_minutes: number; surplus_profit_bp: number; }
+export interface MonopolyPriceRent { id: string; parcel_id: string; product_kind: string; value_labour_minutes: number; monopoly_sale_price_labour_minutes: number; monopoly_rent_labour_minutes: number; created_at: string; }
+export interface CreateMonopolyPriceRentInput { parcel_id: string; product_kind: string; value_labour_minutes: number; monopoly_sale_price_labour_minutes: number; }
+export interface LandPriceScenario { id: string; kind: LandPriceScenarioKind; parcel_id: string; old_annual_rent_bp: number; new_annual_rent_bp: number; old_interest_rate_bp: number; new_interest_rate_bp: number; old_land_price_bp: number; new_land_price_bp: number; created_at: string; }
+export interface CreateLandPriceScenarioInput { kind: LandPriceScenarioKind; parcel_id: string; old_annual_rent_bp: number; new_annual_rent_bp: number; old_interest_rate_bp: number; new_interest_rate_bp: number; old_land_price_bp: number; }

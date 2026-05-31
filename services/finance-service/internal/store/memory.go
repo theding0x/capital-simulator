@@ -93,6 +93,10 @@ type Memory struct {
 	valuePriceGaps             map[rent.ValuePriceGapID]rent.ValuePriceGap
 	absoluteRents              map[rent.AbsoluteRentID]rent.AbsoluteRent
 	absoluteRentLimits         map[rent.AbsoluteRentLimitID]rent.AbsoluteRentLimit
+	buildingSiteRents          map[rent.BuildingSiteRentID]rent.BuildingSiteRent
+	miningRents                map[rent.MiningRentID]rent.MiningRent
+	monopolyPriceRents         map[rent.MonopolyPriceRentID]rent.MonopolyPriceRent
+	landPriceScenarios         map[rent.LandPriceScenarioID]rent.LandPriceScenario
 }
 
 // NewMemory returns an empty in-memory store.
@@ -174,6 +178,10 @@ func NewMemory() *Memory {
 		valuePriceGaps:             make(map[rent.ValuePriceGapID]rent.ValuePriceGap),
 		absoluteRents:              make(map[rent.AbsoluteRentID]rent.AbsoluteRent),
 		absoluteRentLimits:         make(map[rent.AbsoluteRentLimitID]rent.AbsoluteRentLimit),
+		buildingSiteRents:          make(map[rent.BuildingSiteRentID]rent.BuildingSiteRent),
+		miningRents:                make(map[rent.MiningRentID]rent.MiningRent),
+		monopolyPriceRents:         make(map[rent.MonopolyPriceRentID]rent.MonopolyPriceRent),
+		landPriceScenarios:         make(map[rent.LandPriceScenarioID]rent.LandPriceScenario),
 	}
 }
 
@@ -3352,6 +3360,150 @@ func (m *Memory) ListAbsoluteRentLimits(_ context.Context) ([]rent.AbsoluteRentL
 	out := make([]rent.AbsoluteRentLimit, 0, len(m.absoluteRentLimits))
 	for _, l := range m.absoluteRentLimits {
 		out = append(out, l)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateBuildingSiteRent stores r, assigning an ID and timestamp when absent (Vol. III Ch. 46).
+func (m *Memory) CreateBuildingSiteRent(_ context.Context, r rent.BuildingSiteRent) (rent.BuildingSiteRent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if r.ID == "" {
+		r.ID = rent.NewBuildingSiteRentID()
+	}
+	if _, exists := m.buildingSiteRents[r.ID]; exists {
+		return rent.BuildingSiteRent{}, ErrAlreadyExists
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	m.buildingSiteRents[r.ID] = r
+	return r, nil
+}
+
+// ListBuildingSiteRents returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListBuildingSiteRents(_ context.Context) ([]rent.BuildingSiteRent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.BuildingSiteRent, 0, len(m.buildingSiteRents))
+	for _, r := range m.buildingSiteRents {
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateMiningRent stores r, assigning an ID and timestamp when absent (Vol. III Ch. 46).
+func (m *Memory) CreateMiningRent(_ context.Context, r rent.MiningRent) (rent.MiningRent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if r.ID == "" {
+		r.ID = rent.NewMiningRentID()
+	}
+	if _, exists := m.miningRents[r.ID]; exists {
+		return rent.MiningRent{}, ErrAlreadyExists
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	m.miningRents[r.ID] = r
+	return r, nil
+}
+
+// ListMiningRents returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListMiningRents(_ context.Context) ([]rent.MiningRent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.MiningRent, 0, len(m.miningRents))
+	for _, r := range m.miningRents {
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateMonopolyPriceRent stores r, assigning an ID and timestamp when absent (Vol. III Ch. 46).
+func (m *Memory) CreateMonopolyPriceRent(_ context.Context, r rent.MonopolyPriceRent) (rent.MonopolyPriceRent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if r.ID == "" {
+		r.ID = rent.NewMonopolyPriceRentID()
+	}
+	if _, exists := m.monopolyPriceRents[r.ID]; exists {
+		return rent.MonopolyPriceRent{}, ErrAlreadyExists
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	m.monopolyPriceRents[r.ID] = r
+	return r, nil
+}
+
+// ListMonopolyPriceRents returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListMonopolyPriceRents(_ context.Context) ([]rent.MonopolyPriceRent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.MonopolyPriceRent, 0, len(m.monopolyPriceRents))
+	for _, r := range m.monopolyPriceRents {
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateLandPriceScenario stores s, assigning an ID and timestamp when absent (Vol. III Ch. 46).
+func (m *Memory) CreateLandPriceScenario(_ context.Context, s rent.LandPriceScenario) (rent.LandPriceScenario, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID == "" {
+		s.ID = rent.NewLandPriceScenarioID()
+	}
+	if _, exists := m.landPriceScenarios[s.ID]; exists {
+		return rent.LandPriceScenario{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	m.landPriceScenarios[s.ID] = s
+	return s, nil
+}
+
+// ListLandPriceScenarios returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListLandPriceScenarios(_ context.Context) ([]rent.LandPriceScenario, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.LandPriceScenario, 0, len(m.landPriceScenarios))
+	for _, s := range m.landPriceScenarios {
+		out = append(out, s)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

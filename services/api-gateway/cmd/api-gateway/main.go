@@ -518,6 +518,15 @@ func main() {
 	srv.Handle("/v1/rent/absolute-rents/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/rent-limits", financeProxy)
 	srv.Handle("/v1/rent/rent-limits/{rest...}", financeProxy)
+	// Ch. 46 — Building-site rent, mining rent, monopoly-price rent, price of land.
+	srv.Handle("/v1/rent/building-rents", financeProxy)
+	srv.Handle("/v1/rent/building-rents/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/mining-rents", financeProxy)
+	srv.Handle("/v1/rent/mining-rents/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/monopoly-rents", financeProxy)
+	srv.Handle("/v1/rent/monopoly-rents/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/land-price-scenarios", financeProxy)
+	srv.Handle("/v1/rent/land-price-scenarios/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 
