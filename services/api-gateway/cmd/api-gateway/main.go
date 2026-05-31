@@ -441,6 +441,9 @@ func main() {
 	// Vol. III Ch. 31 — Money-Capital and Real Capital, II → finance-service
 	srv.Handle("/v1/credit/floating-capital", financeProxy)
 	srv.Handle("/v1/credit/floating-capital/{rest...}", financeProxy)
+	// Vol. III Ch. 32 — Money-Capital and Real Capital, III (Conclusion) → finance-service
+	srv.Handle("/v1/credit/capital-release", financeProxy)
+	srv.Handle("/v1/credit/capital-release/{rest...}", financeProxy)
 	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
 	// srv.Handle("/v1/ground-rent", financeProxy)
 	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)

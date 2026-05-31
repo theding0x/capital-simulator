@@ -2523,6 +2523,18 @@ export const financeApi = {
     ).then((r) => r.items ?? []),
   getFloatingCapital: (id: string) =>
     http<import("./types").FloatingCapital>(`/v1/credit/floating-capital/${id}`),
+  // Vol. III Ch. 32 — Money-Capital and Real Capital, III (Conclusion)
+  createCapitalRelease: (body: import("./types").CreateCapitalReleaseInput) =>
+    http<import("./types").CapitalRelease>("/v1/credit/capital-release", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listCapitalReleases: () =>
+    http<{ items: import("./types").CapitalRelease[] }>(
+      "/v1/credit/capital-release",
+    ).then((r) => r.items ?? []),
+  getCapitalRelease: (id: string) =>
+    http<import("./types").CapitalRelease>(`/v1/credit/capital-release/${id}`),
   // Vol. III Ch. 29 — Component Parts of Bank Capital
   createBankCapital: (body: import("./types").CreateBankCapitalInput) =>
     http<import("./types").BankCapital>("/v1/credit/bank-capital", {

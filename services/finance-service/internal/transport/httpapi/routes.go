@@ -189,4 +189,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/floating-capital", h.CreateFloatingCapital)
 	s.HandleFunc("GET /v1/credit/floating-capital", h.ListFloatingCapitals)
 	s.HandleFunc("GET /v1/credit/floating-capital/{id}", h.GetFloatingCapital)
+
+	// Vol. III Ch. 32 — Money-Capital and Real Capital, III (Conclusion)
+	s.HandleFunc("POST /v1/credit/capital-release", h.CreateCapitalRelease)
+	s.HandleFunc("GET /v1/credit/capital-release", h.ListCapitalReleases)
+	s.HandleFunc("GET /v1/credit/capital-release/{id}", h.GetCapitalRelease)
 }

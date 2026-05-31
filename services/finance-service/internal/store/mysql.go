@@ -3670,3 +3670,104 @@ func scanFloatingCapital(s rowScanner) (credit.FloatingCapital, error) {
 		CreatedAt:   createdAt,
 	}, nil
 }
+
+// ── Vol. III Ch. 32 — Money-Capital and Real Capital, III (CapitalRelease) ──
+
+// CreateCapitalRelease inserts c, assigning an ID and timestamp when absent (Vol. III Ch. 32).
+func (m *MySQL) CreateCapitalRelease(ctx context.Context, c credit.CapitalRelease) (credit.CapitalRelease, error) {
+	if c.ID.IsZero() {
+		c.ID = credit.NewCapitalReleaseID()
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO capital_releases (` +
+		"`id`, `name`, `released_amount`, `cause`, `reinvested`, `overstatement_pct`, `overstatement_description`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(c.ID),
+		c.Name,
+		c.ReleasedAmount,
+		int(c.Cause),
+		c.Reinvested,
+		c.Overstatement.OverstatementPct,
+		c.Overstatement.Description,
+		c.Description,
+		c.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.CapitalRelease{}, ErrAlreadyExists
+		}
+		return credit.CapitalRelease{}, err
+	}
+	return c, nil
+}
+
+// GetCapitalRelease returns the record with id, or ErrNotFound.
+func (m *MySQL) GetCapitalRelease(ctx context.Context, id credit.CapitalReleaseID) (credit.CapitalRelease, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `released_amount`, `cause`, `reinvested`, `overstatement_pct`, `overstatement_description`, `description`, `created_at` " +
+		"FROM `capital_releases` WHERE `id` = ?"
+	return scanCapitalRelease(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCapitalReleases returns all stored records, newest first.
+func (m *MySQL) ListCapitalReleases(ctx context.Context) ([]credit.CapitalRelease, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `released_amount`, `cause`, `reinvested`, `overstatement_pct`, `overstatement_description`, `description`, `created_at` " +
+		"FROM `capital_releases` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.CapitalRelease, 0)
+	for rows.Next() {
+		c, err := scanCapitalRelease(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func scanCapitalRelease(s rowScanner) (credit.CapitalRelease, error) {
+	var (
+		id                       string
+		name                     string
+		releasedAmount           int64
+		cause                    int
+		reinvested               bool
+		overstatementPct         int64
+		overstatementDescription string
+		description              string
+		createdAt                time.Time
+	)
+	err := s.Scan(
+		&id, &name, &releasedAmount, &cause, &reinvested,
+		&overstatementPct, &overstatementDescription,
+		&description, &createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.CapitalRelease{}, ErrNotFound
+		}
+		return credit.CapitalRelease{}, err
+	}
+	return credit.CapitalRelease{
+		ID:             credit.CapitalReleaseID(id),
+		Name:           name,
+		ReleasedAmount: releasedAmount,
+		Cause:          credit.CapitalReleaseCause(cause),
+		Reinvested:     reinvested,
+		Overstatement: credit.LoanCapitalOverstatement{
+			OverstatementPct: overstatementPct,
+			Description:      overstatementDescription,
+		},
+		Description: description,
+		CreatedAt:   createdAt,
+	}, nil
+}
