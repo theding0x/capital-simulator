@@ -2659,4 +2659,26 @@ export const financeApi = {
     http<import("./types").UsurersCapital>(
       `/v1/credit/usurers-capital/${id}`,
     ),
+
+  // Vol. III Ch. 37 — Introduction (to Ground-Rent, opens Part VI)
+  createLandParcel: (body: import("./types").CreateLandParcelInput) =>
+    http<import("./types").LandParcel>("/v1/rent/parcels", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listLandParcels: () =>
+    http<{ items: import("./types").LandParcel[] }>("/v1/rent/parcels").then(
+      (r) => r.items ?? [],
+    ),
+  getLandParcel: (id: string) =>
+    http<import("./types").LandParcel>(`/v1/rent/parcels/${id}`),
+  createGroundRent: (body: import("./types").CreateGroundRentInput) =>
+    http<import("./types").GroundRent>("/v1/rent/rents", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listGroundRents: () =>
+    http<{ items: import("./types").GroundRent[] }>("/v1/rent/rents").then(
+      (r) => r.items ?? [],
+    ),
 };

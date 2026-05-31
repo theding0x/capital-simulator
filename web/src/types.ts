@@ -4277,3 +4277,39 @@ export interface CreateUsurersCapitalInput {
   subordinated_to: string;
   description: string;
 }
+
+// LandParcel mirrors rent.LandParcel (Vol. III Ch. 37 — opens Part VI).
+// fertility_grade: 1=A (worst, regulating) … 4=D (best).
+export interface LandParcel {
+  id: string;
+  owner_id: string;
+  fertility_grade: number;
+  area_hectares: number;
+  location: string;
+  created_at: string;
+}
+export interface CreateLandParcelInput {
+  owner_id: string;
+  fertility_grade: number;
+  area_hectares: number;
+  location: string;
+}
+// GroundRent mirrors rent.GroundRent. form: 1=Differential, 2=Absolute, 3=Monopoly.
+export interface GroundRent {
+  id: string;
+  parcel_id: string;
+  capitalist_id: string;
+  land_owner_id: string;
+  form: number;
+  amount_labour_minutes: number;
+  period_years: number;
+  created_at: string;
+}
+export interface CreateGroundRentInput {
+  parcel_id: string;
+  capitalist_id: string;
+  land_owner_id: string;
+  form: number;
+  amount_labour_minutes: number;
+  period_years: number;
+}

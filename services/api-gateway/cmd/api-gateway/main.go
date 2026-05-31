@@ -456,9 +456,12 @@ func main() {
 	srv.Handle("/v1/credit/rates-of-exchange/{rest...}", financeProxy)
 	srv.Handle("/v1/credit/usurers-capital", financeProxy)
 	srv.Handle("/v1/credit/usurers-capital/{rest...}", financeProxy)
-	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
-	// srv.Handle("/v1/ground-rent", financeProxy)
-	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)
+	// Vol. III, Ch. 37-47 — Ground-Rent (Part VI) → finance-service.
+	// Ch. 37 opens the /v1/rent/* tree; later chapters add more sub-paths.
+	srv.Handle("/v1/rent/parcels", financeProxy)
+	srv.Handle("/v1/rent/parcels/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/rents", financeProxy)
+	srv.Handle("/v1/rent/rents/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 
