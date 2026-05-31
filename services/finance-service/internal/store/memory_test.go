@@ -2643,3 +2643,153 @@ func TestCh22SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// ── Vol. III Ch. 23 — Profit Division ────────────────────────────────────────
+
+// TestMemory_ProfitDivision_RoundTrip asserts create → get returns identical record.
+// Fixture: borrowed capital (Marx Ch. 23): total 2000 bp, interest 500 bp → enterprise 1500 bp.
+func TestMemory_ProfitDivision_RoundTrip(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m := NewMemory()
+
+	pd, err := credit.NewProfitDivision(
+		2000, 500,
+		credit.FormSeparated,
+		credit.WagesOfSuperintendence{LabourMinutes: 0},
+		0,
+	)
+	if err != nil {
+		t.Fatalf("NewProfitDivision: %v", err)
+	}
+
+	created, err := m.CreateProfitDivision(ctx, pd)
+	if err != nil {
+		t.Fatalf("CreateProfitDivision: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Error("created.ID is zero, want non-empty")
+	}
+
+	got, err := m.GetProfitDivision(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("GetProfitDivision: %v", err)
+	}
+	if got.ID != created.ID {
+		t.Errorf("got.ID = %q, want %q", got.ID, created.ID)
+	}
+	if got.TotalProfitBP != 2000 {
+		t.Errorf("TotalProfitBP = %d, want 2000", got.TotalProfitBP)
+	}
+	if got.InterestBP != 500 {
+		t.Errorf("InterestBP = %d, want 500", got.InterestBP)
+	}
+	if got.ProfitOfEnterpriseBP != 1500 {
+		t.Errorf("ProfitOfEnterpriseBP = %d, want 1500", got.ProfitOfEnterpriseBP)
+	}
+	// Partition invariant.
+	if got.TotalProfitBP != got.InterestBP+got.ProfitOfEnterpriseBP {
+		t.Errorf("partition violated: %d != %d + %d",
+			got.TotalProfitBP, got.InterestBP, got.ProfitOfEnterpriseBP)
+	}
+	if got.OwnershipForm != credit.FormSeparated {
+		t.Errorf("OwnershipForm = %d, want FormSeparated", got.OwnershipForm)
+	}
+}
+
+// TestMemory_ProfitDivision_NotFound asserts ErrNotFound for a missing ID.
+func TestMemory_ProfitDivision_NotFound(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m := NewMemory()
+
+	_, err := m.GetProfitDivision(ctx, credit.NewProfitDivisionID())
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+// TestMemory_ProfitDivision_ListNeverNil asserts ListProfitDivisions returns a
+// non-nil slice even on an empty store.
+func TestMemory_ProfitDivision_ListNeverNil(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m := NewMemory()
+
+	out, err := m.ListProfitDivisions(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("ListProfitDivisions returned nil, want non-nil empty slice")
+	}
+}
+
+// TestMemory_ProfitDivision_ListNewestFirst asserts two records are returned
+// newest first. Fixtures: borrowed (2000/500) then own-capital (2000/0).
+func TestMemory_ProfitDivision_ListNewestFirst(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m := NewMemory()
+
+	borrowed, err := credit.NewProfitDivision(2000, 500, credit.FormSeparated, credit.WagesOfSuperintendence{}, 0)
+	if err != nil {
+		t.Fatalf("new borrowed: %v", err)
+	}
+	own, err := credit.NewProfitDivision(2000, 0, credit.FormOwnerOperator, credit.WagesOfSuperintendence{LabourMinutes: 480}, 0)
+	if err != nil {
+		t.Fatalf("new own: %v", err)
+	}
+
+	createdFirst, err := m.CreateProfitDivision(ctx, borrowed)
+	if err != nil {
+		t.Fatalf("create borrowed: %v", err)
+	}
+	createdSecond, err := m.CreateProfitDivision(ctx, own)
+	if err != nil {
+		t.Fatalf("create own: %v", err)
+	}
+
+	out, err := m.ListProfitDivisions(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("len = %d, want 2", len(out))
+	}
+	// Newest (createdSecond) should be first.
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("out[0].ID = %q, want %q (newest)", out[0].ID, createdSecond.ID)
+	}
+	if out[1].ID != createdFirst.ID {
+		t.Errorf("out[1].ID = %q, want %q (oldest)", out[1].ID, createdFirst.ID)
+	}
+}
+
+// TestCh23SeedIDs asserts the Ch. 23 seed IDs (5eed…<CC=23>01–02) carry the 23
+// token and are unique (mirrors the seed migration 00046_v3_ch23_seed.sql).
+func TestCh23SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000002301",
+		"5eed000000000000002302",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "23" {
+			t.Errorf("seed id %q chapter token = %q, want 23", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

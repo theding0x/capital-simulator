@@ -46,6 +46,7 @@ type Memory struct {
 	historicalMerchantCapitals map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital
 	interestBearingCapitals    map[credit.InterestBearingCapitalID]credit.InterestBearingCapital
 	ratesOfInterest            map[credit.RateOfInterestID]credit.RateOfInterest
+	profitDivisions            map[credit.ProfitDivisionID]credit.ProfitDivision
 }
 
 // NewMemory returns an empty in-memory store.
@@ -81,6 +82,7 @@ func NewMemory() *Memory {
 		historicalMerchantCapitals: make(map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital),
 		interestBearingCapitals:    make(map[credit.InterestBearingCapitalID]credit.InterestBearingCapital),
 		ratesOfInterest:            make(map[credit.RateOfInterestID]credit.RateOfInterest),
+		profitDivisions:            make(map[credit.ProfitDivisionID]credit.ProfitDivision),
 	}
 }
 
@@ -1308,6 +1310,54 @@ func (m *Memory) ListRatesOfInterest(_ context.Context) ([]credit.RateOfInterest
 	out := make([]credit.RateOfInterest, 0, len(m.ratesOfInterest))
 	for _, r := range m.ratesOfInterest {
 		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateProfitDivision stores pd, assigning an ID and timestamp when absent.
+func (m *Memory) CreateProfitDivision(_ context.Context, pd credit.ProfitDivision) (credit.ProfitDivision, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if pd.ID.IsZero() {
+		pd.ID = credit.NewProfitDivisionID()
+	}
+	if _, exists := m.profitDivisions[pd.ID]; exists {
+		return credit.ProfitDivision{}, ErrAlreadyExists
+	}
+	if pd.CreatedAt.IsZero() {
+		pd.CreatedAt = m.now().UTC()
+	}
+	m.profitDivisions[pd.ID] = pd
+	return pd, nil
+}
+
+// GetProfitDivision returns the profit-division record with id, or ErrNotFound.
+func (m *Memory) GetProfitDivision(_ context.Context, id credit.ProfitDivisionID) (credit.ProfitDivision, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	pd, ok := m.profitDivisions[id]
+	if !ok {
+		return credit.ProfitDivision{}, ErrNotFound
+	}
+	return pd, nil
+}
+
+// ListProfitDivisions returns all stored profit-division records, newest first.
+func (m *Memory) ListProfitDivisions(_ context.Context) ([]credit.ProfitDivision, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.ProfitDivision, 0, len(m.profitDivisions))
+	for _, pd := range m.profitDivisions {
+		out = append(out, pd)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

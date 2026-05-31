@@ -136,4 +136,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/credit/rate-of-interest", h.ListRatesOfInterest)
 	s.HandleFunc("GET /v1/credit/rate-of-interest/{id}", h.GetRateOfInterest)
 	s.HandleFunc("POST /v1/credit/interest-rate-analysis", h.ComputeInterestRateAnalysis)
+
+	// Vol. III Ch. 23 — Interest and Profit of Enterprise
+	s.HandleFunc("POST /v1/credit/profit-division", h.CreateProfitDivision)
+	s.HandleFunc("GET /v1/credit/profit-division", h.ListProfitDivisions)
+	s.HandleFunc("GET /v1/credit/profit-division/{id}", h.GetProfitDivision)
 }

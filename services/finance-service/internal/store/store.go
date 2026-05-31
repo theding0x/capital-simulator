@@ -304,4 +304,15 @@ type Store interface {
 	// ListRatesOfInterest returns all stored rate-of-interest records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListRatesOfInterest(ctx context.Context) ([]credit.RateOfInterest, error)
+
+	// CreateProfitDivision persists a profit-division record (Vol. III Ch. 23 —
+	// splits total profit into interest + profit of enterprise; TotalProfitBP>0;
+	// InterestBP>=0; InterestBP<TotalProfitBP; ProfitOfEnterpriseBP=Total-Interest),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateProfitDivision(ctx context.Context, pd credit.ProfitDivision) (credit.ProfitDivision, error)
+	// GetProfitDivision returns the profit-division record with the given ID, or ErrNotFound.
+	GetProfitDivision(ctx context.Context, id credit.ProfitDivisionID) (credit.ProfitDivision, error)
+	// ListProfitDivisions returns all stored profit-division records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListProfitDivisions(ctx context.Context) ([]credit.ProfitDivision, error)
 }

@@ -3720,3 +3720,25 @@ export interface InterestRateBound {
   max_bp: number; // bp; > 0
   min_bp: number; // bp; >= 0
 }
+
+// WagesOfSuperintendence mirrors credit.WagesOfSuperintendence (Vol. III Ch. 23).
+// The labour component of the functioning capitalist's income in large joint-stock
+// companies; their income = wages of skilled labour, not profit of enterprise.
+export interface WagesOfSuperintendence {
+  labour_minutes: number; // canonical value-magnitude unit; >= 0
+}
+
+// ProfitDivision mirrors credit.ProfitDivision (Vol. III Ch. 23).
+// Splits total profit (= average profit) into interest and profit of enterprise.
+// Invariant: total_profit_bp == interest_bp + profit_of_enterprise_bp.
+// ownership_form: 1=OwnerOperator, 2=Separated.
+export interface ProfitDivision {
+  id: string;
+  total_profit_bp: number;             // bp; > 0
+  interest_bp: number;                 // bp; >= 0
+  profit_of_enterprise_bp: number;     // bp; = total - interest; >= 0
+  ownership_form: number;              // 1=OwnerOperator, 2=Separated
+  wages_of_superintendence: WagesOfSuperintendence;
+  mystification_index: number;         // bp [0,10000]
+  created_at: string;
+}
