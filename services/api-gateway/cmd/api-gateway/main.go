@@ -472,6 +472,11 @@ func main() {
 	srv.Handle("/v1/rent/differential-rents/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/capitalised-prices", financeProxy)
 	srv.Handle("/v1/rent/capitalised-prices/{rest...}", financeProxy)
+	// Ch. 39 — Differential Rent I: DR I tables (with soil entries) + location-rent factors.
+	srv.Handle("/v1/rent/dr1-tables", financeProxy)
+	srv.Handle("/v1/rent/dr1-tables/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/location-rent-factors", financeProxy)
+	srv.Handle("/v1/rent/location-rent-factors/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 

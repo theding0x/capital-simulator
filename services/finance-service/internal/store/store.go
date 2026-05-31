@@ -565,4 +565,27 @@ type Store interface {
 	// ListCapitalisedRentPrices returns all stored capitalised-rent-price records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListCapitalisedRentPrices(ctx context.Context) ([]rent.CapitalisedRentPrice, error)
+
+	// CreateDifferentialRentITable persists a DR I table and its entries (Vol. III Ch. 39 —
+	// Differential Rent I; equal capital on unequal soils; surplus-product of better soils
+	// converted to rent; worst soil regulates price and yields no rent). Assigns table ID and
+	// CreatedAt when absent; assigns each entry ID, CreatedAt, and TableID when absent. Returns
+	// ErrAlreadyExists on table ID collision.
+	CreateDifferentialRentITable(ctx context.Context, tbl rent.DifferentialRentITable, entries []rent.DifferentialRentIEntry) (rent.DifferentialRentITable, []rent.DifferentialRentIEntry, error)
+	// GetDifferentialRentITable returns the table header and all its entries, or ErrNotFound.
+	GetDifferentialRentITable(ctx context.Context, id rent.DifferentialRentITableID) (rent.DifferentialRentITable, []rent.DifferentialRentIEntry, error)
+	// ListDifferentialRentITables returns all table headers, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListDifferentialRentITables(ctx context.Context) ([]rent.DifferentialRentITable, error)
+	// ListDifferentialRentIEntries returns all entries for the given table ID, or ErrNotFound
+	// if the table does not exist. Never returns nil — a table with no entries returns an empty slice.
+	ListDifferentialRentIEntries(ctx context.Context, tableID rent.DifferentialRentITableID) ([]rent.DifferentialRentIEntry, error)
+
+	// CreateLocationRentFactor persists a location-rent-factor record (Vol. III Ch. 39 —
+	// transport-cost differential giving rise to a location component of differential rent),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateLocationRentFactor(ctx context.Context, f rent.LocationRentFactor) (rent.LocationRentFactor, error)
+	// ListLocationRentFactors returns all stored location-rent-factor records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListLocationRentFactors(ctx context.Context) ([]rent.LocationRentFactor, error)
 }

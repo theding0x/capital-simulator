@@ -73,6 +73,9 @@ type Memory struct {
 	monopolisedForces          map[rent.MonopolisedNaturalForceID]rent.MonopolisedNaturalForce
 	differentialRents          map[rent.DifferentialRentID]rent.DifferentialRent
 	capitalisedRentPrices      map[rent.CapitalisedRentPriceID]rent.CapitalisedRentPrice
+	dr1Tables                  map[rent.DifferentialRentITableID]rent.DifferentialRentITable
+	dr1Entries                 map[rent.DifferentialRentITableID][]rent.DifferentialRentIEntry
+	locationRentFactors        map[rent.LocationRentFactorID]rent.LocationRentFactor
 }
 
 // NewMemory returns an empty in-memory store.
@@ -134,6 +137,9 @@ func NewMemory() *Memory {
 		monopolisedForces:          make(map[rent.MonopolisedNaturalForceID]rent.MonopolisedNaturalForce),
 		differentialRents:          make(map[rent.DifferentialRentID]rent.DifferentialRent),
 		capitalisedRentPrices:      make(map[rent.CapitalisedRentPriceID]rent.CapitalisedRentPrice),
+		dr1Tables:                  make(map[rent.DifferentialRentITableID]rent.DifferentialRentITable),
+		dr1Entries:                 make(map[rent.DifferentialRentITableID][]rent.DifferentialRentIEntry),
+		locationRentFactors:        make(map[rent.LocationRentFactorID]rent.LocationRentFactor),
 	}
 }
 
@@ -2535,6 +2541,122 @@ func (m *Memory) ListCapitalisedRentPrices(_ context.Context) ([]rent.Capitalise
 	out := make([]rent.CapitalisedRentPrice, 0, len(m.capitalisedRentPrices))
 	for _, crp := range m.capitalisedRentPrices {
 		out = append(out, crp)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateDifferentialRentITable stores tbl and its entries (Vol. III Ch. 39).
+// Assigns IDs and timestamps when absent. Returns ErrAlreadyExists on table ID collision.
+func (m *Memory) CreateDifferentialRentITable(_ context.Context, tbl rent.DifferentialRentITable, entries []rent.DifferentialRentIEntry) (rent.DifferentialRentITable, []rent.DifferentialRentIEntry, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if tbl.ID == "" {
+		tbl.ID = rent.NewDifferentialRentITableID()
+	}
+	if _, exists := m.dr1Tables[tbl.ID]; exists {
+		return rent.DifferentialRentITable{}, nil, ErrAlreadyExists
+	}
+	if tbl.CreatedAt.IsZero() {
+		tbl.CreatedAt = m.now().UTC()
+	}
+	filled := make([]rent.DifferentialRentIEntry, len(entries))
+	for i, e := range entries {
+		if e.ID == "" {
+			e.ID = rent.NewDifferentialRentIEntryID()
+		}
+		if e.CreatedAt.IsZero() {
+			e.CreatedAt = m.now().UTC()
+		}
+		e.TableID = string(tbl.ID)
+		filled[i] = e
+	}
+	m.dr1Tables[tbl.ID] = tbl
+	m.dr1Entries[tbl.ID] = filled
+	return tbl, filled, nil
+}
+
+// GetDifferentialRentITable returns the table and its entries, or ErrNotFound (Vol. III Ch. 39).
+func (m *Memory) GetDifferentialRentITable(_ context.Context, id rent.DifferentialRentITableID) (rent.DifferentialRentITable, []rent.DifferentialRentIEntry, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	tbl, ok := m.dr1Tables[id]
+	if !ok {
+		return rent.DifferentialRentITable{}, nil, ErrNotFound
+	}
+	entries := m.dr1Entries[id]
+	if entries == nil {
+		entries = []rent.DifferentialRentIEntry{}
+	}
+	return tbl, entries, nil
+}
+
+// ListDifferentialRentITables returns all table headers, newest first. Never returns nil (Vol. III Ch. 39).
+func (m *Memory) ListDifferentialRentITables(_ context.Context) ([]rent.DifferentialRentITable, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.DifferentialRentITable, 0, len(m.dr1Tables))
+	for _, tbl := range m.dr1Tables {
+		out = append(out, tbl)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// ListDifferentialRentIEntries returns entries for tableID, or ErrNotFound if the table is unknown (Vol. III Ch. 39).
+func (m *Memory) ListDifferentialRentIEntries(_ context.Context, tableID rent.DifferentialRentITableID) ([]rent.DifferentialRentIEntry, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if _, ok := m.dr1Tables[tableID]; !ok {
+		return nil, ErrNotFound
+	}
+	entries := m.dr1Entries[tableID]
+	if entries == nil {
+		return []rent.DifferentialRentIEntry{}, nil
+	}
+	return entries, nil
+}
+
+// CreateLocationRentFactor stores f, assigning an ID and timestamp when absent (Vol. III Ch. 39).
+func (m *Memory) CreateLocationRentFactor(_ context.Context, f rent.LocationRentFactor) (rent.LocationRentFactor, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if f.ID == "" {
+		f.ID = rent.NewLocationRentFactorID()
+	}
+	if _, exists := m.locationRentFactors[f.ID]; exists {
+		return rent.LocationRentFactor{}, ErrAlreadyExists
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+	m.locationRentFactors[f.ID] = f
+	return f, nil
+}
+
+// ListLocationRentFactors returns all stored location-rent-factor records, newest first. Never returns nil (Vol. III Ch. 39).
+func (m *Memory) ListLocationRentFactors(_ context.Context) ([]rent.LocationRentFactor, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.LocationRentFactor, 0, len(m.locationRentFactors))
+	for _, f := range m.locationRentFactors {
+		out = append(out, f)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

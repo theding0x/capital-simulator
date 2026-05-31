@@ -93,6 +93,7 @@ import { Ch35PreciousMetal } from "../chapters/vol3/Ch35PreciousMetal";
 import { Ch36PreCapitalistRelationships } from "../chapters/vol3/Ch36PreCapitalistRelationships";
 import { Ch37Introduction } from "../chapters/vol3/Ch37Introduction";
 import { Ch38GeneralRemarks } from "../chapters/vol3/Ch38GeneralRemarks";
+import { Ch39DifferentialRentI } from "../chapters/vol3/Ch39DifferentialRentI";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -204,6 +205,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch36": Ch36PreCapitalistRelationships as AnyPanel,
   "v3-ch37": Ch37Introduction as AnyPanel,
   "v3-ch38": Ch38GeneralRemarks as AnyPanel,
+  "v3-ch39": Ch39DifferentialRentI as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -295,6 +297,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch36": "Usury is the antediluvian form of capital, older than the capitalist mode of production: subordinated under modern industry it survives only as bank credit, its interest disciplined by the general rate of profit.",
   "v3-ch37": "We shall deal with landed property only in so far as a portion of the surplus-value produced by capital falls to the share of the landowner. — Marx, Capital III, Ch. 37.",
   "v3-ch38": "The surplus profit ... is here a permanent and regular affair, and forms the basis of the differential rent. — Marx, Capital III, Ch. 38.",
+  "v3-ch39": "The difference between the price of production yielded by the worst soil and that yielded by any better soil constitutes the differential rent. — Marx, Capital III, Ch. 39.",
 };
 
 export function ChapterShell({
