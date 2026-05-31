@@ -470,4 +470,24 @@ type Store interface {
 	// ListNoteIssueConstraints returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListNoteIssueConstraints(ctx context.Context) ([]credit.NoteIssueConstraint, error)
+
+	// CreateGoldReserve persists a gold-reserve record (Vol. III Ch. 35 —
+	// Precious Metal and Rate of Exchange; Amount>=0), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateGoldReserve(ctx context.Context, g credit.GoldReserve) (credit.GoldReserve, error)
+	// GetGoldReserve returns the record with the given ID, or ErrNotFound.
+	GetGoldReserve(ctx context.Context, id credit.GoldReserveID) (credit.GoldReserve, error)
+	// ListGoldReserves returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListGoldReserves(ctx context.Context) ([]credit.GoldReserve, error)
+
+	// CreateRateOfExchange persists a rate-of-exchange record (Vol. III Ch. 35 —
+	// deviation from mint par in basis points; sign unrestricted), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateRateOfExchange(ctx context.Context, r credit.RateOfExchange) (credit.RateOfExchange, error)
+	// GetRateOfExchange returns the record with the given ID, or ErrNotFound.
+	GetRateOfExchange(ctx context.Context, id credit.RateOfExchangeID) (credit.RateOfExchange, error)
+	// ListRatesOfExchange returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRatesOfExchange(ctx context.Context) ([]credit.RateOfExchange, error)
 }

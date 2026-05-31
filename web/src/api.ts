@@ -2603,4 +2603,41 @@ export const financeApi = {
     http<import("./types").NoteIssueConstraint>(
       `/v1/credit/note-issue-constraints/${id}`,
     ),
+  // Vol. III Ch. 35 — Precious Metal and Rate of Exchange
+  createGoldReserve: (
+    body: import("./types").CreateGoldReserveInput,
+  ) =>
+    http<import("./types").GoldReserve>(
+      "/v1/credit/gold-reserves",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+  listGoldReserves: () =>
+    http<{ items: import("./types").GoldReserve[] }>(
+      "/v1/credit/gold-reserves",
+    ).then((r) => r.items ?? []),
+  getGoldReserve: (id: string) =>
+    http<import("./types").GoldReserve>(
+      `/v1/credit/gold-reserves/${id}`,
+    ),
+  createRateOfExchange: (
+    body: import("./types").CreateRateOfExchangeInput,
+  ) =>
+    http<import("./types").RateOfExchange>(
+      "/v1/credit/rates-of-exchange",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+  listRatesOfExchange: () =>
+    http<{ items: import("./types").RateOfExchange[] }>(
+      "/v1/credit/rates-of-exchange",
+    ).then((r) => r.items ?? []),
+  getRateOfExchange: (id: string) =>
+    http<import("./types").RateOfExchange>(
+      `/v1/credit/rates-of-exchange/${id}`,
+    ),
 };

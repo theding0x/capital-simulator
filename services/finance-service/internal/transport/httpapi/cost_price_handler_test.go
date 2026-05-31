@@ -178,6 +178,13 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/credit/note-issue-constraints", h.CreateNoteIssueConstraint)
 	mux.HandleFunc("GET /v1/credit/note-issue-constraints", h.ListNoteIssueConstraints)
 	mux.HandleFunc("GET /v1/credit/note-issue-constraints/{id}", h.GetNoteIssueConstraint)
+	// Vol. III Ch. 35 — Precious Metal and Rate of Exchange
+	mux.HandleFunc("POST /v1/credit/gold-reserves", h.CreateGoldReserve)
+	mux.HandleFunc("GET /v1/credit/gold-reserves", h.ListGoldReserves)
+	mux.HandleFunc("GET /v1/credit/gold-reserves/{id}", h.GetGoldReserve)
+	mux.HandleFunc("POST /v1/credit/rates-of-exchange", h.CreateRateOfExchange)
+	mux.HandleFunc("GET /v1/credit/rates-of-exchange", h.ListRatesOfExchange)
+	mux.HandleFunc("GET /v1/credit/rates-of-exchange/{id}", h.GetRateOfExchange)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

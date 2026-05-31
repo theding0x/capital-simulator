@@ -3951,3 +3951,165 @@ func scanNoteIssueConstraint(s rowScanner) (credit.NoteIssueConstraint, error) {
 		CreatedAt:      createdAt,
 	}, nil
 }
+
+// CreateGoldReserve inserts g, assigning an ID and timestamp when absent (Vol. III Ch. 35).
+func (m *MySQL) CreateGoldReserve(ctx context.Context, g credit.GoldReserve) (credit.GoldReserve, error) {
+	if g.ID.IsZero() {
+		g.ID = credit.NewGoldReserveID()
+	}
+	if g.CreatedAt.IsZero() {
+		g.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO gold_reserves ` +
+		"(`id`, `name`, `amount`, `description`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(g.ID),
+		g.Name,
+		g.Amount,
+		g.Description,
+		g.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.GoldReserve{}, ErrAlreadyExists
+		}
+		return credit.GoldReserve{}, err
+	}
+	return g, nil
+}
+
+// GetGoldReserve returns the record with id, or ErrNotFound.
+func (m *MySQL) GetGoldReserve(ctx context.Context, id credit.GoldReserveID) (credit.GoldReserve, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `amount`, `description`, `created_at` " +
+		"FROM `gold_reserves` WHERE `id` = ?"
+	return scanGoldReserve(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListGoldReserves returns all stored records, newest first.
+func (m *MySQL) ListGoldReserves(ctx context.Context) ([]credit.GoldReserve, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `amount`, `description`, `created_at` " +
+		"FROM `gold_reserves` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.GoldReserve, 0)
+	for rows.Next() {
+		g, err := scanGoldReserve(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, g)
+	}
+	return out, rows.Err()
+}
+
+func scanGoldReserve(s rowScanner) (credit.GoldReserve, error) {
+	var (
+		id          string
+		name        string
+		amount      int64
+		description string
+		createdAt   time.Time
+	)
+	err := s.Scan(&id, &name, &amount, &description, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.GoldReserve{}, ErrNotFound
+		}
+		return credit.GoldReserve{}, err
+	}
+	return credit.GoldReserve{
+		ID:          credit.GoldReserveID(id),
+		Name:        name,
+		Amount:      amount,
+		Description: description,
+		CreatedAt:   createdAt,
+	}, nil
+}
+
+// CreateRateOfExchange inserts r, assigning an ID and timestamp when absent (Vol. III Ch. 35).
+func (m *MySQL) CreateRateOfExchange(ctx context.Context, r credit.RateOfExchange) (credit.RateOfExchange, error) {
+	if r.ID.IsZero() {
+		r.ID = credit.NewRateOfExchangeID()
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO rates_of_exchange ` +
+		"(`id`, `name`, `deviation_bp`, `description`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(r.ID),
+		r.Name,
+		r.DeviationBP,
+		r.Description,
+		r.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.RateOfExchange{}, ErrAlreadyExists
+		}
+		return credit.RateOfExchange{}, err
+	}
+	return r, nil
+}
+
+// GetRateOfExchange returns the record with id, or ErrNotFound.
+func (m *MySQL) GetRateOfExchange(ctx context.Context, id credit.RateOfExchangeID) (credit.RateOfExchange, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `deviation_bp`, `description`, `created_at` " +
+		"FROM `rates_of_exchange` WHERE `id` = ?"
+	return scanRateOfExchange(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListRatesOfExchange returns all stored records, newest first.
+func (m *MySQL) ListRatesOfExchange(ctx context.Context) ([]credit.RateOfExchange, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `deviation_bp`, `description`, `created_at` " +
+		"FROM `rates_of_exchange` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.RateOfExchange, 0)
+	for rows.Next() {
+		r, err := scanRateOfExchange(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func scanRateOfExchange(s rowScanner) (credit.RateOfExchange, error) {
+	var (
+		id          string
+		name        string
+		deviationBP int64
+		description string
+		createdAt   time.Time
+	)
+	err := s.Scan(&id, &name, &deviationBP, &description, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.RateOfExchange{}, ErrNotFound
+		}
+		return credit.RateOfExchange{}, err
+	}
+	return credit.RateOfExchange{
+		ID:          credit.RateOfExchangeID(id),
+		Name:        name,
+		DeviationBP: deviationBP,
+		Description: description,
+		CreatedAt:   createdAt,
+	}, nil
+}
