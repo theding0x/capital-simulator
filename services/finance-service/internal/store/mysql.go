@@ -6637,3 +6637,229 @@ func scanLandPriceScenario(s rowScanner) (rent.LandPriceScenario, error) {
 		CreatedAt:         createdAt,
 	}, nil
 }
+
+// CreateRentHistoricalForm inserts f, assigning an ID and timestamp when absent (Vol. III Ch. 47).
+func (m *MySQL) CreateRentHistoricalForm(ctx context.Context, f rent.RentHistoricalForm) (rent.RentHistoricalForm, error) {
+	if f.ID == "" {
+		f.ID = rent.NewRentHistoricalFormID()
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `rent_historical_forms`" +
+		" (`id`, `stage`, `name`, `coercion_kind`, `surplus_form`, `example_region`, `example_period`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(f.ID), int(f.Stage), f.Name, f.CoercionKind,
+		f.SurplusForm, f.ExampleRegion, f.ExamplePeriod, f.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.RentHistoricalForm{}, ErrAlreadyExists
+		}
+		return rent.RentHistoricalForm{}, err
+	}
+	return f, nil
+}
+
+// ListRentHistoricalForms returns all stored records, newest first (Vol. III Ch. 47).
+func (m *MySQL) ListRentHistoricalForms(ctx context.Context) ([]rent.RentHistoricalForm, error) {
+	const q = "SELECT `id`, `stage`, `name`, `coercion_kind`, `surplus_form`, `example_region`, `example_period`, `created_at`" +
+		" FROM `rent_historical_forms` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.RentHistoricalForm, 0)
+	for rows.Next() {
+		f, err := scanRentHistoricalForm(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, f)
+	}
+	return out, rows.Err()
+}
+
+func scanRentHistoricalForm(s rowScanner) (rent.RentHistoricalForm, error) {
+	var (
+		id            string
+		stage         int
+		name          string
+		coercionKind  string
+		surplusForm   string
+		exampleRegion string
+		examplePeriod string
+		createdAt     time.Time
+	)
+	err := s.Scan(&id, &stage, &name, &coercionKind, &surplusForm, &exampleRegion, &examplePeriod, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.RentHistoricalForm{}, ErrNotFound
+		}
+		return rent.RentHistoricalForm{}, err
+	}
+	return rent.RentHistoricalForm{
+		ID:            rent.RentHistoricalFormID(id),
+		Stage:         rent.RentFormStage(stage),
+		Name:          name,
+		CoercionKind:  coercionKind,
+		SurplusForm:   surplusForm,
+		ExampleRegion: exampleRegion,
+		ExamplePeriod: examplePeriod,
+		CreatedAt:     createdAt,
+	}, nil
+}
+
+// CreateHistoricalRentTransition inserts t, assigning an ID and timestamp when absent (Vol. III Ch. 47).
+func (m *MySQL) CreateHistoricalRentTransition(ctx context.Context, t rent.HistoricalRentTransition) (rent.HistoricalRentTransition, error) {
+	if t.ID == "" {
+		t.ID = rent.NewHistoricalRentTransitionID()
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `historical_rent_transitions`" +
+		" (`id`, `from_stage`, `to_stage`, `preconditions`, `driving_force`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(t.ID), int(t.FromStage), int(t.ToStage),
+		t.Preconditions, t.DrivingForce, t.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.HistoricalRentTransition{}, ErrAlreadyExists
+		}
+		return rent.HistoricalRentTransition{}, err
+	}
+	return t, nil
+}
+
+// ListHistoricalRentTransitions returns all stored records, newest first (Vol. III Ch. 47).
+func (m *MySQL) ListHistoricalRentTransitions(ctx context.Context) ([]rent.HistoricalRentTransition, error) {
+	const q = "SELECT `id`, `from_stage`, `to_stage`, `preconditions`, `driving_force`, `created_at`" +
+		" FROM `historical_rent_transitions` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.HistoricalRentTransition, 0)
+	for rows.Next() {
+		t, err := scanHistoricalRentTransition(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, rows.Err()
+}
+
+func scanHistoricalRentTransition(s rowScanner) (rent.HistoricalRentTransition, error) {
+	var (
+		id            string
+		fromStage     int
+		toStage       int
+		preconditions string
+		drivingForce  string
+		createdAt     time.Time
+	)
+	err := s.Scan(&id, &fromStage, &toStage, &preconditions, &drivingForce, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.HistoricalRentTransition{}, ErrNotFound
+		}
+		return rent.HistoricalRentTransition{}, err
+	}
+	return rent.HistoricalRentTransition{
+		ID:            rent.HistoricalRentTransitionID(id),
+		FromStage:     rent.RentFormStage(fromStage),
+		ToStage:       rent.RentFormStage(toStage),
+		Preconditions: preconditions,
+		DrivingForce:  drivingForce,
+		CreatedAt:     createdAt,
+	}, nil
+}
+
+// CreateSmallPeasantProduction inserts p, assigning an ID and timestamp when absent (Vol. III Ch. 47).
+func (m *MySQL) CreateSmallPeasantProduction(ctx context.Context, p rent.SmallPeasantProduction) (rent.SmallPeasantProduction, error) {
+	if p.ID == "" {
+		p.ID = rent.NewSmallPeasantProductionID()
+	}
+	if p.CreatedAt.IsZero() {
+		p.CreatedAt = m.now().UTC()
+	}
+	isConflated := 0
+	if p.IsConflated {
+		isConflated = 1
+	}
+	const q = "INSERT INTO `small_peasant_productions`" +
+		" (`id`, `parcel_id`, `total_income_bp`, `rent_component_bp`, `profit_component_bp`, `wages_component_bp`, `is_conflated`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(p.ID), p.ParcelID, p.TotalIncomeBP,
+		p.RentComponentBP, p.ProfitComponentBP, p.WagesComponentBP,
+		isConflated, p.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.SmallPeasantProduction{}, ErrAlreadyExists
+		}
+		return rent.SmallPeasantProduction{}, err
+	}
+	return p, nil
+}
+
+// ListSmallPeasantProductions returns all stored records, newest first (Vol. III Ch. 47).
+func (m *MySQL) ListSmallPeasantProductions(ctx context.Context) ([]rent.SmallPeasantProduction, error) {
+	const q = "SELECT `id`, `parcel_id`, `total_income_bp`, `rent_component_bp`, `profit_component_bp`, `wages_component_bp`, `is_conflated`, `created_at`" +
+		" FROM `small_peasant_productions` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.SmallPeasantProduction, 0)
+	for rows.Next() {
+		p, err := scanSmallPeasantProduction(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
+func scanSmallPeasantProduction(s rowScanner) (rent.SmallPeasantProduction, error) {
+	var (
+		id                string
+		parcelID          string
+		totalIncomeBP     int64
+		rentComponentBP   int64
+		profitComponentBP int64
+		wagesComponentBP  int64
+		isConflatedInt    int
+		createdAt         time.Time
+	)
+	err := s.Scan(&id, &parcelID, &totalIncomeBP, &rentComponentBP, &profitComponentBP, &wagesComponentBP, &isConflatedInt, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.SmallPeasantProduction{}, ErrNotFound
+		}
+		return rent.SmallPeasantProduction{}, err
+	}
+	return rent.SmallPeasantProduction{
+		ID:                rent.SmallPeasantProductionID(id),
+		ParcelID:          parcelID,
+		TotalIncomeBP:     totalIncomeBP,
+		RentComponentBP:   rentComponentBP,
+		ProfitComponentBP: profitComponentBP,
+		WagesComponentBP:  wagesComponentBP,
+		IsConflated:       isConflatedInt != 0,
+		CreatedAt:         createdAt,
+	}, nil
+}

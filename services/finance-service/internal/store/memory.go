@@ -97,6 +97,9 @@ type Memory struct {
 	miningRents                map[rent.MiningRentID]rent.MiningRent
 	monopolyPriceRents         map[rent.MonopolyPriceRentID]rent.MonopolyPriceRent
 	landPriceScenarios         map[rent.LandPriceScenarioID]rent.LandPriceScenario
+	rentHistoricalForms        map[rent.RentHistoricalFormID]rent.RentHistoricalForm
+	historicalRentTransitions  map[rent.HistoricalRentTransitionID]rent.HistoricalRentTransition
+	smallPeasantProductions    map[rent.SmallPeasantProductionID]rent.SmallPeasantProduction
 }
 
 // NewMemory returns an empty in-memory store.
@@ -182,6 +185,9 @@ func NewMemory() *Memory {
 		miningRents:                make(map[rent.MiningRentID]rent.MiningRent),
 		monopolyPriceRents:         make(map[rent.MonopolyPriceRentID]rent.MonopolyPriceRent),
 		landPriceScenarios:         make(map[rent.LandPriceScenarioID]rent.LandPriceScenario),
+		rentHistoricalForms:        make(map[rent.RentHistoricalFormID]rent.RentHistoricalForm),
+		historicalRentTransitions:  make(map[rent.HistoricalRentTransitionID]rent.HistoricalRentTransition),
+		smallPeasantProductions:    make(map[rent.SmallPeasantProductionID]rent.SmallPeasantProduction),
 	}
 }
 
@@ -3508,6 +3514,114 @@ func (m *Memory) ListLandPriceScenarios(_ context.Context) ([]rent.LandPriceScen
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
 			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateRentHistoricalForm stores f, assigning an ID and timestamp when absent (Vol. III Ch. 47).
+func (m *Memory) CreateRentHistoricalForm(_ context.Context, f rent.RentHistoricalForm) (rent.RentHistoricalForm, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if f.ID == "" {
+		f.ID = rent.NewRentHistoricalFormID()
+	}
+	if _, exists := m.rentHistoricalForms[f.ID]; exists {
+		return rent.RentHistoricalForm{}, ErrAlreadyExists
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = time.Now().UTC()
+	}
+	m.rentHistoricalForms[f.ID] = f
+	return f, nil
+}
+
+// ListRentHistoricalForms returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListRentHistoricalForms(_ context.Context) ([]rent.RentHistoricalForm, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.RentHistoricalForm, 0, len(m.rentHistoricalForms))
+	for _, f := range m.rentHistoricalForms {
+		out = append(out, f)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return string(out[i].ID) < string(out[j].ID)
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateHistoricalRentTransition stores t, assigning an ID and timestamp when absent (Vol. III Ch. 47).
+func (m *Memory) CreateHistoricalRentTransition(_ context.Context, t rent.HistoricalRentTransition) (rent.HistoricalRentTransition, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if t.ID == "" {
+		t.ID = rent.NewHistoricalRentTransitionID()
+	}
+	if _, exists := m.historicalRentTransitions[t.ID]; exists {
+		return rent.HistoricalRentTransition{}, ErrAlreadyExists
+	}
+	if t.CreatedAt.IsZero() {
+		t.CreatedAt = time.Now().UTC()
+	}
+	m.historicalRentTransitions[t.ID] = t
+	return t, nil
+}
+
+// ListHistoricalRentTransitions returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListHistoricalRentTransitions(_ context.Context) ([]rent.HistoricalRentTransition, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.HistoricalRentTransition, 0, len(m.historicalRentTransitions))
+	for _, t := range m.historicalRentTransitions {
+		out = append(out, t)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return string(out[i].ID) < string(out[j].ID)
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateSmallPeasantProduction stores p, assigning an ID and timestamp when absent (Vol. III Ch. 47).
+func (m *Memory) CreateSmallPeasantProduction(_ context.Context, p rent.SmallPeasantProduction) (rent.SmallPeasantProduction, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if p.ID == "" {
+		p.ID = rent.NewSmallPeasantProductionID()
+	}
+	if _, exists := m.smallPeasantProductions[p.ID]; exists {
+		return rent.SmallPeasantProduction{}, ErrAlreadyExists
+	}
+	if p.CreatedAt.IsZero() {
+		p.CreatedAt = time.Now().UTC()
+	}
+	m.smallPeasantProductions[p.ID] = p
+	return p, nil
+}
+
+// ListSmallPeasantProductions returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListSmallPeasantProductions(_ context.Context) ([]rent.SmallPeasantProduction, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.SmallPeasantProduction, 0, len(m.smallPeasantProductions))
+	for _, p := range m.smallPeasantProductions {
+		out = append(out, p)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return string(out[i].ID) < string(out[j].ID)
 		}
 		return out[i].CreatedAt.After(out[j].CreatedAt)
 	})

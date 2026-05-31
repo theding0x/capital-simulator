@@ -101,6 +101,7 @@ import { Ch43DR2RisingPrice } from "../chapters/vol3/Ch43DR2RisingPrice";
 import { Ch44WorstSoilRent } from "../chapters/vol3/Ch44WorstSoilRent";
 import { Ch45AbsoluteRent } from "../chapters/vol3/Ch45AbsoluteRent";
 import { Ch46LandPrice } from "../chapters/vol3/Ch46LandPrice";
+import { Ch47Genesis } from "../chapters/vol3/Ch47Genesis";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -220,6 +221,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch44": Ch44WorstSoilRent as AnyPanel,
   "v3-ch45": Ch45AbsoluteRent as AnyPanel,
   "v3-ch46": Ch46LandPrice as AnyPanel,
+  "v3-ch47": Ch47Genesis as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -319,6 +321,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch44": "Differential rent... can also develop on the worst cultivated soil, although this soil by definition yields no differential rent in the first instance. — Marx, Capital III, Ch. 44.",
   "v3-ch45": "The lower composition of agricultural capital... is the reason why agricultural products, when sold at their value, yield a surplus over the average profit — and this surplus forms the substance of absolute rent. — Marx, Capital III, Ch. 45.",
   "v3-ch46": "The price of land is nothing but the capitalised and therefore anticipated rent. ... rent, and not the price of land, is the really decisive factor. — Marx, Capital III, Ch. 46.",
+  "v3-ch47": "It is the form of rent which we have here analysed, namely ground-rent... that becomes the general, and so to say the standard form of surplus-value. — Marx, Capital III, Ch. 47.",
 };
 
 export function ChapterShell({

@@ -1,0 +1,130 @@
+.v3-ch47 {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.v3-ch47-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.v3-ch47-note {
+  font-size: 0.85rem;
+  color: var(--color-muted, #666);
+  font-style: italic;
+}
+
+.v3-ch47-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3-ch47-section h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.v3-ch47-subintro {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-muted, #444);
+  margin: 0;
+}
+
+.v3-ch47-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+}
+
+.v3-ch47-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  min-width: 160px;
+}
+
+.v3-ch47-form input,
+.v3-ch47-form select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: var(--color-input-bg, #fff);
+  color: var(--color-text, #111);
+}
+
+.v3-ch47-checkbox-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.4rem !important;
+  min-width: unset !important;
+  cursor: pointer;
+}
+
+.v3-ch47-hint {
+  font-size: 0.78rem;
+  color: var(--color-muted, #666);
+}
+
+.v3-ch47-btn {
+  align-self: flex-start;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--color-border, #aaa);
+  border-radius: 4px;
+  background: var(--color-btn-bg, #f5f5f5);
+  cursor: pointer;
+}
+
+.v3-ch47-btn:hover {
+  background: var(--color-btn-hover, #e8e8e8);
+}
+
+.v3-ch47-error {
+  color: var(--color-error, #c00);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.v3-ch47-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-preview-bg, #f0f7f0);
+  border-left: 3px solid var(--color-success, #4a4);
+  border-radius: 0 4px 4px 0;
+}
+
+.v3-ch47-table-wrap {
+  overflow-x: auto;
+}
+
+.v3-ch47-table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  width: 100%;
+}
+
+.v3-ch47-table th,
+.v3-ch47-table td {
+  border: 1px solid var(--color-border, #ddd);
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.v3-ch47-table th {
+  background: var(--color-table-head, #f4f4f4);
+  font-weight: 600;
+}

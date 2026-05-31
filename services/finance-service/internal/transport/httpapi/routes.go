@@ -300,4 +300,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/monopoly-rents", h.ListMonopolyPriceRents)
 	s.HandleFunc("POST /v1/rent/land-price-scenarios", h.CreateLandPriceScenario)
 	s.HandleFunc("GET /v1/rent/land-price-scenarios", h.ListLandPriceScenarios)
+	s.HandleFunc("POST /v1/rent/historical-forms", h.CreateRentHistoricalForm)
+	s.HandleFunc("GET /v1/rent/historical-forms", h.ListRentHistoricalForms)
+	s.HandleFunc("POST /v1/rent/historical-transitions", h.CreateHistoricalRentTransition)
+	s.HandleFunc("GET /v1/rent/historical-transitions", h.ListHistoricalRentTransitions)
+	s.HandleFunc("POST /v1/rent/small-peasant-productions", h.CreateSmallPeasantProduction)
+	s.HandleFunc("GET /v1/rent/small-peasant-productions", h.ListSmallPeasantProductions)
 }
