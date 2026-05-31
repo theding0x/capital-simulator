@@ -2518,13 +2518,13 @@ func (m *MySQL) ListProfitDivisions(ctx context.Context) ([]credit.ProfitDivisio
 
 func scanProfitDivision(s rowScanner) (credit.ProfitDivision, error) {
 	var (
-		id                   string
-		totalBP, interestBP  int64
-		enterpriseBP         int64
-		ownershipForm        int
-		labourMinutes        int64
-		mystificationIndex   int64
-		createdAt            time.Time
+		id                  string
+		totalBP, interestBP int64
+		enterpriseBP        int64
+		ownershipForm       int
+		labourMinutes       int64
+		mystificationIndex  int64
+		createdAt           time.Time
 	)
 	err := s.Scan(&id, &totalBP, &interestBP, &enterpriseBP,
 		&ownershipForm, &labourMinutes, &mystificationIndex, &createdAt)
@@ -2815,5 +2815,124 @@ func scanFictitiousCapital(s rowScanner) (credit.FictitiousCapital, error) {
 		RealCapitalExists: realCapitalExists,
 		Description:       description,
 		CreatedAt:         createdAt,
+	}, nil
+}
+
+// CreateMoneyCapitalAccumulation inserts a, assigning an ID and timestamp when absent (Vol. III Ch. 26).
+func (m *MySQL) CreateMoneyCapitalAccumulation(ctx context.Context, a credit.MoneyCapitalAccumulation) (credit.MoneyCapitalAccumulation, error) {
+	if a.ID.IsZero() {
+		a.ID = credit.NewMoneyCapitalAccumulationID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO money_capital_accumulations (` +
+		"`id`, `name`, `phase`, `interest_rate_bp`, `period`, `loanable_amount`, `loanable_abundant`, `idle_amount`, `idle_description`, `gap_bp`, `gap_description`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID),
+		a.Name,
+		int(a.CycleObservation.Phase),
+		a.CycleObservation.InterestRateBP,
+		a.CycleObservation.Period,
+		a.LoanableSupply.Amount,
+		a.LoanableSupply.Abundant,
+		a.IdleCapital.Amount,
+		a.IdleCapital.Description,
+		a.Gap.GapBP,
+		a.Gap.Description,
+		a.Description,
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.MoneyCapitalAccumulation{}, ErrAlreadyExists
+		}
+		return credit.MoneyCapitalAccumulation{}, err
+	}
+	return a, nil
+}
+
+// GetMoneyCapitalAccumulation returns the record with id, or ErrNotFound.
+func (m *MySQL) GetMoneyCapitalAccumulation(ctx context.Context, id credit.MoneyCapitalAccumulationID) (credit.MoneyCapitalAccumulation, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `phase`, `interest_rate_bp`, `period`, `loanable_amount`, `loanable_abundant`, `idle_amount`, `idle_description`, `gap_bp`, `gap_description`, `description`, `created_at` " +
+		"FROM `money_capital_accumulations` WHERE `id` = ?"
+	return scanMoneyCapitalAccumulation(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListMoneyCapitalAccumulations returns all stored records, newest first.
+func (m *MySQL) ListMoneyCapitalAccumulations(ctx context.Context) ([]credit.MoneyCapitalAccumulation, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `phase`, `interest_rate_bp`, `period`, `loanable_amount`, `loanable_abundant`, `idle_amount`, `idle_description`, `gap_bp`, `gap_description`, `description`, `created_at` " +
+		"FROM `money_capital_accumulations` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.MoneyCapitalAccumulation, 0)
+	for rows.Next() {
+		a, err := scanMoneyCapitalAccumulation(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
+func scanMoneyCapitalAccumulation(s rowScanner) (credit.MoneyCapitalAccumulation, error) {
+	var (
+		id               string
+		name             string
+		phase            int
+		interestRateBP   int64
+		period           string
+		loanableAmount   int64
+		loanableAbundant bool
+		idleAmount       int64
+		idleDescription  string
+		gapBP            int64
+		gapDescription   string
+		description      string
+		createdAt        time.Time
+	)
+	err := s.Scan(
+		&id, &name, &phase, &interestRateBP, &period,
+		&loanableAmount, &loanableAbundant,
+		&idleAmount, &idleDescription,
+		&gapBP, &gapDescription,
+		&description, &createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.MoneyCapitalAccumulation{}, ErrNotFound
+		}
+		return credit.MoneyCapitalAccumulation{}, err
+	}
+	return credit.MoneyCapitalAccumulation{
+		ID:   credit.MoneyCapitalAccumulationID(id),
+		Name: name,
+		CycleObservation: credit.InterestCycleObservation{
+			Phase:          credit.IndustrialCyclePhase(phase),
+			InterestRateBP: interestRateBP,
+			Period:         period,
+		},
+		LoanableSupply: credit.LoanableCapitalSupply{
+			Amount:   loanableAmount,
+			Abundant: loanableAbundant,
+		},
+		IdleCapital: credit.IdleIndustrialCapital{
+			Amount:      idleAmount,
+			Description: idleDescription,
+		},
+		Gap: credit.AccumulationGap{
+			GapBP:       gapBP,
+			Description: gapDescription,
+		},
+		Description: description,
+		CreatedAt:   createdAt,
 	}, nil
 }

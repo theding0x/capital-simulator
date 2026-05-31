@@ -1,0 +1,142 @@
+.v3-ch26 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.v3-ch26-intro {
+  color: var(--text-secondary, #666);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.v3-ch26-section {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.v3-ch26-section h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #111);
+}
+
+.v3-ch26-subintro {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666);
+  margin: 0 0 0.75rem;
+}
+
+.v3-ch26-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.v3-ch26-card {
+  background: var(--surface-alt, #f9f9f9);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 5px;
+  padding: 0.6rem 0.9rem;
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+.v3-ch26-card--stored {
+  background: var(--surface, #fff);
+}
+
+.v3-ch26-card-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: var(--text-primary, #111);
+}
+
+.v3-ch26-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #666);
+}
+
+.v3-ch26-phase-tag {
+  background: var(--accent-light, #e8f4ff);
+  color: var(--accent, #0066cc);
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.v3-ch26-abundant {
+  color: var(--ok, #2a7a2a);
+  font-weight: 600;
+}
+
+.v3-ch26-scarce {
+  color: var(--warn, #b85000);
+  font-weight: 600;
+}
+
+.v3-ch26-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 480px;
+  margin-bottom: 0.75rem;
+}
+
+.v3-ch26-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--text-primary, #111);
+}
+
+.v3-ch26-form input,
+.v3-ch26-form select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch26-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #888);
+}
+
+.v3-ch26-btn {
+  align-self: flex-start;
+  padding: 0.35rem 0.9rem;
+  background: var(--accent, #0066cc);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.v3-ch26-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.v3-ch26-error {
+  color: var(--error, #c0392b);
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+.v3-ch26-classify {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #555);
+  font-style: italic;
+  margin-top: 0.25rem;
+}

@@ -3787,3 +3787,66 @@ export interface FictitiousCapital {
   description: string;
   created_at: string;
 }
+
+// ── Vol. III Ch. 26 — Accumulation of Money-Capital ──────────────────────────
+
+// InterestCycleObservation mirrors credit.InterestCycleObservation (Vol. III Ch. 26).
+// Records an interest-rate reading tied to a phase of the industrial cycle.
+// phase: 1=Inactivity, 2=Revival, 3=Prosperity, 4=Overproduction, 5=Crisis.
+export interface InterestCycleObservation {
+  phase: number;             // 1..5
+  interest_rate_bp: number;  // bp; >= 0
+  period: string;
+}
+
+// LoanableCapitalSupply mirrors credit.LoanableCapitalSupply (Vol. III Ch. 26).
+// Records the aggregate supply of loanable money-capital at the observed phase.
+export interface LoanableCapitalSupply {
+  amount: number;    // pence; >= 0
+  abundant: boolean; // true when supply exceeds demand
+}
+
+// IdleIndustrialCapital mirrors credit.IdleIndustrialCapital (Vol. III Ch. 26).
+// Portion of industrial capital temporarily idle as money-capital.
+export interface IdleIndustrialCapital {
+  amount: number;      // pence; >= 0
+  description: string;
+}
+
+// AccumulationGap mirrors credit.AccumulationGap (Vol. III Ch. 26).
+// Signed difference between accumulation rate of money-capital and productive capital.
+export interface AccumulationGap {
+  gap_bp: number;      // bp; may be positive or negative
+  description: string;
+}
+
+// MoneyCapitalAccumulation mirrors credit.MoneyCapitalAccumulation (Vol. III Ch. 26).
+// Persisted entity for an observation of money-capital accumulation across
+// the industrial cycle. Invariants: phase ∈ {1..5}, interest_rate_bp >= 0,
+// idle_capital.amount >= 0, loanable_supply.amount >= 0.
+export interface MoneyCapitalAccumulation {
+  id: string;
+  name: string;
+  cycle_observation: InterestCycleObservation;
+  loanable_supply: LoanableCapitalSupply;
+  idle_capital: IdleIndustrialCapital;
+  gap: AccumulationGap;
+  description: string;
+  created_at: string;
+}
+
+// CreateMoneyCapitalAccumulationInput is the flat request body for
+// POST /v1/credit/money-capital-accumulation.
+export interface CreateMoneyCapitalAccumulationInput {
+  name: string;
+  phase: number;
+  interest_rate_bp: number;
+  period: string;
+  loanable_amount: number;
+  loanable_abundant: boolean;
+  idle_amount: number;
+  idle_description: string;
+  gap_bp: number;
+  gap_description: string;
+  description: string;
+}

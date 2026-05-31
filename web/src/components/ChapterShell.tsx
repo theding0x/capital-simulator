@@ -80,6 +80,7 @@ import { Ch22RateOfInterest } from "../chapters/vol3/Ch22RateOfInterest";
 import { Ch23ProfitOfEnterprise } from "../chapters/vol3/Ch23ProfitOfEnterprise";
 import { Ch24CompoundInterest } from "../chapters/vol3/Ch24CompoundInterest";
 import { Ch25CreditFictitiousCapital } from "../chapters/vol3/Ch25CreditFictitiousCapital";
+import { Ch26MoneyCapitalAccumulation } from "../chapters/vol3/Ch26MoneyCapitalAccumulation";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -178,6 +179,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch23": Ch23ProfitOfEnterprise as AnyPanel,
   "v3-ch24": Ch24CompoundInterest as AnyPanel,
   "v3-ch25": Ch25CreditFictitiousCapital as AnyPanel,
+  "v3-ch26": Ch26MoneyCapitalAccumulation as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -257,6 +259,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch21": "In the formula M—M′ we have the irrational form of capital, the perversion and objectification of production relations in their highest degree.",
   "v3-ch22": "The average rate of interest prevailing in a given country — as distinct from the continually fluctuating market rates — cannot be determined by any law. In this sphere there is no law except that of supply and demand.",
   "v3-ch23": "Interest is the fruit of capital as such, as distinct from profit of enterprise, which appears as the wages of superintendence for the management of capital.",
+  "v3-ch26": "The accumulation of money-capital does not mean an actual accumulation of money ... It means merely an accumulation of these claims in the hands of banks.",
 };
 
 export function ChapterShell({

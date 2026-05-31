@@ -154,4 +154,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/fictitious-capital", h.CreateFictitiousCapital)
 	s.HandleFunc("GET /v1/credit/fictitious-capital", h.ListFictitiousCapitals)
 	s.HandleFunc("GET /v1/credit/fictitious-capital/{id}", h.GetFictitiousCapital)
+
+	// Vol. III Ch. 26 — Accumulation of Money-Capital
+	s.HandleFunc("POST /v1/credit/money-capital-accumulation", h.CreateMoneyCapitalAccumulation)
+	s.HandleFunc("GET /v1/credit/money-capital-accumulation", h.ListMoneyCapitalAccumulations)
+	s.HandleFunc("GET /v1/credit/money-capital-accumulation/{id}", h.GetMoneyCapitalAccumulation)
 }

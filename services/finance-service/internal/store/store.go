@@ -346,4 +346,16 @@ type Store interface {
 	// ListFictitiousCapitals returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListFictitiousCapitals(ctx context.Context) ([]credit.FictitiousCapital, error)
+
+	// CreateMoneyCapitalAccumulation persists a money-capital-accumulation record
+	// (Vol. III Ch. 26 — accumulation of money-capital and its influence on the
+	// interest rate across industrial cycle phases; InterestRateBP>=0;
+	// IdleCapital.Amount>=0; LoanableSupply.Amount>=0), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateMoneyCapitalAccumulation(ctx context.Context, a credit.MoneyCapitalAccumulation) (credit.MoneyCapitalAccumulation, error)
+	// GetMoneyCapitalAccumulation returns the record with the given ID, or ErrNotFound.
+	GetMoneyCapitalAccumulation(ctx context.Context, id credit.MoneyCapitalAccumulationID) (credit.MoneyCapitalAccumulation, error)
+	// ListMoneyCapitalAccumulations returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListMoneyCapitalAccumulations(ctx context.Context) ([]credit.MoneyCapitalAccumulation, error)
 }
