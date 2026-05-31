@@ -83,6 +83,9 @@ type Memory struct {
 	soilExclusionEvents        map[rent.SoilExclusionEventID]rent.SoilExclusionEvent
 	fallingPriceDR2Outcomes    map[rent.FallingPriceDR2OutcomeID]rent.FallingPriceDR2Outcome
 	normalCapitalPerAcre       map[rent.NormalCapitalPerAcreID]rent.NormalCapitalPerAcre
+	risingPriceDR2Outcomes     map[rent.RisingPriceDR2OutcomeID]rent.RisingPriceDR2Outcome
+	rentSequences              map[rent.RentSequenceID]rent.RentSequence
+	engelsTableEntries         map[rent.EngelsTableEntryID]rent.EngelsTableEntry
 }
 
 // NewMemory returns an empty in-memory store.
@@ -154,6 +157,9 @@ func NewMemory() *Memory {
 		soilExclusionEvents:        make(map[rent.SoilExclusionEventID]rent.SoilExclusionEvent),
 		fallingPriceDR2Outcomes:    make(map[rent.FallingPriceDR2OutcomeID]rent.FallingPriceDR2Outcome),
 		normalCapitalPerAcre:       make(map[rent.NormalCapitalPerAcreID]rent.NormalCapitalPerAcre),
+		risingPriceDR2Outcomes:     make(map[rent.RisingPriceDR2OutcomeID]rent.RisingPriceDR2Outcome),
+		rentSequences:              make(map[rent.RentSequenceID]rent.RentSequence),
+		engelsTableEntries:         make(map[rent.EngelsTableEntryID]rent.EngelsTableEntry),
 	}
 }
 
@@ -2956,6 +2962,114 @@ func (m *Memory) ListNormalCapitalPerAcre(_ context.Context) ([]rent.NormalCapit
 	out := make([]rent.NormalCapitalPerAcre, 0, len(m.normalCapitalPerAcre))
 	for _, n := range m.normalCapitalPerAcre {
 		out = append(out, n)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateRisingPriceDR2Outcome stores o, assigning an ID and timestamp when absent (Vol. III Ch. 43).
+func (m *Memory) CreateRisingPriceDR2Outcome(_ context.Context, o rent.RisingPriceDR2Outcome) (rent.RisingPriceDR2Outcome, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if o.ID == "" {
+		o.ID = rent.NewRisingPriceDR2OutcomeID()
+	}
+	if _, exists := m.risingPriceDR2Outcomes[o.ID]; exists {
+		return rent.RisingPriceDR2Outcome{}, ErrAlreadyExists
+	}
+	if o.CreatedAt.IsZero() {
+		o.CreatedAt = m.now().UTC()
+	}
+	m.risingPriceDR2Outcomes[o.ID] = o
+	return o, nil
+}
+
+// ListRisingPriceDR2Outcomes returns all stored rising-price DR II outcomes, newest first. Never returns nil (Vol. III Ch. 43).
+func (m *Memory) ListRisingPriceDR2Outcomes(_ context.Context) ([]rent.RisingPriceDR2Outcome, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.RisingPriceDR2Outcome, 0, len(m.risingPriceDR2Outcomes))
+	for _, o := range m.risingPriceDR2Outcomes {
+		out = append(out, o)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateRentSequence stores rs, assigning an ID and timestamp when absent (Vol. III Ch. 43).
+func (m *Memory) CreateRentSequence(_ context.Context, rs rent.RentSequence) (rent.RentSequence, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if rs.ID == "" {
+		rs.ID = rent.NewRentSequenceID()
+	}
+	if _, exists := m.rentSequences[rs.ID]; exists {
+		return rent.RentSequence{}, ErrAlreadyExists
+	}
+	if rs.CreatedAt.IsZero() {
+		rs.CreatedAt = m.now().UTC()
+	}
+	m.rentSequences[rs.ID] = rs
+	return rs, nil
+}
+
+// ListRentSequences returns all stored rent-sequence records, newest first. Never returns nil (Vol. III Ch. 43).
+func (m *Memory) ListRentSequences(_ context.Context) ([]rent.RentSequence, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.RentSequence, 0, len(m.rentSequences))
+	for _, rs := range m.rentSequences {
+		out = append(out, rs)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateEngelsTableEntry stores e, assigning an ID and timestamp when absent (Vol. III Ch. 43).
+func (m *Memory) CreateEngelsTableEntry(_ context.Context, e rent.EngelsTableEntry) (rent.EngelsTableEntry, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if e.ID == "" {
+		e.ID = rent.NewEngelsTableEntryID()
+	}
+	if _, exists := m.engelsTableEntries[e.ID]; exists {
+		return rent.EngelsTableEntry{}, ErrAlreadyExists
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = m.now().UTC()
+	}
+	m.engelsTableEntries[e.ID] = e
+	return e, nil
+}
+
+// ListEngelsTableEntries returns all stored Engels-table entries, newest first. Never returns nil (Vol. III Ch. 43).
+func (m *Memory) ListEngelsTableEntries(_ context.Context) ([]rent.EngelsTableEntry, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.EngelsTableEntry, 0, len(m.engelsTableEntries))
+	for _, e := range m.engelsTableEntries {
+		out = append(out, e)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

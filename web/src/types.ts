@@ -4539,3 +4539,53 @@ export interface CreateNormalCapitalPerAcreInput {
   period_label: string;
   capital_per_acre_bp: number;
 }
+
+// Vol. III Ch. 43 — DR II Rising Price of Production
+export type RisingPriceVariant = 1 | 2 | 3 | 4 | 5;
+export interface RisingPriceDR2Outcome {
+  id: string;
+  variant: RisingPriceVariant;
+  total_capital_shillings: number;
+  total_rent_shillings: number;
+  total_output_bushels: number;
+  price_per_bushel_shillings: number;
+  created_at: string;
+}
+export interface CreateRisingPriceDR2OutcomeInput {
+  variant: RisingPriceVariant;
+  total_capital_shillings: number;
+  total_rent_shillings: number;
+  total_output_bushels: number;
+  price_per_bushel_shillings: number;
+}
+export interface RentSequence {
+  id: string;
+  base_rent: number;
+  increment: number;
+  num_grades: number;
+  created_at: string;
+}
+export interface CreateRentSequenceInput {
+  base_rent: number;
+  increment: number;
+  num_grades: number;
+}
+export interface CreateRentSequenceResponse extends RentSequence {
+  sequence: number[];
+}
+export interface EngelsTableEntry {
+  id: string;
+  table_number: number;
+  soil_grade_label: string;
+  output_bushels: number;
+  rent_shillings: number;
+  capital_shillings: number;
+  created_at: string;
+}
+export interface CreateEngelsTableEntryInput {
+  table_number: number;
+  soil_grade_label: string;
+  output_bushels: number;
+  rent_shillings: number;
+  capital_shillings: number;
+}

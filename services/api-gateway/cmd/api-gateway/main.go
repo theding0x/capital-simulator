@@ -495,6 +495,13 @@ func main() {
 	srv.Handle("/v1/rent/dr2-falling-outcomes/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/normal-capital", financeProxy)
 	srv.Handle("/v1/rent/normal-capital/{rest...}", financeProxy)
+	// Ch. 43 — DR II rising price: rising-price outcomes, rent sequences, Engels tables.
+	srv.Handle("/v1/rent/rising-price-outcomes", financeProxy)
+	srv.Handle("/v1/rent/rising-price-outcomes/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/rent-sequences", financeProxy)
+	srv.Handle("/v1/rent/rent-sequences/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/engels-tables", financeProxy)
+	srv.Handle("/v1/rent/engels-tables/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 

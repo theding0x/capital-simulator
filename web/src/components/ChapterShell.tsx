@@ -97,6 +97,7 @@ import { Ch39DifferentialRentI } from "../chapters/vol3/Ch39DifferentialRentI";
 import { Ch40DifferentialRentII } from "../chapters/vol3/Ch40DifferentialRentII";
 import { Ch41DR2ConstantPrice } from "../chapters/vol3/Ch41DR2ConstantPrice";
 import { Ch42DR2FallingPrice } from "../chapters/vol3/Ch42DR2FallingPrice";
+import { Ch43DR2RisingPrice } from "../chapters/vol3/Ch43DR2RisingPrice";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -212,6 +213,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch40": Ch40DifferentialRentII as AnyPanel,
   "v3-ch41": Ch41DR2ConstantPrice as AnyPanel,
   "v3-ch42": Ch42DR2FallingPrice as AnyPanel,
+  "v3-ch43": Ch43DR2RisingPrice as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -307,6 +309,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch40": "The second form of differential rent... arises from the different distribution of successive capital investments on the same land. — Marx, Capital III, Ch. 40.",
   "v3-ch41": "With a constant price of production... every additional investment of capital in the soil bearing rent increases the rent per acre, although the rate of this increase need not be proportional to the increase of capital. — Marx, Capital III, Ch. 41.",
   "v3-ch42": "Even with a falling price of production, additional capital can be invested with the result that the rental rises, or at least does not fall... the grain-rent rises while the money-rent remains constant. — Marx, Capital III, Ch. 42.",
+  "v3-ch43": "The more capital is invested in the land, and the higher the development of agriculture and civilisation in general in a country, the more the rents rise... and the more immense becomes the tribute paid to the great landlords. — Marx/Engels, Capital III, Ch. 43.",
 };
 
 export function ChapterShell({
