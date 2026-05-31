@@ -3850,3 +3850,59 @@ export interface CreateMoneyCapitalAccumulationInput {
   gap_description: string;
   description: string;
 }
+
+// ── Vol. III Ch. 27 — The Role of Credit in Capitalist Production ─────────────
+
+// Manager mirrors credit.Manager (Vol. III Ch. 27).
+// wage_minutes > 0 — wages of superintendence, NOT profit of enterprise.
+export interface Manager {
+  name: string;
+  title: string;
+  wage_minutes: number; // > 0
+}
+
+// StockCompany mirrors credit.StockCompany (Vol. III Ch. 27).
+// Invariant: total_capital == fixed_capital + floating_capital.
+export interface StockCompany {
+  id: string;
+  name: string;
+  fixed_capital: number;    // pence
+  floating_capital: number; // pence
+  total_capital: number;    // pence; == fixed + floating
+  manager: Manager;
+  description: string;
+  created_at: string;
+}
+
+// CreateStockCompanyInput is the request body for POST /v1/credit/stock-companies.
+export interface CreateStockCompanyInput {
+  name: string;
+  fixed_capital: number;
+  floating_capital: number;
+  total_capital: number;
+  manager_name: string;
+  manager_title: string;
+  manager_wage_minutes: number;
+  description: string;
+}
+
+// CooperativeFactory mirrors credit.CooperativeFactory (Vol. III Ch. 27).
+// Invariant: worker_owned == true.
+export interface CooperativeFactory {
+  id: string;
+  name: string;
+  worker_owned: boolean;    // always true
+  worker_count: number;
+  capital_advanced: number; // pence
+  description: string;
+  created_at: string;
+}
+
+// CreateCooperativeFactoryInput is the request body for POST /v1/credit/cooperative-factories.
+export interface CreateCooperativeFactoryInput {
+  name: string;
+  worker_owned: boolean;
+  worker_count: number;
+  capital_advanced: number;
+  description: string;
+}

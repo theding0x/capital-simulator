@@ -2936,3 +2936,200 @@ func scanMoneyCapitalAccumulation(s rowScanner) (credit.MoneyCapitalAccumulation
 		CreatedAt:   createdAt,
 	}, nil
 }
+
+// ── Vol. III Ch. 27 — The Role of Credit (StockCompany, CooperativeFactory) ──
+
+// CreateStockCompany inserts sc, assigning an ID and timestamp when absent (Vol. III Ch. 27).
+func (m *MySQL) CreateStockCompany(ctx context.Context, sc credit.StockCompany) (credit.StockCompany, error) {
+	if sc.ID.IsZero() {
+		sc.ID = credit.NewStockCompanyID()
+	}
+	if sc.CreatedAt.IsZero() {
+		sc.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO stock_companies (` +
+		"`id`, `name`, `fixed_capital`, `floating_capital`, `total_capital`, " +
+		"`manager_name`, `manager_title`, `manager_wage_minutes`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(sc.ID),
+		sc.Name,
+		sc.FixedCapital,
+		sc.FloatingCapital,
+		sc.TotalCapital,
+		sc.Manager.Name,
+		sc.Manager.Title,
+		sc.Manager.WageMinutes,
+		sc.Description,
+		sc.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.StockCompany{}, ErrAlreadyExists
+		}
+		return credit.StockCompany{}, err
+	}
+	return sc, nil
+}
+
+// GetStockCompany returns the stock company with id, or ErrNotFound.
+func (m *MySQL) GetStockCompany(ctx context.Context, id credit.StockCompanyID) (credit.StockCompany, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `fixed_capital`, `floating_capital`, `total_capital`, " +
+		"`manager_name`, `manager_title`, `manager_wage_minutes`, `description`, `created_at` " +
+		"FROM `stock_companies` WHERE `id` = ?"
+	return scanStockCompany(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListStockCompanies returns all stored stock companies, newest first.
+func (m *MySQL) ListStockCompanies(ctx context.Context) ([]credit.StockCompany, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `fixed_capital`, `floating_capital`, `total_capital`, " +
+		"`manager_name`, `manager_title`, `manager_wage_minutes`, `description`, `created_at` " +
+		"FROM `stock_companies` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.StockCompany, 0)
+	for rows.Next() {
+		sc, err := scanStockCompany(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, sc)
+	}
+	return out, rows.Err()
+}
+
+func scanStockCompany(s rowScanner) (credit.StockCompany, error) {
+	var (
+		id              string
+		name            string
+		fixedCapital    int64
+		floatingCapital int64
+		totalCapital    int64
+		managerName     string
+		managerTitle    string
+		managerWage     int64
+		description     string
+		createdAt       time.Time
+	)
+	err := s.Scan(
+		&id, &name, &fixedCapital, &floatingCapital, &totalCapital,
+		&managerName, &managerTitle, &managerWage,
+		&description, &createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.StockCompany{}, ErrNotFound
+		}
+		return credit.StockCompany{}, err
+	}
+	return credit.StockCompany{
+		ID:              credit.StockCompanyID(id),
+		Name:            name,
+		FixedCapital:    fixedCapital,
+		FloatingCapital: floatingCapital,
+		TotalCapital:    totalCapital,
+		Manager: credit.Manager{
+			Name:        managerName,
+			Title:       managerTitle,
+			WageMinutes: managerWage,
+		},
+		Description: description,
+		CreatedAt:   createdAt,
+	}, nil
+}
+
+// CreateCooperativeFactory inserts cf, assigning an ID and timestamp when absent (Vol. III Ch. 27).
+func (m *MySQL) CreateCooperativeFactory(ctx context.Context, cf credit.CooperativeFactory) (credit.CooperativeFactory, error) {
+	if cf.ID.IsZero() {
+		cf.ID = credit.NewCooperativeFactoryID()
+	}
+	if cf.CreatedAt.IsZero() {
+		cf.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO cooperative_factories (` +
+		"`id`, `name`, `worker_owned`, `worker_count`, `capital_advanced`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(cf.ID),
+		cf.Name,
+		cf.WorkerOwned,
+		cf.WorkerCount,
+		cf.CapitalAdvanced,
+		cf.Description,
+		cf.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.CooperativeFactory{}, ErrAlreadyExists
+		}
+		return credit.CooperativeFactory{}, err
+	}
+	return cf, nil
+}
+
+// GetCooperativeFactory returns the cooperative factory with id, or ErrNotFound.
+func (m *MySQL) GetCooperativeFactory(ctx context.Context, id credit.CooperativeFactoryID) (credit.CooperativeFactory, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `worker_owned`, `worker_count`, `capital_advanced`, `description`, `created_at` " +
+		"FROM `cooperative_factories` WHERE `id` = ?"
+	return scanCooperativeFactory(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCooperativeFactories returns all stored cooperative factories, newest first.
+func (m *MySQL) ListCooperativeFactories(ctx context.Context) ([]credit.CooperativeFactory, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `worker_owned`, `worker_count`, `capital_advanced`, `description`, `created_at` " +
+		"FROM `cooperative_factories` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.CooperativeFactory, 0)
+	for rows.Next() {
+		cf, err := scanCooperativeFactory(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, cf)
+	}
+	return out, rows.Err()
+}
+
+func scanCooperativeFactory(s rowScanner) (credit.CooperativeFactory, error) {
+	var (
+		id              string
+		name            string
+		workerOwned     bool
+		workerCount     int64
+		capitalAdvanced int64
+		description     string
+		createdAt       time.Time
+	)
+	err := s.Scan(
+		&id, &name, &workerOwned, &workerCount, &capitalAdvanced,
+		&description, &createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.CooperativeFactory{}, ErrNotFound
+		}
+		return credit.CooperativeFactory{}, err
+	}
+	return credit.CooperativeFactory{
+		ID:              credit.CooperativeFactoryID(id),
+		Name:            name,
+		WorkerOwned:     workerOwned,
+		WorkerCount:     workerCount,
+		CapitalAdvanced: capitalAdvanced,
+		Description:     description,
+		CreatedAt:       createdAt,
+	}, nil
+}

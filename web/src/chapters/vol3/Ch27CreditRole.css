@@ -1,0 +1,251 @@
+.v3-ch27 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.v3-ch27-intro {
+  color: var(--text-secondary, #666);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.v3-ch27-section {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.v3-ch27-section h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #111);
+}
+
+.v3-ch27-subintro {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666);
+  margin: 0 0 0.75rem;
+}
+
+/* Three roles */
+.v3-ch27-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3-ch27-role-card {
+  background: var(--surface-alt, #f9f9f9);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 5px;
+  padding: 0.6rem 0.9rem;
+}
+
+.v3-ch27-role-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary, #111);
+  margin-bottom: 0.25rem;
+}
+
+.v3-ch27-role-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #555);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Circulation saving */
+.v3-ch27-saving-card {
+  background: var(--surface-alt, #f9f9f9);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 5px;
+  padding: 0.6rem 0.9rem;
+  max-width: 400px;
+}
+
+.v3-ch27-saving-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding: 0.2rem 0;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch27-saving-row--total {
+  border-top: 1px solid var(--border, #ddd);
+  margin-top: 0.25rem;
+  padding-top: 0.3rem;
+  font-weight: 600;
+  color: var(--text-primary, #111);
+}
+
+.v3-ch27-saving-label {
+  flex: 1;
+}
+
+.v3-ch27-saving-val {
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.v3-ch27-saving-ok {
+  color: var(--ok, #2a7a2a);
+}
+
+.v3-ch27-saving-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #888);
+  margin: 0.5rem 0 0;
+}
+
+/* Exemplar cards */
+.v3-ch27-exemplar-card {
+  background: var(--surface-alt, #f9f9f9);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 5px;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.v3-ch27-exemplar-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary, #111);
+  margin-bottom: 0.25rem;
+}
+
+.v3-ch27-exemplar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch27-exemplar-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #888);
+  margin: 0.35rem 0 0;
+}
+
+/* Create forms */
+.v3-ch27-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 480px;
+  margin-bottom: 0.75rem;
+}
+
+.v3-ch27-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--text-primary, #111);
+}
+
+.v3-ch27-form input {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch27-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #888);
+}
+
+.v3-ch27-warn {
+  font-size: 0.78rem;
+  color: var(--warn, #b85000);
+}
+
+.v3-ch27-btn {
+  align-self: flex-start;
+  padding: 0.35rem 0.9rem;
+  background: var(--accent, #0066cc);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.v3-ch27-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.v3-ch27-error {
+  color: var(--error, #c0392b);
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+/* Stored entity cards */
+.v3-ch27-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.v3-ch27-card {
+  background: var(--surface-alt, #f9f9f9);
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 5px;
+  padding: 0.6rem 0.9rem;
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+.v3-ch27-card--coop {
+  background: var(--surface, #fff);
+  border-color: var(--ok, #2a7a2a);
+}
+
+.v3-ch27-card-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary, #111);
+  margin-bottom: 0.3rem;
+}
+
+.v3-ch27-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch27-card-mgr {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #666);
+  margin-top: 0.25rem;
+}
+
+.v3-ch27-card-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #666);
+  margin-top: 0.25rem;
+}
+
+.v3-ch27-total {
+  font-weight: 600;
+  color: var(--text-primary, #111);
+}
+
+.v3-ch27-worker-tag {
+  background: var(--ok-light, #e6f4e6);
+  color: var(--ok, #2a7a2a);
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

@@ -142,6 +142,12 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/credit/money-capital-accumulation", h.CreateMoneyCapitalAccumulation)
 	mux.HandleFunc("GET /v1/credit/money-capital-accumulation", h.ListMoneyCapitalAccumulations)
 	mux.HandleFunc("GET /v1/credit/money-capital-accumulation/{id}", h.GetMoneyCapitalAccumulation)
+	// Vol. III Ch. 27 — The Role of Credit in Capitalist Production
+	mux.HandleFunc("POST /v1/credit/stock-companies", h.CreateStockCompany)
+	mux.HandleFunc("GET /v1/credit/stock-companies", h.ListStockCompanies)
+	mux.HandleFunc("GET /v1/credit/stock-companies/{id}", h.GetStockCompany)
+	mux.HandleFunc("POST /v1/credit/cooperative-factories", h.CreateCooperativeFactory)
+	mux.HandleFunc("GET /v1/credit/cooperative-factories", h.ListCooperativeFactories)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

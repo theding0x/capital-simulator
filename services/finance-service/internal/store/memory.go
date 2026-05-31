@@ -46,11 +46,13 @@ type Memory struct {
 	historicalMerchantCapitals map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital
 	interestBearingCapitals    map[credit.InterestBearingCapitalID]credit.InterestBearingCapital
 	ratesOfInterest            map[credit.RateOfInterestID]credit.RateOfInterest
-	profitDivisions             map[credit.ProfitDivisionID]credit.ProfitDivision
+	profitDivisions            map[credit.ProfitDivisionID]credit.ProfitDivision
 	compoundInterestSchedules  map[credit.CompoundInterestID]credit.CompoundInterestSchedule
-	billsOfExchange              map[credit.BillOfExchangeID]credit.BillOfExchange
-	fictitiousCapitals           map[credit.FictitiousCapitalID]credit.FictitiousCapital
-	moneyCapitalAccumulations    map[credit.MoneyCapitalAccumulationID]credit.MoneyCapitalAccumulation
+	billsOfExchange            map[credit.BillOfExchangeID]credit.BillOfExchange
+	fictitiousCapitals         map[credit.FictitiousCapitalID]credit.FictitiousCapital
+	moneyCapitalAccumulations  map[credit.MoneyCapitalAccumulationID]credit.MoneyCapitalAccumulation
+	stockCompanies             map[credit.StockCompanyID]credit.StockCompany
+	cooperativeFactories       map[credit.CooperativeFactoryID]credit.CooperativeFactory
 }
 
 // NewMemory returns an empty in-memory store.
@@ -88,9 +90,11 @@ func NewMemory() *Memory {
 		ratesOfInterest:            make(map[credit.RateOfInterestID]credit.RateOfInterest),
 		profitDivisions:            make(map[credit.ProfitDivisionID]credit.ProfitDivision),
 		compoundInterestSchedules:  make(map[credit.CompoundInterestID]credit.CompoundInterestSchedule),
-		billsOfExchange:             make(map[credit.BillOfExchangeID]credit.BillOfExchange),
-		fictitiousCapitals:          make(map[credit.FictitiousCapitalID]credit.FictitiousCapital),
-		moneyCapitalAccumulations:   make(map[credit.MoneyCapitalAccumulationID]credit.MoneyCapitalAccumulation),
+		billsOfExchange:            make(map[credit.BillOfExchangeID]credit.BillOfExchange),
+		fictitiousCapitals:         make(map[credit.FictitiousCapitalID]credit.FictitiousCapital),
+		moneyCapitalAccumulations:  make(map[credit.MoneyCapitalAccumulationID]credit.MoneyCapitalAccumulation),
+		stockCompanies:             make(map[credit.StockCompanyID]credit.StockCompany),
+		cooperativeFactories:       make(map[credit.CooperativeFactoryID]credit.CooperativeFactory),
 	}
 }
 
@@ -1558,6 +1562,102 @@ func (m *Memory) ListMoneyCapitalAccumulations(_ context.Context) ([]credit.Mone
 	out := make([]credit.MoneyCapitalAccumulation, 0, len(m.moneyCapitalAccumulations))
 	for _, a := range m.moneyCapitalAccumulations {
 		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateStockCompany stores sc, assigning an ID and timestamp when absent (Vol. III Ch. 27).
+func (m *Memory) CreateStockCompany(_ context.Context, sc credit.StockCompany) (credit.StockCompany, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if sc.ID.IsZero() {
+		sc.ID = credit.NewStockCompanyID()
+	}
+	if _, exists := m.stockCompanies[sc.ID]; exists {
+		return credit.StockCompany{}, ErrAlreadyExists
+	}
+	if sc.CreatedAt.IsZero() {
+		sc.CreatedAt = m.now().UTC()
+	}
+	m.stockCompanies[sc.ID] = sc
+	return sc, nil
+}
+
+// GetStockCompany returns the stock company with id, or ErrNotFound.
+func (m *Memory) GetStockCompany(_ context.Context, id credit.StockCompanyID) (credit.StockCompany, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	sc, ok := m.stockCompanies[id]
+	if !ok {
+		return credit.StockCompany{}, ErrNotFound
+	}
+	return sc, nil
+}
+
+// ListStockCompanies returns all stored stock companies, newest first.
+func (m *Memory) ListStockCompanies(_ context.Context) ([]credit.StockCompany, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.StockCompany, 0, len(m.stockCompanies))
+	for _, sc := range m.stockCompanies {
+		out = append(out, sc)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCooperativeFactory stores cf, assigning an ID and timestamp when absent (Vol. III Ch. 27).
+func (m *Memory) CreateCooperativeFactory(_ context.Context, cf credit.CooperativeFactory) (credit.CooperativeFactory, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if cf.ID.IsZero() {
+		cf.ID = credit.NewCooperativeFactoryID()
+	}
+	if _, exists := m.cooperativeFactories[cf.ID]; exists {
+		return credit.CooperativeFactory{}, ErrAlreadyExists
+	}
+	if cf.CreatedAt.IsZero() {
+		cf.CreatedAt = m.now().UTC()
+	}
+	m.cooperativeFactories[cf.ID] = cf
+	return cf, nil
+}
+
+// GetCooperativeFactory returns the cooperative factory with id, or ErrNotFound.
+func (m *Memory) GetCooperativeFactory(_ context.Context, id credit.CooperativeFactoryID) (credit.CooperativeFactory, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	cf, ok := m.cooperativeFactories[id]
+	if !ok {
+		return credit.CooperativeFactory{}, ErrNotFound
+	}
+	return cf, nil
+}
+
+// ListCooperativeFactories returns all stored cooperative factories, newest first.
+func (m *Memory) ListCooperativeFactories(_ context.Context) ([]credit.CooperativeFactory, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.CooperativeFactory, 0, len(m.cooperativeFactories))
+	for _, cf := range m.cooperativeFactories {
+		out = append(out, cf)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

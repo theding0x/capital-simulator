@@ -2462,4 +2462,25 @@ export const financeApi = {
     ),
   getMoneyCapitalAccumulation: (id: string) =>
     http<import("./types").MoneyCapitalAccumulation>(`/v1/credit/money-capital-accumulation/${id}`),
+  // Vol. III Ch. 27 — The Role of Credit in Capitalist Production
+  createStockCompany: (body: import("./types").CreateStockCompanyInput) =>
+    http<import("./types").StockCompany>("/v1/credit/stock-companies", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listStockCompanies: () =>
+    http<{ items: import("./types").StockCompany[] }>("/v1/credit/stock-companies").then(
+      (r) => r.items ?? [],
+    ),
+  getStockCompany: (id: string) =>
+    http<import("./types").StockCompany>(`/v1/credit/stock-companies/${id}`),
+  createCooperativeFactory: (body: import("./types").CreateCooperativeFactoryInput) =>
+    http<import("./types").CooperativeFactory>("/v1/credit/cooperative-factories", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listCooperativeFactories: () =>
+    http<{ items: import("./types").CooperativeFactory[] }>("/v1/credit/cooperative-factories").then(
+      (r) => r.items ?? [],
+    ),
 };
