@@ -5796,3 +5796,236 @@ func scanEngelsTableEntry(s rowScanner) (rent.EngelsTableEntry, error) {
 		CreatedAt:        createdAt,
 	}, nil
 }
+
+// ── Vol. III Ch. 44 — Differential Rent on the Worst Cultivated Soil ──
+
+// CreateRentOnWorstSoil inserts r, assigning an ID and timestamp when absent (Vol. III Ch. 44).
+func (m *MySQL) CreateRentOnWorstSoil(ctx context.Context, r rent.RentOnWorstSoil) (rent.RentOnWorstSoil, error) {
+	if r.ID == "" {
+		r.ID = rent.NewRentOnWorstSoilID()
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `rent_on_worst_soils`" +
+		" (`id`, `parcel_id`, `mechanism`, `old_price_of_production_bp`, `new_price_of_production_bp`, `rent_per_acre_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(r.ID),
+		r.ParcelID,
+		int(r.Mechanism),
+		r.OldPriceOfProductionBP,
+		r.NewPriceOfProductionBP,
+		r.RentPerAcreBP,
+		r.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.RentOnWorstSoil{}, ErrAlreadyExists
+		}
+		return rent.RentOnWorstSoil{}, err
+	}
+	return r, nil
+}
+
+// ListRentOnWorstSoils returns all stored records, newest first (Vol. III Ch. 44).
+func (m *MySQL) ListRentOnWorstSoils(ctx context.Context) ([]rent.RentOnWorstSoil, error) {
+	const q = "SELECT `id`, `parcel_id`, `mechanism`, `old_price_of_production_bp`, `new_price_of_production_bp`, `rent_per_acre_bp`, `created_at`" +
+		" FROM `rent_on_worst_soils` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.RentOnWorstSoil, 0)
+	for rows.Next() {
+		r, err := scanRentOnWorstSoil(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func scanRentOnWorstSoil(s rowScanner) (rent.RentOnWorstSoil, error) {
+	var (
+		id                     string
+		parcelID               string
+		mechanism              int
+		oldPriceOfProductionBP int64
+		newPriceOfProductionBP int64
+		rentPerAcreBP          int64
+		createdAt              time.Time
+	)
+	err := s.Scan(&id, &parcelID, &mechanism, &oldPriceOfProductionBP, &newPriceOfProductionBP, &rentPerAcreBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.RentOnWorstSoil{}, ErrNotFound
+		}
+		return rent.RentOnWorstSoil{}, err
+	}
+	return rent.RentOnWorstSoil{
+		ID:                     rent.RentOnWorstSoilID(id),
+		ParcelID:               parcelID,
+		Mechanism:              rent.RentEmergenceMechanism(mechanism),
+		OldPriceOfProductionBP: oldPriceOfProductionBP,
+		NewPriceOfProductionBP: newPriceOfProductionBP,
+		RentPerAcreBP:          rentPerAcreBP,
+		CreatedAt:              createdAt,
+	}, nil
+}
+
+// CreateSoilImprovementCapital inserts s, assigning an ID and timestamp when absent (Vol. III Ch. 44).
+func (m *MySQL) CreateSoilImprovementCapital(ctx context.Context, s rent.SoilImprovementCapital) (rent.SoilImprovementCapital, error) {
+	if s.ID == "" {
+		s.ID = rent.NewSoilImprovementCapitalID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `soil_improvement_capitals`" +
+		" (`id`, `parcel_id`, `capital_invested_bp`, `productivity_gain_bp`, `amortisation_years`, `amortised_years`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID),
+		s.ParcelID,
+		s.CapitalInvestedBP,
+		s.ProductivityGainBP,
+		s.AmortisationYears,
+		s.AmortisedYears,
+		s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.SoilImprovementCapital{}, ErrAlreadyExists
+		}
+		return rent.SoilImprovementCapital{}, err
+	}
+	return s, nil
+}
+
+// ListSoilImprovementCapitals returns all stored records, newest first (Vol. III Ch. 44).
+func (m *MySQL) ListSoilImprovementCapitals(ctx context.Context) ([]rent.SoilImprovementCapital, error) {
+	const q = "SELECT `id`, `parcel_id`, `capital_invested_bp`, `productivity_gain_bp`, `amortisation_years`, `amortised_years`, `created_at`" +
+		" FROM `soil_improvement_capitals` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.SoilImprovementCapital, 0)
+	for rows.Next() {
+		s, err := scanSoilImprovementCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func scanSoilImprovementCapital(s rowScanner) (rent.SoilImprovementCapital, error) {
+	var (
+		id                 string
+		parcelID           string
+		capitalInvestedBP  int64
+		productivityGainBP int64
+		amortisationYears  int
+		amortisedYears     int
+		createdAt          time.Time
+	)
+	err := s.Scan(&id, &parcelID, &capitalInvestedBP, &productivityGainBP, &amortisationYears, &amortisedYears, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.SoilImprovementCapital{}, ErrNotFound
+		}
+		return rent.SoilImprovementCapital{}, err
+	}
+	return rent.SoilImprovementCapital{
+		ID:                 rent.SoilImprovementCapitalID(id),
+		ParcelID:           parcelID,
+		CapitalInvestedBP:  capitalInvestedBP,
+		ProductivityGainBP: productivityGainBP,
+		AmortisationYears:  amortisationYears,
+		AmortisedYears:     amortisedYears,
+		CreatedAt:          createdAt,
+	}, nil
+}
+
+// CreateRegulatingPriceShift inserts s, assigning an ID and timestamp when absent (Vol. III Ch. 44).
+func (m *MySQL) CreateRegulatingPriceShift(ctx context.Context, s rent.RegulatingPriceShift) (rent.RegulatingPriceShift, error) {
+	if s.ID == "" {
+		s.ID = rent.NewRegulatingPriceShiftID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `regulating_price_shifts`" +
+		" (`id`, `from_grade`, `to_grade`, `old_price_bp`, `new_price_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID),
+		int(s.FromGrade),
+		int(s.ToGrade),
+		s.OldPriceBP,
+		s.NewPriceBP,
+		s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.RegulatingPriceShift{}, ErrAlreadyExists
+		}
+		return rent.RegulatingPriceShift{}, err
+	}
+	return s, nil
+}
+
+// ListRegulatingPriceShifts returns all stored records, newest first (Vol. III Ch. 44).
+func (m *MySQL) ListRegulatingPriceShifts(ctx context.Context) ([]rent.RegulatingPriceShift, error) {
+	const q = "SELECT `id`, `from_grade`, `to_grade`, `old_price_bp`, `new_price_bp`, `created_at`" +
+		" FROM `regulating_price_shifts` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.RegulatingPriceShift, 0)
+	for rows.Next() {
+		s, err := scanRegulatingPriceShift(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func scanRegulatingPriceShift(s rowScanner) (rent.RegulatingPriceShift, error) {
+	var (
+		id         string
+		fromGrade  int
+		toGrade    int
+		oldPriceBP int64
+		newPriceBP int64
+		createdAt  time.Time
+	)
+	err := s.Scan(&id, &fromGrade, &toGrade, &oldPriceBP, &newPriceBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.RegulatingPriceShift{}, ErrNotFound
+		}
+		return rent.RegulatingPriceShift{}, err
+	}
+	return rent.RegulatingPriceShift{
+		ID:         rent.RegulatingPriceShiftID(id),
+		FromGrade:  rent.SoilGrade(fromGrade),
+		ToGrade:    rent.SoilGrade(toGrade),
+		OldPriceBP: oldPriceBP,
+		NewPriceBP: newPriceBP,
+		CreatedAt:  createdAt,
+	}, nil
+}

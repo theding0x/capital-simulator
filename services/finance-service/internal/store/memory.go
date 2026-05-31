@@ -86,6 +86,9 @@ type Memory struct {
 	risingPriceDR2Outcomes     map[rent.RisingPriceDR2OutcomeID]rent.RisingPriceDR2Outcome
 	rentSequences              map[rent.RentSequenceID]rent.RentSequence
 	engelsTableEntries         map[rent.EngelsTableEntryID]rent.EngelsTableEntry
+	rentOnWorstSoils           map[rent.RentOnWorstSoilID]rent.RentOnWorstSoil
+	soilImprovementCapitals    map[rent.SoilImprovementCapitalID]rent.SoilImprovementCapital
+	regulatingPriceShifts      map[rent.RegulatingPriceShiftID]rent.RegulatingPriceShift
 }
 
 // NewMemory returns an empty in-memory store.
@@ -160,6 +163,9 @@ func NewMemory() *Memory {
 		risingPriceDR2Outcomes:     make(map[rent.RisingPriceDR2OutcomeID]rent.RisingPriceDR2Outcome),
 		rentSequences:              make(map[rent.RentSequenceID]rent.RentSequence),
 		engelsTableEntries:         make(map[rent.EngelsTableEntryID]rent.EngelsTableEntry),
+		rentOnWorstSoils:           make(map[rent.RentOnWorstSoilID]rent.RentOnWorstSoil),
+		soilImprovementCapitals:    make(map[rent.SoilImprovementCapitalID]rent.SoilImprovementCapital),
+		regulatingPriceShifts:      make(map[rent.RegulatingPriceShiftID]rent.RegulatingPriceShift),
 	}
 }
 
@@ -3070,6 +3076,116 @@ func (m *Memory) ListEngelsTableEntries(_ context.Context) ([]rent.EngelsTableEn
 	out := make([]rent.EngelsTableEntry, 0, len(m.engelsTableEntries))
 	for _, e := range m.engelsTableEntries {
 		out = append(out, e)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// ── Vol. III Ch. 44 — Differential Rent on the Worst Cultivated Soil ──
+
+// CreateRentOnWorstSoil stores r, assigning an ID and timestamp when absent (Vol. III Ch. 44).
+func (m *Memory) CreateRentOnWorstSoil(_ context.Context, r rent.RentOnWorstSoil) (rent.RentOnWorstSoil, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if r.ID == "" {
+		r.ID = rent.NewRentOnWorstSoilID()
+	}
+	if _, exists := m.rentOnWorstSoils[r.ID]; exists {
+		return rent.RentOnWorstSoil{}, ErrAlreadyExists
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = m.now().UTC()
+	}
+	m.rentOnWorstSoils[r.ID] = r
+	return r, nil
+}
+
+// ListRentOnWorstSoils returns all stored rent-on-worst-soil records, newest first. Never returns nil.
+func (m *Memory) ListRentOnWorstSoils(_ context.Context) ([]rent.RentOnWorstSoil, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.RentOnWorstSoil, 0, len(m.rentOnWorstSoils))
+	for _, r := range m.rentOnWorstSoils {
+		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateSoilImprovementCapital stores s, assigning an ID and timestamp when absent (Vol. III Ch. 44).
+func (m *Memory) CreateSoilImprovementCapital(_ context.Context, s rent.SoilImprovementCapital) (rent.SoilImprovementCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID == "" {
+		s.ID = rent.NewSoilImprovementCapitalID()
+	}
+	if _, exists := m.soilImprovementCapitals[s.ID]; exists {
+		return rent.SoilImprovementCapital{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	m.soilImprovementCapitals[s.ID] = s
+	return s, nil
+}
+
+// ListSoilImprovementCapitals returns all stored soil-improvement-capital records, newest first. Never returns nil.
+func (m *Memory) ListSoilImprovementCapitals(_ context.Context) ([]rent.SoilImprovementCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.SoilImprovementCapital, 0, len(m.soilImprovementCapitals))
+	for _, s := range m.soilImprovementCapitals {
+		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateRegulatingPriceShift stores s, assigning an ID and timestamp when absent (Vol. III Ch. 44).
+func (m *Memory) CreateRegulatingPriceShift(_ context.Context, s rent.RegulatingPriceShift) (rent.RegulatingPriceShift, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID == "" {
+		s.ID = rent.NewRegulatingPriceShiftID()
+	}
+	if _, exists := m.regulatingPriceShifts[s.ID]; exists {
+		return rent.RegulatingPriceShift{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	m.regulatingPriceShifts[s.ID] = s
+	return s, nil
+}
+
+// ListRegulatingPriceShifts returns all stored regulating-price-shift records, newest first. Never returns nil.
+func (m *Memory) ListRegulatingPriceShifts(_ context.Context) ([]rent.RegulatingPriceShift, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.RegulatingPriceShift, 0, len(m.regulatingPriceShifts))
+	for _, s := range m.regulatingPriceShifts {
+		out = append(out, s)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

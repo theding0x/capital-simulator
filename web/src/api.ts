@@ -2845,4 +2845,33 @@ export const financeApi = {
     http<{ items: import("./types").EngelsTableEntry[] }>("/v1/rent/engels-tables").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 44 — Differential Rent on the Worst Cultivated Soil
+  createRentOnWorstSoil: (body: import("./types").CreateRentOnWorstSoilInput) =>
+    http<import("./types").RentOnWorstSoil>("/v1/rent/worst-soil-rents", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listRentOnWorstSoils: () =>
+    http<{ items: import("./types").RentOnWorstSoil[] }>("/v1/rent/worst-soil-rents").then(
+      (r) => r.items ?? [],
+    ),
+  createSoilImprovementCapital: (body: import("./types").CreateSoilImprovementCapitalInput) =>
+    http<import("./types").SoilImprovementCapital>("/v1/rent/soil-improvements", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listSoilImprovementCapitals: () =>
+    http<{ items: import("./types").SoilImprovementCapital[] }>("/v1/rent/soil-improvements").then(
+      (r) => r.items ?? [],
+    ),
+  createRegulatingPriceShift: (body: import("./types").CreateRegulatingPriceShiftInput) =>
+    http<import("./types").RegulatingPriceShift>("/v1/rent/regulating-price-shifts", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listRegulatingPriceShifts: () =>
+    http<{ items: import("./types").RegulatingPriceShift[] }>("/v1/rent/regulating-price-shifts").then(
+      (r) => r.items ?? [],
+    ),
 };
