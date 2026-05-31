@@ -84,6 +84,7 @@ import { Ch26MoneyCapitalAccumulation } from "../chapters/vol3/Ch26MoneyCapitalA
 import { Ch27CreditRole } from "../chapters/vol3/Ch27CreditRole";
 import { Ch28MediumOfCirculation } from "../chapters/vol3/Ch28MediumOfCirculation";
 import { Ch29BankCapital } from "../chapters/vol3/Ch29BankCapital";
+import { Ch30MoneyRealCapital } from "../chapters/vol3/Ch30MoneyRealCapital";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -186,6 +187,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch27": Ch27CreditRole as AnyPanel,
   "v3-ch28": Ch28MediumOfCirculation as AnyPanel,
   "v3-ch29": Ch29BankCapital as AnyPanel,
+  "v3-ch30": Ch30MoneyRealCapital as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {

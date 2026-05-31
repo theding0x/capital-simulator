@@ -2495,6 +2495,22 @@ export const financeApi = {
     ),
   getCurrencyObservation: (id: string) =>
     http<import("./types").CurrencyObservation>(`/v1/credit/currency-observations/${id}`),
+  // Vol. III Ch. 30 — Money-Capital and Real Capital, I
+  createRealCapitalAccumulation: (
+    body: import("./types").CreateRealCapitalAccumulationInput,
+  ) =>
+    http<import("./types").RealCapitalAccumulation>("/v1/credit/real-capital-accumulation", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listRealCapitalAccumulations: () =>
+    http<{ items: import("./types").RealCapitalAccumulation[] }>(
+      "/v1/credit/real-capital-accumulation",
+    ).then((r) => r.items ?? []),
+  getRealCapitalAccumulation: (id: string) =>
+    http<import("./types").RealCapitalAccumulation>(
+      `/v1/credit/real-capital-accumulation/${id}`,
+    ),
   // Vol. III Ch. 29 — Component Parts of Bank Capital
   createBankCapital: (body: import("./types").CreateBankCapitalInput) =>
     http<import("./types").BankCapital>("/v1/credit/bank-capital", {

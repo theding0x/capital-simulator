@@ -2997,3 +2997,149 @@ func TestCh26SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// ── Vol. III Ch. 30 — Money-Capital and Real Capital, I ──────────────────────
+
+// TestRealCapitalAccumulation_NotFound verifies ErrNotFound for a missing ID.
+func TestRealCapitalAccumulation_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	_, err := m.GetRealCapitalAccumulation(ctx, credit.RealCapitalAccumulationID("doesnotexist"))
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+// TestRealCapitalAccumulation_RoundTrip verifies create → get returns the full
+// struct, including the embedded correspondence and credit-limit sub-fields.
+func TestRealCapitalAccumulation_RoundTrip(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	corr := credit.AccumulationCorrespondence{
+		MoneyCapitalGrowthBP: 800,
+		RealCapitalGrowthBP:  -600,
+		Corresponds:          false,
+		Explanation:          "loanable money piles up while real capital contracts",
+	}
+	limit := credit.CreditLimit{ReserveCapital: 500_000, Description: "Bank of England reserve"}
+	a, err := credit.NewRealCapitalAccumulation("Crisis 1847", credit.PhaseCrisis, corr, limit, true, false, "blocked returns")
+	if err != nil {
+		t.Fatalf("NewRealCapitalAccumulation: %v", err)
+	}
+
+	created, err := m.CreateRealCapitalAccumulation(ctx, a)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Fatal("ID must be assigned")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Fatal("CreatedAt must be assigned")
+	}
+
+	got, err := m.GetRealCapitalAccumulation(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got != created {
+		t.Errorf("round-trip mismatch:\n got %+v\nwant %+v", got, created)
+	}
+	if got.Correspondence.RealCapitalGrowthBP != -600 {
+		t.Errorf("RealCapitalGrowthBP: got %d, want -600", got.Correspondence.RealCapitalGrowthBP)
+	}
+	if got.CreditLimit.ReserveCapital != 500_000 {
+		t.Errorf("ReserveCapital: got %d, want 500000", got.CreditLimit.ReserveCapital)
+	}
+	if !got.CommercialCreditContracts {
+		t.Error("CommercialCreditContracts must round-trip true")
+	}
+}
+
+// TestRealCapitalAccumulation_Duplicate verifies ErrAlreadyExists on a colliding ID.
+func TestRealCapitalAccumulation_Duplicate(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	corr := credit.AccumulationCorrespondence{}
+	limit := credit.CreditLimit{ReserveCapital: 0}
+	a, err := credit.NewRealCapitalAccumulation("x", credit.PhaseInactivity, corr, limit, false, false, "")
+	if err != nil {
+		t.Fatalf("NewRealCapitalAccumulation: %v", err)
+	}
+	a.ID = credit.NewRealCapitalAccumulationID()
+	if _, err := m.CreateRealCapitalAccumulation(ctx, a); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	if _, err := m.CreateRealCapitalAccumulation(ctx, a); !errors.Is(err, ErrAlreadyExists) {
+		t.Errorf("expected ErrAlreadyExists, got %v", err)
+	}
+}
+
+// TestListRealCapitalAccumulations_NewestFirst verifies newest-first ordering and a non-nil result.
+func TestListRealCapitalAccumulations_NewestFirst(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	items, err := m.ListRealCapitalAccumulations(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if items == nil {
+		t.Fatal("list must never be nil")
+	}
+	if len(items) != 0 {
+		t.Fatalf("empty store: got %d items, want 0", len(items))
+	}
+
+	corr := credit.AccumulationCorrespondence{}
+	limit := credit.CreditLimit{ReserveCapital: 0}
+	for i := 0; i < 3; i++ {
+		a, _ := credit.NewRealCapitalAccumulation("x", credit.PhaseRevival, corr, limit, false, false, "")
+		if _, err := m.CreateRealCapitalAccumulation(ctx, a); err != nil {
+			t.Fatalf("create %d: %v", i, err)
+		}
+	}
+
+	items, err = m.ListRealCapitalAccumulations(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(items) != 3 {
+		t.Fatalf("got %d items, want 3", len(items))
+	}
+	for i := 1; i < len(items); i++ {
+		if items[i-1].CreatedAt.Before(items[i].CreatedAt) {
+			t.Error("items not in newest-first order")
+		}
+	}
+}
+
+// TestCh30SeedIDs verifies the Ch. 30 seed IDs carry the chapter-30 token and are unique.
+func TestCh30SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000003000",
+		"5eed000000000000003001",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "30" {
+			t.Errorf("seed id %q chapter token = %q, want 30", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}

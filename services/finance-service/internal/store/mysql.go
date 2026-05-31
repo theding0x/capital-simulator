@@ -3443,3 +3443,120 @@ func scanFictitiousCapitalValuation(s rowScanner) (credit.FictitiousCapitalValua
 		CreatedAt:      createdAt,
 	}, nil
 }
+
+// ── Vol. III Ch. 30 — Money-Capital and Real Capital, I (RealCapitalAccumulation) ──
+
+// CreateRealCapitalAccumulation inserts a, assigning an ID and timestamp when absent (Vol. III Ch. 30).
+func (m *MySQL) CreateRealCapitalAccumulation(ctx context.Context, a credit.RealCapitalAccumulation) (credit.RealCapitalAccumulation, error) {
+	if a.ID.IsZero() {
+		a.ID = credit.NewRealCapitalAccumulationID()
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO real_capital_accumulations (` +
+		"`id`, `name`, `phase`, `money_capital_growth_bp`, `real_capital_growth_bp`, `corresponds`, `correspondence_explanation`, `reserve_capital`, `credit_limit_description`, `commercial_credit_contracts`, `cause_is_money_scarcity`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(a.ID),
+		a.Name,
+		int(a.Phase),
+		a.Correspondence.MoneyCapitalGrowthBP,
+		a.Correspondence.RealCapitalGrowthBP,
+		a.Correspondence.Corresponds,
+		a.Correspondence.Explanation,
+		a.CreditLimit.ReserveCapital,
+		a.CreditLimit.Description,
+		a.CommercialCreditContracts,
+		a.CauseIsMoneyScarcity,
+		a.Description,
+		a.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.RealCapitalAccumulation{}, ErrAlreadyExists
+		}
+		return credit.RealCapitalAccumulation{}, err
+	}
+	return a, nil
+}
+
+// GetRealCapitalAccumulation returns the record with id, or ErrNotFound.
+func (m *MySQL) GetRealCapitalAccumulation(ctx context.Context, id credit.RealCapitalAccumulationID) (credit.RealCapitalAccumulation, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `phase`, `money_capital_growth_bp`, `real_capital_growth_bp`, `corresponds`, `correspondence_explanation`, `reserve_capital`, `credit_limit_description`, `commercial_credit_contracts`, `cause_is_money_scarcity`, `description`, `created_at` " +
+		"FROM `real_capital_accumulations` WHERE `id` = ?"
+	return scanRealCapitalAccumulation(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListRealCapitalAccumulations returns all stored records, newest first.
+func (m *MySQL) ListRealCapitalAccumulations(ctx context.Context) ([]credit.RealCapitalAccumulation, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `phase`, `money_capital_growth_bp`, `real_capital_growth_bp`, `corresponds`, `correspondence_explanation`, `reserve_capital`, `credit_limit_description`, `commercial_credit_contracts`, `cause_is_money_scarcity`, `description`, `created_at` " +
+		"FROM `real_capital_accumulations` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.RealCapitalAccumulation, 0)
+	for rows.Next() {
+		a, err := scanRealCapitalAccumulation(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, a)
+	}
+	return out, rows.Err()
+}
+
+func scanRealCapitalAccumulation(s rowScanner) (credit.RealCapitalAccumulation, error) {
+	var (
+		id                        string
+		name                      string
+		phase                     int
+		moneyCapitalGrowthBP      int64
+		realCapitalGrowthBP       int64
+		corresponds               bool
+		correspondenceExplanation string
+		reserveCapital            int64
+		creditLimitDescription    string
+		commercialCreditContracts bool
+		causeIsMoneyScarcity      bool
+		description               string
+		createdAt                 time.Time
+	)
+	err := s.Scan(
+		&id, &name, &phase,
+		&moneyCapitalGrowthBP, &realCapitalGrowthBP, &corresponds, &correspondenceExplanation,
+		&reserveCapital, &creditLimitDescription,
+		&commercialCreditContracts, &causeIsMoneyScarcity,
+		&description, &createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.RealCapitalAccumulation{}, ErrNotFound
+		}
+		return credit.RealCapitalAccumulation{}, err
+	}
+	return credit.RealCapitalAccumulation{
+		ID:    credit.RealCapitalAccumulationID(id),
+		Name:  name,
+		Phase: credit.IndustrialCyclePhase(phase),
+		Correspondence: credit.AccumulationCorrespondence{
+			MoneyCapitalGrowthBP: moneyCapitalGrowthBP,
+			RealCapitalGrowthBP:  realCapitalGrowthBP,
+			Corresponds:          corresponds,
+			Explanation:          correspondenceExplanation,
+		},
+		CreditLimit: credit.CreditLimit{
+			ReserveCapital: reserveCapital,
+			Description:    creditLimitDescription,
+		},
+		CommercialCreditContracts: commercialCreditContracts,
+		CauseIsMoneyScarcity:      causeIsMoneyScarcity,
+		Description:               description,
+		CreatedAt:                 createdAt,
+	}, nil
+}

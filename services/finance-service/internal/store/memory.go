@@ -56,6 +56,7 @@ type Memory struct {
 	currencyObservations       map[credit.CurrencyObservationID]credit.CurrencyObservation
 	bankCapitals               map[credit.BankCapitalID]credit.BankCapital
 	fictitiousValuations       map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation
+	realCapitalAccumulations   map[credit.RealCapitalAccumulationID]credit.RealCapitalAccumulation
 }
 
 // NewMemory returns an empty in-memory store.
@@ -101,6 +102,7 @@ func NewMemory() *Memory {
 		currencyObservations:       make(map[credit.CurrencyObservationID]credit.CurrencyObservation),
 		bankCapitals:               make(map[credit.BankCapitalID]credit.BankCapital),
 		fictitiousValuations:       make(map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation),
+		realCapitalAccumulations:   make(map[credit.RealCapitalAccumulationID]credit.RealCapitalAccumulation),
 	}
 }
 
@@ -1820,6 +1822,54 @@ func (m *Memory) ListFictitiousCapitalValuations(_ context.Context) ([]credit.Fi
 	out := make([]credit.FictitiousCapitalValuation, 0, len(m.fictitiousValuations))
 	for _, v := range m.fictitiousValuations {
 		out = append(out, v)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateRealCapitalAccumulation stores a, assigning an ID and timestamp when absent (Vol. III Ch. 30).
+func (m *Memory) CreateRealCapitalAccumulation(_ context.Context, a credit.RealCapitalAccumulation) (credit.RealCapitalAccumulation, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if a.ID.IsZero() {
+		a.ID = credit.NewRealCapitalAccumulationID()
+	}
+	if _, exists := m.realCapitalAccumulations[a.ID]; exists {
+		return credit.RealCapitalAccumulation{}, ErrAlreadyExists
+	}
+	if a.CreatedAt.IsZero() {
+		a.CreatedAt = m.now().UTC()
+	}
+	m.realCapitalAccumulations[a.ID] = a
+	return a, nil
+}
+
+// GetRealCapitalAccumulation returns the record with id, or ErrNotFound.
+func (m *Memory) GetRealCapitalAccumulation(_ context.Context, id credit.RealCapitalAccumulationID) (credit.RealCapitalAccumulation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	a, ok := m.realCapitalAccumulations[id]
+	if !ok {
+		return credit.RealCapitalAccumulation{}, ErrNotFound
+	}
+	return a, nil
+}
+
+// ListRealCapitalAccumulations returns all stored records, newest first.
+func (m *Memory) ListRealCapitalAccumulations(_ context.Context) ([]credit.RealCapitalAccumulation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.RealCapitalAccumulation, 0, len(m.realCapitalAccumulations))
+	for _, a := range m.realCapitalAccumulations {
+		out = append(out, a)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
