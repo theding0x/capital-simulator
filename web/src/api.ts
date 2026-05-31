@@ -2415,4 +2415,40 @@ export const financeApi = {
     ),
   getCompoundInterestSchedule: (id: string) =>
     http<import("./types").CompoundInterestSchedule>(`/v1/credit/compound-interest/${id}`),
+
+  // Vol. III Ch. 25 — Credit and Fictitious Capital
+  createBillOfExchange: (body: {
+    drawer: string;
+    drawee: string;
+    face_value: number;
+    maturity_days: number;
+    description: string;
+  }) =>
+    http<import("./types").BillOfExchange>("/v1/credit/bills-of-exchange", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listBillsOfExchange: () =>
+    http<{ items: import("./types").BillOfExchange[] }>("/v1/credit/bills-of-exchange").then(
+      (r) => r.items ?? [],
+    ),
+  getBillOfExchange: (id: string) =>
+    http<import("./types").BillOfExchange>(`/v1/credit/bills-of-exchange/${id}`),
+  createFictitiousCapital: (body: {
+    kind: number;
+    name: string;
+    annual_income: number;
+    rate_bp: number;
+    description: string;
+  }) =>
+    http<import("./types").FictitiousCapital>("/v1/credit/fictitious-capital", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listFictitiousCapitals: () =>
+    http<{ items: import("./types").FictitiousCapital[] }>("/v1/credit/fictitious-capital").then(
+      (r) => r.items ?? [],
+    ),
+  getFictitiousCapital: (id: string) =>
+    http<import("./types").FictitiousCapital>(`/v1/credit/fictitious-capital/${id}`),
 };

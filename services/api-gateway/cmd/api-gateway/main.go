@@ -404,6 +404,21 @@ func main() {
 	// Vol. III Ch. 21 — Interest-Bearing Capital (opens Part V) → finance-service
 	srv.Handle("/v1/credit/interest-bearing-capital", financeProxy)
 	srv.Handle("/v1/credit/interest-bearing-capital/{rest...}", financeProxy)
+	// Vol. III Ch. 22 — Division of Profit; Rate of Interest → finance-service
+	srv.Handle("/v1/credit/rate-of-interest", financeProxy)
+	srv.Handle("/v1/credit/rate-of-interest/{rest...}", financeProxy)
+	srv.Handle("/v1/credit/interest-rate-analysis", financeProxy)
+	// Vol. III Ch. 23 — Interest and Profit of Enterprise → finance-service
+	srv.Handle("/v1/credit/profit-division", financeProxy)
+	srv.Handle("/v1/credit/profit-division/{rest...}", financeProxy)
+	// Vol. III Ch. 24 — Externalisation / Fetish Capital → finance-service
+	srv.Handle("/v1/credit/compound-interest", financeProxy)
+	srv.Handle("/v1/credit/compound-interest/{rest...}", financeProxy)
+	// Vol. III Ch. 25 — Credit and Fictitious Capital → finance-service
+	srv.Handle("/v1/credit/bills-of-exchange", financeProxy)
+	srv.Handle("/v1/credit/bills-of-exchange/{rest...}", financeProxy)
+	srv.Handle("/v1/credit/fictitious-capital", financeProxy)
+	srv.Handle("/v1/credit/fictitious-capital/{rest...}", financeProxy)
 	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
 	// srv.Handle("/v1/ground-rent", financeProxy)
 	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)

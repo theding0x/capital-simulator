@@ -146,4 +146,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/compound-interest", h.CreateCompoundInterestSchedule)
 	s.HandleFunc("GET /v1/credit/compound-interest", h.ListCompoundInterestSchedules)
 	s.HandleFunc("GET /v1/credit/compound-interest/{id}", h.GetCompoundInterestSchedule)
+
+	// Vol. III Ch. 25 — Credit and Fictitious Capital
+	s.HandleFunc("POST /v1/credit/bills-of-exchange", h.CreateBillOfExchange)
+	s.HandleFunc("GET /v1/credit/bills-of-exchange", h.ListBillsOfExchange)
+	s.HandleFunc("GET /v1/credit/bills-of-exchange/{id}", h.GetBillOfExchange)
+	s.HandleFunc("POST /v1/credit/fictitious-capital", h.CreateFictitiousCapital)
+	s.HandleFunc("GET /v1/credit/fictitious-capital", h.ListFictitiousCapitals)
+	s.HandleFunc("GET /v1/credit/fictitious-capital/{id}", h.GetFictitiousCapital)
 }
