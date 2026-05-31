@@ -436,4 +436,16 @@ type Store interface {
 	// ListFloatingCapitals returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListFloatingCapitals(ctx context.Context) ([]credit.FloatingCapital, error)
+
+	// CreateCapitalRelease persists a capital-release record (Vol. III Ch. 32 —
+	// Money-Capital and Real Capital, III (Conclusion); ReleasedAmount>=0;
+	// Cause ∈ {1,2,3,4}; embedded LoanCapitalOverstatement with OverstatementPct>=0;
+	// a release reflects real accumulation only when Reinvested), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCapitalRelease(ctx context.Context, c credit.CapitalRelease) (credit.CapitalRelease, error)
+	// GetCapitalRelease returns the record with the given ID, or ErrNotFound.
+	GetCapitalRelease(ctx context.Context, id credit.CapitalReleaseID) (credit.CapitalRelease, error)
+	// ListCapitalReleases returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCapitalReleases(ctx context.Context) ([]credit.CapitalRelease, error)
 }

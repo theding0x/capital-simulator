@@ -86,6 +86,7 @@ import { Ch28MediumOfCirculation } from "../chapters/vol3/Ch28MediumOfCirculatio
 import { Ch29BankCapital } from "../chapters/vol3/Ch29BankCapital";
 import { Ch30MoneyRealCapital } from "../chapters/vol3/Ch30MoneyRealCapital";
 import { Ch31MoneyRealCapitalII } from "../chapters/vol3/Ch31MoneyRealCapitalII";
+import { Ch32MoneyRealCapitalIII } from "../chapters/vol3/Ch32MoneyRealCapitalIII";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -190,6 +191,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch29": Ch29BankCapital as AnyPanel,
   "v3-ch30": Ch30MoneyRealCapital as AnyPanel,
   "v3-ch31": Ch31MoneyRealCapitalII as AnyPanel,
+  "v3-ch32": Ch32MoneyRealCapitalIII as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -274,6 +276,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch28": "The confusion arises from Tooke's failure to distinguish between money as medium of circulation and money as capital — between the coin function, which serves revenue expenditure, and the capital-transfer function, which moves productive capital between capitalists.",
   "v3-ch29": "The greater part of banker's capital is purely fictitious and consists of claims (bills of exchange), government securities (which represent spent capital), and stocks (drafts on future revenue).",
   "v3-ch31": "The same piece of money can effect quite different transactions. The same money serves, on the one hand, as means of circulation, on the other, as loan capital — and the mass of loanable capital is altogether different from the quantity of the circulation.",
+  "v3-ch32": "The accumulation of loan capital simply expresses the fact that a portion of the money realised is transformed into loanable capital. This is very far from being identical with actual accumulation, although it may express it within certain limits — and in times of crisis the demand for loan capital is a demand for means of payment, not for productive capital.",
 };
 
 export function ChapterShell({

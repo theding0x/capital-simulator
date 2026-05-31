@@ -4046,6 +4046,57 @@ export interface CreateFloatingCapitalInput {
   description: string;
 }
 
+// ── Vol. III Ch. 32 — Money-Capital and Real Capital, III (Conclusion) ────────
+
+// LoanCapitalOverstatement mirrors credit.LoanCapitalOverstatement (Vol. III Ch. 32).
+// The gap between apparent (loanable money-capital) and real (productive)
+// accumulation, in basis points. Always >= 0.
+export interface LoanCapitalOverstatement {
+  overstatement_pct: number; // basis points; >= 0
+  description: string;
+}
+
+// MeansOfPaymentDemand mirrors credit.MeansOfPaymentDemand (Vol. III Ch. 32).
+// In a crisis (phase 5) the demand for loan capital is a demand for means of
+// payment (convertibility), not productive capital: is_productive_capital_demand
+// is false.
+export interface MeansOfPaymentDemand {
+  id: string;
+  phase: number; // 1..5
+  amount: number; // pence
+  is_productive_capital_demand: boolean;
+  description: string;
+}
+
+// CapitalRelease mirrors credit.CapitalRelease (Vol. III Ch. 32).
+// cause: 1 = input (raw-material) price fall; 2 = merchants' idle money;
+//   3 = rentier-class savings; 4 = revenue passing through money form.
+// A release reflects real accumulation only when reinvested; otherwise it merely
+// overstates it. Invariants: released_amount >= 0; loan_capital_overstatement.
+//   overstatement_pct >= 0.
+export interface CapitalRelease {
+  id: string;
+  name: string;
+  released_amount: number; // pence; >= 0
+  cause: number; // 1..4
+  reinvested: boolean;
+  loan_capital_overstatement: LoanCapitalOverstatement;
+  description: string;
+  created_at: string;
+}
+
+// CreateCapitalReleaseInput is the flat request body for
+// POST /v1/credit/capital-release. The overstatement sub-object is flattened.
+export interface CreateCapitalReleaseInput {
+  name: string;
+  released_amount: number;
+  cause: number;
+  reinvested: boolean;
+  overstatement_pct: number;
+  overstatement_description: string;
+  description: string;
+}
+
 // ── Vol. III Ch. 29 — Component Parts of Bank Capital ────────────────────────
 
 // BankCapitalComponentKind mirrors credit.BankCapitalComponentKind (Vol. III Ch. 29).
