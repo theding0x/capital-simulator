@@ -4489,3 +4489,301 @@ func scanGroundRent(s rowScanner) (rent.GroundRent, error) {
 		CreatedAt:           createdAt,
 	}, nil
 }
+
+// CreatePoPSurplusProfit inserts s, assigning an ID and timestamp when absent (Vol. III Ch. 38).
+func (m *MySQL) CreatePoPSurplusProfit(ctx context.Context, s rent.PriceOfProductionSurplusProfit) (rent.PriceOfProductionSurplusProfit, error) {
+	if s.ID == "" {
+		s.ID = rent.NewPoPSurplusProfitID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO pop_surplus_profits ` +
+		"(`id`, `capital_id`, `general_price_of_production_bp`, `individual_price_of_production_bp`, `surplus_profit_bp`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID),
+		s.CapitalID,
+		s.GeneralPriceOfProductionBP,
+		s.IndividualPriceOfProductionBP,
+		s.SurplusProfitBP,
+		s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.PriceOfProductionSurplusProfit{}, ErrAlreadyExists
+		}
+		return rent.PriceOfProductionSurplusProfit{}, err
+	}
+	return s, nil
+}
+
+// ListPoPSurplusProfits returns all stored PoP surplus-profit records, newest first (Vol. III Ch. 38).
+func (m *MySQL) ListPoPSurplusProfits(ctx context.Context) ([]rent.PriceOfProductionSurplusProfit, error) {
+	const q = `SELECT ` +
+		"`id`, `capital_id`, `general_price_of_production_bp`, `individual_price_of_production_bp`, `surplus_profit_bp`, `created_at` " +
+		"FROM `pop_surplus_profits` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.PriceOfProductionSurplusProfit, 0)
+	for rows.Next() {
+		s, err := scanPoPSurplusProfit(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func scanPoPSurplusProfit(s rowScanner) (rent.PriceOfProductionSurplusProfit, error) {
+	var (
+		id                            string
+		capitalID                     string
+		generalPriceOfProductionBP    int64
+		individualPriceOfProductionBP int64
+		surplusProfitBP               int64
+		createdAt                     time.Time
+	)
+	err := s.Scan(&id, &capitalID, &generalPriceOfProductionBP, &individualPriceOfProductionBP, &surplusProfitBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.PriceOfProductionSurplusProfit{}, ErrNotFound
+		}
+		return rent.PriceOfProductionSurplusProfit{}, err
+	}
+	return rent.PriceOfProductionSurplusProfit{
+		ID:                            rent.PriceOfProductionSurplusProfitID(id),
+		CapitalID:                     capitalID,
+		GeneralPriceOfProductionBP:    generalPriceOfProductionBP,
+		IndividualPriceOfProductionBP: individualPriceOfProductionBP,
+		SurplusProfitBP:               surplusProfitBP,
+		CreatedAt:                     createdAt,
+	}, nil
+}
+
+// CreateMonopolisedNaturalForce inserts f, assigning an ID and timestamp when absent (Vol. III Ch. 38).
+func (m *MySQL) CreateMonopolisedNaturalForce(ctx context.Context, f rent.MonopolisedNaturalForce) (rent.MonopolisedNaturalForce, error) {
+	if f.ID == "" {
+		f.ID = rent.NewMonopolisedNaturalForceID()
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO monopolised_natural_forces ` +
+		"(`id`, `kind`, `is_monopolisable`, `parcel_id`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(f.ID),
+		f.Kind,
+		f.IsMonopolisable,
+		f.ParcelID,
+		f.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.MonopolisedNaturalForce{}, ErrAlreadyExists
+		}
+		return rent.MonopolisedNaturalForce{}, err
+	}
+	return f, nil
+}
+
+// ListMonopolisedNaturalForces returns all stored monopolised-natural-force records, newest first (Vol. III Ch. 38).
+func (m *MySQL) ListMonopolisedNaturalForces(ctx context.Context) ([]rent.MonopolisedNaturalForce, error) {
+	const q = `SELECT ` +
+		"`id`, `kind`, `is_monopolisable`, `parcel_id`, `created_at` " +
+		"FROM `monopolised_natural_forces` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.MonopolisedNaturalForce, 0)
+	for rows.Next() {
+		f, err := scanMonopolisedNaturalForce(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, f)
+	}
+	return out, rows.Err()
+}
+
+func scanMonopolisedNaturalForce(s rowScanner) (rent.MonopolisedNaturalForce, error) {
+	var (
+		id              string
+		kind            string
+		isMonopolisable bool
+		parcelID        string
+		createdAt       time.Time
+	)
+	err := s.Scan(&id, &kind, &isMonopolisable, &parcelID, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.MonopolisedNaturalForce{}, ErrNotFound
+		}
+		return rent.MonopolisedNaturalForce{}, err
+	}
+	return rent.MonopolisedNaturalForce{
+		ID:              rent.MonopolisedNaturalForceID(id),
+		Kind:            kind,
+		IsMonopolisable: isMonopolisable,
+		ParcelID:        parcelID,
+		CreatedAt:       createdAt,
+	}, nil
+}
+
+// CreateDifferentialRent inserts dr, assigning an ID and timestamp when absent (Vol. III Ch. 38).
+func (m *MySQL) CreateDifferentialRent(ctx context.Context, dr rent.DifferentialRent) (rent.DifferentialRent, error) {
+	if dr.ID == "" {
+		dr.ID = rent.NewDifferentialRentID()
+	}
+	if dr.CreatedAt.IsZero() {
+		dr.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO differential_rents_ch38 ` +
+		"(`id`, `parcel_id`, `surplus_profit_bp`, `annual_rent_labour_minutes`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(dr.ID),
+		dr.ParcelID,
+		dr.SurplusProfitBP,
+		dr.AnnualRentLabourMinutes,
+		dr.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.DifferentialRent{}, ErrAlreadyExists
+		}
+		return rent.DifferentialRent{}, err
+	}
+	return dr, nil
+}
+
+// ListDifferentialRents returns all stored differential-rent records, newest first (Vol. III Ch. 38).
+func (m *MySQL) ListDifferentialRents(ctx context.Context) ([]rent.DifferentialRent, error) {
+	const q = `SELECT ` +
+		"`id`, `parcel_id`, `surplus_profit_bp`, `annual_rent_labour_minutes`, `created_at` " +
+		"FROM `differential_rents_ch38` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.DifferentialRent, 0)
+	for rows.Next() {
+		dr, err := scanDifferentialRent(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, dr)
+	}
+	return out, rows.Err()
+}
+
+func scanDifferentialRent(s rowScanner) (rent.DifferentialRent, error) {
+	var (
+		id                      string
+		parcelID                string
+		surplusProfitBP         int64
+		annualRentLabourMinutes int64
+		createdAt               time.Time
+	)
+	err := s.Scan(&id, &parcelID, &surplusProfitBP, &annualRentLabourMinutes, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.DifferentialRent{}, ErrNotFound
+		}
+		return rent.DifferentialRent{}, err
+	}
+	return rent.DifferentialRent{
+		ID:                      rent.DifferentialRentID(id),
+		ParcelID:                parcelID,
+		SurplusProfitBP:         surplusProfitBP,
+		AnnualRentLabourMinutes: annualRentLabourMinutes,
+		CreatedAt:               createdAt,
+	}, nil
+}
+
+// CreateCapitalisedRentPrice inserts crp, assigning an ID and timestamp when absent (Vol. III Ch. 38).
+func (m *MySQL) CreateCapitalisedRentPrice(ctx context.Context, crp rent.CapitalisedRentPrice) (rent.CapitalisedRentPrice, error) {
+	if crp.ID == "" {
+		crp.ID = rent.NewCapitalisedRentPriceID()
+	}
+	if crp.CreatedAt.IsZero() {
+		crp.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO capitalised_rent_prices ` +
+		"(`id`, `parcel_id`, `annual_rent_labour_minutes`, `interest_rate_bp`, `capitalised_price_labour_minutes`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(crp.ID),
+		crp.ParcelID,
+		crp.AnnualRentLabourMinutes,
+		crp.InterestRateBP,
+		crp.CapitalisedPriceLabourMinutes,
+		crp.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.CapitalisedRentPrice{}, ErrAlreadyExists
+		}
+		return rent.CapitalisedRentPrice{}, err
+	}
+	return crp, nil
+}
+
+// ListCapitalisedRentPrices returns all stored capitalised-rent-price records, newest first (Vol. III Ch. 38).
+func (m *MySQL) ListCapitalisedRentPrices(ctx context.Context) ([]rent.CapitalisedRentPrice, error) {
+	const q = `SELECT ` +
+		"`id`, `parcel_id`, `annual_rent_labour_minutes`, `interest_rate_bp`, `capitalised_price_labour_minutes`, `created_at` " +
+		"FROM `capitalised_rent_prices` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.CapitalisedRentPrice, 0)
+	for rows.Next() {
+		crp, err := scanCapitalisedRentPrice(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, crp)
+	}
+	return out, rows.Err()
+}
+
+func scanCapitalisedRentPrice(s rowScanner) (rent.CapitalisedRentPrice, error) {
+	var (
+		id                            string
+		parcelID                      string
+		annualRentLabourMinutes       int64
+		interestRateBP                int64
+		capitalisedPriceLabourMinutes int64
+		createdAt                     time.Time
+	)
+	err := s.Scan(&id, &parcelID, &annualRentLabourMinutes, &interestRateBP, &capitalisedPriceLabourMinutes, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.CapitalisedRentPrice{}, ErrNotFound
+		}
+		return rent.CapitalisedRentPrice{}, err
+	}
+	return rent.CapitalisedRentPrice{
+		ID:                            rent.CapitalisedRentPriceID(id),
+		ParcelID:                      parcelID,
+		AnnualRentLabourMinutes:       annualRentLabourMinutes,
+		InterestRateBP:                interestRateBP,
+		CapitalisedPriceLabourMinutes: capitalisedPriceLabourMinutes,
+		CreatedAt:                     createdAt,
+	}, nil
+}

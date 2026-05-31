@@ -1,0 +1,123 @@
+.v3-ch38 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.v3-ch38-intro {
+  color: var(--text-secondary, #555);
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+
+.v3-ch38-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3-ch38-section h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #222);
+}
+
+.v3-ch38-subintro {
+  font-size: 0.88rem;
+  color: var(--text-secondary, #666);
+  margin: 0;
+}
+
+/* Form */
+.v3-ch38-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 520px;
+}
+
+.v3-ch38-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.87rem;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch38-form input,
+.v3-ch38-form select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: var(--surface, #fff);
+  font-family: inherit;
+}
+
+.v3-ch38-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+}
+
+.v3-ch38-preview {
+  font-size: 0.86rem;
+  color: var(--accent, #2c6e49);
+  font-style: italic;
+  max-width: 520px;
+}
+
+.v3-ch38-btn {
+  align-self: flex-start;
+  padding: 0.4rem 1rem;
+  background: var(--accent, #2c6e49);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.v3-ch38-btn:hover {
+  opacity: 0.88;
+}
+
+.v3-ch38-error {
+  font-size: 0.85rem;
+  color: var(--error, #c0392b);
+  margin: 0;
+}
+
+/* Records table */
+.v3-ch38-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.v3-ch38-table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  width: 100%;
+  min-width: 560px;
+}
+
+.v3-ch38-table th {
+  text-align: left;
+  padding: 0.35rem 0.6rem;
+  background: var(--surface-alt, #f4f4f2);
+  border-bottom: 2px solid var(--border, #ddd);
+  color: var(--text-primary, #222);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.v3-ch38-table td {
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid var(--border, #eee);
+  color: var(--text-secondary, #444);
+  vertical-align: top;
+}
+
+.v3-ch38-table tr:last-child td {
+  border-bottom: none;
+}

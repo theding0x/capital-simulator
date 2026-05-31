@@ -92,6 +92,7 @@ import { Ch34CurrencyPrinciple } from "../chapters/vol3/Ch34CurrencyPrinciple";
 import { Ch35PreciousMetal } from "../chapters/vol3/Ch35PreciousMetal";
 import { Ch36PreCapitalistRelationships } from "../chapters/vol3/Ch36PreCapitalistRelationships";
 import { Ch37Introduction } from "../chapters/vol3/Ch37Introduction";
+import { Ch38GeneralRemarks } from "../chapters/vol3/Ch38GeneralRemarks";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -202,6 +203,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch35": Ch35PreciousMetal as AnyPanel,
   "v3-ch36": Ch36PreCapitalistRelationships as AnyPanel,
   "v3-ch37": Ch37Introduction as AnyPanel,
+  "v3-ch38": Ch38GeneralRemarks as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -292,6 +294,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch35": "Gold as world money is the pivot of the international monetary system: the central-bank reserve defends the rate of exchange, and its movements are determined by the balance of payments, not the balance of trade.",
   "v3-ch36": "Usury is the antediluvian form of capital, older than the capitalist mode of production: subordinated under modern industry it survives only as bank credit, its interest disciplined by the general rate of profit.",
   "v3-ch37": "We shall deal with landed property only in so far as a portion of the surplus-value produced by capital falls to the share of the landowner. — Marx, Capital III, Ch. 37.",
+  "v3-ch38": "The surplus profit ... is here a permanent and regular affair, and forms the basis of the differential rent. — Marx, Capital III, Ch. 38.",
 };
 
 export function ChapterShell({

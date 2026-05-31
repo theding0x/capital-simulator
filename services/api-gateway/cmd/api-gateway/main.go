@@ -462,6 +462,16 @@ func main() {
 	srv.Handle("/v1/rent/parcels/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/rents", financeProxy)
 	srv.Handle("/v1/rent/rents/{rest...}", financeProxy)
+	// Ch. 38 — Differential Rent (general remarks): surplus-profit, monopolised
+	// natural forces, differential rent, capitalised land price.
+	srv.Handle("/v1/rent/surplus-profits", financeProxy)
+	srv.Handle("/v1/rent/surplus-profits/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/monopolised-forces", financeProxy)
+	srv.Handle("/v1/rent/monopolised-forces/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/differential-rents", financeProxy)
+	srv.Handle("/v1/rent/differential-rents/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/capitalised-prices", financeProxy)
+	srv.Handle("/v1/rent/capitalised-prices/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 

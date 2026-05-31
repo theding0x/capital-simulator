@@ -224,4 +224,14 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/parcels/{id}", h.GetLandParcel)
 	s.HandleFunc("POST /v1/rent/rents", h.CreateGroundRent)
 	s.HandleFunc("GET /v1/rent/rents", h.ListGroundRents)
+
+	// Vol. III Ch. 38 — Differential Rent: General Remarks
+	s.HandleFunc("POST /v1/rent/surplus-profits", h.CreatePoPSurplusProfit)
+	s.HandleFunc("GET /v1/rent/surplus-profits", h.ListPoPSurplusProfits)
+	s.HandleFunc("POST /v1/rent/monopolised-forces", h.CreateMonopolisedNaturalForce)
+	s.HandleFunc("GET /v1/rent/monopolised-forces", h.ListMonopolisedNaturalForces)
+	s.HandleFunc("POST /v1/rent/differential-rents", h.CreateDifferentialRent)
+	s.HandleFunc("GET /v1/rent/differential-rents", h.ListDifferentialRents)
+	s.HandleFunc("POST /v1/rent/capitalised-prices", h.CreateCapitalisedRentPrice)
+	s.HandleFunc("GET /v1/rent/capitalised-prices", h.ListCapitalisedRentPrices)
 }

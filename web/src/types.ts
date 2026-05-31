@@ -4313,3 +4313,55 @@ export interface CreateGroundRentInput {
   amount_labour_minutes: number;
   period_years: number;
 }
+
+// Vol. III Ch. 38 — Differential Rent: General Remarks
+export interface PriceOfProductionSurplusProfit {
+  id: string;
+  capital_id: string;
+  general_price_of_production_bp: number;
+  individual_price_of_production_bp: number;
+  surplus_profit_bp: number;
+  created_at: string;
+}
+export interface CreatePoPSurplusProfitInput {
+  capital_id: string;
+  general_price_of_production_bp: number;
+  individual_price_of_production_bp: number;
+}
+export interface MonopolisedNaturalForce {
+  id: string;
+  kind: string;
+  is_monopolisable: boolean;
+  parcel_id: string;
+  created_at: string;
+}
+export interface CreateMonopolisedNaturalForceInput {
+  kind: string;
+  is_monopolisable: boolean;
+  parcel_id: string;
+}
+export interface DifferentialRentRecord {
+  id: string;
+  parcel_id: string;
+  surplus_profit_bp: number;
+  annual_rent_labour_minutes: number;
+  created_at: string;
+}
+export interface CreateDifferentialRentInput {
+  parcel_id: string;
+  surplus_profit_bp: number;
+  annual_rent_labour_minutes: number;
+}
+export interface CapitalisedRentPrice {
+  id: string;
+  parcel_id: string;
+  annual_rent_labour_minutes: number;
+  interest_rate_bp: number;
+  capitalised_price_labour_minutes: number;
+  created_at: string;
+}
+export interface CreateCapitalisedRentPriceInput {
+  parcel_id: string;
+  annual_rent_labour_minutes: number;
+  interest_rate_bp: number;
+}

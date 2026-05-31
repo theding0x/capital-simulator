@@ -2681,4 +2681,42 @@ export const financeApi = {
     http<{ items: import("./types").GroundRent[] }>("/v1/rent/rents").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 38 — Differential Rent: General Remarks
+  createPoPSurplusProfit: (body: import("./types").CreatePoPSurplusProfitInput) =>
+    http<import("./types").PriceOfProductionSurplusProfit>("/v1/rent/surplus-profits", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listPoPSurplusProfits: () =>
+    http<{ items: import("./types").PriceOfProductionSurplusProfit[] }>("/v1/rent/surplus-profits").then(
+      (r) => r.items ?? [],
+    ),
+  createMonopolisedNaturalForce: (body: import("./types").CreateMonopolisedNaturalForceInput) =>
+    http<import("./types").MonopolisedNaturalForce>("/v1/rent/monopolised-forces", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listMonopolisedNaturalForces: () =>
+    http<{ items: import("./types").MonopolisedNaturalForce[] }>("/v1/rent/monopolised-forces").then(
+      (r) => r.items ?? [],
+    ),
+  createDifferentialRent: (body: import("./types").CreateDifferentialRentInput) =>
+    http<import("./types").DifferentialRentRecord>("/v1/rent/differential-rents", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listDifferentialRents: () =>
+    http<{ items: import("./types").DifferentialRentRecord[] }>("/v1/rent/differential-rents").then(
+      (r) => r.items ?? [],
+    ),
+  createCapitalisedRentPrice: (body: import("./types").CreateCapitalisedRentPriceInput) =>
+    http<import("./types").CapitalisedRentPrice>("/v1/rent/capitalised-prices", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listCapitalisedRentPrices: () =>
+    http<{ items: import("./types").CapitalisedRentPrice[] }>("/v1/rent/capitalised-prices").then(
+      (r) => r.items ?? [],
+    ),
 };

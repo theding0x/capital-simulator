@@ -530,4 +530,39 @@ type Store interface {
 	// ListGroundRents returns all stored ground-rent records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListGroundRents(ctx context.Context) ([]rent.GroundRent, error)
+
+	// CreatePoPSurplusProfit persists a price-of-production surplus-profit record
+	// (Vol. III Ch. 38 — gap between general and individual price of production;
+	// SurplusProfitBP derived server-side), assigning an ID and created-at timestamp
+	// when absent. Returns ErrAlreadyExists on ID collision.
+	CreatePoPSurplusProfit(ctx context.Context, s rent.PriceOfProductionSurplusProfit) (rent.PriceOfProductionSurplusProfit, error)
+	// ListPoPSurplusProfits returns all stored PoP surplus-profit records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListPoPSurplusProfits(ctx context.Context) ([]rent.PriceOfProductionSurplusProfit, error)
+
+	// CreateMonopolisedNaturalForce persists a monopolised-natural-force record
+	// (Vol. III Ch. 38 — waterfall, mine, fertile soil whose monopolisation enables
+	// differential rent), assigning an ID and created-at timestamp when absent.
+	// Returns ErrAlreadyExists on ID collision.
+	CreateMonopolisedNaturalForce(ctx context.Context, f rent.MonopolisedNaturalForce) (rent.MonopolisedNaturalForce, error)
+	// ListMonopolisedNaturalForces returns all stored monopolised-natural-force records,
+	// newest first (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListMonopolisedNaturalForces(ctx context.Context) ([]rent.MonopolisedNaturalForce, error)
+
+	// CreateDifferentialRent persists a differential-rent record (Vol. III Ch. 38 —
+	// surplus-profit converted into rent), assigning an ID and created-at timestamp
+	// when absent. Returns ErrAlreadyExists on ID collision.
+	CreateDifferentialRent(ctx context.Context, dr rent.DifferentialRent) (rent.DifferentialRent, error)
+	// ListDifferentialRents returns all stored differential-rent records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListDifferentialRents(ctx context.Context) ([]rent.DifferentialRent, error)
+
+	// CreateCapitalisedRentPrice persists a capitalised-rent-price record (Vol. III Ch. 38 —
+	// annual rent capitalised at the interest rate gives the land purchase price;
+	// CapitalisedPriceLabourMinutes derived server-side), assigning an ID and created-at
+	// timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCapitalisedRentPrice(ctx context.Context, crp rent.CapitalisedRentPrice) (rent.CapitalisedRentPrice, error)
+	// ListCapitalisedRentPrices returns all stored capitalised-rent-price records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCapitalisedRentPrices(ctx context.Context) ([]rent.CapitalisedRentPrice, error)
 }

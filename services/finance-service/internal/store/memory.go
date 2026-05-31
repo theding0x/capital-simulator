@@ -69,6 +69,10 @@ type Memory struct {
 	landowners                 map[rent.LandownerID]rent.Landowner
 	agriculturalCapitalists    map[rent.AgriculturalCapitalistID]rent.AgriculturalCapitalist
 	groundRents                map[rent.GroundRentID]rent.GroundRent
+	popSurplusProfits          map[rent.PriceOfProductionSurplusProfitID]rent.PriceOfProductionSurplusProfit
+	monopolisedForces          map[rent.MonopolisedNaturalForceID]rent.MonopolisedNaturalForce
+	differentialRents          map[rent.DifferentialRentID]rent.DifferentialRent
+	capitalisedRentPrices      map[rent.CapitalisedRentPriceID]rent.CapitalisedRentPrice
 }
 
 // NewMemory returns an empty in-memory store.
@@ -126,6 +130,10 @@ func NewMemory() *Memory {
 		landowners:                 make(map[rent.LandownerID]rent.Landowner),
 		agriculturalCapitalists:    make(map[rent.AgriculturalCapitalistID]rent.AgriculturalCapitalist),
 		groundRents:                make(map[rent.GroundRentID]rent.GroundRent),
+		popSurplusProfits:          make(map[rent.PriceOfProductionSurplusProfitID]rent.PriceOfProductionSurplusProfit),
+		monopolisedForces:          make(map[rent.MonopolisedNaturalForceID]rent.MonopolisedNaturalForce),
+		differentialRents:          make(map[rent.DifferentialRentID]rent.DifferentialRent),
+		capitalisedRentPrices:      make(map[rent.CapitalisedRentPriceID]rent.CapitalisedRentPrice),
 	}
 }
 
@@ -2383,6 +2391,150 @@ func (m *Memory) ListGroundRents(_ context.Context) ([]rent.GroundRent, error) {
 	out := make([]rent.GroundRent, 0, len(m.groundRents))
 	for _, g := range m.groundRents {
 		out = append(out, g)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreatePoPSurplusProfit stores s, assigning an ID and timestamp when absent (Vol. III Ch. 38).
+func (m *Memory) CreatePoPSurplusProfit(_ context.Context, s rent.PriceOfProductionSurplusProfit) (rent.PriceOfProductionSurplusProfit, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID == "" {
+		s.ID = rent.NewPoPSurplusProfitID()
+	}
+	if _, exists := m.popSurplusProfits[s.ID]; exists {
+		return rent.PriceOfProductionSurplusProfit{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	m.popSurplusProfits[s.ID] = s
+	return s, nil
+}
+
+// ListPoPSurplusProfits returns all stored PoP surplus-profit records, newest first. Never returns nil.
+func (m *Memory) ListPoPSurplusProfits(_ context.Context) ([]rent.PriceOfProductionSurplusProfit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.PriceOfProductionSurplusProfit, 0, len(m.popSurplusProfits))
+	for _, s := range m.popSurplusProfits {
+		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateMonopolisedNaturalForce stores f, assigning an ID and timestamp when absent (Vol. III Ch. 38).
+func (m *Memory) CreateMonopolisedNaturalForce(_ context.Context, f rent.MonopolisedNaturalForce) (rent.MonopolisedNaturalForce, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if f.ID == "" {
+		f.ID = rent.NewMonopolisedNaturalForceID()
+	}
+	if _, exists := m.monopolisedForces[f.ID]; exists {
+		return rent.MonopolisedNaturalForce{}, ErrAlreadyExists
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+	m.monopolisedForces[f.ID] = f
+	return f, nil
+}
+
+// ListMonopolisedNaturalForces returns all stored monopolised-natural-force records, newest first. Never returns nil.
+func (m *Memory) ListMonopolisedNaturalForces(_ context.Context) ([]rent.MonopolisedNaturalForce, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.MonopolisedNaturalForce, 0, len(m.monopolisedForces))
+	for _, f := range m.monopolisedForces {
+		out = append(out, f)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateDifferentialRent stores dr, assigning an ID and timestamp when absent (Vol. III Ch. 38).
+func (m *Memory) CreateDifferentialRent(_ context.Context, dr rent.DifferentialRent) (rent.DifferentialRent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if dr.ID == "" {
+		dr.ID = rent.NewDifferentialRentID()
+	}
+	if _, exists := m.differentialRents[dr.ID]; exists {
+		return rent.DifferentialRent{}, ErrAlreadyExists
+	}
+	if dr.CreatedAt.IsZero() {
+		dr.CreatedAt = m.now().UTC()
+	}
+	m.differentialRents[dr.ID] = dr
+	return dr, nil
+}
+
+// ListDifferentialRents returns all stored differential-rent records, newest first. Never returns nil.
+func (m *Memory) ListDifferentialRents(_ context.Context) ([]rent.DifferentialRent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.DifferentialRent, 0, len(m.differentialRents))
+	for _, dr := range m.differentialRents {
+		out = append(out, dr)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCapitalisedRentPrice stores crp, assigning an ID and timestamp when absent (Vol. III Ch. 38).
+func (m *Memory) CreateCapitalisedRentPrice(_ context.Context, crp rent.CapitalisedRentPrice) (rent.CapitalisedRentPrice, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if crp.ID == "" {
+		crp.ID = rent.NewCapitalisedRentPriceID()
+	}
+	if _, exists := m.capitalisedRentPrices[crp.ID]; exists {
+		return rent.CapitalisedRentPrice{}, ErrAlreadyExists
+	}
+	if crp.CreatedAt.IsZero() {
+		crp.CreatedAt = m.now().UTC()
+	}
+	m.capitalisedRentPrices[crp.ID] = crp
+	return crp, nil
+}
+
+// ListCapitalisedRentPrices returns all stored capitalised-rent-price records, newest first. Never returns nil.
+func (m *Memory) ListCapitalisedRentPrices(_ context.Context) ([]rent.CapitalisedRentPrice, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.CapitalisedRentPrice, 0, len(m.capitalisedRentPrices))
+	for _, crp := range m.capitalisedRentPrices {
+		out = append(out, crp)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
