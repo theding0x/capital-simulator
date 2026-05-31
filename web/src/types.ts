@@ -4250,3 +4250,30 @@ export interface CreateRateOfExchangeInput {
   deviation_bp: number;
   description: string;
 }
+
+// UsurersCapital mirrors credit.UsurersCapital (Vol. III Ch. 36).
+// Usury's capital is the oldest antediluvian form of interest-bearing capital —
+// it predates wage-labour and operates on simple commodity circulation alone.
+// Under developed capitalism it is disciplined and subordinated to the
+// general rate of profit through the credit system.
+export interface UsurersCapital {
+  id: string;
+  name: string;
+  stage: number;              // UsuryDevelopmentStage: 1=Antiquity, 2=Mediaeval, 3=Transition, 4=Subordinated
+  wage_labour: boolean;       // false in pre-capitalist stages; true only when subordinated
+  borrowers: string[];        // debtor classes (peasants, petty producers, nobles, etc.)
+  interest_rate_bp: number;   // interest rate in basis points (e.g. 4800 = 48%)
+  subordinated_to: string;    // empty unless stage=4; e.g. "industrial_capital"
+  description: string;
+  created_at: string;
+}
+
+export interface CreateUsurersCapitalInput {
+  name: string;
+  stage: number;
+  wage_labour: boolean;
+  borrowers: string[];
+  interest_rate_bp: number;
+  subordinated_to: string;
+  description: string;
+}

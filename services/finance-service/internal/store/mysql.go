@@ -4113,3 +4113,111 @@ func scanRateOfExchange(s rowScanner) (credit.RateOfExchange, error) {
 		CreatedAt:   createdAt,
 	}, nil
 }
+
+// CreateUsurersCapital inserts u, assigning an ID and timestamp when absent (Vol. III Ch. 36).
+func (m *MySQL) CreateUsurersCapital(ctx context.Context, u credit.UsurersCapital) (credit.UsurersCapital, error) {
+	if u.ID.IsZero() {
+		u.ID = credit.NewUsurersCapitalID()
+	}
+	if u.CreatedAt.IsZero() {
+		u.CreatedAt = m.now().UTC()
+	}
+	borrowers := u.Borrowers
+	if borrowers == nil {
+		borrowers = []string{}
+	}
+	borrowersJSON, err := json.Marshal(borrowers)
+	if err != nil {
+		return credit.UsurersCapital{}, fmt.Errorf("store: marshal borrowers: %w", err)
+	}
+	const q = `INSERT INTO usurers_capitals ` +
+		"(`id`, `name`, `stage`, `wage_labour`, `borrowers_json`, `interest_rate_bp`, `subordinated_to`, `description`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	_, err = m.db.ExecContext(ctx, q,
+		string(u.ID),
+		u.Name,
+		int64(u.Stage),
+		u.WageLabour,
+		string(borrowersJSON),
+		u.InterestRateBP,
+		u.SubordinatedTo,
+		u.Description,
+		u.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.UsurersCapital{}, ErrAlreadyExists
+		}
+		return credit.UsurersCapital{}, err
+	}
+	return u, nil
+}
+
+// GetUsurersCapital returns the record with id, or ErrNotFound (Vol. III Ch. 36).
+func (m *MySQL) GetUsurersCapital(ctx context.Context, id credit.UsurersCapitalID) (credit.UsurersCapital, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `stage`, `wage_labour`, `borrowers_json`, `interest_rate_bp`, `subordinated_to`, `description`, `created_at` " +
+		"FROM `usurers_capitals` WHERE `id` = ?"
+	return scanUsurersCapital(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListUsurersCapitals returns all stored records, newest first (Vol. III Ch. 36).
+func (m *MySQL) ListUsurersCapitals(ctx context.Context) ([]credit.UsurersCapital, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `stage`, `wage_labour`, `borrowers_json`, `interest_rate_bp`, `subordinated_to`, `description`, `created_at` " +
+		"FROM `usurers_capitals` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.UsurersCapital, 0)
+	for rows.Next() {
+		u, err := scanUsurersCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, u)
+	}
+	return out, rows.Err()
+}
+
+func scanUsurersCapital(s rowScanner) (credit.UsurersCapital, error) {
+	var (
+		id             string
+		name           string
+		stage          int64
+		wageLabour     bool
+		borrowersStr   string
+		interestRateBP int64
+		subordinatedTo string
+		description    string
+		createdAt      time.Time
+	)
+	err := s.Scan(&id, &name, &stage, &wageLabour, &borrowersStr, &interestRateBP, &subordinatedTo, &description, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.UsurersCapital{}, ErrNotFound
+		}
+		return credit.UsurersCapital{}, err
+	}
+	var borrowers []string
+	if err := json.Unmarshal([]byte(borrowersStr), &borrowers); err != nil {
+		return credit.UsurersCapital{}, fmt.Errorf("store: unmarshal borrowers: %w", err)
+	}
+	if borrowers == nil {
+		borrowers = []string{}
+	}
+	return credit.UsurersCapital{
+		ID:             credit.UsurersCapitalID(id),
+		Name:           name,
+		Stage:          credit.UsuryDevelopmentStage(stage),
+		WageLabour:     wageLabour,
+		Borrowers:      borrowers,
+		InterestRateBP: interestRateBP,
+		SubordinatedTo: subordinatedTo,
+		Description:    description,
+		CreatedAt:      createdAt,
+	}, nil
+}

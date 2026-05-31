@@ -212,4 +212,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/rates-of-exchange", h.CreateRateOfExchange)
 	s.HandleFunc("GET /v1/credit/rates-of-exchange", h.ListRatesOfExchange)
 	s.HandleFunc("GET /v1/credit/rates-of-exchange/{id}", h.GetRateOfExchange)
+
+	// Vol. III Ch. 36 — Pre-Capitalist Relationships (FINAL chapter)
+	s.HandleFunc("POST /v1/credit/usurers-capital", h.CreateUsurersCapital)
+	s.HandleFunc("GET /v1/credit/usurers-capital", h.ListUsurersCapitals)
+	s.HandleFunc("GET /v1/credit/usurers-capital/{id}", h.GetUsurersCapital)
 }

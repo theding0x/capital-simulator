@@ -2640,4 +2640,23 @@ export const financeApi = {
     http<import("./types").RateOfExchange>(
       `/v1/credit/rates-of-exchange/${id}`,
     ),
+  // Vol. III Ch. 36 — Pre-Capitalist Relationships (Usurer's Capital)
+  createUsurersCapital: (
+    body: import("./types").CreateUsurersCapitalInput,
+  ) =>
+    http<import("./types").UsurersCapital>(
+      "/v1/credit/usurers-capital",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+  listUsurersCapitals: () =>
+    http<{ items: import("./types").UsurersCapital[] }>(
+      "/v1/credit/usurers-capital",
+    ).then((r) => r.items ?? []),
+  getUsurersCapital: (id: string) =>
+    http<import("./types").UsurersCapital>(
+      `/v1/credit/usurers-capital/${id}`,
+    ),
 };

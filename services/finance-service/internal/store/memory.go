@@ -63,6 +63,7 @@ type Memory struct {
 	noteIssueConstraints       map[credit.NoteIssueConstraintID]credit.NoteIssueConstraint
 	goldReserves               map[credit.GoldReserveID]credit.GoldReserve
 	ratesOfExchange            map[credit.RateOfExchangeID]credit.RateOfExchange
+	usurersCapitals            map[credit.UsurersCapitalID]credit.UsurersCapital
 }
 
 // NewMemory returns an empty in-memory store.
@@ -115,6 +116,7 @@ func NewMemory() *Memory {
 		noteIssueConstraints:       make(map[credit.NoteIssueConstraintID]credit.NoteIssueConstraint),
 		goldReserves:               make(map[credit.GoldReserveID]credit.GoldReserve),
 		ratesOfExchange:            make(map[credit.RateOfExchangeID]credit.RateOfExchange),
+		usurersCapitals:            make(map[credit.UsurersCapitalID]credit.UsurersCapital),
 	}
 }
 
@@ -2170,6 +2172,64 @@ func (m *Memory) ListRatesOfExchange(_ context.Context) ([]credit.RateOfExchange
 	out := make([]credit.RateOfExchange, 0, len(m.ratesOfExchange))
 	for _, r := range m.ratesOfExchange {
 		out = append(out, r)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// cloneBorrowers returns a deep copy of a borrowers slice.
+func cloneBorrowers(src []string) []string {
+	out := make([]string, len(src))
+	copy(out, src)
+	return out
+}
+
+// CreateUsurersCapital stores u, assigning an ID and timestamp when absent (Vol. III Ch. 36).
+func (m *Memory) CreateUsurersCapital(_ context.Context, u credit.UsurersCapital) (credit.UsurersCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if u.ID.IsZero() {
+		u.ID = credit.NewUsurersCapitalID()
+	}
+	if _, exists := m.usurersCapitals[u.ID]; exists {
+		return credit.UsurersCapital{}, ErrAlreadyExists
+	}
+	if u.CreatedAt.IsZero() {
+		u.CreatedAt = m.now().UTC()
+	}
+	u.Borrowers = cloneBorrowers(u.Borrowers)
+	m.usurersCapitals[u.ID] = u
+	return u, nil
+}
+
+// GetUsurersCapital returns the record with id, or ErrNotFound.
+func (m *Memory) GetUsurersCapital(_ context.Context, id credit.UsurersCapitalID) (credit.UsurersCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	u, ok := m.usurersCapitals[id]
+	if !ok {
+		return credit.UsurersCapital{}, ErrNotFound
+	}
+	u.Borrowers = cloneBorrowers(u.Borrowers)
+	return u, nil
+}
+
+// ListUsurersCapitals returns all stored records, newest first. Never returns nil.
+func (m *Memory) ListUsurersCapitals(_ context.Context) ([]credit.UsurersCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.UsurersCapital, 0, len(m.usurersCapitals))
+	for _, u := range m.usurersCapitals {
+		u.Borrowers = cloneBorrowers(u.Borrowers)
+		out = append(out, u)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
