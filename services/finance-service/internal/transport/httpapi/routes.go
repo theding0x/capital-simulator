@@ -159,4 +159,11 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/money-capital-accumulation", h.CreateMoneyCapitalAccumulation)
 	s.HandleFunc("GET /v1/credit/money-capital-accumulation", h.ListMoneyCapitalAccumulations)
 	s.HandleFunc("GET /v1/credit/money-capital-accumulation/{id}", h.GetMoneyCapitalAccumulation)
+
+	// Vol. III Ch. 27 — The Role of Credit in Capitalist Production
+	s.HandleFunc("POST /v1/credit/stock-companies", h.CreateStockCompany)
+	s.HandleFunc("GET /v1/credit/stock-companies", h.ListStockCompanies)
+	s.HandleFunc("GET /v1/credit/stock-companies/{id}", h.GetStockCompany)
+	s.HandleFunc("POST /v1/credit/cooperative-factories", h.CreateCooperativeFactory)
+	s.HandleFunc("GET /v1/credit/cooperative-factories", h.ListCooperativeFactories)
 }

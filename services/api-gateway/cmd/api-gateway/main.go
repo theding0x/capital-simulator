@@ -422,6 +422,11 @@ func main() {
 
 	srv.Handle("/v1/credit/money-capital-accumulation", financeProxy)
 	srv.Handle("/v1/credit/money-capital-accumulation/{rest...}", financeProxy)
+	// Vol. III Ch. 27 — The Role of Credit in Capitalist Production → finance-service
+	srv.Handle("/v1/credit/stock-companies", financeProxy)
+	srv.Handle("/v1/credit/stock-companies/{rest...}", financeProxy)
+	srv.Handle("/v1/credit/cooperative-factories", financeProxy)
+	srv.Handle("/v1/credit/cooperative-factories/{rest...}", financeProxy)
 	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
 	// srv.Handle("/v1/ground-rent", financeProxy)
 	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)

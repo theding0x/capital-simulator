@@ -358,4 +358,24 @@ type Store interface {
 	// ListMoneyCapitalAccumulations returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListMoneyCapitalAccumulations(ctx context.Context) ([]credit.MoneyCapitalAccumulation, error)
+
+	// CreateStockCompany persists a joint-stock company (Vol. III Ch. 27 —
+	// TotalCapital==FixedCapital+FloatingCapital; Manager.WageMinutes>0), assigning
+	// an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateStockCompany(ctx context.Context, sc credit.StockCompany) (credit.StockCompany, error)
+	// GetStockCompany returns the stock company with the given ID, or ErrNotFound.
+	GetStockCompany(ctx context.Context, id credit.StockCompanyID) (credit.StockCompany, error)
+	// ListStockCompanies returns all stored stock companies, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListStockCompanies(ctx context.Context) ([]credit.StockCompany, error)
+
+	// CreateCooperativeFactory persists a worker-owned cooperative factory
+	// (Vol. III Ch. 27 — WorkerOwned==true; positive transitional form), assigning
+	// an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCooperativeFactory(ctx context.Context, cf credit.CooperativeFactory) (credit.CooperativeFactory, error)
+	// GetCooperativeFactory returns the cooperative factory with the given ID, or ErrNotFound.
+	GetCooperativeFactory(ctx context.Context, id credit.CooperativeFactoryID) (credit.CooperativeFactory, error)
+	// ListCooperativeFactories returns all stored cooperative factories, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCooperativeFactories(ctx context.Context) ([]credit.CooperativeFactory, error)
 }
