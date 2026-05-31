@@ -4001,6 +4001,51 @@ export interface CreateRealCapitalAccumulationInput {
   description: string;
 }
 
+// ── Vol. III Ch. 31 — Money-Capital and Real Capital, II ─────────────────────
+
+// LoanCapitalVelocity mirrors credit.LoanCapitalVelocity (Vol. III Ch. 31).
+// The same money lent repeatedly performs a larger mass of loan capital:
+// loan_capital_created == money_amount × times_lent (the same £20 lent 5× = £100).
+export interface LoanCapitalVelocity {
+  money_amount: number;          // pence
+  times_lent: number;            // >= 1
+  loan_capital_created: number;  // = money_amount × times_lent
+}
+
+// FloatingCapital mirrors credit.FloatingCapital (Vol. III Ch. 31).
+// source: 1 = simple transformation of idle money into loan capital (inverse to
+//   real accumulation); 2 = conversion of capital/revenue into money that becomes
+//   loan capital (accompanies real accumulation).
+// Invariants: amount >= 0; loan_capital_velocity.times_lent >= 1;
+//   circulation_reserve_saving.amount >= 0.
+export interface FloatingCapital {
+  id: string;
+  name: string;
+  amount: number; // pence; >= 0
+  source: number; // 1 or 2
+  loan_capital_velocity: LoanCapitalVelocity;
+  circulation_reserve_saving: {
+    amount: number; // pence; >= 0
+    description: string;
+  };
+  description: string;
+  created_at: string;
+}
+
+// CreateFloatingCapitalInput is the flat request body for
+// POST /v1/credit/floating-capital. The velocity and reserve-saving sub-objects
+// are flattened; loan_capital_created is derived server-side.
+export interface CreateFloatingCapitalInput {
+  name: string;
+  amount: number;
+  source: number;
+  velocity_money_amount: number;
+  velocity_times_lent: number;
+  reserve_saving_amount: number;
+  reserve_saving_description: string;
+  description: string;
+}
+
 // ── Vol. III Ch. 29 — Component Parts of Bank Capital ────────────────────────
 
 // BankCapitalComponentKind mirrors credit.BankCapitalComponentKind (Vol. III Ch. 29).

@@ -85,6 +85,7 @@ import { Ch27CreditRole } from "../chapters/vol3/Ch27CreditRole";
 import { Ch28MediumOfCirculation } from "../chapters/vol3/Ch28MediumOfCirculation";
 import { Ch29BankCapital } from "../chapters/vol3/Ch29BankCapital";
 import { Ch30MoneyRealCapital } from "../chapters/vol3/Ch30MoneyRealCapital";
+import { Ch31MoneyRealCapitalII } from "../chapters/vol3/Ch31MoneyRealCapitalII";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -188,6 +189,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch28": Ch28MediumOfCirculation as AnyPanel,
   "v3-ch29": Ch29BankCapital as AnyPanel,
   "v3-ch30": Ch30MoneyRealCapital as AnyPanel,
+  "v3-ch31": Ch31MoneyRealCapitalII as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -271,6 +273,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch27": "The credit system ... accelerates the material development of the productive forces and the establishment of the world market ... At the same time credit accelerates the violent eruptions of this contradiction — crises.",
   "v3-ch28": "The confusion arises from Tooke's failure to distinguish between money as medium of circulation and money as capital — between the coin function, which serves revenue expenditure, and the capital-transfer function, which moves productive capital between capitalists.",
   "v3-ch29": "The greater part of banker's capital is purely fictitious and consists of claims (bills of exchange), government securities (which represent spent capital), and stocks (drafts on future revenue).",
+  "v3-ch31": "The same piece of money can effect quite different transactions. The same money serves, on the one hand, as means of circulation, on the other, as loan capital — and the mass of loanable capital is altogether different from the quantity of the circulation.",
 };
 
 export function ChapterShell({

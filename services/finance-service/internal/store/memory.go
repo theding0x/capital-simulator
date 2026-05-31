@@ -57,6 +57,7 @@ type Memory struct {
 	bankCapitals               map[credit.BankCapitalID]credit.BankCapital
 	fictitiousValuations       map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation
 	realCapitalAccumulations   map[credit.RealCapitalAccumulationID]credit.RealCapitalAccumulation
+	floatingCapitals           map[credit.FloatingCapitalID]credit.FloatingCapital
 }
 
 // NewMemory returns an empty in-memory store.
@@ -103,6 +104,7 @@ func NewMemory() *Memory {
 		bankCapitals:               make(map[credit.BankCapitalID]credit.BankCapital),
 		fictitiousValuations:       make(map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation),
 		realCapitalAccumulations:   make(map[credit.RealCapitalAccumulationID]credit.RealCapitalAccumulation),
+		floatingCapitals:           make(map[credit.FloatingCapitalID]credit.FloatingCapital),
 	}
 }
 
@@ -1870,6 +1872,54 @@ func (m *Memory) ListRealCapitalAccumulations(_ context.Context) ([]credit.RealC
 	out := make([]credit.RealCapitalAccumulation, 0, len(m.realCapitalAccumulations))
 	for _, a := range m.realCapitalAccumulations {
 		out = append(out, a)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateFloatingCapital stores f, assigning an ID and timestamp when absent (Vol. III Ch. 31).
+func (m *Memory) CreateFloatingCapital(_ context.Context, f credit.FloatingCapital) (credit.FloatingCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if f.ID.IsZero() {
+		f.ID = credit.NewFloatingCapitalID()
+	}
+	if _, exists := m.floatingCapitals[f.ID]; exists {
+		return credit.FloatingCapital{}, ErrAlreadyExists
+	}
+	if f.CreatedAt.IsZero() {
+		f.CreatedAt = m.now().UTC()
+	}
+	m.floatingCapitals[f.ID] = f
+	return f, nil
+}
+
+// GetFloatingCapital returns the record with id, or ErrNotFound.
+func (m *Memory) GetFloatingCapital(_ context.Context, id credit.FloatingCapitalID) (credit.FloatingCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	f, ok := m.floatingCapitals[id]
+	if !ok {
+		return credit.FloatingCapital{}, ErrNotFound
+	}
+	return f, nil
+}
+
+// ListFloatingCapitals returns all stored records, newest first.
+func (m *Memory) ListFloatingCapitals(_ context.Context) ([]credit.FloatingCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.FloatingCapital, 0, len(m.floatingCapitals))
+	for _, f := range m.floatingCapitals {
+		out = append(out, f)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
