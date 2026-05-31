@@ -115,6 +115,11 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/credit/interest-bearing-capital", h.CreateInterestBearingCapital)
 	mux.HandleFunc("GET /v1/credit/interest-bearing-capital", h.ListInterestBearingCapitals)
 	mux.HandleFunc("GET /v1/credit/interest-bearing-capital/{id}", h.GetInterestBearingCapital)
+	// Vol. III Ch. 22 — Division of Profit; Rate of Interest
+	mux.HandleFunc("POST /v1/credit/rate-of-interest", h.CreateRateOfInterest)
+	mux.HandleFunc("GET /v1/credit/rate-of-interest", h.ListRatesOfInterest)
+	mux.HandleFunc("GET /v1/credit/rate-of-interest/{id}", h.GetRateOfInterest)
+	mux.HandleFunc("POST /v1/credit/interest-rate-analysis", h.ComputeInterestRateAnalysis)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

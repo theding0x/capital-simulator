@@ -2381,3 +2381,74 @@ func scanInterestBearingCapital(s rowScanner) (credit.InterestBearingCapital, er
 		CreatedAt:       createdAt,
 	}, nil
 }
+
+// CreateRateOfInterest inserts r, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateRateOfInterest(ctx context.Context, r credit.RateOfInterest) (credit.RateOfInterest, error) {
+	if r.ID.IsZero() {
+		r.ID = credit.NewRateOfInterestID()
+	}
+	if r.CreatedAt.IsZero() {
+		r.CreatedAt = time.Now().UTC()
+	}
+	const q = `INSERT INTO rate_of_interests (id, rate_bp, average_profit_rate_bp, cycle_phase, period, created_at) VALUES (?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(r.ID), r.RateBP, r.AverageProfitRateBP, int(r.CyclePhase), r.Period, r.CreatedAt)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.RateOfInterest{}, ErrAlreadyExists
+		}
+		return credit.RateOfInterest{}, err
+	}
+	return r, nil
+}
+
+// GetRateOfInterest returns the rate-of-interest record with id, or ErrNotFound.
+func (m *MySQL) GetRateOfInterest(ctx context.Context, id credit.RateOfInterestID) (credit.RateOfInterest, error) {
+	const q = `SELECT id, rate_bp, average_profit_rate_bp, cycle_phase, period, created_at FROM rate_of_interests WHERE id = ?`
+	return scanRateOfInterest(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListRatesOfInterest returns all stored rate-of-interest records, newest first.
+func (m *MySQL) ListRatesOfInterest(ctx context.Context) ([]credit.RateOfInterest, error) {
+	const q = `SELECT id, rate_bp, average_profit_rate_bp, cycle_phase, period, created_at FROM rate_of_interests ORDER BY created_at DESC, id ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.RateOfInterest, 0)
+	for rows.Next() {
+		r, err := scanRateOfInterest(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+func scanRateOfInterest(s rowScanner) (credit.RateOfInterest, error) {
+	var (
+		id            string
+		rateBP, avgBP int64
+		phase         int
+		period        string
+		createdAt     time.Time
+	)
+	err := s.Scan(&id, &rateBP, &avgBP, &phase, &period, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.RateOfInterest{}, ErrNotFound
+		}
+		return credit.RateOfInterest{}, err
+	}
+	return credit.RateOfInterest{
+		ID:                  credit.RateOfInterestID(id),
+		RateBP:              rateBP,
+		AverageProfitRateBP: avgBP,
+		CyclePhase:          credit.IndustrialCyclePhase(phase),
+		Period:              period,
+		CreatedAt:           createdAt,
+	}, nil
+}

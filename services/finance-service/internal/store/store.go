@@ -293,4 +293,15 @@ type Store interface {
 	// ListInterestBearingCapitals returns all stored interest-bearing-capital records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListInterestBearingCapitals(ctx context.Context) ([]credit.InterestBearingCapital, error)
+
+	// CreateRateOfInterest persists a rate-of-interest observation (Vol. III Ch. 22 —
+	// observed market interest rate in bp, average profit rate in bp, industrial cycle phase;
+	// RateBP>=0; RateBP<AverageProfitRateBP), assigning an ID and created-at timestamp when
+	// absent. Returns ErrAlreadyExists on ID collision.
+	CreateRateOfInterest(ctx context.Context, r credit.RateOfInterest) (credit.RateOfInterest, error)
+	// GetRateOfInterest returns the rate-of-interest record with the given ID, or ErrNotFound.
+	GetRateOfInterest(ctx context.Context, id credit.RateOfInterestID) (credit.RateOfInterest, error)
+	// ListRatesOfInterest returns all stored rate-of-interest records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRatesOfInterest(ctx context.Context) ([]credit.RateOfInterest, error)
 }

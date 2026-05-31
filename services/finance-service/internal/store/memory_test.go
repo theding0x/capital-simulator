@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
@@ -2493,6 +2494,148 @@ func TestCh20SeedIDs(t *testing.T) {
 		}
 		if cc := id[len(prefix) : len(prefix)+2]; cc != "20" {
 			t.Errorf("seed id %q chapter token = %q, want 20", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}
+
+// TestMemory_RateOfInterest_RoundTrip asserts create → get returns an identical
+// record with a non-zero ID and timestamp assigned by the store.
+func TestMemory_RateOfInterest_RoundTrip(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m := NewMemory()
+
+	r, err := credit.NewRateOfInterest(150, 2000, credit.PhaseProsperity, "1843")
+	if err != nil {
+		t.Fatalf("new rate: %v", err)
+	}
+
+	created, err := m.CreateRateOfInterest(ctx, r)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Error("created.ID is zero, want non-empty (store assigns it)")
+	}
+	if created.CreatedAt.IsZero() {
+		t.Error("created.CreatedAt is zero, want non-zero (store assigns it)")
+	}
+
+	got, err := m.GetRateOfInterest(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.ID != created.ID {
+		t.Errorf("got.ID = %q, want %q", got.ID, created.ID)
+	}
+	if got.RateBP != 150 {
+		t.Errorf("got.RateBP = %d, want 150", got.RateBP)
+	}
+	if got.AverageProfitRateBP != 2000 {
+		t.Errorf("got.AverageProfitRateBP = %d, want 2000", got.AverageProfitRateBP)
+	}
+	if got.CyclePhase != credit.PhaseProsperity {
+		t.Errorf("got.CyclePhase = %d, want PhaseProsperity", got.CyclePhase)
+	}
+	if got.Period != "1843" {
+		t.Errorf("got.Period = %q, want 1843", got.Period)
+	}
+}
+
+// TestMemory_RateOfInterest_NotFound asserts ErrNotFound for a missing ID.
+func TestMemory_RateOfInterest_NotFound(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m := NewMemory()
+
+	_, err := m.GetRateOfInterest(ctx, credit.NewRateOfInterestID())
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
+	}
+}
+
+// TestMemory_RateOfInterest_ListNeverNil asserts ListRatesOfInterest returns a
+// non-nil slice even on an empty store.
+func TestMemory_RateOfInterest_ListNeverNil(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m := NewMemory()
+
+	out, err := m.ListRatesOfInterest(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if out == nil {
+		t.Error("ListRatesOfInterest returned nil, want non-nil empty slice")
+	}
+}
+
+// TestMemory_RateOfInterest_ListNewestFirst asserts two records are returned
+// newest first.
+func TestMemory_RateOfInterest_ListNewestFirst(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	m := NewMemory()
+
+	first, err := credit.NewRateOfInterest(150, 2000, credit.PhaseProsperity, "1843")
+	if err != nil {
+		t.Fatalf("new first: %v", err)
+	}
+	second, err := credit.NewRateOfInterest(800, 2000, credit.PhaseCrisis, "1847 crisis")
+	if err != nil {
+		t.Fatalf("new second: %v", err)
+	}
+
+	createdFirst, err := m.CreateRateOfInterest(ctx, first)
+	if err != nil {
+		t.Fatalf("create first: %v", err)
+	}
+	createdSecond, err := m.CreateRateOfInterest(ctx, second)
+	if err != nil {
+		t.Fatalf("create second: %v", err)
+	}
+
+	out, err := m.ListRatesOfInterest(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("list len = %d, want 2", len(out))
+	}
+	// Skip ordering check if both share the same nanosecond timestamp.
+	if !createdSecond.CreatedAt.After(createdFirst.CreatedAt) {
+		return
+	}
+	if out[0].ID != createdSecond.ID {
+		t.Errorf("first item id = %s, want newest (%s)", out[0].ID, createdSecond.ID)
+	}
+}
+
+// TestCh22SeedIDs asserts the Ch. 22 seed IDs (5eed…<CC=22>01–03) carry the 22
+// token and are unique (mirrors the seed migration 00044_v3_ch22_seed.sql).
+func TestCh22SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000002201",
+		"5eed000000000000002202",
+		"5eed000000000000002203",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "22" {
+			t.Errorf("seed id %q chapter token = %q, want 22", id, cc)
 		}
 		if _, dup := seen[id]; dup {
 			t.Errorf("duplicate seed id %q", id)

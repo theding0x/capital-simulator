@@ -3692,3 +3692,31 @@ export interface MoneyCapitalCircuit {
   interest_earned: number; // pence; >= 0
   money_returned: number;  // pence; = money_advanced + interest_earned
 }
+
+// RateOfInterest mirrors credit.RateOfInterest (Vol. III Ch. 22).
+// Observed market rate of interest in basis points. RateBP < AverageProfitRateBP.
+// CyclePhase: 1=Inactivity, 2=Revival, 3=Prosperity, 4=Overproduction, 5=Crisis.
+export interface RateOfInterest {
+  id: string;
+  rate_bp: number;                // bp; >= 0
+  average_profit_rate_bp: number; // bp; > 0
+  cycle_phase: number;            // 1..5
+  period: string;
+  created_at: string;
+}
+
+// InterestRateAnalysis mirrors credit.InterestRateAnalysis (Vol. III Ch. 22).
+// Compute-only split of average profit into interest and profit of enterprise.
+// profit_of_enterprise_bp == average_profit_rate_bp - interest_rate_bp.
+export interface InterestRateAnalysis {
+  average_profit_rate_bp: number;  // bp; > 0
+  interest_rate_bp: number;        // bp; >= 0
+  profit_of_enterprise_bp: number; // bp; = avg - interest
+}
+
+// InterestRateBound mirrors credit.InterestRateBound (Vol. III Ch. 22).
+// Theoretical bounds: max == average profit rate; min approaches but never reaches 0.
+export interface InterestRateBound {
+  max_bp: number; // bp; > 0
+  min_bp: number; // bp; >= 0
+}
