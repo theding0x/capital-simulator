@@ -2584,4 +2584,23 @@ export const financeApi = {
     http<import("./types").ClearingHouseSettlement>(
       `/v1/credit/clearing-house-settlements/${id}`,
     ),
+  // Vol. III Ch. 34 — The Currency Principle and the English Bank Legislation
+  createNoteIssueConstraint: (
+    body: import("./types").CreateNoteIssueConstraintInput,
+  ) =>
+    http<import("./types").NoteIssueConstraint>(
+      "/v1/credit/note-issue-constraints",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+  listNoteIssueConstraints: () =>
+    http<{ items: import("./types").NoteIssueConstraint[] }>(
+      "/v1/credit/note-issue-constraints",
+    ).then((r) => r.items ?? []),
+  getNoteIssueConstraint: (id: string) =>
+    http<import("./types").NoteIssueConstraint>(
+      `/v1/credit/note-issue-constraints/${id}`,
+    ),
 };

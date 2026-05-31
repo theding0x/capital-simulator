@@ -174,6 +174,10 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("POST /v1/credit/clearing-house-settlements", h.CreateClearingHouseSettlement)
 	mux.HandleFunc("GET /v1/credit/clearing-house-settlements", h.ListClearingHouseSettlements)
 	mux.HandleFunc("GET /v1/credit/clearing-house-settlements/{id}", h.GetClearingHouseSettlement)
+	// Vol. III Ch. 34 — The Currency Principle and the Bank Acts of 1844 and 1845
+	mux.HandleFunc("POST /v1/credit/note-issue-constraints", h.CreateNoteIssueConstraint)
+	mux.HandleFunc("GET /v1/credit/note-issue-constraints", h.ListNoteIssueConstraints)
+	mux.HandleFunc("GET /v1/credit/note-issue-constraints/{id}", h.GetNoteIssueConstraint)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

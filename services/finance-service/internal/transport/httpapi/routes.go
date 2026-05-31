@@ -199,4 +199,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/clearing-house-settlements", h.CreateClearingHouseSettlement)
 	s.HandleFunc("GET /v1/credit/clearing-house-settlements", h.ListClearingHouseSettlements)
 	s.HandleFunc("GET /v1/credit/clearing-house-settlements/{id}", h.GetClearingHouseSettlement)
+
+	// Vol. III Ch. 34 — The Currency Principle and the Bank Acts of 1844 and 1845
+	s.HandleFunc("POST /v1/credit/note-issue-constraints", h.CreateNoteIssueConstraint)
+	s.HandleFunc("GET /v1/credit/note-issue-constraints", h.ListNoteIssueConstraints)
+	s.HandleFunc("GET /v1/credit/note-issue-constraints/{id}", h.GetNoteIssueConstraint)
 }

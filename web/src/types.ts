@@ -4189,3 +4189,30 @@ export interface CreateClearingHouseSettlementInput {
   total_claims: number;
   money_used: number;
 }
+
+// NoteIssueConstraint mirrors credit.NoteIssueConstraint (Vol. III Ch. 34).
+// Peel's Bank Act 1844 split the Bank of England into Issue and Banking departments;
+// MaxNotes = GoldBacking + UnbackedLimit. Regime encodes the legal period.
+export interface NoteIssueConstraint {
+  id: string;
+  name: string;
+  regime: number;          // 1=Pre-Act 1844, 2=Bank Act 1844, 3=Suspended
+  max_notes: number;       // pence; derived = gold_backing + unbacked_limit
+  gold_backing: number;    // pence; >= 0
+  unbacked_limit: number;  // pence; >= 0
+  notes_beyond_max: number; // pence; >= 0
+  description: string;
+  created_at: string;
+}
+
+// CreateNoteIssueConstraintInput is the request body for
+// POST /v1/credit/note-issue-constraints.
+// max_notes is server-derived (gold_backing + unbacked_limit).
+export interface CreateNoteIssueConstraintInput {
+  name: string;
+  regime: number;
+  gold_backing: number;
+  unbacked_limit: number;
+  notes_beyond_max: number;
+  description: string;
+}

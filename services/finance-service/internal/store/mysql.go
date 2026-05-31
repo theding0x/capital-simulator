@@ -3858,3 +3858,96 @@ func scanClearingHouseSettlement(s rowScanner) (credit.ClearingHouseSettlement, 
 		CreatedAt:   createdAt,
 	}, nil
 }
+
+// CreateNoteIssueConstraint inserts n, assigning an ID and timestamp when absent (Vol. III Ch. 34).
+func (m *MySQL) CreateNoteIssueConstraint(ctx context.Context, n credit.NoteIssueConstraint) (credit.NoteIssueConstraint, error) {
+	if n.ID.IsZero() {
+		n.ID = credit.NewNoteIssueConstraintID()
+	}
+	if n.CreatedAt.IsZero() {
+		n.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO note_issue_constraints ` +
+		"(`id`, `name`, `regime`, `max_notes`, `gold_backing`, `unbacked_limit`, `notes_beyond_max`, `description`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(n.ID),
+		n.Name,
+		int(n.Regime),
+		n.MaxNotes,
+		n.GoldBacking,
+		n.UnbackedLimit,
+		n.NotesBeyondMax,
+		n.Description,
+		n.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.NoteIssueConstraint{}, ErrAlreadyExists
+		}
+		return credit.NoteIssueConstraint{}, err
+	}
+	return n, nil
+}
+
+// GetNoteIssueConstraint returns the record with id, or ErrNotFound.
+func (m *MySQL) GetNoteIssueConstraint(ctx context.Context, id credit.NoteIssueConstraintID) (credit.NoteIssueConstraint, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `regime`, `max_notes`, `gold_backing`, `unbacked_limit`, `notes_beyond_max`, `description`, `created_at` " +
+		"FROM `note_issue_constraints` WHERE `id` = ?"
+	return scanNoteIssueConstraint(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListNoteIssueConstraints returns all stored records, newest first.
+func (m *MySQL) ListNoteIssueConstraints(ctx context.Context) ([]credit.NoteIssueConstraint, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `regime`, `max_notes`, `gold_backing`, `unbacked_limit`, `notes_beyond_max`, `description`, `created_at` " +
+		"FROM `note_issue_constraints` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.NoteIssueConstraint, 0)
+	for rows.Next() {
+		n, err := scanNoteIssueConstraint(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
+}
+
+func scanNoteIssueConstraint(s rowScanner) (credit.NoteIssueConstraint, error) {
+	var (
+		id             string
+		name           string
+		regime         int
+		maxNotes       int64
+		goldBacking    int64
+		unbackedLimit  int64
+		notesBeyondMax int64
+		description    string
+		createdAt      time.Time
+	)
+	err := s.Scan(&id, &name, &regime, &maxNotes, &goldBacking, &unbackedLimit, &notesBeyondMax, &description, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.NoteIssueConstraint{}, ErrNotFound
+		}
+		return credit.NoteIssueConstraint{}, err
+	}
+	return credit.NoteIssueConstraint{
+		ID:             credit.NoteIssueConstraintID(id),
+		Name:           name,
+		Regime:         credit.BankActRegime(regime),
+		MaxNotes:       maxNotes,
+		GoldBacking:    goldBacking,
+		UnbackedLimit:  unbackedLimit,
+		NotesBeyondMax: notesBeyondMax,
+		Description:    description,
+		CreatedAt:      createdAt,
+	}, nil
+}

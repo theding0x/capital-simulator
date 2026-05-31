@@ -447,6 +447,9 @@ func main() {
 	// Vol. III Ch. 33 — The Medium of Circulation in the Credit System → finance-service
 	srv.Handle("/v1/credit/clearing-house-settlements", financeProxy)
 	srv.Handle("/v1/credit/clearing-house-settlements/{rest...}", financeProxy)
+	// Vol. III Ch. 34 — The Currency Principle and the Bank Acts of 1844 and 1845 → finance-service
+	srv.Handle("/v1/credit/note-issue-constraints", financeProxy)
+	srv.Handle("/v1/credit/note-issue-constraints/{rest...}", financeProxy)
 	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
 	// srv.Handle("/v1/ground-rent", financeProxy)
 	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)
