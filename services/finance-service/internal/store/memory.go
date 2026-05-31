@@ -10,6 +10,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/rent"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
@@ -64,6 +65,10 @@ type Memory struct {
 	goldReserves               map[credit.GoldReserveID]credit.GoldReserve
 	ratesOfExchange            map[credit.RateOfExchangeID]credit.RateOfExchange
 	usurersCapitals            map[credit.UsurersCapitalID]credit.UsurersCapital
+	landParcels                map[rent.LandParcelID]rent.LandParcel
+	landowners                 map[rent.LandownerID]rent.Landowner
+	agriculturalCapitalists    map[rent.AgriculturalCapitalistID]rent.AgriculturalCapitalist
+	groundRents                map[rent.GroundRentID]rent.GroundRent
 }
 
 // NewMemory returns an empty in-memory store.
@@ -117,6 +122,10 @@ func NewMemory() *Memory {
 		goldReserves:               make(map[credit.GoldReserveID]credit.GoldReserve),
 		ratesOfExchange:            make(map[credit.RateOfExchangeID]credit.RateOfExchange),
 		usurersCapitals:            make(map[credit.UsurersCapitalID]credit.UsurersCapital),
+		landParcels:                make(map[rent.LandParcelID]rent.LandParcel),
+		landowners:                 make(map[rent.LandownerID]rent.Landowner),
+		agriculturalCapitalists:    make(map[rent.AgriculturalCapitalistID]rent.AgriculturalCapitalist),
+		groundRents:                make(map[rent.GroundRentID]rent.GroundRent),
 	}
 }
 
@@ -2230,6 +2239,150 @@ func (m *Memory) ListUsurersCapitals(_ context.Context) ([]credit.UsurersCapital
 	for _, u := range m.usurersCapitals {
 		u.Borrowers = cloneBorrowers(u.Borrowers)
 		out = append(out, u)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateLandParcel stores p, assigning an ID and timestamp when absent (Vol. III Ch. 37).
+func (m *Memory) CreateLandParcel(_ context.Context, p rent.LandParcel) (rent.LandParcel, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if p.ID == "" {
+		p.ID = rent.NewLandParcelID()
+	}
+	if _, exists := m.landParcels[p.ID]; exists {
+		return rent.LandParcel{}, ErrAlreadyExists
+	}
+	if p.CreatedAt.IsZero() {
+		p.CreatedAt = m.now().UTC()
+	}
+	m.landParcels[p.ID] = p
+	return p, nil
+}
+
+// GetLandParcel returns the land-parcel with id, or ErrNotFound.
+func (m *Memory) GetLandParcel(_ context.Context, id rent.LandParcelID) (rent.LandParcel, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	p, ok := m.landParcels[id]
+	if !ok {
+		return rent.LandParcel{}, ErrNotFound
+	}
+	return p, nil
+}
+
+// ListLandParcels returns all stored land-parcels, newest first. Never returns nil.
+func (m *Memory) ListLandParcels(_ context.Context) ([]rent.LandParcel, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.LandParcel, 0, len(m.landParcels))
+	for _, p := range m.landParcels {
+		out = append(out, p)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateLandowner stores lo, assigning an ID and timestamp when absent (Vol. III Ch. 37).
+func (m *Memory) CreateLandowner(_ context.Context, lo rent.Landowner) (rent.Landowner, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if lo.ID == "" {
+		lo.ID = rent.NewLandownerID()
+	}
+	if _, exists := m.landowners[lo.ID]; exists {
+		return rent.Landowner{}, ErrAlreadyExists
+	}
+	if lo.CreatedAt.IsZero() {
+		lo.CreatedAt = m.now().UTC()
+	}
+	m.landowners[lo.ID] = lo
+	return lo, nil
+}
+
+// GetLandowner returns the landowner with id, or ErrNotFound.
+func (m *Memory) GetLandowner(_ context.Context, id rent.LandownerID) (rent.Landowner, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	lo, ok := m.landowners[id]
+	if !ok {
+		return rent.Landowner{}, ErrNotFound
+	}
+	return lo, nil
+}
+
+// CreateAgriculturalCapitalist stores ac, assigning an ID and timestamp when absent (Vol. III Ch. 37).
+func (m *Memory) CreateAgriculturalCapitalist(_ context.Context, ac rent.AgriculturalCapitalist) (rent.AgriculturalCapitalist, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if ac.ID == "" {
+		ac.ID = rent.NewAgriculturalCapitalistID()
+	}
+	if _, exists := m.agriculturalCapitalists[ac.ID]; exists {
+		return rent.AgriculturalCapitalist{}, ErrAlreadyExists
+	}
+	if ac.CreatedAt.IsZero() {
+		ac.CreatedAt = m.now().UTC()
+	}
+	m.agriculturalCapitalists[ac.ID] = ac
+	return ac, nil
+}
+
+// GetAgriculturalCapitalist returns the agricultural capitalist with id, or ErrNotFound.
+func (m *Memory) GetAgriculturalCapitalist(_ context.Context, id rent.AgriculturalCapitalistID) (rent.AgriculturalCapitalist, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	ac, ok := m.agriculturalCapitalists[id]
+	if !ok {
+		return rent.AgriculturalCapitalist{}, ErrNotFound
+	}
+	return ac, nil
+}
+
+// CreateGroundRent stores g, assigning an ID and timestamp when absent (Vol. III Ch. 37).
+func (m *Memory) CreateGroundRent(_ context.Context, g rent.GroundRent) (rent.GroundRent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if g.ID == "" {
+		g.ID = rent.NewGroundRentID()
+	}
+	if _, exists := m.groundRents[g.ID]; exists {
+		return rent.GroundRent{}, ErrAlreadyExists
+	}
+	if g.CreatedAt.IsZero() {
+		g.CreatedAt = m.now().UTC()
+	}
+	m.groundRents[g.ID] = g
+	return g, nil
+}
+
+// ListGroundRents returns all stored ground-rent records, newest first. Never returns nil.
+func (m *Memory) ListGroundRents(_ context.Context) ([]rent.GroundRent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.GroundRent, 0, len(m.groundRents))
+	for _, g := range m.groundRents {
+		out = append(out, g)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

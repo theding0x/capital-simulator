@@ -17,6 +17,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/rent"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
@@ -501,4 +502,32 @@ type Store interface {
 	// ListUsurersCapitals returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListUsurersCapitals(ctx context.Context) ([]credit.UsurersCapital, error)
+
+	// CreateLandParcel persists a land-parcel record (Vol. III Ch. 37 — opens Part VI),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateLandParcel(ctx context.Context, p rent.LandParcel) (rent.LandParcel, error)
+	// GetLandParcel returns the land-parcel with the given ID, or ErrNotFound.
+	GetLandParcel(ctx context.Context, id rent.LandParcelID) (rent.LandParcel, error)
+	// ListLandParcels returns all stored land-parcels, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListLandParcels(ctx context.Context) ([]rent.LandParcel, error)
+
+	// CreateLandowner persists a landowner record (Vol. III Ch. 37),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateLandowner(ctx context.Context, lo rent.Landowner) (rent.Landowner, error)
+	// GetLandowner returns the landowner with the given ID, or ErrNotFound.
+	GetLandowner(ctx context.Context, id rent.LandownerID) (rent.Landowner, error)
+
+	// CreateAgriculturalCapitalist persists an agricultural-capitalist record (Vol. III Ch. 37),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateAgriculturalCapitalist(ctx context.Context, ac rent.AgriculturalCapitalist) (rent.AgriculturalCapitalist, error)
+	// GetAgriculturalCapitalist returns the agricultural capitalist with the given ID, or ErrNotFound.
+	GetAgriculturalCapitalist(ctx context.Context, id rent.AgriculturalCapitalistID) (rent.AgriculturalCapitalist, error)
+
+	// CreateGroundRent persists a ground-rent record (Vol. III Ch. 37),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateGroundRent(ctx context.Context, g rent.GroundRent) (rent.GroundRent, error)
+	// ListGroundRents returns all stored ground-rent records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListGroundRents(ctx context.Context) ([]rent.GroundRent, error)
 }

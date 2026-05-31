@@ -217,4 +217,11 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/usurers-capital", h.CreateUsurersCapital)
 	s.HandleFunc("GET /v1/credit/usurers-capital", h.ListUsurersCapitals)
 	s.HandleFunc("GET /v1/credit/usurers-capital/{id}", h.GetUsurersCapital)
+
+	// Vol. III Ch. 37 — Introduction to Ground-Rent (opens Part VI)
+	s.HandleFunc("POST /v1/rent/parcels", h.CreateLandParcel)
+	s.HandleFunc("GET /v1/rent/parcels", h.ListLandParcels)
+	s.HandleFunc("GET /v1/rent/parcels/{id}", h.GetLandParcel)
+	s.HandleFunc("POST /v1/rent/rents", h.CreateGroundRent)
+	s.HandleFunc("GET /v1/rent/rents", h.ListGroundRents)
 }

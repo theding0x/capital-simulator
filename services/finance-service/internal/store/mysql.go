@@ -16,6 +16,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/rent"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
@@ -4219,5 +4220,272 @@ func scanUsurersCapital(s rowScanner) (credit.UsurersCapital, error) {
 		SubordinatedTo: subordinatedTo,
 		Description:    description,
 		CreatedAt:      createdAt,
+	}, nil
+}
+
+// CreateLandParcel inserts p, assigning an ID and timestamp when absent (Vol. III Ch. 37).
+func (m *MySQL) CreateLandParcel(ctx context.Context, p rent.LandParcel) (rent.LandParcel, error) {
+	if p.ID == "" {
+		p.ID = rent.NewLandParcelID()
+	}
+	if p.CreatedAt.IsZero() {
+		p.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO land_parcels ` +
+		"(`id`, `owner_id`, `fertility_grade`, `area_hectares`, `location`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(p.ID),
+		p.OwnerID,
+		int64(p.FertilityGrade),
+		p.AreaHectares,
+		p.Location,
+		p.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.LandParcel{}, ErrAlreadyExists
+		}
+		return rent.LandParcel{}, err
+	}
+	return p, nil
+}
+
+// GetLandParcel returns the land-parcel with id, or ErrNotFound (Vol. III Ch. 37).
+func (m *MySQL) GetLandParcel(ctx context.Context, id rent.LandParcelID) (rent.LandParcel, error) {
+	const q = `SELECT ` +
+		"`id`, `owner_id`, `fertility_grade`, `area_hectares`, `location`, `created_at` " +
+		"FROM `land_parcels` WHERE `id` = ?"
+	return scanLandParcel(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListLandParcels returns all stored land-parcels, newest first (Vol. III Ch. 37).
+func (m *MySQL) ListLandParcels(ctx context.Context) ([]rent.LandParcel, error) {
+	const q = `SELECT ` +
+		"`id`, `owner_id`, `fertility_grade`, `area_hectares`, `location`, `created_at` " +
+		"FROM `land_parcels` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.LandParcel, 0)
+	for rows.Next() {
+		p, err := scanLandParcel(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
+func scanLandParcel(s rowScanner) (rent.LandParcel, error) {
+	var (
+		id             string
+		ownerID        string
+		fertilityGrade int64
+		areaHectares   int64
+		location       string
+		createdAt      time.Time
+	)
+	err := s.Scan(&id, &ownerID, &fertilityGrade, &areaHectares, &location, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.LandParcel{}, ErrNotFound
+		}
+		return rent.LandParcel{}, err
+	}
+	return rent.LandParcel{
+		ID:             rent.LandParcelID(id),
+		OwnerID:        ownerID,
+		FertilityGrade: int(fertilityGrade),
+		AreaHectares:   areaHectares,
+		Location:       location,
+		CreatedAt:      createdAt,
+	}, nil
+}
+
+// CreateLandowner inserts lo, assigning an ID and timestamp when absent (Vol. III Ch. 37).
+func (m *MySQL) CreateLandowner(ctx context.Context, lo rent.Landowner) (rent.Landowner, error) {
+	if lo.ID == "" {
+		lo.ID = rent.NewLandownerID()
+	}
+	if lo.CreatedAt.IsZero() {
+		lo.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO landowners ` +
+		"(`id`, `name`, `created_at`) " +
+		"VALUES (?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(lo.ID),
+		lo.Name,
+		lo.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.Landowner{}, ErrAlreadyExists
+		}
+		return rent.Landowner{}, err
+	}
+	return lo, nil
+}
+
+// GetLandowner returns the landowner with id, or ErrNotFound (Vol. III Ch. 37).
+func (m *MySQL) GetLandowner(ctx context.Context, id rent.LandownerID) (rent.Landowner, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `created_at` " +
+		"FROM `landowners` WHERE `id` = ?"
+	var (
+		sid       string
+		name      string
+		createdAt time.Time
+	)
+	err := m.db.QueryRowContext(ctx, q, string(id)).Scan(&sid, &name, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.Landowner{}, ErrNotFound
+		}
+		return rent.Landowner{}, err
+	}
+	return rent.Landowner{
+		ID:        rent.LandownerID(sid),
+		Name:      name,
+		CreatedAt: createdAt,
+	}, nil
+}
+
+// CreateAgriculturalCapitalist inserts ac, assigning an ID and timestamp when absent (Vol. III Ch. 37).
+func (m *MySQL) CreateAgriculturalCapitalist(ctx context.Context, ac rent.AgriculturalCapitalist) (rent.AgriculturalCapitalist, error) {
+	if ac.ID == "" {
+		ac.ID = rent.NewAgriculturalCapitalistID()
+	}
+	if ac.CreatedAt.IsZero() {
+		ac.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO agricultural_capitalists ` +
+		"(`id`, `capital_advanced`, `lease_parcel_id`, `created_at`) " +
+		"VALUES (?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(ac.ID),
+		ac.CapitalAdvanced,
+		ac.LeaseParcelID,
+		ac.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.AgriculturalCapitalist{}, ErrAlreadyExists
+		}
+		return rent.AgriculturalCapitalist{}, err
+	}
+	return ac, nil
+}
+
+// GetAgriculturalCapitalist returns the agricultural capitalist with id, or ErrNotFound (Vol. III Ch. 37).
+func (m *MySQL) GetAgriculturalCapitalist(ctx context.Context, id rent.AgriculturalCapitalistID) (rent.AgriculturalCapitalist, error) {
+	const q = `SELECT ` +
+		"`id`, `capital_advanced`, `lease_parcel_id`, `created_at` " +
+		"FROM `agricultural_capitalists` WHERE `id` = ?"
+	var (
+		sid             string
+		capitalAdvanced int64
+		leaseParcelID   string
+		createdAt       time.Time
+	)
+	err := m.db.QueryRowContext(ctx, q, string(id)).Scan(&sid, &capitalAdvanced, &leaseParcelID, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.AgriculturalCapitalist{}, ErrNotFound
+		}
+		return rent.AgriculturalCapitalist{}, err
+	}
+	return rent.AgriculturalCapitalist{
+		ID:              rent.AgriculturalCapitalistID(sid),
+		CapitalAdvanced: capitalAdvanced,
+		LeaseParcelID:   leaseParcelID,
+		CreatedAt:       createdAt,
+	}, nil
+}
+
+// CreateGroundRent inserts g, assigning an ID and timestamp when absent (Vol. III Ch. 37).
+func (m *MySQL) CreateGroundRent(ctx context.Context, g rent.GroundRent) (rent.GroundRent, error) {
+	if g.ID == "" {
+		g.ID = rent.NewGroundRentID()
+	}
+	if g.CreatedAt.IsZero() {
+		g.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO ground_rents ` +
+		"(`id`, `parcel_id`, `capitalist_id`, `land_owner_id`, `form`, `amount_labour_minutes`, `period_years`, `created_at`) " +
+		"VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(g.ID),
+		g.ParcelID,
+		g.CapitalistID,
+		g.LandOwnerID,
+		int64(g.Form),
+		g.AmountLabourMinutes,
+		int64(g.PeriodYears),
+		g.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.GroundRent{}, ErrAlreadyExists
+		}
+		return rent.GroundRent{}, err
+	}
+	return g, nil
+}
+
+// ListGroundRents returns all stored ground-rent records, newest first (Vol. III Ch. 37).
+func (m *MySQL) ListGroundRents(ctx context.Context) ([]rent.GroundRent, error) {
+	const q = `SELECT ` +
+		"`id`, `parcel_id`, `capitalist_id`, `land_owner_id`, `form`, `amount_labour_minutes`, `period_years`, `created_at` " +
+		"FROM `ground_rents` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.GroundRent, 0)
+	for rows.Next() {
+		g, err := scanGroundRent(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, g)
+	}
+	return out, rows.Err()
+}
+
+func scanGroundRent(s rowScanner) (rent.GroundRent, error) {
+	var (
+		id                  string
+		parcelID            string
+		capitalistID        string
+		landOwnerID         string
+		form                int64
+		amountLabourMinutes int64
+		periodYears         int64
+		createdAt           time.Time
+	)
+	err := s.Scan(&id, &parcelID, &capitalistID, &landOwnerID, &form, &amountLabourMinutes, &periodYears, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.GroundRent{}, ErrNotFound
+		}
+		return rent.GroundRent{}, err
+	}
+	return rent.GroundRent{
+		ID:                  rent.GroundRentID(id),
+		ParcelID:            parcelID,
+		CapitalistID:        capitalistID,
+		LandOwnerID:         landOwnerID,
+		Form:                rent.RentForm(form),
+		AmountLabourMinutes: amountLabourMinutes,
+		PeriodYears:         int(periodYears),
+		CreatedAt:           createdAt,
 	}, nil
 }
