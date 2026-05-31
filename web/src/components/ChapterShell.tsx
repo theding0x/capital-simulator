@@ -96,6 +96,7 @@ import { Ch38GeneralRemarks } from "../chapters/vol3/Ch38GeneralRemarks";
 import { Ch39DifferentialRentI } from "../chapters/vol3/Ch39DifferentialRentI";
 import { Ch40DifferentialRentII } from "../chapters/vol3/Ch40DifferentialRentII";
 import { Ch41DR2ConstantPrice } from "../chapters/vol3/Ch41DR2ConstantPrice";
+import { Ch42DR2FallingPrice } from "../chapters/vol3/Ch42DR2FallingPrice";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -210,6 +211,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch39": Ch39DifferentialRentI as AnyPanel,
   "v3-ch40": Ch40DifferentialRentII as AnyPanel,
   "v3-ch41": Ch41DR2ConstantPrice as AnyPanel,
+  "v3-ch42": Ch42DR2FallingPrice as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -304,6 +306,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch39": "The difference between the price of production yielded by the worst soil and that yielded by any better soil constitutes the differential rent. — Marx, Capital III, Ch. 39.",
   "v3-ch40": "The second form of differential rent... arises from the different distribution of successive capital investments on the same land. — Marx, Capital III, Ch. 40.",
   "v3-ch41": "With a constant price of production... every additional investment of capital in the soil bearing rent increases the rent per acre, although the rate of this increase need not be proportional to the increase of capital. — Marx, Capital III, Ch. 41.",
+  "v3-ch42": "Even with a falling price of production, additional capital can be invested with the result that the rental rises, or at least does not fall... the grain-rent rises while the money-rent remains constant. — Marx, Capital III, Ch. 42.",
 };
 
 export function ChapterShell({

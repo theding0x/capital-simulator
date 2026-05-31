@@ -625,4 +625,33 @@ type Store interface {
 	// ListIntensiveExtensiveComparisons returns all stored comparisons, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListIntensiveExtensiveComparisons(ctx context.Context) ([]rent.IntensiveExtensiveComparison, error)
+
+	// CreateSoilExclusionEvent persists a soil-exclusion event (Vol. III Ch. 42 — DR II Falling
+	// Price; a superior soil drives the worst soil from cultivation, lowering the regulating
+	// price of production), assigning an ID and created-at timestamp when absent.
+	// Returns ErrAlreadyExists on ID collision.
+	CreateSoilExclusionEvent(ctx context.Context, e rent.SoilExclusionEvent) (rent.SoilExclusionEvent, error)
+	// GetSoilExclusionEvent returns the soil-exclusion event with the given ID, or ErrNotFound.
+	GetSoilExclusionEvent(ctx context.Context, id rent.SoilExclusionEventID) (rent.SoilExclusionEvent, error)
+	// ListSoilExclusionEvents returns all stored soil-exclusion events, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListSoilExclusionEvents(ctx context.Context) ([]rent.SoilExclusionEvent, error)
+
+	// CreateFallingPriceDR2Outcome persists a falling-price DR II outcome (Vol. III Ch. 42 —
+	// total money rental at the new lower regulating price; TotalMoneyRentalBP derived
+	// server-side), assigning an ID and created-at timestamp when absent.
+	// Returns ErrAlreadyExists on ID collision.
+	CreateFallingPriceDR2Outcome(ctx context.Context, o rent.FallingPriceDR2Outcome) (rent.FallingPriceDR2Outcome, error)
+	// ListFallingPriceDR2Outcomes returns all stored falling-price DR II outcomes, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListFallingPriceDR2Outcomes(ctx context.Context) ([]rent.FallingPriceDR2Outcome, error)
+
+	// CreateNormalCapitalPerAcre persists a normal-capital-per-acre record (Vol. III Ch. 42 —
+	// minimum capital per acre in a historical period; Marx: pre-1848 England £8=800p,
+	// post-1848 £12=1200p), assigning an ID and created-at timestamp when absent.
+	// Returns ErrAlreadyExists on ID collision.
+	CreateNormalCapitalPerAcre(ctx context.Context, n rent.NormalCapitalPerAcre) (rent.NormalCapitalPerAcre, error)
+	// ListNormalCapitalPerAcre returns all stored normal-capital-per-acre records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListNormalCapitalPerAcre(ctx context.Context) ([]rent.NormalCapitalPerAcre, error)
 }

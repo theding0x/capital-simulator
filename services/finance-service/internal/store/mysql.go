@@ -5339,3 +5339,232 @@ func scanIntensiveExtensiveComparison(s rowScanner) (rent.IntensiveExtensiveComp
 		CreatedAt:              createdAt,
 	}, nil
 }
+
+// CreateSoilExclusionEvent inserts e, assigning an ID and timestamp when absent (Vol. III Ch. 42).
+func (m *MySQL) CreateSoilExclusionEvent(ctx context.Context, e rent.SoilExclusionEvent) (rent.SoilExclusionEvent, error) {
+	if e.ID == "" {
+		e.ID = rent.NewSoilExclusionEventID()
+	}
+	if e.CreatedAt.IsZero() {
+		e.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `soil_exclusion_events`" +
+		" (`id`, `excluded_grade`, `new_regulating_grade`, `new_price_of_production_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(e.ID),
+		int64(e.ExcludedGrade),
+		int64(e.NewRegulatingGrade),
+		e.NewPriceOfProductionBP,
+		e.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.SoilExclusionEvent{}, ErrAlreadyExists
+		}
+		return rent.SoilExclusionEvent{}, err
+	}
+	return e, nil
+}
+
+// GetSoilExclusionEvent returns the soil-exclusion event with id, or ErrNotFound (Vol. III Ch. 42).
+func (m *MySQL) GetSoilExclusionEvent(ctx context.Context, id rent.SoilExclusionEventID) (rent.SoilExclusionEvent, error) {
+	const q = "SELECT `id`, `excluded_grade`, `new_regulating_grade`, `new_price_of_production_bp`, `created_at`" +
+		" FROM `soil_exclusion_events` WHERE `id` = ?"
+	return scanSoilExclusionEvent(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListSoilExclusionEvents returns all stored soil-exclusion events, newest first (Vol. III Ch. 42).
+func (m *MySQL) ListSoilExclusionEvents(ctx context.Context) ([]rent.SoilExclusionEvent, error) {
+	const q = "SELECT `id`, `excluded_grade`, `new_regulating_grade`, `new_price_of_production_bp`, `created_at`" +
+		" FROM `soil_exclusion_events` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.SoilExclusionEvent, 0)
+	for rows.Next() {
+		e, err := scanSoilExclusionEvent(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
+func scanSoilExclusionEvent(s rowScanner) (rent.SoilExclusionEvent, error) {
+	var (
+		id                     string
+		excludedGrade          int64
+		newRegulatingGrade     int64
+		newPriceOfProductionBP int64
+		createdAt              time.Time
+	)
+	err := s.Scan(&id, &excludedGrade, &newRegulatingGrade, &newPriceOfProductionBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.SoilExclusionEvent{}, ErrNotFound
+		}
+		return rent.SoilExclusionEvent{}, err
+	}
+	return rent.SoilExclusionEvent{
+		ID:                     rent.SoilExclusionEventID(id),
+		ExcludedGrade:          rent.SoilGrade(excludedGrade),
+		NewRegulatingGrade:     rent.SoilGrade(newRegulatingGrade),
+		NewPriceOfProductionBP: newPriceOfProductionBP,
+		CreatedAt:              createdAt,
+	}, nil
+}
+
+// CreateFallingPriceDR2Outcome inserts o, assigning an ID and timestamp when absent (Vol. III Ch. 42).
+func (m *MySQL) CreateFallingPriceDR2Outcome(ctx context.Context, o rent.FallingPriceDR2Outcome) (rent.FallingPriceDR2Outcome, error) {
+	if o.ID == "" {
+		o.ID = rent.NewFallingPriceDR2OutcomeID()
+	}
+	if o.CreatedAt.IsZero() {
+		o.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `falling_price_dr2_outcomes`" +
+		" (`id`, `falling_variant`, `exclusion_event_id`, `total_money_rental_bp`, `total_grain_rent_qtrs`, `total_output_quarters`, `total_capital_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(o.ID),
+		int64(o.Variant),
+		o.ExclusionEventID,
+		o.TotalMoneyRentalBP,
+		o.TotalGrainRentQtrs,
+		o.TotalOutputQuarters,
+		o.TotalCapitalBP,
+		o.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.FallingPriceDR2Outcome{}, ErrAlreadyExists
+		}
+		return rent.FallingPriceDR2Outcome{}, err
+	}
+	return o, nil
+}
+
+// ListFallingPriceDR2Outcomes returns all stored falling-price DR II outcomes, newest first (Vol. III Ch. 42).
+func (m *MySQL) ListFallingPriceDR2Outcomes(ctx context.Context) ([]rent.FallingPriceDR2Outcome, error) {
+	const q = "SELECT `id`, `falling_variant`, `exclusion_event_id`, `total_money_rental_bp`, `total_grain_rent_qtrs`, `total_output_quarters`, `total_capital_bp`, `created_at`" +
+		" FROM `falling_price_dr2_outcomes` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.FallingPriceDR2Outcome, 0)
+	for rows.Next() {
+		o, err := scanFallingPriceDR2Outcome(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, o)
+	}
+	return out, rows.Err()
+}
+
+func scanFallingPriceDR2Outcome(s rowScanner) (rent.FallingPriceDR2Outcome, error) {
+	var (
+		id                  string
+		fallingVariant      int64
+		exclusionEventID    string
+		totalMoneyRentalBP  int64
+		totalGrainRentQtrs  int64
+		totalOutputQuarters int64
+		totalCapitalBP      int64
+		createdAt           time.Time
+	)
+	err := s.Scan(&id, &fallingVariant, &exclusionEventID, &totalMoneyRentalBP, &totalGrainRentQtrs, &totalOutputQuarters, &totalCapitalBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.FallingPriceDR2Outcome{}, ErrNotFound
+		}
+		return rent.FallingPriceDR2Outcome{}, err
+	}
+	return rent.FallingPriceDR2Outcome{
+		ID:                  rent.FallingPriceDR2OutcomeID(id),
+		Variant:             rent.FallingPriceVariant(fallingVariant),
+		ExclusionEventID:    exclusionEventID,
+		TotalMoneyRentalBP:  totalMoneyRentalBP,
+		TotalGrainRentQtrs:  totalGrainRentQtrs,
+		TotalOutputQuarters: totalOutputQuarters,
+		TotalCapitalBP:      totalCapitalBP,
+		CreatedAt:           createdAt,
+	}, nil
+}
+
+// CreateNormalCapitalPerAcre inserts n, assigning an ID and timestamp when absent (Vol. III Ch. 42).
+func (m *MySQL) CreateNormalCapitalPerAcre(ctx context.Context, n rent.NormalCapitalPerAcre) (rent.NormalCapitalPerAcre, error) {
+	if n.ID == "" {
+		n.ID = rent.NewNormalCapitalPerAcreID()
+	}
+	if n.CreatedAt.IsZero() {
+		n.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `normal_capital_per_acre`" +
+		" (`id`, `period_label`, `capital_per_acre_bp`, `created_at`)" +
+		" VALUES (?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(n.ID),
+		n.PeriodLabel,
+		n.CapitalPerAcreBP,
+		n.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.NormalCapitalPerAcre{}, ErrAlreadyExists
+		}
+		return rent.NormalCapitalPerAcre{}, err
+	}
+	return n, nil
+}
+
+// ListNormalCapitalPerAcre returns all stored normal-capital-per-acre records, newest first (Vol. III Ch. 42).
+func (m *MySQL) ListNormalCapitalPerAcre(ctx context.Context) ([]rent.NormalCapitalPerAcre, error) {
+	const q = "SELECT `id`, `period_label`, `capital_per_acre_bp`, `created_at`" +
+		" FROM `normal_capital_per_acre` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.NormalCapitalPerAcre, 0)
+	for rows.Next() {
+		n, err := scanNormalCapitalPerAcre(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, n)
+	}
+	return out, rows.Err()
+}
+
+func scanNormalCapitalPerAcre(s rowScanner) (rent.NormalCapitalPerAcre, error) {
+	var (
+		id               string
+		periodLabel      string
+		capitalPerAcreBP int64
+		createdAt        time.Time
+	)
+	err := s.Scan(&id, &periodLabel, &capitalPerAcreBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.NormalCapitalPerAcre{}, ErrNotFound
+		}
+		return rent.NormalCapitalPerAcre{}, err
+	}
+	return rent.NormalCapitalPerAcre{
+		ID:               rent.NormalCapitalPerAcreID(id),
+		PeriodLabel:      periodLabel,
+		CapitalPerAcreBP: capitalPerAcreBP,
+		CreatedAt:        createdAt,
+	}, nil
+}

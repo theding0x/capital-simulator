@@ -488,6 +488,13 @@ func main() {
 	srv.Handle("/v1/rent/dr2-outcomes/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/intensive-extensive", financeProxy)
 	srv.Handle("/v1/rent/intensive-extensive/{rest...}", financeProxy)
+	// Ch. 42 — DR II falling price: soil-exclusion events, falling-price outcomes, normal capital per acre.
+	srv.Handle("/v1/rent/exclusion-events", financeProxy)
+	srv.Handle("/v1/rent/exclusion-events/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/dr2-falling-outcomes", financeProxy)
+	srv.Handle("/v1/rent/dr2-falling-outcomes/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/normal-capital", financeProxy)
+	srv.Handle("/v1/rent/normal-capital/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 

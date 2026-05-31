@@ -2787,4 +2787,33 @@ export const financeApi = {
     http<{ items: import("./types").IntensiveExtensiveComparison[] }>("/v1/rent/intensive-extensive").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 42 — DR II Falling Price of Production
+  createSoilExclusionEvent: (body: import("./types").CreateSoilExclusionEventInput) =>
+    http<import("./types").SoilExclusionEvent>("/v1/rent/exclusion-events", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listSoilExclusionEvents: () =>
+    http<{ items: import("./types").SoilExclusionEvent[] }>("/v1/rent/exclusion-events").then(
+      (r) => r.items ?? [],
+    ),
+  createFallingPriceDR2Outcome: (body: import("./types").CreateFallingPriceDR2OutcomeInput) =>
+    http<import("./types").FallingPriceDR2Outcome>("/v1/rent/dr2-falling-outcomes", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listFallingPriceDR2Outcomes: () =>
+    http<{ items: import("./types").FallingPriceDR2Outcome[] }>("/v1/rent/dr2-falling-outcomes").then(
+      (r) => r.items ?? [],
+    ),
+  createNormalCapitalPerAcre: (body: import("./types").CreateNormalCapitalPerAcreInput) =>
+    http<import("./types").NormalCapitalPerAcre>("/v1/rent/normal-capital", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listNormalCapitalPerAcre: () =>
+    http<{ items: import("./types").NormalCapitalPerAcre[] }>("/v1/rent/normal-capital").then(
+      (r) => r.items ?? [],
+    ),
 };

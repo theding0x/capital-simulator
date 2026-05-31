@@ -255,4 +255,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/dr2-outcomes", h.ListDR2Outcomes)
 	s.HandleFunc("POST /v1/rent/intensive-extensive", h.CreateIntensiveExtensiveComparison)
 	s.HandleFunc("GET /v1/rent/intensive-extensive", h.ListIntensiveExtensiveComparisons)
+
+	// Vol. III Ch. 42 — DR II, Second Case: Falling Price of Production
+	s.HandleFunc("POST /v1/rent/exclusion-events", h.CreateSoilExclusionEvent)
+	s.HandleFunc("GET /v1/rent/exclusion-events", h.ListSoilExclusionEvents)
+	s.HandleFunc("POST /v1/rent/dr2-falling-outcomes", h.CreateFallingPriceDR2Outcome)
+	s.HandleFunc("GET /v1/rent/dr2-falling-outcomes", h.ListFallingPriceDR2Outcomes)
+	s.HandleFunc("POST /v1/rent/normal-capital", h.CreateNormalCapitalPerAcre)
+	s.HandleFunc("GET /v1/rent/normal-capital", h.ListNormalCapitalPerAcre)
 }
