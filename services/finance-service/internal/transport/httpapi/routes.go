@@ -271,4 +271,12 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/rent-sequences", h.ListRentSequences)
 	s.HandleFunc("POST /v1/rent/engels-tables", h.CreateEngelsTableEntry)
 	s.HandleFunc("GET /v1/rent/engels-tables", h.ListEngelsTableEntries)
+
+	// Vol. III Ch. 44 — Differential Rent on the Worst Cultivated Soil
+	s.HandleFunc("POST /v1/rent/worst-soil-rents", h.CreateRentOnWorstSoil)
+	s.HandleFunc("GET /v1/rent/worst-soil-rents", h.ListRentOnWorstSoils)
+	s.HandleFunc("POST /v1/rent/soil-improvements", h.CreateSoilImprovementCapital)
+	s.HandleFunc("GET /v1/rent/soil-improvements", h.ListSoilImprovementCapitals)
+	s.HandleFunc("POST /v1/rent/regulating-price-shifts", h.CreateRegulatingPriceShift)
+	s.HandleFunc("GET /v1/rent/regulating-price-shifts", h.ListRegulatingPriceShifts)
 }

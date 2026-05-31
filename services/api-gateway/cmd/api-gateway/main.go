@@ -502,6 +502,13 @@ func main() {
 	srv.Handle("/v1/rent/rent-sequences/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/engels-tables", financeProxy)
 	srv.Handle("/v1/rent/engels-tables/{rest...}", financeProxy)
+	// Ch. 44 — DR on worst soil: worst-soil rents, soil improvements, regulating-price shifts.
+	srv.Handle("/v1/rent/worst-soil-rents", financeProxy)
+	srv.Handle("/v1/rent/worst-soil-rents/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/soil-improvements", financeProxy)
+	srv.Handle("/v1/rent/soil-improvements/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/regulating-price-shifts", financeProxy)
+	srv.Handle("/v1/rent/regulating-price-shifts/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 

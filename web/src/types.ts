@@ -4589,3 +4589,51 @@ export interface CreateEngelsTableEntryInput {
   rent_shillings: number;
   capital_shillings: number;
 }
+
+// Vol. III Ch. 44 — Differential Rent on the Worst Cultivated Soil
+export type RentEmergenceMechanism = 1 | 2 | 3;
+export interface RentOnWorstSoil {
+  id: string;
+  parcel_id: string;
+  mechanism: RentEmergenceMechanism;
+  old_price_of_production_bp: number;
+  new_price_of_production_bp: number;
+  rent_per_acre_bp: number;
+  created_at: string;
+}
+export interface CreateRentOnWorstSoilInput {
+  parcel_id: string;
+  mechanism: RentEmergenceMechanism;
+  old_price_of_production_bp: number;
+  new_price_of_production_bp: number;
+}
+export interface SoilImprovementCapital {
+  id: string;
+  parcel_id: string;
+  capital_invested_bp: number;
+  productivity_gain_bp: number;
+  amortisation_years: number;
+  amortised_years: number;
+  created_at: string;
+}
+export interface CreateSoilImprovementCapitalInput {
+  parcel_id: string;
+  capital_invested_bp: number;
+  productivity_gain_bp: number;
+  amortisation_years: number;
+  amortised_years: number;
+}
+export interface RegulatingPriceShift {
+  id: string;
+  from_grade: number;
+  to_grade: number;
+  old_price_bp: number;
+  new_price_bp: number;
+  created_at: string;
+}
+export interface CreateRegulatingPriceShiftInput {
+  from_grade: number;
+  to_grade: number;
+  old_price_bp: number;
+  new_price_bp: number;
+}

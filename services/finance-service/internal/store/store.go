@@ -678,4 +678,28 @@ type Store interface {
 	// ListEngelsTableEntries returns all stored Engels-table entries, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListEngelsTableEntries(ctx context.Context) ([]rent.EngelsTableEntry, error)
+
+	// CreateRentOnWorstSoil persists a rent-on-worst-soil record (Vol. III Ch. 44 —
+	// hitherto rentless soil A acquires rent; RentPerAcreBP computed server-side),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateRentOnWorstSoil(ctx context.Context, r rent.RentOnWorstSoil) (rent.RentOnWorstSoil, error)
+	// ListRentOnWorstSoils returns all stored rent-on-worst-soil records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRentOnWorstSoils(ctx context.Context) ([]rent.RentOnWorstSoil, error)
+
+	// CreateSoilImprovementCapital persists a soil-improvement-capital record (Vol. III Ch. 44 —
+	// permanent improvement amortised over lease; dissolves into pure DR once amortised),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateSoilImprovementCapital(ctx context.Context, s rent.SoilImprovementCapital) (rent.SoilImprovementCapital, error)
+	// ListSoilImprovementCapitals returns all stored soil-improvement-capital records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListSoilImprovementCapitals(ctx context.Context) ([]rent.SoilImprovementCapital, error)
+
+	// CreateRegulatingPriceShift persists a regulating-price-shift record (Vol. III Ch. 44 —
+	// movement in which grade regulates the market price of production),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateRegulatingPriceShift(ctx context.Context, s rent.RegulatingPriceShift) (rent.RegulatingPriceShift, error)
+	// ListRegulatingPriceShifts returns all stored regulating-price-shift records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRegulatingPriceShifts(ctx context.Context) ([]rent.RegulatingPriceShift, error)
 }
