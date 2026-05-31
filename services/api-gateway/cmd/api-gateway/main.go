@@ -509,6 +509,15 @@ func main() {
 	srv.Handle("/v1/rent/soil-improvements/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/regulating-price-shifts", financeProxy)
 	srv.Handle("/v1/rent/regulating-price-shifts/{rest...}", financeProxy)
+	// Ch. 45 — Absolute ground-rent: compositions, value-price gaps, absolute rents, rent limits.
+	srv.Handle("/v1/rent/compositions", financeProxy)
+	srv.Handle("/v1/rent/compositions/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/value-gaps", financeProxy)
+	srv.Handle("/v1/rent/value-gaps/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/absolute-rents", financeProxy)
+	srv.Handle("/v1/rent/absolute-rents/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/rent-limits", financeProxy)
+	srv.Handle("/v1/rent/rent-limits/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 

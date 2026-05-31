@@ -6029,3 +6029,315 @@ func scanRegulatingPriceShift(s rowScanner) (rent.RegulatingPriceShift, error) {
 		CreatedAt:  createdAt,
 	}, nil
 }
+
+// ── Vol. III Ch. 45 — Absolute Ground-Rent ──
+
+// CreateAgriculturalComposition inserts ac, assigning an ID and timestamp when absent (Vol. III Ch. 45).
+func (m *MySQL) CreateAgriculturalComposition(ctx context.Context, ac rent.AgriculturalComposition) (rent.AgriculturalComposition, error) {
+	if ac.ID == "" {
+		ac.ID = rent.NewAgriculturalCompositionID()
+	}
+	if ac.CreatedAt.IsZero() {
+		ac.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `agricultural_compositions`" +
+		" (`id`, `constant_capital_bp`, `variable_capital_bp`, `composition_ratio_bp`, `social_average_ratio_bp`, `is_below_average`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(ac.ID),
+		ac.ConstantCapitalBP,
+		ac.VariableCapitalBP,
+		ac.CompositionRatioBP,
+		ac.SocialAverageRatioBP,
+		ac.IsBelowAverage,
+		ac.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.AgriculturalComposition{}, ErrAlreadyExists
+		}
+		return rent.AgriculturalComposition{}, err
+	}
+	return ac, nil
+}
+
+// ListAgriculturalCompositions returns all stored records, newest first (Vol. III Ch. 45).
+func (m *MySQL) ListAgriculturalCompositions(ctx context.Context) ([]rent.AgriculturalComposition, error) {
+	const q = "SELECT `id`, `constant_capital_bp`, `variable_capital_bp`, `composition_ratio_bp`, `social_average_ratio_bp`, `is_below_average`, `created_at`" +
+		" FROM `agricultural_compositions` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.AgriculturalComposition, 0)
+	for rows.Next() {
+		ac, err := scanAgriculturalComposition(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, ac)
+	}
+	return out, rows.Err()
+}
+
+func scanAgriculturalComposition(s rowScanner) (rent.AgriculturalComposition, error) {
+	var (
+		id                   string
+		constantCapitalBP    int64
+		variableCapitalBP    int64
+		compositionRatioBP   int64
+		socialAverageRatioBP int64
+		isBelowAverage       bool
+		createdAt            time.Time
+	)
+	err := s.Scan(&id, &constantCapitalBP, &variableCapitalBP, &compositionRatioBP, &socialAverageRatioBP, &isBelowAverage, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.AgriculturalComposition{}, ErrNotFound
+		}
+		return rent.AgriculturalComposition{}, err
+	}
+	return rent.AgriculturalComposition{
+		ID:                   rent.AgriculturalCompositionID(id),
+		ConstantCapitalBP:    constantCapitalBP,
+		VariableCapitalBP:    variableCapitalBP,
+		CompositionRatioBP:   compositionRatioBP,
+		SocialAverageRatioBP: socialAverageRatioBP,
+		IsBelowAverage:       isBelowAverage,
+		CreatedAt:            createdAt,
+	}, nil
+}
+
+// CreateValuePriceGap inserts g, assigning an ID and timestamp when absent (Vol. III Ch. 45).
+func (m *MySQL) CreateValuePriceGap(ctx context.Context, g rent.ValuePriceGap) (rent.ValuePriceGap, error) {
+	if g.ID == "" {
+		g.ID = rent.NewValuePriceGapID()
+	}
+	if g.CreatedAt.IsZero() {
+		g.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `value_price_gaps`" +
+		" (`id`, `product_id`, `value_labour_minutes`, `price_of_production_labour_minutes`, `gap_labour_minutes`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(g.ID),
+		g.ProductID,
+		g.ValueLabourMinutes,
+		g.PriceOfProductionLabourMinutes,
+		g.GapLabourMinutes,
+		g.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.ValuePriceGap{}, ErrAlreadyExists
+		}
+		return rent.ValuePriceGap{}, err
+	}
+	return g, nil
+}
+
+// ListValuePriceGaps returns all stored records, newest first (Vol. III Ch. 45).
+func (m *MySQL) ListValuePriceGaps(ctx context.Context) ([]rent.ValuePriceGap, error) {
+	const q = "SELECT `id`, `product_id`, `value_labour_minutes`, `price_of_production_labour_minutes`, `gap_labour_minutes`, `created_at`" +
+		" FROM `value_price_gaps` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.ValuePriceGap, 0)
+	for rows.Next() {
+		g, err := scanValuePriceGap(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, g)
+	}
+	return out, rows.Err()
+}
+
+func scanValuePriceGap(s rowScanner) (rent.ValuePriceGap, error) {
+	var (
+		id                             string
+		productID                      string
+		valueLabourMinutes             int64
+		priceOfProductionLabourMinutes int64
+		gapLabourMinutes               int64
+		createdAt                      time.Time
+	)
+	err := s.Scan(&id, &productID, &valueLabourMinutes, &priceOfProductionLabourMinutes, &gapLabourMinutes, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.ValuePriceGap{}, ErrNotFound
+		}
+		return rent.ValuePriceGap{}, err
+	}
+	return rent.ValuePriceGap{
+		ID:                             rent.ValuePriceGapID(id),
+		ProductID:                      productID,
+		ValueLabourMinutes:             valueLabourMinutes,
+		PriceOfProductionLabourMinutes: priceOfProductionLabourMinutes,
+		GapLabourMinutes:               gapLabourMinutes,
+		CreatedAt:                      createdAt,
+	}, nil
+}
+
+// CreateAbsoluteRent inserts ar, assigning an ID and timestamp when absent (Vol. III Ch. 45).
+func (m *MySQL) CreateAbsoluteRent(ctx context.Context, ar rent.AbsoluteRent) (rent.AbsoluteRent, error) {
+	if ar.ID == "" {
+		ar.ID = rent.NewAbsoluteRentID()
+	}
+	if ar.CreatedAt.IsZero() {
+		ar.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `absolute_rents`" +
+		" (`id`, `parcel_id`, `value_price_gap_id`, `surplus_value_bp`, `average_profit_bp`, `absolute_rent_bp`, `created_at`)" +
+		" VALUES (?,?,?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(ar.ID),
+		ar.ParcelID,
+		ar.ValuePriceGapID,
+		ar.SurplusValueBP,
+		ar.AverageProfitBP,
+		ar.AbsoluteRentBP,
+		ar.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.AbsoluteRent{}, ErrAlreadyExists
+		}
+		return rent.AbsoluteRent{}, err
+	}
+	return ar, nil
+}
+
+// GetAbsoluteRent returns the record with id, or ErrNotFound (Vol. III Ch. 45).
+func (m *MySQL) GetAbsoluteRent(ctx context.Context, id rent.AbsoluteRentID) (rent.AbsoluteRent, error) {
+	const q = "SELECT `id`, `parcel_id`, `value_price_gap_id`, `surplus_value_bp`, `average_profit_bp`, `absolute_rent_bp`, `created_at`" +
+		" FROM `absolute_rents` WHERE `id` = ?"
+	return scanAbsoluteRent(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListAbsoluteRents returns all stored records, newest first (Vol. III Ch. 45).
+func (m *MySQL) ListAbsoluteRents(ctx context.Context) ([]rent.AbsoluteRent, error) {
+	const q = "SELECT `id`, `parcel_id`, `value_price_gap_id`, `surplus_value_bp`, `average_profit_bp`, `absolute_rent_bp`, `created_at`" +
+		" FROM `absolute_rents` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.AbsoluteRent, 0)
+	for rows.Next() {
+		ar, err := scanAbsoluteRent(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, ar)
+	}
+	return out, rows.Err()
+}
+
+func scanAbsoluteRent(s rowScanner) (rent.AbsoluteRent, error) {
+	var (
+		id              string
+		parcelID        string
+		valuePriceGapID string
+		surplusValueBP  int64
+		averageProfitBP int64
+		absoluteRentBP  int64
+		createdAt       time.Time
+	)
+	err := s.Scan(&id, &parcelID, &valuePriceGapID, &surplusValueBP, &averageProfitBP, &absoluteRentBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.AbsoluteRent{}, ErrNotFound
+		}
+		return rent.AbsoluteRent{}, err
+	}
+	return rent.AbsoluteRent{
+		ID:              rent.AbsoluteRentID(id),
+		ParcelID:        parcelID,
+		ValuePriceGapID: valuePriceGapID,
+		SurplusValueBP:  surplusValueBP,
+		AverageProfitBP: averageProfitBP,
+		AbsoluteRentBP:  absoluteRentBP,
+		CreatedAt:       createdAt,
+	}, nil
+}
+
+// CreateAbsoluteRentLimit inserts l, assigning an ID and timestamp when absent (Vol. III Ch. 45).
+func (m *MySQL) CreateAbsoluteRentLimit(ctx context.Context, l rent.AbsoluteRentLimit) (rent.AbsoluteRentLimit, error) {
+	if l.ID == "" {
+		l.ID = rent.NewAbsoluteRentLimitID()
+	}
+	if l.CreatedAt.IsZero() {
+		l.CreatedAt = m.now().UTC()
+	}
+	const q = "INSERT INTO `absolute_rent_limits`" +
+		" (`id`, `max_rent_bp`, `actual_rent_bp`, `is_at_limit`, `created_at`)" +
+		" VALUES (?,?,?,?,?)"
+	_, err := m.db.ExecContext(ctx, q,
+		string(l.ID),
+		l.MaxRentBP,
+		l.ActualRentBP,
+		l.IsAtLimit,
+		l.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.AbsoluteRentLimit{}, ErrAlreadyExists
+		}
+		return rent.AbsoluteRentLimit{}, err
+	}
+	return l, nil
+}
+
+// ListAbsoluteRentLimits returns all stored records, newest first (Vol. III Ch. 45).
+func (m *MySQL) ListAbsoluteRentLimits(ctx context.Context) ([]rent.AbsoluteRentLimit, error) {
+	const q = "SELECT `id`, `max_rent_bp`, `actual_rent_bp`, `is_at_limit`, `created_at`" +
+		" FROM `absolute_rent_limits` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.AbsoluteRentLimit, 0)
+	for rows.Next() {
+		l, err := scanAbsoluteRentLimit(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, l)
+	}
+	return out, rows.Err()
+}
+
+func scanAbsoluteRentLimit(s rowScanner) (rent.AbsoluteRentLimit, error) {
+	var (
+		id           string
+		maxRentBP    int64
+		actualRentBP int64
+		isAtLimit    bool
+		createdAt    time.Time
+	)
+	err := s.Scan(&id, &maxRentBP, &actualRentBP, &isAtLimit, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.AbsoluteRentLimit{}, ErrNotFound
+		}
+		return rent.AbsoluteRentLimit{}, err
+	}
+	return rent.AbsoluteRentLimit{
+		ID:           rent.AbsoluteRentLimitID(id),
+		MaxRentBP:    maxRentBP,
+		ActualRentBP: actualRentBP,
+		IsAtLimit:    isAtLimit,
+		CreatedAt:    createdAt,
+	}, nil
+}

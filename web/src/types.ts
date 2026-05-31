@@ -4637,3 +4637,58 @@ export interface CreateRegulatingPriceShiftInput {
   old_price_bp: number;
   new_price_bp: number;
 }
+
+// Vol. III Ch. 45 — Absolute Ground-Rent
+export interface AgriculturalComposition {
+  id: string;
+  constant_capital_bp: number;
+  variable_capital_bp: number;
+  composition_ratio_bp: number;
+  social_average_ratio_bp: number;
+  is_below_average: boolean;
+  created_at: string;
+}
+export interface CreateAgriculturalCompositionInput {
+  constant_capital_bp: number;
+  variable_capital_bp: number;
+  social_average_ratio_bp: number;
+}
+export interface ValuePriceGap {
+  id: string;
+  product_id: string;
+  value_labour_minutes: number;
+  price_of_production_labour_minutes: number;
+  gap_labour_minutes: number;
+  created_at: string;
+}
+export interface CreateValuePriceGapInput {
+  product_id: string;
+  value_labour_minutes: number;
+  price_of_production_labour_minutes: number;
+}
+export interface AbsoluteRent {
+  id: string;
+  parcel_id: string;
+  value_price_gap_id: string;
+  surplus_value_bp: number;
+  average_profit_bp: number;
+  absolute_rent_bp: number;
+  created_at: string;
+}
+export interface CreateAbsoluteRentInput {
+  parcel_id: string;
+  value_price_gap_id: string;
+  surplus_value_bp: number;
+  average_profit_bp: number;
+}
+export interface AbsoluteRentLimit {
+  id: string;
+  max_rent_bp: number;
+  actual_rent_bp: number;
+  is_at_limit: boolean;
+  created_at: string;
+}
+export interface CreateAbsoluteRentLimitInput {
+  max_rent_bp: number;
+  actual_rent_bp: number;
+}

@@ -99,6 +99,7 @@ import { Ch41DR2ConstantPrice } from "../chapters/vol3/Ch41DR2ConstantPrice";
 import { Ch42DR2FallingPrice } from "../chapters/vol3/Ch42DR2FallingPrice";
 import { Ch43DR2RisingPrice } from "../chapters/vol3/Ch43DR2RisingPrice";
 import { Ch44WorstSoilRent } from "../chapters/vol3/Ch44WorstSoilRent";
+import { Ch45AbsoluteRent } from "../chapters/vol3/Ch45AbsoluteRent";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -216,6 +217,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch42": Ch42DR2FallingPrice as AnyPanel,
   "v3-ch43": Ch43DR2RisingPrice as AnyPanel,
   "v3-ch44": Ch44WorstSoilRent as AnyPanel,
+  "v3-ch45": Ch45AbsoluteRent as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -313,6 +315,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch42": "Even with a falling price of production, additional capital can be invested with the result that the rental rises, or at least does not fall... the grain-rent rises while the money-rent remains constant. — Marx, Capital III, Ch. 42.",
   "v3-ch43": "The more capital is invested in the land, and the higher the development of agriculture and civilisation in general in a country, the more the rents rise... and the more immense becomes the tribute paid to the great landlords. — Marx/Engels, Capital III, Ch. 43.",
   "v3-ch44": "Differential rent... can also develop on the worst cultivated soil, although this soil by definition yields no differential rent in the first instance. — Marx, Capital III, Ch. 44.",
+  "v3-ch45": "The lower composition of agricultural capital... is the reason why agricultural products, when sold at their value, yield a surplus over the average profit — and this surplus forms the substance of absolute rent. — Marx, Capital III, Ch. 45.",
 };
 
 export function ChapterShell({
