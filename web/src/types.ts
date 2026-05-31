@@ -3757,3 +3757,33 @@ export interface CompoundInterestSchedule {
   fetish_form: number;         // 1=SimpleInterest, 2=CompoundInterest, 3=MM
   created_at: string;
 }
+
+// BillOfExchange mirrors credit.BillOfExchange (Vol. III Ch. 25).
+// A promissory note with a fixed maturity, circulating as commercial money
+// before its due date. face_value and maturity_days must be > 0.
+export interface BillOfExchange {
+  id: string;
+  drawer: string;              // issuer
+  drawee: string;              // debtor
+  face_value: number;          // > 0; pence
+  maturity_days: number;       // > 0
+  description: string;
+  created_at: string;
+}
+
+// FictitiousCapital mirrors credit.FictitiousCapital (Vol. III Ch. 25).
+// A capitalised income stream: capitalised_value is DERIVED server-side as
+// roundHalfUp(annual_income * 10000, rate_bp). For public debt (kind=3) the
+// original capital is consumed, so real_capital_exists is false.
+// kind: 1=bill, 2=bank-note, 3=public-debt, 4=share.
+export interface FictitiousCapital {
+  id: string;
+  kind: number;                // 1=bill, 2=bank-note, 3=public-debt, 4=share
+  name: string;
+  annual_income: number;       // > 0; pence
+  rate_bp: number;             // > 0; prevailing interest rate in basis points
+  capitalised_value: number;   // DERIVED: roundHalfUp(annual_income*10000, rate_bp)
+  real_capital_exists: boolean; // false for public debt (consumed capital)
+  description: string;
+  created_at: string;
+}

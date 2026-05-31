@@ -48,6 +48,8 @@ type Memory struct {
 	ratesOfInterest            map[credit.RateOfInterestID]credit.RateOfInterest
 	profitDivisions             map[credit.ProfitDivisionID]credit.ProfitDivision
 	compoundInterestSchedules  map[credit.CompoundInterestID]credit.CompoundInterestSchedule
+	billsOfExchange            map[credit.BillOfExchangeID]credit.BillOfExchange
+	fictitiousCapitals         map[credit.FictitiousCapitalID]credit.FictitiousCapital
 }
 
 // NewMemory returns an empty in-memory store.
@@ -85,6 +87,8 @@ func NewMemory() *Memory {
 		ratesOfInterest:            make(map[credit.RateOfInterestID]credit.RateOfInterest),
 		profitDivisions:            make(map[credit.ProfitDivisionID]credit.ProfitDivision),
 		compoundInterestSchedules:  make(map[credit.CompoundInterestID]credit.CompoundInterestSchedule),
+		billsOfExchange:            make(map[credit.BillOfExchangeID]credit.BillOfExchange),
+		fictitiousCapitals:         make(map[credit.FictitiousCapitalID]credit.FictitiousCapital),
 	}
 }
 
@@ -1408,6 +1412,102 @@ func (m *Memory) ListCompoundInterestSchedules(_ context.Context) ([]credit.Comp
 	out := make([]credit.CompoundInterestSchedule, 0, len(m.compoundInterestSchedules))
 	for _, s := range m.compoundInterestSchedules {
 		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateBillOfExchange stores b, assigning an ID and timestamp when absent.
+func (m *Memory) CreateBillOfExchange(_ context.Context, b credit.BillOfExchange) (credit.BillOfExchange, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if b.ID.IsZero() {
+		b.ID = credit.NewBillOfExchangeID()
+	}
+	if _, exists := m.billsOfExchange[b.ID]; exists {
+		return credit.BillOfExchange{}, ErrAlreadyExists
+	}
+	if b.CreatedAt.IsZero() {
+		b.CreatedAt = m.now().UTC()
+	}
+	m.billsOfExchange[b.ID] = b
+	return b, nil
+}
+
+// GetBillOfExchange returns the bill with id, or ErrNotFound.
+func (m *Memory) GetBillOfExchange(_ context.Context, id credit.BillOfExchangeID) (credit.BillOfExchange, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	b, ok := m.billsOfExchange[id]
+	if !ok {
+		return credit.BillOfExchange{}, ErrNotFound
+	}
+	return b, nil
+}
+
+// ListBillsOfExchange returns all stored bills, newest first.
+func (m *Memory) ListBillsOfExchange(_ context.Context) ([]credit.BillOfExchange, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.BillOfExchange, 0, len(m.billsOfExchange))
+	for _, b := range m.billsOfExchange {
+		out = append(out, b)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateFictitiousCapital stores fc, assigning an ID and timestamp when absent.
+func (m *Memory) CreateFictitiousCapital(_ context.Context, fc credit.FictitiousCapital) (credit.FictitiousCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if fc.ID.IsZero() {
+		fc.ID = credit.NewFictitiousCapitalID()
+	}
+	if _, exists := m.fictitiousCapitals[fc.ID]; exists {
+		return credit.FictitiousCapital{}, ErrAlreadyExists
+	}
+	if fc.CreatedAt.IsZero() {
+		fc.CreatedAt = m.now().UTC()
+	}
+	m.fictitiousCapitals[fc.ID] = fc
+	return fc, nil
+}
+
+// GetFictitiousCapital returns the record with id, or ErrNotFound.
+func (m *Memory) GetFictitiousCapital(_ context.Context, id credit.FictitiousCapitalID) (credit.FictitiousCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	fc, ok := m.fictitiousCapitals[id]
+	if !ok {
+		return credit.FictitiousCapital{}, ErrNotFound
+	}
+	return fc, nil
+}
+
+// ListFictitiousCapitals returns all stored records, newest first.
+func (m *Memory) ListFictitiousCapitals(_ context.Context) ([]credit.FictitiousCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.FictitiousCapital, 0, len(m.fictitiousCapitals))
+	for _, fc := range m.fictitiousCapitals {
+		out = append(out, fc)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

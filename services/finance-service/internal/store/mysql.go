@@ -2637,3 +2637,183 @@ func scanCompoundInterestSchedule(s rowScanner) (credit.CompoundInterestSchedule
 		CreatedAt:       createdAt,
 	}, nil
 }
+
+// CreateBillOfExchange inserts b, assigning an ID and timestamp when absent (Vol. III Ch. 25).
+func (m *MySQL) CreateBillOfExchange(ctx context.Context, b credit.BillOfExchange) (credit.BillOfExchange, error) {
+	if b.ID.IsZero() {
+		b.ID = credit.NewBillOfExchangeID()
+	}
+	if b.CreatedAt.IsZero() {
+		b.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO bills_of_exchange (` +
+		"`id`, `drawer`, `drawee`, `face_value`, `maturity_days`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(b.ID),
+		b.Drawer,
+		b.Drawee,
+		b.FaceValue,
+		b.MaturityDays,
+		b.Description,
+		b.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.BillOfExchange{}, ErrAlreadyExists
+		}
+		return credit.BillOfExchange{}, err
+	}
+	return b, nil
+}
+
+// GetBillOfExchange returns the bill with id, or ErrNotFound.
+func (m *MySQL) GetBillOfExchange(ctx context.Context, id credit.BillOfExchangeID) (credit.BillOfExchange, error) {
+	const q = `SELECT ` +
+		"`id`, `drawer`, `drawee`, `face_value`, `maturity_days`, `description`, `created_at` " +
+		"FROM `bills_of_exchange` WHERE `id` = ?"
+	return scanBillOfExchange(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListBillsOfExchange returns all stored bills, newest first.
+func (m *MySQL) ListBillsOfExchange(ctx context.Context) ([]credit.BillOfExchange, error) {
+	const q = `SELECT ` +
+		"`id`, `drawer`, `drawee`, `face_value`, `maturity_days`, `description`, `created_at` " +
+		"FROM `bills_of_exchange` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.BillOfExchange, 0)
+	for rows.Next() {
+		b, err := scanBillOfExchange(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, b)
+	}
+	return out, rows.Err()
+}
+
+func scanBillOfExchange(s rowScanner) (credit.BillOfExchange, error) {
+	var (
+		id           string
+		drawer       string
+		drawee       string
+		faceValue    int64
+		maturityDays int64
+		description  string
+		createdAt    time.Time
+	)
+	err := s.Scan(&id, &drawer, &drawee, &faceValue, &maturityDays, &description, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.BillOfExchange{}, ErrNotFound
+		}
+		return credit.BillOfExchange{}, err
+	}
+	return credit.BillOfExchange{
+		ID:           credit.BillOfExchangeID(id),
+		Drawer:       drawer,
+		Drawee:       drawee,
+		FaceValue:    faceValue,
+		MaturityDays: maturityDays,
+		Description:  description,
+		CreatedAt:    createdAt,
+	}, nil
+}
+
+// CreateFictitiousCapital inserts fc, assigning an ID and timestamp when absent (Vol. III Ch. 25).
+func (m *MySQL) CreateFictitiousCapital(ctx context.Context, fc credit.FictitiousCapital) (credit.FictitiousCapital, error) {
+	if fc.ID.IsZero() {
+		fc.ID = credit.NewFictitiousCapitalID()
+	}
+	if fc.CreatedAt.IsZero() {
+		fc.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO fictitious_capitals (` +
+		"`id`, `kind`, `name`, `annual_income`, `rate_bp`, `capitalised_value`, `real_capital_exists`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(fc.ID),
+		int(fc.Kind),
+		fc.Name,
+		fc.AnnualIncome,
+		fc.RateBP,
+		fc.CapitalisedValue,
+		fc.RealCapitalExists,
+		fc.Description,
+		fc.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.FictitiousCapital{}, ErrAlreadyExists
+		}
+		return credit.FictitiousCapital{}, err
+	}
+	return fc, nil
+}
+
+// GetFictitiousCapital returns the record with id, or ErrNotFound.
+func (m *MySQL) GetFictitiousCapital(ctx context.Context, id credit.FictitiousCapitalID) (credit.FictitiousCapital, error) {
+	const q = `SELECT ` +
+		"`id`, `kind`, `name`, `annual_income`, `rate_bp`, `capitalised_value`, `real_capital_exists`, `description`, `created_at` " +
+		"FROM `fictitious_capitals` WHERE `id` = ?"
+	return scanFictitiousCapital(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListFictitiousCapitals returns all stored records, newest first.
+func (m *MySQL) ListFictitiousCapitals(ctx context.Context) ([]credit.FictitiousCapital, error) {
+	const q = `SELECT ` +
+		"`id`, `kind`, `name`, `annual_income`, `rate_bp`, `capitalised_value`, `real_capital_exists`, `description`, `created_at` " +
+		"FROM `fictitious_capitals` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.FictitiousCapital, 0)
+	for rows.Next() {
+		fc, err := scanFictitiousCapital(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, fc)
+	}
+	return out, rows.Err()
+}
+
+func scanFictitiousCapital(s rowScanner) (credit.FictitiousCapital, error) {
+	var (
+		id                string
+		kind              int
+		name              string
+		annualIncome      int64
+		rateBP            int64
+		capitalisedValue  int64
+		realCapitalExists bool
+		description       string
+		createdAt         time.Time
+	)
+	err := s.Scan(&id, &kind, &name, &annualIncome, &rateBP, &capitalisedValue, &realCapitalExists, &description, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.FictitiousCapital{}, ErrNotFound
+		}
+		return credit.FictitiousCapital{}, err
+	}
+	return credit.FictitiousCapital{
+		ID:                credit.FictitiousCapitalID(id),
+		Kind:              credit.FictitiousKind(kind),
+		Name:              name,
+		AnnualIncome:      annualIncome,
+		RateBP:            rateBP,
+		CapitalisedValue:  capitalisedValue,
+		RealCapitalExists: realCapitalExists,
+		Description:       description,
+		CreatedAt:         createdAt,
+	}, nil
+}

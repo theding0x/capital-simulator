@@ -325,4 +325,25 @@ type Store interface {
 	// ListCompoundInterestSchedules returns all stored schedules, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListCompoundInterestSchedules(ctx context.Context) ([]credit.CompoundInterestSchedule, error)
+
+	// CreateBillOfExchange persists a bill of exchange (Vol. III Ch. 25 —
+	// commercial credit; FaceValue>0; MaturityDays>0), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateBillOfExchange(ctx context.Context, b credit.BillOfExchange) (credit.BillOfExchange, error)
+	// GetBillOfExchange returns the bill with the given ID, or ErrNotFound.
+	GetBillOfExchange(ctx context.Context, id credit.BillOfExchangeID) (credit.BillOfExchange, error)
+	// ListBillsOfExchange returns all stored bills, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListBillsOfExchange(ctx context.Context) ([]credit.BillOfExchange, error)
+
+	// CreateFictitiousCapital persists a fictitious-capital record (Vol. III Ch. 25 —
+	// capitalised income stream; AnnualIncome>0; RateBP>0; CapitalisedValue derived;
+	// KindPublicDebt has RealCapitalExists==false), assigning an ID and created-at
+	// timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateFictitiousCapital(ctx context.Context, fc credit.FictitiousCapital) (credit.FictitiousCapital, error)
+	// GetFictitiousCapital returns the record with the given ID, or ErrNotFound.
+	GetFictitiousCapital(ctx context.Context, id credit.FictitiousCapitalID) (credit.FictitiousCapital, error)
+	// ListFictitiousCapitals returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListFictitiousCapitals(ctx context.Context) ([]credit.FictitiousCapital, error)
 }
