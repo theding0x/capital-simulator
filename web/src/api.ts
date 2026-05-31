@@ -2483,4 +2483,16 @@ export const financeApi = {
     http<{ items: import("./types").CooperativeFactory[] }>("/v1/credit/cooperative-factories").then(
       (r) => r.items ?? [],
     ),
+  // Vol. III Ch. 28 — Medium of Circulation and Capital (Tooke and Fullarton)
+  createCurrencyObservation: (body: import("./types").CreateCurrencyObservationInput) =>
+    http<import("./types").CurrencyObservation>("/v1/credit/currency-observations", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listCurrencyObservations: () =>
+    http<{ items: import("./types").CurrencyObservation[] }>("/v1/credit/currency-observations").then(
+      (r) => r.items ?? [],
+    ),
+  getCurrencyObservation: (id: string) =>
+    http<import("./types").CurrencyObservation>(`/v1/credit/currency-observations/${id}`),
 };

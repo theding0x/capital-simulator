@@ -427,6 +427,9 @@ func main() {
 	srv.Handle("/v1/credit/stock-companies/{rest...}", financeProxy)
 	srv.Handle("/v1/credit/cooperative-factories", financeProxy)
 	srv.Handle("/v1/credit/cooperative-factories/{rest...}", financeProxy)
+	// Vol. III Ch. 28 — Medium of Circulation and Capital → finance-service
+	srv.Handle("/v1/credit/currency-observations", financeProxy)
+	srv.Handle("/v1/credit/currency-observations/{rest...}", financeProxy)
 	// Vol. III, Ch. 37-47 — Ground-Rent (differential I/II, absolute) → finance-service
 	// srv.Handle("/v1/ground-rent", financeProxy)
 	// srv.Handle("/v1/ground-rent/{rest...}", financeProxy)
