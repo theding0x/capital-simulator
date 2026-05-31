@@ -46,7 +46,8 @@ type Memory struct {
 	historicalMerchantCapitals map[merchant.HistoricalMerchantCapitalID]merchant.HistoricalMerchantCapital
 	interestBearingCapitals    map[credit.InterestBearingCapitalID]credit.InterestBearingCapital
 	ratesOfInterest            map[credit.RateOfInterestID]credit.RateOfInterest
-	profitDivisions            map[credit.ProfitDivisionID]credit.ProfitDivision
+	profitDivisions             map[credit.ProfitDivisionID]credit.ProfitDivision
+	compoundInterestSchedules  map[credit.CompoundInterestID]credit.CompoundInterestSchedule
 }
 
 // NewMemory returns an empty in-memory store.
@@ -83,6 +84,7 @@ func NewMemory() *Memory {
 		interestBearingCapitals:    make(map[credit.InterestBearingCapitalID]credit.InterestBearingCapital),
 		ratesOfInterest:            make(map[credit.RateOfInterestID]credit.RateOfInterest),
 		profitDivisions:            make(map[credit.ProfitDivisionID]credit.ProfitDivision),
+		compoundInterestSchedules:  make(map[credit.CompoundInterestID]credit.CompoundInterestSchedule),
 	}
 }
 
@@ -1358,6 +1360,54 @@ func (m *Memory) ListProfitDivisions(_ context.Context) ([]credit.ProfitDivision
 	out := make([]credit.ProfitDivision, 0, len(m.profitDivisions))
 	for _, pd := range m.profitDivisions {
 		out = append(out, pd)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCompoundInterestSchedule stores s, assigning an ID and timestamp when absent.
+func (m *Memory) CreateCompoundInterestSchedule(_ context.Context, s credit.CompoundInterestSchedule) (credit.CompoundInterestSchedule, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if s.ID.IsZero() {
+		s.ID = credit.NewCompoundInterestID()
+	}
+	if _, exists := m.compoundInterestSchedules[s.ID]; exists {
+		return credit.CompoundInterestSchedule{}, ErrAlreadyExists
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	m.compoundInterestSchedules[s.ID] = s
+	return s, nil
+}
+
+// GetCompoundInterestSchedule returns the schedule with id, or ErrNotFound.
+func (m *Memory) GetCompoundInterestSchedule(_ context.Context, id credit.CompoundInterestID) (credit.CompoundInterestSchedule, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	s, ok := m.compoundInterestSchedules[id]
+	if !ok {
+		return credit.CompoundInterestSchedule{}, ErrNotFound
+	}
+	return s, nil
+}
+
+// ListCompoundInterestSchedules returns all stored schedules, newest first.
+func (m *Memory) ListCompoundInterestSchedules(_ context.Context) ([]credit.CompoundInterestSchedule, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.CompoundInterestSchedule, 0, len(m.compoundInterestSchedules))
+	for _, s := range m.compoundInterestSchedules {
+		out = append(out, s)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

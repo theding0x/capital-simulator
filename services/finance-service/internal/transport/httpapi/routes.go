@@ -141,4 +141,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/credit/profit-division", h.CreateProfitDivision)
 	s.HandleFunc("GET /v1/credit/profit-division", h.ListProfitDivisions)
 	s.HandleFunc("GET /v1/credit/profit-division/{id}", h.GetProfitDivision)
+
+	// Vol. III Ch. 24 — Externalisation / Fetish Capital
+	s.HandleFunc("POST /v1/credit/compound-interest", h.CreateCompoundInterestSchedule)
+	s.HandleFunc("GET /v1/credit/compound-interest", h.ListCompoundInterestSchedules)
+	s.HandleFunc("GET /v1/credit/compound-interest/{id}", h.GetCompoundInterestSchedule)
 }

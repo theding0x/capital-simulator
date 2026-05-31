@@ -315,4 +315,14 @@ type Store interface {
 	// ListProfitDivisions returns all stored profit-division records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListProfitDivisions(ctx context.Context) ([]credit.ProfitDivision, error)
+
+	// CreateCompoundInterestSchedule persists a compound-interest schedule (Vol. III Ch. 24 —
+	// integer compound iteration; FinalValue derived; NewValueCreated==0; Principal/RateBP/PeriodYears>0),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCompoundInterestSchedule(ctx context.Context, s credit.CompoundInterestSchedule) (credit.CompoundInterestSchedule, error)
+	// GetCompoundInterestSchedule returns the schedule with the given ID, or ErrNotFound.
+	GetCompoundInterestSchedule(ctx context.Context, id credit.CompoundInterestID) (credit.CompoundInterestSchedule, error)
+	// ListCompoundInterestSchedules returns all stored schedules, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCompoundInterestSchedules(ctx context.Context) ([]credit.CompoundInterestSchedule, error)
 }

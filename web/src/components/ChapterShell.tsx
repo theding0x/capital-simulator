@@ -78,6 +78,7 @@ import { Ch20HistoricalMerchantCapital } from "../chapters/vol3/Ch20HistoricalMe
 import { Ch21InterestBearingCapital } from "../chapters/vol3/Ch21InterestBearingCapital";
 import { Ch22RateOfInterest } from "../chapters/vol3/Ch22RateOfInterest";
 import { Ch23ProfitOfEnterprise } from "../chapters/vol3/Ch23ProfitOfEnterprise";
+import { Ch24CompoundInterest } from "../chapters/vol3/Ch24CompoundInterest";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -174,6 +175,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch21": Ch21InterestBearingCapital as AnyPanel,
   "v3-ch22": Ch22RateOfInterest as AnyPanel,
   "v3-ch23": Ch23ProfitOfEnterprise as AnyPanel,
+  "v3-ch24": Ch24CompoundInterest as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {

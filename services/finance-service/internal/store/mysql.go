@@ -2547,3 +2547,93 @@ func scanProfitDivision(s rowScanner) (credit.ProfitDivision, error) {
 		CreatedAt:          createdAt,
 	}, nil
 }
+
+// CreateCompoundInterestSchedule inserts s, assigning an ID and timestamp when absent.
+func (m *MySQL) CreateCompoundInterestSchedule(ctx context.Context, s credit.CompoundInterestSchedule) (credit.CompoundInterestSchedule, error) {
+	if s.ID.IsZero() {
+		s.ID = credit.NewCompoundInterestID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO compound_interest_schedules (` +
+		"`id`, `principal`, `rate_bp`, `period_years`, `final_value`, `new_value_created`, `fetish_form`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(s.ID),
+		s.Principal,
+		s.RateBP,
+		s.PeriodYears,
+		s.FinalValue,
+		s.NewValueCreated,
+		int(s.FetishForm),
+		s.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.CompoundInterestSchedule{}, ErrAlreadyExists
+		}
+		return credit.CompoundInterestSchedule{}, err
+	}
+	return s, nil
+}
+
+// GetCompoundInterestSchedule returns the schedule with id, or ErrNotFound.
+func (m *MySQL) GetCompoundInterestSchedule(ctx context.Context, id credit.CompoundInterestID) (credit.CompoundInterestSchedule, error) {
+	const q = `SELECT ` +
+		"`id`, `principal`, `rate_bp`, `period_years`, `final_value`, `new_value_created`, `fetish_form`, `created_at` " +
+		"FROM `compound_interest_schedules` WHERE `id` = ?"
+	return scanCompoundInterestSchedule(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCompoundInterestSchedules returns all stored schedules, newest first.
+func (m *MySQL) ListCompoundInterestSchedules(ctx context.Context) ([]credit.CompoundInterestSchedule, error) {
+	const q = `SELECT ` +
+		"`id`, `principal`, `rate_bp`, `period_years`, `final_value`, `new_value_created`, `fetish_form`, `created_at` " +
+		"FROM `compound_interest_schedules` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.CompoundInterestSchedule, 0)
+	for rows.Next() {
+		s, err := scanCompoundInterestSchedule(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+func scanCompoundInterestSchedule(s rowScanner) (credit.CompoundInterestSchedule, error) {
+	var (
+		id              string
+		principal       int64
+		rateBP          int64
+		periodYears     int64
+		finalValue      int64
+		newValueCreated int64
+		fetishForm      int
+		createdAt       time.Time
+	)
+	err := s.Scan(&id, &principal, &rateBP, &periodYears, &finalValue, &newValueCreated, &fetishForm, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.CompoundInterestSchedule{}, ErrNotFound
+		}
+		return credit.CompoundInterestSchedule{}, err
+	}
+	return credit.CompoundInterestSchedule{
+		ID:              credit.CompoundInterestID(id),
+		Principal:       principal,
+		RateBP:          rateBP,
+		PeriodYears:     periodYears,
+		FinalValue:      finalValue,
+		NewValueCreated: newValueCreated,
+		FetishForm:      credit.FetishForm(fetishForm),
+		CreatedAt:       createdAt,
+	}, nil
+}

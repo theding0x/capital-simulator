@@ -2793,3 +2793,89 @@ func TestCh23SeedIDs(t *testing.T) {
 		seen[id] = struct{}{}
 	}
 }
+
+// TestCompoundInterestSchedule_RoundTrip verifies create → get returns identical struct.
+func TestCompoundInterestSchedule_RoundTrip(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	sched, err := credit.NewCompoundInterestSchedule(250000, 500, 10, credit.FormMM)
+	if err != nil {
+		t.Fatalf("NewCompoundInterestSchedule: %v", err)
+	}
+	created, err := m.CreateCompoundInterestSchedule(ctx, sched)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if created.ID.IsZero() {
+		t.Error("ID must be assigned")
+	}
+
+	got, err := m.GetCompoundInterestSchedule(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if got.Principal != created.Principal {
+		t.Errorf("Principal: got %d, want %d", got.Principal, created.Principal)
+	}
+	if got.FinalValue != created.FinalValue {
+		t.Errorf("FinalValue: got %d, want %d", got.FinalValue, created.FinalValue)
+	}
+	if got.NewValueCreated != 0 {
+		t.Errorf("NewValueCreated: got %d, want 0", got.NewValueCreated)
+	}
+}
+
+// TestCompoundInterestSchedule_NotFound verifies ErrNotFound for missing ID.
+func TestCompoundInterestSchedule_NotFound(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	_, err := m.GetCompoundInterestSchedule(ctx, credit.CompoundInterestID("doesnotexist"))
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+// TestListCompoundInterestSchedules_NeverNil verifies an empty store returns [].
+func TestListCompoundInterestSchedules_NeverNil(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	m := NewMemory()
+
+	items, err := m.ListCompoundInterestSchedules(ctx)
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if items == nil {
+		t.Error("List must return non-nil slice")
+	}
+	if len(items) != 0 {
+		t.Errorf("expected empty slice, got %d items", len(items))
+	}
+}
+
+// TestCh24SeedIDs asserts the Ch. 24 seed IDs carry the 24 token and are unique.
+func TestCh24SeedIDs(t *testing.T) {
+	t.Parallel()
+	ids := []string{
+		"5eed000000000000002400",
+		"5eed000000000000002401",
+	}
+	const prefix = "5eed00000000000000"
+	seen := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if len(id) <= len(prefix) || id[:len(prefix)] != prefix {
+			t.Errorf("seed id %q lacks prefix %q", id, prefix)
+		}
+		if cc := id[len(prefix) : len(prefix)+2]; cc != "24" {
+			t.Errorf("seed id %q chapter token = %q, want 24", id, cc)
+		}
+		if _, dup := seen[id]; dup {
+			t.Errorf("duplicate seed id %q", id)
+		}
+		seen[id] = struct{}{}
+	}
+}
