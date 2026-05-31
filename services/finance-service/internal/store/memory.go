@@ -76,6 +76,8 @@ type Memory struct {
 	dr1Tables                  map[rent.DifferentialRentITableID]rent.DifferentialRentITable
 	dr1Entries                 map[rent.DifferentialRentITableID][]rent.DifferentialRentIEntry
 	locationRentFactors        map[rent.LocationRentFactorID]rent.LocationRentFactor
+	successiveInvestments      map[rent.SuccessiveInvestmentID]rent.SuccessiveInvestment
+	leaseTerms                 map[rent.LeaseTermID]rent.LeaseTerm
 }
 
 // NewMemory returns an empty in-memory store.
@@ -140,6 +142,8 @@ func NewMemory() *Memory {
 		dr1Tables:                  make(map[rent.DifferentialRentITableID]rent.DifferentialRentITable),
 		dr1Entries:                 make(map[rent.DifferentialRentITableID][]rent.DifferentialRentIEntry),
 		locationRentFactors:        make(map[rent.LocationRentFactorID]rent.LocationRentFactor),
+		successiveInvestments:      make(map[rent.SuccessiveInvestmentID]rent.SuccessiveInvestment),
+		leaseTerms:                 make(map[rent.LeaseTermID]rent.LeaseTerm),
 	}
 }
 
@@ -2657,6 +2661,99 @@ func (m *Memory) ListLocationRentFactors(_ context.Context) ([]rent.LocationRent
 	out := make([]rent.LocationRentFactor, 0, len(m.locationRentFactors))
 	for _, f := range m.locationRentFactors {
 		out = append(out, f)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateSuccessiveInvestment stores inv, assigning an ID and timestamp when absent (Vol. III Ch. 40).
+func (m *Memory) CreateSuccessiveInvestment(_ context.Context, inv rent.SuccessiveInvestment) (rent.SuccessiveInvestment, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if inv.ID == "" {
+		inv.ID = rent.NewSuccessiveInvestmentID()
+	}
+	if _, exists := m.successiveInvestments[inv.ID]; exists {
+		return rent.SuccessiveInvestment{}, ErrAlreadyExists
+	}
+	if inv.CreatedAt.IsZero() {
+		inv.CreatedAt = m.now().UTC()
+	}
+	m.successiveInvestments[inv.ID] = inv
+	return inv, nil
+}
+
+// ListSuccessiveInvestments returns all stored successive-investment records, newest first. Never returns nil (Vol. III Ch. 40).
+func (m *Memory) ListSuccessiveInvestments(_ context.Context) ([]rent.SuccessiveInvestment, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.SuccessiveInvestment, 0, len(m.successiveInvestments))
+	for _, inv := range m.successiveInvestments {
+		out = append(out, inv)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// ListSuccessiveInvestmentsByParcel returns successive-investment records matching parcelID, newest first.
+// Returns an empty slice (not ErrNotFound) when no rows match (Vol. III Ch. 40).
+func (m *Memory) ListSuccessiveInvestmentsByParcel(_ context.Context, parcelID string) ([]rent.SuccessiveInvestment, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.SuccessiveInvestment, 0)
+	for _, inv := range m.successiveInvestments {
+		if inv.ParcelID == parcelID {
+			out = append(out, inv)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateLeaseTerm stores lt, assigning an ID and timestamp when absent (Vol. III Ch. 40).
+func (m *Memory) CreateLeaseTerm(_ context.Context, lt rent.LeaseTerm) (rent.LeaseTerm, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if lt.ID == "" {
+		lt.ID = rent.NewLeaseTermID()
+	}
+	if _, exists := m.leaseTerms[lt.ID]; exists {
+		return rent.LeaseTerm{}, ErrAlreadyExists
+	}
+	if lt.CreatedAt.IsZero() {
+		lt.CreatedAt = m.now().UTC()
+	}
+	m.leaseTerms[lt.ID] = lt
+	return lt, nil
+}
+
+// ListLeaseTerms returns all stored lease-term records, newest first. Never returns nil (Vol. III Ch. 40).
+func (m *Memory) ListLeaseTerms(_ context.Context) ([]rent.LeaseTerm, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]rent.LeaseTerm, 0, len(m.leaseTerms))
+	for _, lt := range m.leaseTerms {
+		out = append(out, lt)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

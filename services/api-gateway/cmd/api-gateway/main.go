@@ -477,6 +477,12 @@ func main() {
 	srv.Handle("/v1/rent/dr1-tables/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/location-rent-factors", financeProxy)
 	srv.Handle("/v1/rent/location-rent-factors/{rest...}", financeProxy)
+	// Ch. 40 — Differential Rent II: successive investments, DR II tables (by parcel), lease terms.
+	srv.Handle("/v1/rent/successive-investments", financeProxy)
+	srv.Handle("/v1/rent/successive-investments/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/dr2-tables/{rest...}", financeProxy)
+	srv.Handle("/v1/rent/lease-terms", financeProxy)
+	srv.Handle("/v1/rent/lease-terms/{rest...}", financeProxy)
 
 	srv.MarkReady(true)
 

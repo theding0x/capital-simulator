@@ -4412,3 +4412,47 @@ export interface CreateLocationRentFactorInput {
   transport_cost_bp: number;
   rent_equivalent_bp: number;
 }
+
+// Vol. III Ch. 40 — Differential Rent II
+export interface SuccessiveInvestment {
+  id: string;
+  parcel_id: string;
+  tranche_number: number;
+  capital_bp: number;
+  output_quarters: number;
+  surplus_profit_bp: number;
+  created_at: string;
+}
+export interface DifferentialRentIITable {
+  id: string;
+  parcel_id: string;
+  total_capital_bp: number;
+  total_output_quarters: number;
+  total_rent_bp: number;
+  rent_per_acre_bp: number;
+}
+export interface DifferentialRentIITableWithInvestments {
+  table: DifferentialRentIITable;
+  investments: SuccessiveInvestment[];
+}
+export interface LeaseTerm {
+  id: string;
+  parcel_id: string;
+  start_year: number;
+  duration_years: number;
+  fixed_rent_bp: number;
+  created_at: string;
+}
+export interface CreateSuccessiveInvestmentInput {
+  parcel_id: string;
+  tranche_number: number;
+  capital_bp: number;
+  output_quarters: number;
+  surplus_profit_bp: number;
+}
+export interface CreateLeaseTermInput {
+  parcel_id: string;
+  start_year: number;
+  duration_years: number;
+  fixed_rent_bp: number;
+}

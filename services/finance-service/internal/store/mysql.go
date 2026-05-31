@@ -5002,3 +5002,183 @@ func unmarshalDR1Entries(raw string) ([]rent.DifferentialRentIEntry, error) {
 	}
 	return entries, nil
 }
+
+// ── Vol. III Ch. 40 — Differential Rent II (SuccessiveInvestment, LeaseTerm) ──
+
+// CreateSuccessiveInvestment inserts inv, assigning an ID and timestamp when absent (Vol. III Ch. 40).
+func (m *MySQL) CreateSuccessiveInvestment(ctx context.Context, inv rent.SuccessiveInvestment) (rent.SuccessiveInvestment, error) {
+	if inv.ID == "" {
+		inv.ID = rent.NewSuccessiveInvestmentID()
+	}
+	if inv.CreatedAt.IsZero() {
+		inv.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO ` + "`successive_investments`" +
+		` (` + "`id`, `parcel_id`, `tranche_number`, `capital_bp`, `output_quarters`, `surplus_profit_bp`, `created_at`" + `)` +
+		` VALUES (?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(inv.ID),
+		inv.ParcelID,
+		inv.TrancheNumber,
+		inv.CapitalBP,
+		inv.OutputQuarters,
+		inv.SurplusProfitBP,
+		inv.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.SuccessiveInvestment{}, ErrAlreadyExists
+		}
+		return rent.SuccessiveInvestment{}, err
+	}
+	return inv, nil
+}
+
+// ListSuccessiveInvestments returns all stored records, newest first (Vol. III Ch. 40).
+func (m *MySQL) ListSuccessiveInvestments(ctx context.Context) ([]rent.SuccessiveInvestment, error) {
+	const q = `SELECT ` +
+		"`id`, `parcel_id`, `tranche_number`, `capital_bp`, `output_quarters`, `surplus_profit_bp`, `created_at` " +
+		"FROM `successive_investments` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.SuccessiveInvestment, 0)
+	for rows.Next() {
+		inv, err := scanSuccessiveInvestment(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, inv)
+	}
+	return out, rows.Err()
+}
+
+// ListSuccessiveInvestmentsByParcel returns records matching parcelID, newest first (Vol. III Ch. 40).
+// Returns an empty slice (not ErrNotFound) when no rows match.
+func (m *MySQL) ListSuccessiveInvestmentsByParcel(ctx context.Context, parcelID string) ([]rent.SuccessiveInvestment, error) {
+	const q = `SELECT ` +
+		"`id`, `parcel_id`, `tranche_number`, `capital_bp`, `output_quarters`, `surplus_profit_bp`, `created_at` " +
+		"FROM `successive_investments` WHERE `parcel_id` = ? ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q, parcelID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.SuccessiveInvestment, 0)
+	for rows.Next() {
+		inv, err := scanSuccessiveInvestment(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, inv)
+	}
+	return out, rows.Err()
+}
+
+func scanSuccessiveInvestment(s rowScanner) (rent.SuccessiveInvestment, error) {
+	var (
+		id              string
+		parcelID        string
+		trancheNumber   int
+		capitalBP       int64
+		outputQuarters  int64
+		surplusProfitBP int64
+		createdAt       time.Time
+	)
+	err := s.Scan(&id, &parcelID, &trancheNumber, &capitalBP, &outputQuarters, &surplusProfitBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.SuccessiveInvestment{}, ErrNotFound
+		}
+		return rent.SuccessiveInvestment{}, err
+	}
+	return rent.SuccessiveInvestment{
+		ID:              rent.SuccessiveInvestmentID(id),
+		ParcelID:        parcelID,
+		TrancheNumber:   trancheNumber,
+		CapitalBP:       capitalBP,
+		OutputQuarters:  outputQuarters,
+		SurplusProfitBP: surplusProfitBP,
+		CreatedAt:       createdAt,
+	}, nil
+}
+
+// CreateLeaseTerm inserts lt, assigning an ID and timestamp when absent (Vol. III Ch. 40).
+func (m *MySQL) CreateLeaseTerm(ctx context.Context, lt rent.LeaseTerm) (rent.LeaseTerm, error) {
+	if lt.ID == "" {
+		lt.ID = rent.NewLeaseTermID()
+	}
+	if lt.CreatedAt.IsZero() {
+		lt.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO ` + "`lease_terms`" +
+		` (` + "`id`, `parcel_id`, `start_year`, `duration_years`, `fixed_rent_bp`, `created_at`" + `)` +
+		` VALUES (?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(lt.ID),
+		lt.ParcelID,
+		lt.StartYear,
+		lt.DurationYears,
+		lt.FixedRentBP,
+		lt.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return rent.LeaseTerm{}, ErrAlreadyExists
+		}
+		return rent.LeaseTerm{}, err
+	}
+	return lt, nil
+}
+
+// ListLeaseTerms returns all stored records, newest first (Vol. III Ch. 40).
+func (m *MySQL) ListLeaseTerms(ctx context.Context) ([]rent.LeaseTerm, error) {
+	const q = `SELECT ` +
+		"`id`, `parcel_id`, `start_year`, `duration_years`, `fixed_rent_bp`, `created_at` " +
+		"FROM `lease_terms` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]rent.LeaseTerm, 0)
+	for rows.Next() {
+		lt, err := scanLeaseTerm(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, lt)
+	}
+	return out, rows.Err()
+}
+
+func scanLeaseTerm(s rowScanner) (rent.LeaseTerm, error) {
+	var (
+		id            string
+		parcelID      string
+		startYear     int
+		durationYears int
+		fixedRentBP   int64
+		createdAt     time.Time
+	)
+	err := s.Scan(&id, &parcelID, &startYear, &durationYears, &fixedRentBP, &createdAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return rent.LeaseTerm{}, ErrNotFound
+		}
+		return rent.LeaseTerm{}, err
+	}
+	return rent.LeaseTerm{
+		ID:            rent.LeaseTermID(id),
+		ParcelID:      parcelID,
+		StartYear:     startYear,
+		DurationYears: durationYears,
+		FixedRentBP:   fixedRentBP,
+		CreatedAt:     createdAt,
+	}, nil
+}

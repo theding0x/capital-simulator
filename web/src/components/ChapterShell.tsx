@@ -94,6 +94,7 @@ import { Ch36PreCapitalistRelationships } from "../chapters/vol3/Ch36PreCapitali
 import { Ch37Introduction } from "../chapters/vol3/Ch37Introduction";
 import { Ch38GeneralRemarks } from "../chapters/vol3/Ch38GeneralRemarks";
 import { Ch39DifferentialRentI } from "../chapters/vol3/Ch39DifferentialRentI";
+import { Ch40DifferentialRentII } from "../chapters/vol3/Ch40DifferentialRentII";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -206,6 +207,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch37": Ch37Introduction as AnyPanel,
   "v3-ch38": Ch38GeneralRemarks as AnyPanel,
   "v3-ch39": Ch39DifferentialRentI as AnyPanel,
+  "v3-ch40": Ch40DifferentialRentII as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {
@@ -298,6 +300,7 @@ const QUOTES: Partial<Record<string, string>> = {
   "v3-ch37": "We shall deal with landed property only in so far as a portion of the surplus-value produced by capital falls to the share of the landowner. — Marx, Capital III, Ch. 37.",
   "v3-ch38": "The surplus profit ... is here a permanent and regular affair, and forms the basis of the differential rent. — Marx, Capital III, Ch. 38.",
   "v3-ch39": "The difference between the price of production yielded by the worst soil and that yielded by any better soil constitutes the differential rent. — Marx, Capital III, Ch. 39.",
+  "v3-ch40": "The second form of differential rent... arises from the different distribution of successive capital investments on the same land. — Marx, Capital III, Ch. 40.",
 };
 
 export function ChapterShell({
