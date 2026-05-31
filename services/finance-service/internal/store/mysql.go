@@ -3133,3 +3133,108 @@ func scanCooperativeFactory(s rowScanner) (credit.CooperativeFactory, error) {
 		CreatedAt:       createdAt,
 	}, nil
 }
+
+// ── Vol. III Ch. 28 — Medium of Circulation and Capital (CurrencyObservation) ──
+
+// CreateCurrencyObservation inserts o, assigning an ID and timestamp when absent (Vol. III Ch. 28).
+func (m *MySQL) CreateCurrencyObservation(ctx context.Context, o credit.CurrencyObservation) (credit.CurrencyObservation, error) {
+	if o.ID.IsZero() {
+		o.ID = credit.NewCurrencyObservationID()
+	}
+	if o.CreatedAt.IsZero() {
+		o.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO currency_observations (` +
+		"`id`, `name`, `total_currency_outstanding`, `coin_function_amount`, `capital_transfer_amount`, " +
+		"`reserve_amount`, `reserve_description`, `description`, `created_at`" +
+		`) VALUES (?,?,?,?,?,?,?,?,?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(o.ID),
+		o.Name,
+		o.TotalCurrencyOutstanding,
+		o.CoinFunctionAmount,
+		o.CapitalTransferAmount,
+		o.ReserveFund.Amount,
+		o.ReserveFund.Description,
+		o.Description,
+		o.CreatedAt,
+	)
+	if err != nil {
+		if isDuplicate(err) {
+			return credit.CurrencyObservation{}, ErrAlreadyExists
+		}
+		return credit.CurrencyObservation{}, err
+	}
+	return o, nil
+}
+
+// GetCurrencyObservation returns the record with id, or ErrNotFound.
+func (m *MySQL) GetCurrencyObservation(ctx context.Context, id credit.CurrencyObservationID) (credit.CurrencyObservation, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `total_currency_outstanding`, `coin_function_amount`, `capital_transfer_amount`, " +
+		"`reserve_amount`, `reserve_description`, `description`, `created_at` " +
+		"FROM `currency_observations` WHERE `id` = ?"
+	return scanCurrencyObservation(m.db.QueryRowContext(ctx, q, string(id)))
+}
+
+// ListCurrencyObservations returns all stored records, newest first.
+func (m *MySQL) ListCurrencyObservations(ctx context.Context) ([]credit.CurrencyObservation, error) {
+	const q = `SELECT ` +
+		"`id`, `name`, `total_currency_outstanding`, `coin_function_amount`, `capital_transfer_amount`, " +
+		"`reserve_amount`, `reserve_description`, `description`, `created_at` " +
+		"FROM `currency_observations` ORDER BY `created_at` DESC, `id` ASC"
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]credit.CurrencyObservation, 0)
+	for rows.Next() {
+		o, err := scanCurrencyObservation(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, o)
+	}
+	return out, rows.Err()
+}
+
+func scanCurrencyObservation(s rowScanner) (credit.CurrencyObservation, error) {
+	var (
+		id                       string
+		name                     string
+		totalCurrencyOutstanding int64
+		coinFunctionAmount       int64
+		capitalTransferAmount    int64
+		reserveAmount            int64
+		reserveDescription       string
+		description              string
+		createdAt                time.Time
+	)
+	err := s.Scan(
+		&id, &name,
+		&totalCurrencyOutstanding, &coinFunctionAmount, &capitalTransferAmount,
+		&reserveAmount, &reserveDescription,
+		&description, &createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return credit.CurrencyObservation{}, ErrNotFound
+		}
+		return credit.CurrencyObservation{}, err
+	}
+	return credit.CurrencyObservation{
+		ID:                       credit.CurrencyObservationID(id),
+		Name:                     name,
+		TotalCurrencyOutstanding: totalCurrencyOutstanding,
+		CoinFunctionAmount:       coinFunctionAmount,
+		CapitalTransferAmount:    capitalTransferAmount,
+		ReserveFund: credit.ReserveFund{
+			Amount:      reserveAmount,
+			Description: reserveDescription,
+		},
+		Description: description,
+		CreatedAt:   createdAt,
+	}, nil
+}

@@ -166,4 +166,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/credit/stock-companies/{id}", h.GetStockCompany)
 	s.HandleFunc("POST /v1/credit/cooperative-factories", h.CreateCooperativeFactory)
 	s.HandleFunc("GET /v1/credit/cooperative-factories", h.ListCooperativeFactories)
+
+	// Vol. III Ch. 28 — Medium of Circulation and Capital (Tooke and Fullarton)
+	s.HandleFunc("POST /v1/credit/currency-observations", h.CreateCurrencyObservation)
+	s.HandleFunc("GET /v1/credit/currency-observations", h.ListCurrencyObservations)
+	s.HandleFunc("GET /v1/credit/currency-observations/{id}", h.GetCurrencyObservation)
 }

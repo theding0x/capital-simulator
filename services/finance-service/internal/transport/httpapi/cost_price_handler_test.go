@@ -148,6 +148,10 @@ func newFinanceTestServer(t *testing.T) (*httptest.Server, *store.Memory) {
 	mux.HandleFunc("GET /v1/credit/stock-companies/{id}", h.GetStockCompany)
 	mux.HandleFunc("POST /v1/credit/cooperative-factories", h.CreateCooperativeFactory)
 	mux.HandleFunc("GET /v1/credit/cooperative-factories", h.ListCooperativeFactories)
+	// Vol. III Ch. 28 — Medium of Circulation and Capital (Tooke and Fullarton)
+	mux.HandleFunc("POST /v1/credit/currency-observations", h.CreateCurrencyObservation)
+	mux.HandleFunc("GET /v1/credit/currency-observations", h.ListCurrencyObservations)
+	mux.HandleFunc("GET /v1/credit/currency-observations/{id}", h.GetCurrencyObservation)
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
 	return ts, st

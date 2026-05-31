@@ -3906,3 +3906,40 @@ export interface CreateCooperativeFactoryInput {
   capital_advanced: number;
   description: string;
 }
+
+// ── Vol. III Ch. 28 — Medium of Circulation and Capital (Tooke and Fullarton) ─
+
+// ReserveFund mirrors credit.ReserveFund (Vol. III Ch. 28).
+// amount >= 0 — cash reserve held against convertibility demands.
+export interface ReserveFund {
+  amount: number;        // pence; >= 0
+  description: string;
+}
+
+// CurrencyObservation mirrors credit.CurrencyObservation (Vol. III Ch. 28).
+// Invariants:
+//   total_currency_outstanding > 0
+//   coin_function_amount + capital_transfer_amount <= total_currency_outstanding
+//   reserve_fund.amount >= 0
+export interface CurrencyObservation {
+  id: string;
+  name: string;
+  total_currency_outstanding: number; // pence; > 0
+  coin_function_amount: number;       // pence; revenue expenditure (coin function)
+  capital_transfer_amount: number;    // pence; productive-capital transfers
+  reserve_fund: ReserveFund;
+  description: string;
+  created_at: string;
+}
+
+// CreateCurrencyObservationInput is the flat request body for
+// POST /v1/credit/currency-observations.
+export interface CreateCurrencyObservationInput {
+  name: string;
+  total_currency_outstanding: number;
+  coin_function_amount: number;
+  capital_transfer_amount: number;
+  reserve_amount: number;
+  reserve_description: string;
+  description: string;
+}

@@ -1,0 +1,172 @@
+.v3-ch28 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.v3-ch28-intro {
+  color: var(--text-secondary, #555);
+  font-size: 0.93rem;
+  line-height: 1.6;
+}
+
+.v3-ch28-list {
+  margin: 0.5rem 0 0.75rem 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.v3-ch28-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3-ch28-section h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #222);
+}
+
+.v3-ch28-subintro {
+  font-size: 0.88rem;
+  color: var(--text-secondary, #666);
+  margin: 0;
+}
+
+/* Seed exemplar card */
+.v3-ch28-seed-card {
+  background: var(--surface-alt, #f6f6f4);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 560px;
+}
+
+.v3-ch28-seed-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+}
+
+.v3-ch28-seed-label {
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch28-seed-val {
+  font-weight: 500;
+  color: var(--text-primary, #222);
+}
+
+.v3-ch28-seed-verdict {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border, #ddd);
+  font-size: 0.87rem;
+  color: var(--accent, #2c6e49);
+}
+
+/* Form */
+.v3-ch28-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 520px;
+}
+
+.v3-ch28-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.87rem;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch28-form input {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.v3-ch28-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted, #888);
+}
+
+.v3-ch28-btn {
+  align-self: flex-start;
+  padding: 0.4rem 1rem;
+  background: var(--accent, #2c6e49);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.v3-ch28-btn:hover {
+  opacity: 0.88;
+}
+
+.v3-ch28-error {
+  font-size: 0.85rem;
+  color: var(--error, #c0392b);
+  margin: 0;
+}
+
+/* Observation cards */
+.v3-ch28-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.v3-ch28-card {
+  background: var(--surface-alt, #f8f8f6);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-width: 580px;
+}
+
+.v3-ch28-card-name {
+  font-weight: 600;
+  font-size: 0.93rem;
+  color: var(--text-primary, #222);
+}
+
+.v3-ch28-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.v3-ch28-card-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.86rem;
+  color: var(--text-secondary, #555);
+}
+
+.v3-ch28-verdict {
+  font-size: 0.84rem;
+  color: var(--accent, #2c6e49);
+  font-style: italic;
+  border-top: 1px solid var(--border, #eee);
+  padding-top: 0.35rem;
+}
+
+.v3-ch28-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted, #888);
+}

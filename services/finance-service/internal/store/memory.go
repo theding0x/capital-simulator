@@ -53,6 +53,7 @@ type Memory struct {
 	moneyCapitalAccumulations  map[credit.MoneyCapitalAccumulationID]credit.MoneyCapitalAccumulation
 	stockCompanies             map[credit.StockCompanyID]credit.StockCompany
 	cooperativeFactories       map[credit.CooperativeFactoryID]credit.CooperativeFactory
+	currencyObservations       map[credit.CurrencyObservationID]credit.CurrencyObservation
 }
 
 // NewMemory returns an empty in-memory store.
@@ -95,6 +96,7 @@ func NewMemory() *Memory {
 		moneyCapitalAccumulations:  make(map[credit.MoneyCapitalAccumulationID]credit.MoneyCapitalAccumulation),
 		stockCompanies:             make(map[credit.StockCompanyID]credit.StockCompany),
 		cooperativeFactories:       make(map[credit.CooperativeFactoryID]credit.CooperativeFactory),
+		currencyObservations:       make(map[credit.CurrencyObservationID]credit.CurrencyObservation),
 	}
 }
 
@@ -1658,6 +1660,54 @@ func (m *Memory) ListCooperativeFactories(_ context.Context) ([]credit.Cooperati
 	out := make([]credit.CooperativeFactory, 0, len(m.cooperativeFactories))
 	for _, cf := range m.cooperativeFactories {
 		out = append(out, cf)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCurrencyObservation stores o, assigning an ID and timestamp when absent (Vol. III Ch. 28).
+func (m *Memory) CreateCurrencyObservation(_ context.Context, o credit.CurrencyObservation) (credit.CurrencyObservation, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if o.ID.IsZero() {
+		o.ID = credit.NewCurrencyObservationID()
+	}
+	if _, exists := m.currencyObservations[o.ID]; exists {
+		return credit.CurrencyObservation{}, ErrAlreadyExists
+	}
+	if o.CreatedAt.IsZero() {
+		o.CreatedAt = m.now().UTC()
+	}
+	m.currencyObservations[o.ID] = o
+	return o, nil
+}
+
+// GetCurrencyObservation returns the record with id, or ErrNotFound.
+func (m *Memory) GetCurrencyObservation(_ context.Context, id credit.CurrencyObservationID) (credit.CurrencyObservation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	o, ok := m.currencyObservations[id]
+	if !ok {
+		return credit.CurrencyObservation{}, ErrNotFound
+	}
+	return o, nil
+}
+
+// ListCurrencyObservations returns all stored records, newest first.
+func (m *Memory) ListCurrencyObservations(_ context.Context) ([]credit.CurrencyObservation, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.CurrencyObservation, 0, len(m.currencyObservations))
+	for _, o := range m.currencyObservations {
+		out = append(out, o)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {

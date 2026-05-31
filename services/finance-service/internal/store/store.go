@@ -378,4 +378,16 @@ type Store interface {
 	// ListCooperativeFactories returns all stored cooperative factories, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListCooperativeFactories(ctx context.Context) ([]credit.CooperativeFactory, error)
+
+	// CreateCurrencyObservation persists a currency-observation record
+	// (Vol. III Ch. 28 — medium of circulation split into coin function and
+	// capital-transfer function; TotalCurrencyOutstanding>0;
+	// CoinFunctionAmount+CapitalTransferAmount<=Total; ReserveFund.Amount>=0),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCurrencyObservation(ctx context.Context, o credit.CurrencyObservation) (credit.CurrencyObservation, error)
+	// GetCurrencyObservation returns the record with the given ID, or ErrNotFound.
+	GetCurrencyObservation(ctx context.Context, id credit.CurrencyObservationID) (credit.CurrencyObservation, error)
+	// ListCurrencyObservations returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCurrencyObservations(ctx context.Context) ([]credit.CurrencyObservation, error)
 }
