@@ -459,4 +459,15 @@ type Store interface {
 	// ListClearingHouseSettlements returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListClearingHouseSettlements(ctx context.Context) ([]credit.ClearingHouseSettlement, error)
+
+	// CreateNoteIssueConstraint persists a note-issue-constraint record
+	// (Vol. III Ch. 34 — The Currency Principle and the Bank Acts of 1844 and 1845;
+	// Regime.IsValid(); MaxNotes==GoldBacking+UnbackedLimit), assigning an ID and
+	// created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateNoteIssueConstraint(ctx context.Context, n credit.NoteIssueConstraint) (credit.NoteIssueConstraint, error)
+	// GetNoteIssueConstraint returns the record with the given ID, or ErrNotFound.
+	GetNoteIssueConstraint(ctx context.Context, id credit.NoteIssueConstraintID) (credit.NoteIssueConstraint, error)
+	// ListNoteIssueConstraints returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListNoteIssueConstraints(ctx context.Context) ([]credit.NoteIssueConstraint, error)
 }

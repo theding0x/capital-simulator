@@ -57,9 +57,10 @@ type Memory struct {
 	bankCapitals               map[credit.BankCapitalID]credit.BankCapital
 	fictitiousValuations       map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation
 	realCapitalAccumulations   map[credit.RealCapitalAccumulationID]credit.RealCapitalAccumulation
-	floatingCapitals              map[credit.FloatingCapitalID]credit.FloatingCapital
-	capitalReleases               map[credit.CapitalReleaseID]credit.CapitalRelease
-	clearingHouseSettlements      map[credit.ClearingHouseSettlementID]credit.ClearingHouseSettlement
+	floatingCapitals           map[credit.FloatingCapitalID]credit.FloatingCapital
+	capitalReleases            map[credit.CapitalReleaseID]credit.CapitalRelease
+	clearingHouseSettlements   map[credit.ClearingHouseSettlementID]credit.ClearingHouseSettlement
+	noteIssueConstraints       map[credit.NoteIssueConstraintID]credit.NoteIssueConstraint
 }
 
 // NewMemory returns an empty in-memory store.
@@ -106,9 +107,10 @@ func NewMemory() *Memory {
 		bankCapitals:               make(map[credit.BankCapitalID]credit.BankCapital),
 		fictitiousValuations:       make(map[credit.FictitiousCapitalValuationID]credit.FictitiousCapitalValuation),
 		realCapitalAccumulations:   make(map[credit.RealCapitalAccumulationID]credit.RealCapitalAccumulation),
-		floatingCapitals:              make(map[credit.FloatingCapitalID]credit.FloatingCapital),
-		capitalReleases:               make(map[credit.CapitalReleaseID]credit.CapitalRelease),
-		clearingHouseSettlements:      make(map[credit.ClearingHouseSettlementID]credit.ClearingHouseSettlement),
+		floatingCapitals:           make(map[credit.FloatingCapitalID]credit.FloatingCapital),
+		capitalReleases:            make(map[credit.CapitalReleaseID]credit.CapitalRelease),
+		clearingHouseSettlements:   make(map[credit.ClearingHouseSettlementID]credit.ClearingHouseSettlement),
+		noteIssueConstraints:       make(map[credit.NoteIssueConstraintID]credit.NoteIssueConstraint),
 	}
 }
 
@@ -2020,6 +2022,54 @@ func (m *Memory) ListClearingHouseSettlements(_ context.Context) ([]credit.Clear
 	out := make([]credit.ClearingHouseSettlement, 0, len(m.clearingHouseSettlements))
 	for _, s := range m.clearingHouseSettlements {
 		out = append(out, s)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.After(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateNoteIssueConstraint stores n, assigning an ID and timestamp when absent (Vol. III Ch. 34).
+func (m *Memory) CreateNoteIssueConstraint(_ context.Context, n credit.NoteIssueConstraint) (credit.NoteIssueConstraint, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if n.ID.IsZero() {
+		n.ID = credit.NewNoteIssueConstraintID()
+	}
+	if _, exists := m.noteIssueConstraints[n.ID]; exists {
+		return credit.NoteIssueConstraint{}, ErrAlreadyExists
+	}
+	if n.CreatedAt.IsZero() {
+		n.CreatedAt = m.now().UTC()
+	}
+	m.noteIssueConstraints[n.ID] = n
+	return n, nil
+}
+
+// GetNoteIssueConstraint returns the record with id, or ErrNotFound.
+func (m *Memory) GetNoteIssueConstraint(_ context.Context, id credit.NoteIssueConstraintID) (credit.NoteIssueConstraint, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	n, ok := m.noteIssueConstraints[id]
+	if !ok {
+		return credit.NoteIssueConstraint{}, ErrNotFound
+	}
+	return n, nil
+}
+
+// ListNoteIssueConstraints returns all stored records, newest first.
+func (m *Memory) ListNoteIssueConstraints(_ context.Context) ([]credit.NoteIssueConstraint, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	out := make([]credit.NoteIssueConstraint, 0, len(m.noteIssueConstraints))
+	for _, n := range m.noteIssueConstraints {
+		out = append(out, n)
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
