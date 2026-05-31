@@ -588,4 +588,24 @@ type Store interface {
 	// ListLocationRentFactors returns all stored location-rent-factor records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListLocationRentFactors(ctx context.Context) ([]rent.LocationRentFactor, error)
+
+	// CreateSuccessiveInvestment persists a successive-investment tranche (Vol. III Ch. 40 —
+	// Differential Rent II; intensive cultivation; one capital tranche on a parcel),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateSuccessiveInvestment(ctx context.Context, inv rent.SuccessiveInvestment) (rent.SuccessiveInvestment, error)
+	// ListSuccessiveInvestments returns all stored successive-investment records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListSuccessiveInvestments(ctx context.Context) ([]rent.SuccessiveInvestment, error)
+	// ListSuccessiveInvestmentsByParcel returns all successive-investment records for the given
+	// parcel_id, newest first (created_at DESC, id ASC). Returns an empty slice (NOT ErrNotFound)
+	// when no rows match.
+	ListSuccessiveInvestmentsByParcel(ctx context.Context, parcelID string) ([]rent.SuccessiveInvestment, error)
+
+	// CreateLeaseTerm persists a lease-term record (Vol. III Ch. 40 — the fixed lease under
+	// which a capitalist farms a parcel; improvements during the term accrue to the capitalist),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateLeaseTerm(ctx context.Context, lt rent.LeaseTerm) (rent.LeaseTerm, error)
+	// ListLeaseTerms returns all stored lease-term records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListLeaseTerms(ctx context.Context) ([]rent.LeaseTerm, error)
 }

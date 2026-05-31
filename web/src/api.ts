@@ -2745,4 +2745,26 @@ export const financeApi = {
     http<{ items: import("./types").LocationRentFactor[] }>("/v1/rent/location-rent-factors").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 40 — Differential Rent II
+  createSuccessiveInvestment: (body: import("./types").CreateSuccessiveInvestmentInput) =>
+    http<import("./types").SuccessiveInvestment>("/v1/rent/successive-investments", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listSuccessiveInvestments: () =>
+    http<{ items: import("./types").SuccessiveInvestment[] }>("/v1/rent/successive-investments").then(
+      (r) => r.items ?? [],
+    ),
+  getDR2Table: (parcelId: string) =>
+    http<import("./types").DifferentialRentIITableWithInvestments>(`/v1/rent/dr2-tables/${parcelId}`),
+  createLeaseTerm: (body: import("./types").CreateLeaseTermInput) =>
+    http<import("./types").LeaseTerm>("/v1/rent/lease-terms", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listLeaseTerms: () =>
+    http<{ items: import("./types").LeaseTerm[] }>("/v1/rent/lease-terms").then(
+      (r) => r.items ?? [],
+    ),
 };
