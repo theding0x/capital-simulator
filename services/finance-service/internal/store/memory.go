@@ -107,6 +107,10 @@ type Memory struct {
 	annualValueCompositions    map[revenue.AnnualValueCompositionID]revenue.AnnualValueComposition
 	revenueLimits              map[revenue.RevenueLimitID]revenue.RevenueLimit
 	surplusValuePartitions     map[revenue.SurplusValuePartitionID]revenue.SurplusValuePartition
+	competitionIllusions       map[revenue.CompetitionIllusionID]revenue.CompetitionIllusion
+	costPriceFetishes          map[revenue.CostPriceFetishID]revenue.CostPriceFetish
+	annualRevenueAccounts      map[revenue.AnnualRevenueAccountID]revenue.AnnualRevenueAccount
+	valueAppearanceContrasts   map[revenue.ValueAppearanceContrastID]revenue.ValueAppearanceContrast
 }
 
 // NewMemory returns an empty in-memory store.
@@ -201,6 +205,10 @@ func NewMemory() *Memory {
 		annualValueCompositions:    make(map[revenue.AnnualValueCompositionID]revenue.AnnualValueComposition),
 		revenueLimits:              make(map[revenue.RevenueLimitID]revenue.RevenueLimit),
 		surplusValuePartitions:     make(map[revenue.SurplusValuePartitionID]revenue.SurplusValuePartition),
+		competitionIllusions:       make(map[revenue.CompetitionIllusionID]revenue.CompetitionIllusion),
+		costPriceFetishes:          make(map[revenue.CostPriceFetishID]revenue.CostPriceFetish),
+		annualRevenueAccounts:      make(map[revenue.AnnualRevenueAccountID]revenue.AnnualRevenueAccount),
+		valueAppearanceContrasts:   make(map[revenue.ValueAppearanceContrastID]revenue.ValueAppearanceContrast),
 	}
 }
 

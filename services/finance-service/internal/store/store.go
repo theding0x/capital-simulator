@@ -834,4 +834,34 @@ type Store interface {
 	// ListSurplusValuePartitions returns all stored partitions, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListSurplusValuePartitions(ctx context.Context) ([]revenue.SurplusValuePartition, error)
+
+	// --- Vol. III Ch. 50 — Illusions Created by Competition -------------------
+
+	// CreateCompetitionIllusion persists a competition illusion (Vol. III Ch. 50),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCompetitionIllusion(ctx context.Context, i revenue.CompetitionIllusion) (revenue.CompetitionIllusion, error)
+	// ListCompetitionIllusions returns all stored illusions, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCompetitionIllusions(ctx context.Context) ([]revenue.CompetitionIllusion, error)
+
+	// CreateCostPriceFetish persists a cost-price fetish (Vol. III Ch. 50),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateCostPriceFetish(ctx context.Context, f revenue.CostPriceFetish) (revenue.CostPriceFetish, error)
+	// ListCostPriceFetishes returns all stored cost-price fetishes, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListCostPriceFetishes(ctx context.Context) ([]revenue.CostPriceFetish, error)
+
+	// CreateAnnualRevenueAccount persists a society-wide annual revenue account (Vol. III Ch. 50),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateAnnualRevenueAccount(ctx context.Context, a revenue.AnnualRevenueAccount) (revenue.AnnualRevenueAccount, error)
+	// ListAnnualRevenueAccounts returns all stored accounts, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListAnnualRevenueAccounts(ctx context.Context) ([]revenue.AnnualRevenueAccount, error)
+
+	// CreateValueAppearanceContrast persists a surface-vs-reality contrast (Vol. III Ch. 50),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateValueAppearanceContrast(ctx context.Context, c revenue.ValueAppearanceContrast) (revenue.ValueAppearanceContrast, error)
+	// ListValueAppearanceContrasts returns all stored contrasts, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListValueAppearanceContrasts(ctx context.Context) ([]revenue.ValueAppearanceContrast, error)
 }

@@ -316,4 +316,10 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/revenue/annual-compositions", h.CreateAnnualValueComposition)
 	s.HandleFunc("GET /v1/revenue/annual-compositions/{id}", h.GetAnnualValueComposition)
 	s.HandleFunc("POST /v1/revenue/surplus-partitions", h.CreateSurplusValuePartition)
+
+	// Vol. III Ch. 50 — Illusions Created by Competition
+	s.HandleFunc("GET /v1/revenue/competition-illusions", h.ListCompetitionIllusions)
+	s.HandleFunc("POST /v1/revenue/cost-price-fetishes", h.CreateCostPriceFetish)
+	s.HandleFunc("POST /v1/revenue/annual-accounts", h.CreateAnnualRevenueAccount)
+	s.HandleFunc("GET /v1/revenue/value-contrasts", h.ListValueAppearanceContrasts)
 }
