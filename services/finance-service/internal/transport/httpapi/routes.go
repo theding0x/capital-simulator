@@ -329,4 +329,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/revenue/historical-transiences", h.ListHistoricalTransiences)
 	s.HandleFunc("POST /v1/revenue/productive-force-contradictions", h.CreateProductiveForceContradiction)
 	s.HandleFunc("GET /v1/revenue/productive-force-contradictions", h.ListProductiveForceContradictions)
+
+	// Vol. III Ch. 52 — Classes (COMPLETES Vol. III)
+	s.HandleFunc("GET /v1/revenue/classes", h.ListSocialClasses)
+	s.HandleFunc("GET /v1/revenue/classes/{id}", h.GetSocialClass)
+	s.HandleFunc("GET /v1/revenue/class-ambiguities", h.ListClassAmbiguities)
 }
