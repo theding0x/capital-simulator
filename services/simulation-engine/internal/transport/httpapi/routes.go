@@ -187,6 +187,7 @@ func Register(s *httpx.Server, h *Handler) {
 	// Vol. II Ch. 15 — The Effects of a Change of Prices
 	s.HandleFunc("POST /v1/price-revolutions", h.CreatePriceRevolution)
 	s.HandleFunc("GET /v1/price-revolutions/{id}", h.GetPriceRevolution)
+	s.HandleFunc("GET /v1/price-revolutions/{id}/adjusted-annual-rate", h.GetAdjustedAnnualRate)
 	s.HandleFunc("POST /v1/price-revolutions/{id}/price-case", h.RecordPriceRevolutionCase)
 	s.HandleFunc("POST /v1/inventory-revaluations", h.RecordInventoryRevaluation)
 	s.HandleFunc("POST /v1/speculative-holds", h.RecordSpeculativeHold)
@@ -235,6 +236,7 @@ func Register(s *httpx.Server, h *Handler) {
 	// Vol. II Ch. 20 — Simple Reproduction
 	s.HandleFunc("POST /v1/reproduction/simple/schemes", h.CreateSimpleReproductionScheme)
 	s.HandleFunc("GET /v1/reproduction/simple/schemes", h.ListSimpleReproductionSchemes)
+	s.HandleFunc("POST /v1/reproduction/simple/schemes/from-annual-rates", h.BuildReproductionFromAnnualRates)
 	s.HandleFunc("GET /v1/reproduction/simple/schemes/{id}", h.GetSimpleReproductionScheme)
 	s.HandleFunc("POST /v1/reproduction/simple/schemes/{id}/departments", h.AddDepartmentToScheme)
 	s.HandleFunc("POST /v1/reproduction/simple/schemes/{id}/exchanges", h.RecordInterDepartmentExchange)
