@@ -409,6 +409,61 @@ function MoneyClosedLoop({ scheme }: MoneyClosedLoopProps) {
   );
 }
 
+// ── Widget — Annualised Settlement (Ch. 14 turnover) ──────────────────────────
+
+interface AnnualisedSettlementProps {
+  balance: BalanceCheckResult | null;
+}
+
+function AnnualisedSettlement({ balance }: AnnualisedSettlementProps) {
+  if (!balance) return null;
+  const turns = (bp: number) =>
+    (bp / 10000).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return (
+    <div className="ch20-widget">
+      <p className="ch20-section-title">Annualised Settlement — Turnover (Ch. 14)</p>
+      <p>
+        When the two departments turn over at different speeds, the keystone
+        exchange settles on annual flows rather than raw per-period magnitudes —
+        a scheme balanced each period can be unbalanced over the year.
+      </p>
+      <table className="ch20-annual-table">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">Dept I — I(v+s)</th>
+            <th scope="col">Dept II — II(c)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Turnover / yr</th>
+            <td>{turns(balance.dept_i_turnover_bp)}×</td>
+            <td>{turns(balance.dept_ii_turnover_bp)}×</td>
+          </tr>
+          <tr>
+            <th scope="row">Raw (per period)</th>
+            <td>{fmt(toAbstract(balance.dept_i_v_plus_s_pence))}</td>
+            <td>{fmt(toAbstract(balance.dept_ii_constant_pence))}</td>
+          </tr>
+          <tr>
+            <th scope="row">Annualised</th>
+            <td>{fmt(toAbstract(balance.dept_i_v_plus_s_annualised_pence))}</td>
+            <td>{fmt(toAbstract(balance.dept_ii_constant_annualised_pence))}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div className={`ch20-balance-badge ${balance.annualised_balanced ? "balanced" : "imbalanced"}`}>
+        <span className="ch20-balance-verdict">
+          {balance.annualised_balanced
+            ? "✓ Annually balanced"
+            : `✗ Annual deficit of ${fmt(toAbstract(Math.abs(balance.annualised_deficit_pence)))}`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Root export ───────────────────────────────────────────────────────────────
 
 export function Ch20SimpleReproduction() {
@@ -465,6 +520,7 @@ export function Ch20SimpleReproduction() {
       <ExchangeFlowDiagram scheme={scheme} />
       <TickDemonstrator scheme={scheme} onTick={handleTick} />
       <ImbalanceToy scheme={scheme} balance={balance} />
+      <AnnualisedSettlement balance={balance} />
       <MoneyClosedLoop scheme={scheme} />
     </div>
   );

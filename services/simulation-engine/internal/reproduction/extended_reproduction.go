@@ -241,13 +241,14 @@ func ComputeNextPeriodCapital(dept DepartmentalCapital, r Reinvestment) Departme
 	newS := newV * surplusRateBps / 10000
 	newTotal := newC + newV + newS
 	return DepartmentalCapital{
-		ID:            dept.ID,
-		SchemeID:      dept.SchemeID,
-		Department:    dept.Department,
-		ConstantPence: newC,
-		VariablePence: newV,
-		SurplusPence:  newS,
-		TotalPence:    newTotal,
+		ID:               dept.ID,
+		SchemeID:         dept.SchemeID,
+		Department:       dept.Department,
+		ConstantPence:    newC,
+		VariablePence:    newV,
+		SurplusPence:     newS,
+		TotalPence:       newTotal,
+		TurnoverNumberBP: dept.TurnoverNumberBP,
 	}
 }
 

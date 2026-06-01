@@ -203,13 +203,18 @@ func (h *Handler) handleAddExtendedDepartmentToScheme(w http.ResponseWriter, r *
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	turnoverBP := req.TurnoverNumberBP
+	if turnoverBP <= 0 {
+		turnoverBP = 10000 // default: one turnover per year (annual)
+	}
 	d := repro.DepartmentalCapital{
-		ID:            repro.NewDepartmentalCapitalID(),
-		Department:    repro.CapitalDepartment(req.Department),
-		ConstantPence: req.ConstantPence,
-		VariablePence: req.VariablePence,
-		SurplusPence:  req.SurplusPence,
-		TotalPence:    req.TotalPence,
+		ID:               repro.NewDepartmentalCapitalID(),
+		Department:       repro.CapitalDepartment(req.Department),
+		ConstantPence:    req.ConstantPence,
+		VariablePence:    req.VariablePence,
+		SurplusPence:     req.SurplusPence,
+		TotalPence:       req.TotalPence,
+		TurnoverNumberBP: turnoverBP,
 	}
 	if err := d.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())

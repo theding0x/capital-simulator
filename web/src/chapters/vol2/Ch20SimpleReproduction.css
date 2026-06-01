@@ -326,3 +326,24 @@
   color: #f87171;
   margin-top: 0.5rem;
 }
+
+.ch20-annual-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+.ch20-annual-table th,
+.ch20-annual-table td {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border, #2a2a4a);
+  text-align: right;
+}
+
+.ch20-annual-table thead th,
+.ch20-annual-table tbody th {
+  background: var(--surface-3, #111128);
+  text-align: left;
+  font-weight: 600;
+}
