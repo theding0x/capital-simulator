@@ -4,6 +4,7 @@ import type {
   SimpleReproductionScheme,
   DepartmentalCapital,
   BalanceCheckResult,
+  ReproductionTick,
 } from "../../types";
 import "./Ch20SimpleReproduction.css";
 
@@ -216,6 +217,9 @@ interface TickDemonstratorProps {
 function TickDemonstrator({ scheme, onTick }: TickDemonstratorProps) {
   const [ticking, setTicking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [workers, setWorkers] = useState(0);
+  const [basket, setBasket] = useState(0); // abstract units per worker
+  const [lastTick, setLastTick] = useState<ReproductionTick | null>(null);
   const dI  = scheme?.department_i  ? deptToAbstract(scheme.department_i)  : DEPT_I_FALLBACK;
   const dII = scheme?.department_ii ? deptToAbstract(scheme.department_ii) : DEPT_II_FALLBACK;
   const tickCount = scheme?.tick_count ?? 0;
@@ -225,7 +229,11 @@ function TickDemonstrator({ scheme, onTick }: TickDemonstratorProps) {
     setTicking(true);
     setError(null);
     try {
-      await simpleReproductionApi.advanceTick(scheme.id);
+      const tick = await simpleReproductionApi.advanceTick(scheme.id, {
+        worker_pool_size: workers,
+        subsistence_basket_pence: basket * 1000,
+      });
+      setLastTick(tick);
       const updated = await simpleReproductionApi.getScheme(scheme.id);
       onTick(updated);
     } catch {
@@ -267,6 +275,26 @@ function TickDemonstrator({ scheme, onTick }: TickDemonstratorProps) {
         </div>
         <div className="ch20-tick-note">Magnitudes unchanged — no surplus converted to capital.</div>
       </div>
+      <div className="ch20-labour-inputs">
+        <label>
+          Worker pool
+          <input
+            type="number"
+            min={0}
+            value={workers}
+            onChange={(e) => setWorkers(Math.max(0, Math.floor(Number(e.target.value))))}
+          />
+        </label>
+        <label>
+          Subsistence / worker
+          <input
+            type="number"
+            min={0}
+            value={basket}
+            onChange={(e) => setBasket(Math.max(0, Math.floor(Number(e.target.value))))}
+          />
+        </label>
+      </div>
       <button
         className="ch20-tick-btn"
         onClick={handleTick}
@@ -275,6 +303,14 @@ function TickDemonstrator({ scheme, onTick }: TickDemonstratorProps) {
         {ticking ? "Advancing…" : "Advance one reproduction cycle →"}
       </button>
       {error && <p className="ch20-tick-error">{error}</p>}
+      {lastTick && lastTick.worker_pool_size > 0 && (
+        <p className={`ch20-labour-status ${lastTick.subsistence_covered ? "ok" : "fail"}`}>
+          Labour-force: wage bill {fmt(toAbstract(lastTick.wage_bill_pence))} vs required{" "}
+          {fmt(lastTick.worker_pool_size * toAbstract(lastTick.subsistence_basket_pence))} (
+          {lastTick.worker_pool_size} worker{lastTick.worker_pool_size !== 1 ? "s" : ""}) —{" "}
+          {lastTick.subsistence_covered ? "✓ reproduced" : "✗ labour-force shortfall"}
+        </p>
+      )}
       {tickCount > 0 && (
         <p className="ch20-tick-confirm">
           After {tickCount} cycle{tickCount !== 1 ? "s" : ""}: Dept I still {fmt(dI.total)}, Dept II

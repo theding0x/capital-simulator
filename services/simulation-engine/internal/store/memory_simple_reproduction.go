@@ -156,7 +156,7 @@ func (m *Memory) ListInterDepartmentExchanges(_ context.Context, schemeID repro.
 
 // --- ReproductionTick -------------------------------------------------------
 
-func (m *Memory) AdvanceReproductionTick(_ context.Context, id repro.SimpleReproductionSchemeID) (repro.ReproductionTick, error) {
+func (m *Memory) AdvanceReproductionTick(_ context.Context, id repro.SimpleReproductionSchemeID, workerPoolSize, subsistenceBasketPence int64) (repro.ReproductionTick, error) {
 	m.simpleRepro.mu.Lock()
 	defer m.simpleRepro.mu.Unlock()
 	row, ok := m.simpleRepro.schemes[id]
@@ -169,12 +169,19 @@ func (m *Memory) AdvanceReproductionTick(_ context.Context, id repro.SimpleRepro
 	m.simpleRepro.schemes[id] = row
 
 	assembled := assembleScheme(row)
+	wageBill := assembled.WageBillPence()
+	covered, status := repro.ComputeLabourForceReproduction(wageBill, workerPoolSize, subsistenceBasketPence)
 	tick := repro.ReproductionTick{
-		ID:         repro.NewReproductionTickID(),
-		SchemeID:   id,
-		TickNumber: s.TickCount,
-		Period:     s.Period,
-		IsBalanced: assembled.IsBalanced,
+		ID:                     repro.NewReproductionTickID(),
+		SchemeID:               id,
+		TickNumber:             s.TickCount,
+		Period:                 s.Period,
+		IsBalanced:             assembled.IsBalanced,
+		WorkerPoolSize:         workerPoolSize,
+		WageBillPence:          wageBill,
+		SubsistenceBasketPence: subsistenceBasketPence,
+		SubsistenceCovered:     covered,
+		Status:                 status,
 	}
 	m.simpleRepro.ticks[id] = append(m.simpleRepro.ticks[id], tick)
 	return tick, nil

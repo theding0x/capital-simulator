@@ -225,7 +225,7 @@ func (m *MySQL) ListInterDepartmentExchanges(ctx context.Context, schemeID repro
 
 // --- ReproductionTick -------------------------------------------------------
 
-func (m *MySQL) AdvanceReproductionTick(ctx context.Context, id repro.SimpleReproductionSchemeID) (repro.ReproductionTick, error) {
+func (m *MySQL) AdvanceReproductionTick(ctx context.Context, id repro.SimpleReproductionSchemeID, workerPoolSize, subsistenceBasketPence int64) (repro.ReproductionTick, error) {
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return repro.ReproductionTick{}, err
@@ -253,19 +253,30 @@ func (m *MySQL) AdvanceReproductionTick(ctx context.Context, id repro.SimpleRepr
 
 	s, balErr := m.GetSimpleReproductionScheme(ctx, id)
 	isBalanced := balErr == nil && s.IsBalanced
+	wageBill := s.WageBillPence()
+	covered, status := repro.ComputeLabourForceReproduction(wageBill, workerPoolSize, subsistenceBasketPence)
 
 	tick := repro.ReproductionTick{
-		ID:         repro.NewReproductionTickID(),
-		SchemeID:   id,
-		TickNumber: tickCount,
-		Period:     period,
-		IsBalanced: isBalanced,
+		ID:                     repro.NewReproductionTickID(),
+		SchemeID:               id,
+		TickNumber:             tickCount,
+		Period:                 period,
+		IsBalanced:             isBalanced,
+		WorkerPoolSize:         workerPoolSize,
+		WageBillPence:          wageBill,
+		SubsistenceBasketPence: subsistenceBasketPence,
+		SubsistenceCovered:     covered,
+		Status:                 status,
 	}
 	const q = `INSERT INTO reproduction_ticks
-		(id, scheme_id, tick_number, period, is_balanced, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)`
+		(id, scheme_id, tick_number, period, is_balanced,
+		 worker_pool_size, wage_bill_pence, subsistence_basket_pence,
+		 subsistence_covered, tick_status, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	if _, err := tx.ExecContext(ctx, q,
-		string(tick.ID), string(id), tick.TickNumber, tick.Period, tick.IsBalanced, m.now(),
+		string(tick.ID), string(id), tick.TickNumber, tick.Period, tick.IsBalanced,
+		tick.WorkerPoolSize, tick.WageBillPence, tick.SubsistenceBasketPence,
+		tick.SubsistenceCovered, tick.Status, m.now(),
 	); err != nil {
 		return repro.ReproductionTick{}, err
 	}

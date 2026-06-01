@@ -14,7 +14,7 @@ import (
 // *store.Memory and *store.MySQL.
 type ReproductionAdvancer interface {
 	ListSimpleReproductionSchemes(ctx context.Context, period string) ([]repro.SimpleReproductionScheme, error)
-	AdvanceReproductionTick(ctx context.Context, id repro.SimpleReproductionSchemeID) (repro.ReproductionTick, error)
+	AdvanceReproductionTick(ctx context.Context, id repro.SimpleReproductionSchemeID, workerPoolSize, subsistenceBasketPence int64) (repro.ReproductionTick, error)
 	ListExtendedReproductionSchemes(ctx context.Context, period string) ([]repro.ExtendedReproductionScheme, error)
 	TickExtendedScheme(ctx context.Context, id repro.ExtendedReproductionSchemeID) (repro.ExtendedReproductionScheme, error)
 }
@@ -47,7 +47,8 @@ func (t *ReproductionTicker) Tick(ctx context.Context) (int, error) {
 		errs = append(errs, fmt.Errorf("list simple schemes: %w", err))
 	}
 	for _, s := range simple {
-		if _, err := t.store.AdvanceReproductionTick(ctx, s.ID); err != nil {
+		// Automated ticks do not carry labour-force inputs (issue #220).
+		if _, err := t.store.AdvanceReproductionTick(ctx, s.ID, 0, 0); err != nil {
 			errs = append(errs, fmt.Errorf("simple scheme %s: %w", s.ID, err))
 			continue
 		}

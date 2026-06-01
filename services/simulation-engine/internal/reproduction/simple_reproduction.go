@@ -236,6 +236,19 @@ func (s SimpleReproductionScheme) CheckBalance() bool {
 	return s.DepartmentI.VplusSPence() == s.DepartmentII.ConstantPence
 }
 
+// WageBillPence is the scheme's total variable capital (Dept I.v + Dept II.v) —
+// the wage bill advanced to the working class each period (issue #220).
+func (s SimpleReproductionScheme) WageBillPence() int64 {
+	var v int64
+	if s.DepartmentI != nil {
+		v += s.DepartmentI.VariablePence
+	}
+	if s.DepartmentII != nil {
+		v += s.DepartmentII.VariablePence
+	}
+	return v
+}
+
 // --- BalanceCheckResult -----------------------------------------------------
 
 // BalanceCheckResult is the response payload for the balance-check endpoint.
@@ -320,6 +333,35 @@ type ReproductionTick struct {
 	TickNumber int64                      `json:"tick_number"`
 	Period     string                     `json:"period"`
 	IsBalanced bool                       `json:"is_balanced"`
+	// Labour-force reproduction (issue #220): each period's wage bill (the
+	// scheme's total variable capital) is asserted to cover the worker pool's
+	// subsistence. WorkerPoolSize == 0 means labour-force tracking was not
+	// requested for this tick. Status is one of the TickStatus* values.
+	WorkerPoolSize         int64  `json:"worker_pool_size"`
+	WageBillPence          int64  `json:"wage_bill_pence"`
+	SubsistenceBasketPence int64  `json:"subsistence_basket_pence"`
+	SubsistenceCovered     bool   `json:"subsistence_covered"`
+	Status                 string `json:"status"`
+}
+
+// Reproduction-tick status values (issue #220).
+const (
+	TickStatusReproduced      = "reproduced"
+	TickStatusLabourShortfall = "labour-force-shortfall"
+)
+
+// ComputeLabourForceReproduction asserts that a period's wage bill covers the
+// subsistence of the worker pool. workerPoolSize == 0 means tracking was not
+// requested, in which case the tick is vacuously reproduced. Otherwise the wage
+// bill must be at least workerPoolSize × subsistenceBasketPence (issue #220).
+func ComputeLabourForceReproduction(wageBillPence, workerPoolSize, subsistenceBasketPence int64) (covered bool, status string) {
+	if workerPoolSize <= 0 {
+		return true, TickStatusReproduced
+	}
+	if wageBillPence >= workerPoolSize*subsistenceBasketPence {
+		return true, TickStatusReproduced
+	}
+	return false, TickStatusLabourShortfall
 }
 
 // --- MoneyClosedLoop --------------------------------------------------------

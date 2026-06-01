@@ -40,6 +40,13 @@ type recordMoneyLoopRequest struct {
 	NetFlowPence int64  `json:"net_flow_pence"`
 }
 
+// advanceTickRequest is the optional body for a tick. When worker_pool_size > 0
+// the tick asserts the wage bill covers the pool's subsistence (issue #220).
+type advanceTickRequest struct {
+	WorkerPoolSize         int64 `json:"worker_pool_size"`
+	SubsistenceBasketPence int64 `json:"subsistence_basket_pence"`
+}
+
 // --- response types ---
 
 type departmentalCapitalResponse struct {
@@ -73,11 +80,16 @@ type interdepartmentExchangeResponse struct {
 }
 
 type reproductionTickResponse struct {
-	ID         string `json:"id"`
-	SchemeID   string `json:"scheme_id"`
-	TickNumber int64  `json:"tick_number"`
-	Period     string `json:"period"`
-	IsBalanced bool   `json:"is_balanced"`
+	ID                     string `json:"id"`
+	SchemeID               string `json:"scheme_id"`
+	TickNumber             int64  `json:"tick_number"`
+	Period                 string `json:"period"`
+	IsBalanced             bool   `json:"is_balanced"`
+	WorkerPoolSize         int64  `json:"worker_pool_size"`
+	WageBillPence          int64  `json:"wage_bill_pence"`
+	SubsistenceBasketPence int64  `json:"subsistence_basket_pence"`
+	SubsistenceCovered     bool   `json:"subsistence_covered"`
+	Status                 string `json:"status"`
 }
 
 type balanceCheckResponse struct {
@@ -299,7 +311,14 @@ func (h *Handler) RecordInterDepartmentExchange(w http.ResponseWriter, r *http.R
 // AdvanceReproductionTick handles POST /v1/reproduction/simple/schemes/{id}/tick.
 func (h *Handler) AdvanceReproductionTick(w http.ResponseWriter, r *http.Request) {
 	id := repro.SimpleReproductionSchemeID(r.PathValue("id"))
-	tick, err := h.SimpleReproduction.AdvanceReproductionTick(r.Context(), id)
+	var req advanceTickRequest
+	if r.ContentLength != 0 {
+		if err := decodeJSON(r, &req); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+	tick, err := h.SimpleReproduction.AdvanceReproductionTick(r.Context(), id, req.WorkerPoolSize, req.SubsistenceBasketPence)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			writeError(w, http.StatusNotFound, "scheme not found")
@@ -320,11 +339,16 @@ func (h *Handler) AdvanceReproductionTick(w http.ResponseWriter, r *http.Request
 		return
 	}
 	writeJSON(w, http.StatusCreated, reproductionTickResponse{
-		ID:         string(tick.ID),
-		SchemeID:   string(tick.SchemeID),
-		TickNumber: tick.TickNumber,
-		Period:     tick.Period,
-		IsBalanced: tick.IsBalanced,
+		ID:                     string(tick.ID),
+		SchemeID:               string(tick.SchemeID),
+		TickNumber:             tick.TickNumber,
+		Period:                 tick.Period,
+		IsBalanced:             tick.IsBalanced,
+		WorkerPoolSize:         tick.WorkerPoolSize,
+		WageBillPence:          tick.WageBillPence,
+		SubsistenceBasketPence: tick.SubsistenceBasketPence,
+		SubsistenceCovered:     tick.SubsistenceCovered,
+		Status:                 tick.Status,
 	})
 }
 
