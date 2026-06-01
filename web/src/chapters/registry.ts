@@ -166,6 +166,6 @@ export const CHAPTERS: ChapterDef[] = [
   { id: "v3-ch48", volume: 3, number: 48, title: "The Trinity Formula",                                       part: "Part VII — The Revenues and Their Sources",                         circuitNode: ["whole", "delta-M"],               status: "done"    },
   { id: "v3-ch49", volume: 3, number: 49, title: "Concerning the Analysis of the Process of Production",      part: "Part VII — The Revenues and Their Sources",                         circuitNode: ["whole", "P", "delta-M"],          status: "done"    },
   { id: "v3-ch50", volume: 3, number: 50, title: "Illusions Created by Competition",                          part: "Part VII — The Revenues and Their Sources",                         circuitNode: ["whole", "delta-M"],               status: "done"    },
-  { id: "v3-ch51", volume: 3, number: 51, title: "Distribution Relations and Production Relations",           part: "Part VII — The Revenues and Their Sources",                         circuitNode: ["whole"],                          status: "pending" },
+  { id: "v3-ch51", volume: 3, number: 51, title: "Distribution Relations and Production Relations",           part: "Part VII — The Revenues and Their Sources",                         circuitNode: ["whole"],                          status: "done"    },
   { id: "v3-ch52", volume: 3, number: 52, title: "Classes",                                                   part: "Part VII — The Revenues and Their Sources",                         circuitNode: ["historical", "whole"],            status: "pending" },
 ]

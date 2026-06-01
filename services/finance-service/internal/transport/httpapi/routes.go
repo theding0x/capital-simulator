@@ -322,4 +322,11 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/revenue/cost-price-fetishes", h.CreateCostPriceFetish)
 	s.HandleFunc("POST /v1/revenue/annual-accounts", h.CreateAnnualRevenueAccount)
 	s.HandleFunc("GET /v1/revenue/value-contrasts", h.ListValueAppearanceContrasts)
+
+	// Vol. III Ch. 51 — Distribution Relations and Production Relations
+	s.HandleFunc("GET /v1/revenue/production-bases", h.ListProductionRelationBases)
+	s.HandleFunc("GET /v1/revenue/distribution-relations", h.ListDistributionRelations)
+	s.HandleFunc("GET /v1/revenue/historical-transiences", h.ListHistoricalTransiences)
+	s.HandleFunc("POST /v1/revenue/productive-force-contradictions", h.CreateProductiveForceContradiction)
+	s.HandleFunc("GET /v1/revenue/productive-force-contradictions", h.ListProductiveForceContradictions)
 }

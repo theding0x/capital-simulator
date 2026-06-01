@@ -864,4 +864,34 @@ type Store interface {
 	// ListValueAppearanceContrasts returns all stored contrasts, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListValueAppearanceContrasts(ctx context.Context) ([]revenue.ValueAppearanceContrast, error)
+
+	// --- Vol. III Ch. 51 — Distribution Relations and Production Relations ----
+
+	// CreateProductionRelationBasis persists a production-relation basis (Vol. III Ch. 51),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateProductionRelationBasis(ctx context.Context, b revenue.ProductionRelationBasis) (revenue.ProductionRelationBasis, error)
+	// ListProductionRelationBases returns all stored bases, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListProductionRelationBases(ctx context.Context) ([]revenue.ProductionRelationBasis, error)
+
+	// CreateDistributionRelation persists a distribution relation (Vol. III Ch. 51),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateDistributionRelation(ctx context.Context, d revenue.DistributionRelation) (revenue.DistributionRelation, error)
+	// ListDistributionRelations returns all stored relations, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListDistributionRelations(ctx context.Context) ([]revenue.DistributionRelation, error)
+
+	// CreateHistoricalTransience persists a historical-transience record (Vol. III Ch. 51),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateHistoricalTransience(ctx context.Context, t revenue.HistoricalTransience) (revenue.HistoricalTransience, error)
+	// ListHistoricalTransiences returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListHistoricalTransiences(ctx context.Context) ([]revenue.HistoricalTransience, error)
+
+	// CreateProductiveForceContradiction persists a productive-force contradiction (Vol. III Ch. 51),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateProductiveForceContradiction(ctx context.Context, c revenue.ProductiveForceContradiction) (revenue.ProductiveForceContradiction, error)
+	// ListProductiveForceContradictions returns all stored records, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListProductiveForceContradictions(ctx context.Context) ([]revenue.ProductiveForceContradiction, error)
 }

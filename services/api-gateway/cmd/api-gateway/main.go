@@ -546,6 +546,11 @@ func main() {
 	srv.Handle("/v1/revenue/cost-price-fetishes", financeProxy)
 	srv.Handle("/v1/revenue/annual-accounts", financeProxy)
 	srv.Handle("/v1/revenue/value-contrasts", financeProxy)
+	// Vol. III Ch. 51 — Distribution Relations and Production Relations → finance-service
+	srv.Handle("/v1/revenue/production-bases", financeProxy)
+	srv.Handle("/v1/revenue/distribution-relations", financeProxy)
+	srv.Handle("/v1/revenue/historical-transiences", financeProxy)
+	srv.Handle("/v1/revenue/productive-force-contradictions", financeProxy)
 
 	srv.MarkReady(true)
 
