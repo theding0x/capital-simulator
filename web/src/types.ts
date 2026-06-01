@@ -4737,3 +4737,10 @@ export interface CreateCostPriceFetishInput { constant_capital_bp: number; varia
 export interface AnnualRevenueAccount { id: string; new_value_created_lm: number; wages_share_lm: number; profit_and_rent_share_lm: number; constant_capital_lm: number; total_social_product_lm: number; created_at: string; }
 export interface CreateAnnualRevenueAccountInput { constant_capital_lm: number; wages_share_lm: number; profit_and_rent_share_lm: number; }
 export interface ValueAppearanceContrast { id: string; illusion_id: string; surface: string; reality: string; created_at: string; }
+
+// Vol. III Ch. 51 — Distribution Relations and Production Relations
+export interface ProductionRelationBasis { id: string; name: string; characteristic_feature: string; is_historically_specific: boolean; created_at: string; }
+export interface DistributionRelation { id: string; form: string; production_basis_id: string; apparent_character: string; real_character: string; corresponds_to_surplus_form: string; created_at: string; }
+export interface HistoricalTransience { id: string; distribution_form_id: string; mode_of_production: string; precondition: string; succeeding_form: string; created_at: string; }
+export interface ProductiveForceContradiction { id: string; productive_force: string; social_form: string; contradiction_nature: string; crisis_signal: string; created_at: string; }
+export interface CreateProductiveForceContradictionInput { productive_force: string; social_form: string; contradiction_nature: string; crisis_signal: string; }

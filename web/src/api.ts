@@ -3028,4 +3028,27 @@ export const financeApi = {
     http<{ items: import("./types").ValueAppearanceContrast[] }>("/v1/revenue/value-contrasts").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 51 — Distribution Relations and Production Relations
+  listProductionRelationBases: () =>
+    http<{ items: import("./types").ProductionRelationBasis[] }>("/v1/revenue/production-bases").then(
+      (r) => r.items ?? [],
+    ),
+  listDistributionRelations: () =>
+    http<{ items: import("./types").DistributionRelation[] }>("/v1/revenue/distribution-relations").then(
+      (r) => r.items ?? [],
+    ),
+  listHistoricalTransiences: () =>
+    http<{ items: import("./types").HistoricalTransience[] }>("/v1/revenue/historical-transiences").then(
+      (r) => r.items ?? [],
+    ),
+  createProductiveForceContradiction: (body: import("./types").CreateProductiveForceContradictionInput) =>
+    http<import("./types").ProductiveForceContradiction>("/v1/revenue/productive-force-contradictions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listProductiveForceContradictions: () =>
+    http<{ items: import("./types").ProductiveForceContradiction[] }>("/v1/revenue/productive-force-contradictions").then(
+      (r) => r.items ?? [],
+    ),
 };
