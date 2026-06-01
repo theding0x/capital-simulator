@@ -894,4 +894,36 @@ type Store interface {
 	// ListProductiveForceContradictions returns all stored records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListProductiveForceContradictions(ctx context.Context) ([]revenue.ProductiveForceContradiction, error)
+
+	// --- Vol. III Ch. 52 — Classes (final chapter; COMPLETES Vol. III) --------
+
+	// CreateSocialClass persists one of the three great classes (Vol. III Ch. 52),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateSocialClass(ctx context.Context, c revenue.SocialClass) (revenue.SocialClass, error)
+	// GetSocialClass returns the class with the given ID, or ErrNotFound.
+	GetSocialClass(ctx context.Context, id revenue.SocialClassID) (revenue.SocialClass, error)
+	// ListSocialClasses returns all stored classes, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListSocialClasses(ctx context.Context) ([]revenue.SocialClass, error)
+
+	// CreateClassIncomeSource persists a class income source (Vol. III Ch. 52),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateClassIncomeSource(ctx context.Context, s revenue.ClassIncomeSource) (revenue.ClassIncomeSource, error)
+	// ListClassIncomeSources returns all stored income sources, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListClassIncomeSources(ctx context.Context) ([]revenue.ClassIncomeSource, error)
+
+	// CreateClassTendency persists a class developmental tendency (Vol. III Ch. 52),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateClassTendency(ctx context.Context, t revenue.ClassTendency) (revenue.ClassTendency, error)
+	// ListClassTendencies returns all stored tendencies, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListClassTendencies(ctx context.Context) ([]revenue.ClassTendency, error)
+
+	// CreateClassAmbiguity persists a class-ambiguity record (Vol. III Ch. 52),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateClassAmbiguity(ctx context.Context, a revenue.ClassAmbiguity) (revenue.ClassAmbiguity, error)
+	// ListClassAmbiguities returns all stored ambiguities, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListClassAmbiguities(ctx context.Context) ([]revenue.ClassAmbiguity, error)
 }

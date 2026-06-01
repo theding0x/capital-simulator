@@ -4744,3 +4744,10 @@ export interface DistributionRelation { id: string; form: string; production_bas
 export interface HistoricalTransience { id: string; distribution_form_id: string; mode_of_production: string; precondition: string; succeeding_form: string; created_at: string; }
 export interface ProductiveForceContradiction { id: string; productive_force: string; social_form: string; contradiction_nature: string; crisis_signal: string; created_at: string; }
 export interface CreateProductiveForceContradictionInput { productive_force: string; social_form: string; contradiction_nature: string; crisis_signal: string; }
+
+// Vol. III Ch. 52 — Classes
+export interface SocialClass { id: string; name: string; relation_to_means_of_production: string; primary_revenue_form: string; historical_precondition: string; created_at: string; }
+export interface ClassIncomeSource { id: string; class_id: string; revenue_form: string; surplus_value_component_bp: number; created_at: string; }
+export interface ClassTendency { id: string; class_id: string; description: string; direction: string; created_at: string; }
+export interface ClassAmbiguity { id: string; intermediate_group: string; income_source: string; why_not_a_class: string; created_at: string; }
+export interface SocialClassDetail { class: SocialClass; income_sources: ClassIncomeSource[]; tendencies: ClassTendency[]; }

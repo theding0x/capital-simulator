@@ -551,6 +551,10 @@ func main() {
 	srv.Handle("/v1/revenue/distribution-relations", financeProxy)
 	srv.Handle("/v1/revenue/historical-transiences", financeProxy)
 	srv.Handle("/v1/revenue/productive-force-contradictions", financeProxy)
+	// Vol. III Ch. 52 — Classes (COMPLETES Vol. III) → finance-service
+	srv.Handle("/v1/revenue/classes", financeProxy)
+	srv.Handle("/v1/revenue/classes/{rest...}", financeProxy)
+	srv.Handle("/v1/revenue/class-ambiguities", financeProxy)
 
 	srv.MarkReady(true)
 

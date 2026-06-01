@@ -3051,4 +3051,12 @@ export const financeApi = {
     http<{ items: import("./types").ProductiveForceContradiction[] }>("/v1/revenue/productive-force-contradictions").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 52 — Classes
+  listSocialClasses: () =>
+    http<{ items: import("./types").SocialClass[] }>("/v1/revenue/classes").then((r) => r.items ?? []),
+  getSocialClass: (id: string) =>
+    http<import("./types").SocialClassDetail>(`/v1/revenue/classes/${id}`),
+  listClassAmbiguities: () =>
+    http<{ items: import("./types").ClassAmbiguity[] }>("/v1/revenue/class-ambiguities").then((r) => r.items ?? []),
 };

@@ -106,6 +106,7 @@ import { Ch48Trinity } from "../chapters/vol3/Ch48Trinity";
 import { Ch49Analysis } from "../chapters/vol3/Ch49Analysis";
 import { Ch50Illusions } from "../chapters/vol3/Ch50Illusions";
 import { Ch51Distribution } from "../chapters/vol3/Ch51Distribution";
+import { Ch52Classes } from "../chapters/vol3/Ch52Classes";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -230,6 +231,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch49": Ch49Analysis as AnyPanel,
   "v3-ch50": Ch50Illusions as AnyPanel,
   "v3-ch51": Ch51Distribution as AnyPanel,
+  "v3-ch52": Ch52Classes as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {

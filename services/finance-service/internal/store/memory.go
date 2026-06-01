@@ -115,6 +115,10 @@ type Memory struct {
 	distributionRelations         map[revenue.DistributionRelationID]revenue.DistributionRelation
 	historicalTransiences         map[revenue.HistoricalTransienceID]revenue.HistoricalTransience
 	productiveForceContradictions map[revenue.ProductiveForceContradictionID]revenue.ProductiveForceContradiction
+	socialClasses                 map[revenue.SocialClassID]revenue.SocialClass
+	classIncomeSources            map[revenue.ClassIncomeSourceID]revenue.ClassIncomeSource
+	classTendencies               map[revenue.ClassTendencyID]revenue.ClassTendency
+	classAmbiguities              map[revenue.ClassAmbiguityID]revenue.ClassAmbiguity
 }
 
 // NewMemory returns an empty in-memory store.
@@ -217,6 +221,10 @@ func NewMemory() *Memory {
 		distributionRelations:         make(map[revenue.DistributionRelationID]revenue.DistributionRelation),
 		historicalTransiences:         make(map[revenue.HistoricalTransienceID]revenue.HistoricalTransience),
 		productiveForceContradictions: make(map[revenue.ProductiveForceContradictionID]revenue.ProductiveForceContradiction),
+		socialClasses:                 make(map[revenue.SocialClassID]revenue.SocialClass),
+		classIncomeSources:            make(map[revenue.ClassIncomeSourceID]revenue.ClassIncomeSource),
+		classTendencies:               make(map[revenue.ClassTendencyID]revenue.ClassTendency),
+		classAmbiguities:              make(map[revenue.ClassAmbiguityID]revenue.ClassAmbiguity),
 	}
 }
 
