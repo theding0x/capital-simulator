@@ -4712,3 +4712,12 @@ export interface HistoricalRentTransition { id: string; from_stage: RentFormStag
 export interface CreateHistoricalRentTransitionInput { from_stage: RentFormStage; to_stage: RentFormStage; preconditions: string; driving_force: string; }
 export interface SmallPeasantProduction { id: string; parcel_id: string; total_income_bp: number; rent_component_bp: number; profit_component_bp: number; wages_component_bp: number; is_conflated: boolean; created_at: string; }
 export interface CreateSmallPeasantProductionInput { parcel_id: string; rent_component_bp: number; profit_component_bp: number; wages_component_bp: number; is_conflated: boolean; }
+
+// Vol. III Ch. 48 — The Trinity Formula
+export type RevenueSourceKind = 1 | 2 | 3;
+export interface RevenueStream { id: string; source: RevenueSourceKind; apparent_revenue_bp: number; actual_source_bp: number; is_fetishised: boolean; created_at: string; }
+export interface TrinityFormula { id: string; capital_stream_id: string; land_stream_id: string; labour_stream_id: string; total_surplus_value_bp: number; total_apparent_revenue_bp: number; created_at: string; }
+export interface RevenueFetishForm { id: string; source: RevenueSourceKind; surface_formula: string; real_relation: string; mystification_kind: string; created_at: string; }
+export interface TrinityStreamInput { apparent_revenue_bp: number; actual_source_bp: number; is_fetishised: boolean; }
+export interface CreateTrinityFormulaInput { capital_stream: TrinityStreamInput; land_stream: TrinityStreamInput; labour_stream: TrinityStreamInput; }
+export interface TrinityFormulaResponse { formula: TrinityFormula; streams: RevenueStream[]; }

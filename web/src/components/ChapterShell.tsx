@@ -102,6 +102,7 @@ import { Ch44WorstSoilRent } from "../chapters/vol3/Ch44WorstSoilRent";
 import { Ch45AbsoluteRent } from "../chapters/vol3/Ch45AbsoluteRent";
 import { Ch46LandPrice } from "../chapters/vol3/Ch46LandPrice";
 import { Ch47Genesis } from "../chapters/vol3/Ch47Genesis";
+import { Ch48Trinity } from "../chapters/vol3/Ch48Trinity";
 
 interface ChapterShellProps {
   activeChapterId: string;
@@ -222,6 +223,7 @@ const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v3-ch45": Ch45AbsoluteRent as AnyPanel,
   "v3-ch46": Ch46LandPrice as AnyPanel,
   "v3-ch47": Ch47Genesis as AnyPanel,
+  "v3-ch48": Ch48Trinity as AnyPanel,
 };
 
 const QUOTES: Partial<Record<string, string>> = {

@@ -18,6 +18,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/rent"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/revenue"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
@@ -785,4 +786,28 @@ type Store interface {
 	// ListSmallPeasantProductions returns all stored small-peasant-production records, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListSmallPeasantProductions(ctx context.Context) ([]rent.SmallPeasantProduction, error)
+
+	// --- Vol. III Ch. 48 — The Trinity Formula -------------------------------
+
+	// CreateRevenueStream persists one branch of the trinity formula (Vol. III Ch. 48),
+	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateRevenueStream(ctx context.Context, s revenue.RevenueStream) (revenue.RevenueStream, error)
+	// ListRevenueStreams returns all stored revenue streams, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRevenueStreams(ctx context.Context) ([]revenue.RevenueStream, error)
+
+	// CreateTrinityFormula persists a trinity formula binding three revenue streams and the
+	// undivided surplus-value behind them (Vol. III Ch. 48), assigning an ID and created-at
+	// timestamp when absent. Returns ErrAlreadyExists on ID collision.
+	CreateTrinityFormula(ctx context.Context, tf revenue.TrinityFormula) (revenue.TrinityFormula, error)
+	// GetTrinityFormula returns the trinity formula with the given ID, or ErrNotFound.
+	GetTrinityFormula(ctx context.Context, id revenue.TrinityFormulaID) (revenue.TrinityFormula, error)
+
+	// CreateRevenueFetishForm persists a revenue fetish form contrasting the surface relation
+	// against the real one (Vol. III Ch. 48), assigning an ID and created-at timestamp when
+	// absent. Returns ErrAlreadyExists on ID collision.
+	CreateRevenueFetishForm(ctx context.Context, f revenue.RevenueFetishForm) (revenue.RevenueFetishForm, error)
+	// ListRevenueFetishForms returns all stored revenue fetish forms, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListRevenueFetishForms(ctx context.Context) ([]revenue.RevenueFetishForm, error)
 }

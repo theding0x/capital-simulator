@@ -533,6 +533,10 @@ func main() {
 	srv.Handle("/v1/rent/historical-transitions/{rest...}", financeProxy)
 	srv.Handle("/v1/rent/small-peasant-productions", financeProxy)
 	srv.Handle("/v1/rent/small-peasant-productions/{rest...}", financeProxy)
+	// Vol. III Ch. 48 — The Trinity Formula (Part VII opens) → finance-service
+	srv.Handle("/v1/revenue/trinity-formulas", financeProxy)
+	srv.Handle("/v1/revenue/trinity-formulas/{rest...}", financeProxy)
+	srv.Handle("/v1/revenue/fetish-forms", financeProxy)
 
 	srv.MarkReady(true)
 
