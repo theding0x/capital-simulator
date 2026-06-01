@@ -2981,4 +2981,17 @@ export const financeApi = {
     http<{ items: import("./types").SmallPeasantProduction[] }>("/v1/rent/small-peasant-productions").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 48 — The Trinity Formula
+  createTrinityFormula: (body: import("./types").CreateTrinityFormulaInput) =>
+    http<import("./types").TrinityFormulaResponse>("/v1/revenue/trinity-formulas", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getTrinityFormula: (id: string) =>
+    http<import("./types").TrinityFormula>(`/v1/revenue/trinity-formulas/${id}`),
+  listRevenueFetishForms: () =>
+    http<{ items: import("./types").RevenueFetishForm[] }>("/v1/revenue/fetish-forms").then(
+      (r) => r.items ?? [],
+    ),
 };

@@ -306,4 +306,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/rent/historical-transitions", h.ListHistoricalRentTransitions)
 	s.HandleFunc("POST /v1/rent/small-peasant-productions", h.CreateSmallPeasantProduction)
 	s.HandleFunc("GET /v1/rent/small-peasant-productions", h.ListSmallPeasantProductions)
+
+	// Vol. III Ch. 48 — The Trinity Formula (Part VII opens)
+	s.HandleFunc("POST /v1/revenue/trinity-formulas", h.CreateTrinityFormula)
+	s.HandleFunc("GET /v1/revenue/trinity-formulas/{id}", h.GetTrinityFormula)
+	s.HandleFunc("GET /v1/revenue/fetish-forms", h.ListRevenueFetishForms)
 }

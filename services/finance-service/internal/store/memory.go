@@ -11,6 +11,7 @@ import (
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/merchant"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/rent"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/revenue"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/tendency"
 )
 
@@ -100,6 +101,9 @@ type Memory struct {
 	rentHistoricalForms        map[rent.RentHistoricalFormID]rent.RentHistoricalForm
 	historicalRentTransitions  map[rent.HistoricalRentTransitionID]rent.HistoricalRentTransition
 	smallPeasantProductions    map[rent.SmallPeasantProductionID]rent.SmallPeasantProduction
+	revenueStreams             map[revenue.RevenueStreamID]revenue.RevenueStream
+	trinityFormulas            map[revenue.TrinityFormulaID]revenue.TrinityFormula
+	revenueFetishForms         map[revenue.RevenueFetishFormID]revenue.RevenueFetishForm
 }
 
 // NewMemory returns an empty in-memory store.
@@ -188,6 +192,9 @@ func NewMemory() *Memory {
 		rentHistoricalForms:        make(map[rent.RentHistoricalFormID]rent.RentHistoricalForm),
 		historicalRentTransitions:  make(map[rent.HistoricalRentTransitionID]rent.HistoricalRentTransition),
 		smallPeasantProductions:    make(map[rent.SmallPeasantProductionID]rent.SmallPeasantProduction),
+		revenueStreams:             make(map[revenue.RevenueStreamID]revenue.RevenueStream),
+		trinityFormulas:            make(map[revenue.TrinityFormulaID]revenue.TrinityFormula),
+		revenueFetishForms:         make(map[revenue.RevenueFetishFormID]revenue.RevenueFetishForm),
 	}
 }
 
