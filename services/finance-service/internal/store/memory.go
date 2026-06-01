@@ -104,6 +104,9 @@ type Memory struct {
 	revenueStreams             map[revenue.RevenueStreamID]revenue.RevenueStream
 	trinityFormulas            map[revenue.TrinityFormulaID]revenue.TrinityFormula
 	revenueFetishForms         map[revenue.RevenueFetishFormID]revenue.RevenueFetishForm
+	annualValueCompositions    map[revenue.AnnualValueCompositionID]revenue.AnnualValueComposition
+	revenueLimits              map[revenue.RevenueLimitID]revenue.RevenueLimit
+	surplusValuePartitions     map[revenue.SurplusValuePartitionID]revenue.SurplusValuePartition
 }
 
 // NewMemory returns an empty in-memory store.
@@ -195,6 +198,9 @@ func NewMemory() *Memory {
 		revenueStreams:             make(map[revenue.RevenueStreamID]revenue.RevenueStream),
 		trinityFormulas:            make(map[revenue.TrinityFormulaID]revenue.TrinityFormula),
 		revenueFetishForms:         make(map[revenue.RevenueFetishFormID]revenue.RevenueFetishForm),
+		annualValueCompositions:    make(map[revenue.AnnualValueCompositionID]revenue.AnnualValueComposition),
+		revenueLimits:              make(map[revenue.RevenueLimitID]revenue.RevenueLimit),
+		surplusValuePartitions:     make(map[revenue.SurplusValuePartitionID]revenue.SurplusValuePartition),
 	}
 }
 

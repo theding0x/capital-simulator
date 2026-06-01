@@ -810,4 +810,28 @@ type Store interface {
 	// ListRevenueFetishForms returns all stored revenue fetish forms, newest first
 	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
 	ListRevenueFetishForms(ctx context.Context) ([]revenue.RevenueFetishForm, error)
+
+	// --- Vol. III Ch. 49 — Analysis of the Process of Production --------------
+
+	// CreateAnnualValueComposition persists a c+v+s decomposition of the annual product
+	// (Vol. III Ch. 49), assigning an ID and created-at timestamp when absent. Returns
+	// ErrAlreadyExists on ID collision.
+	CreateAnnualValueComposition(ctx context.Context, c revenue.AnnualValueComposition) (revenue.AnnualValueComposition, error)
+	// GetAnnualValueComposition returns the composition with the given ID, or ErrNotFound.
+	GetAnnualValueComposition(ctx context.Context, id revenue.AnnualValueCompositionID) (revenue.AnnualValueComposition, error)
+
+	// CreateRevenueLimit persists the distributable-revenue ceiling derived from a composition
+	// (Vol. III Ch. 49), assigning an ID and created-at timestamp when absent. Returns
+	// ErrAlreadyExists on ID collision.
+	CreateRevenueLimit(ctx context.Context, l revenue.RevenueLimit) (revenue.RevenueLimit, error)
+	// GetRevenueLimitByComposition returns the revenue limit for the given composition ID, or ErrNotFound.
+	GetRevenueLimitByComposition(ctx context.Context, compositionID string) (revenue.RevenueLimit, error)
+
+	// CreateSurplusValuePartition persists a division of surplus-value into profit/interest/rent
+	// (Vol. III Ch. 49), assigning an ID and created-at timestamp when absent. Returns
+	// ErrAlreadyExists on ID collision.
+	CreateSurplusValuePartition(ctx context.Context, p revenue.SurplusValuePartition) (revenue.SurplusValuePartition, error)
+	// ListSurplusValuePartitions returns all stored partitions, newest first
+	// (created_at DESC, id ASC). Never returns nil — an empty store returns an empty slice.
+	ListSurplusValuePartitions(ctx context.Context) ([]revenue.SurplusValuePartition, error)
 }

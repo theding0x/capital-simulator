@@ -2994,4 +2994,18 @@ export const financeApi = {
     http<{ items: import("./types").RevenueFetishForm[] }>("/v1/revenue/fetish-forms").then(
       (r) => r.items ?? [],
     ),
+
+  // Vol. III Ch. 49 — Concerning the Analysis of the Process of Production
+  createAnnualComposition: (body: import("./types").CreateAnnualCompositionInput) =>
+    http<import("./types").AnnualCompositionResponse>("/v1/revenue/annual-compositions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getAnnualComposition: (id: string) =>
+    http<import("./types").AnnualCompositionResponse>(`/v1/revenue/annual-compositions/${id}`),
+  createSurplusPartition: (body: import("./types").CreateSurplusPartitionInput) =>
+    http<import("./types").SurplusValuePartition>("/v1/revenue/surplus-partitions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };

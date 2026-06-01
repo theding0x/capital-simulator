@@ -537,6 +537,10 @@ func main() {
 	srv.Handle("/v1/revenue/trinity-formulas", financeProxy)
 	srv.Handle("/v1/revenue/trinity-formulas/{rest...}", financeProxy)
 	srv.Handle("/v1/revenue/fetish-forms", financeProxy)
+	// Vol. III Ch. 49 — Concerning the Analysis of the Process of Production → finance-service
+	srv.Handle("/v1/revenue/annual-compositions", financeProxy)
+	srv.Handle("/v1/revenue/annual-compositions/{rest...}", financeProxy)
+	srv.Handle("/v1/revenue/surplus-partitions", financeProxy)
 
 	srv.MarkReady(true)
 
