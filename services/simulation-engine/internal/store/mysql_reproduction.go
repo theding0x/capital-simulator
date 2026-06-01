@@ -184,6 +184,23 @@ func (m *MySQL) SnapshotAggregate(ctx context.Context, period string) (repro.Soc
 	}, nil
 }
 
+// UpsertAggregateShares writes the Department I/II share split onto the
+// social_capital_aggregates row for the given period, inserting the row if it
+// does not exist. The remaining columns keep their existing values (on update)
+// or their schema defaults (on insert). The write is a single atomic statement.
+func (m *MySQL) UpsertAggregateShares(ctx context.Context, period string, deptIShareBP, deptIIShareBP int64) (repro.SocialCapitalAggregate, error) {
+	const q = `INSERT INTO social_capital_aggregates
+		(period, department_i_share_bp, department_ii_share_bp)
+		VALUES (?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			department_i_share_bp = VALUES(department_i_share_bp),
+			department_ii_share_bp = VALUES(department_ii_share_bp)`
+	if _, err := m.db.ExecContext(ctx, q, period, deptIShareBP, deptIIShareBP); err != nil {
+		return repro.SocialCapitalAggregate{}, err
+	}
+	return m.SnapshotAggregate(ctx, period)
+}
+
 // ListRealisationPuzzles returns all canonical RealisationPuzzle rows.
 func (m *MySQL) ListRealisationPuzzles(ctx context.Context) ([]repro.RealisationPuzzle, error) {
 	const q = `SELECT surplus_circulation_id, puzzle_statement, resolved_in_chapter

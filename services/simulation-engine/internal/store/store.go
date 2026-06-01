@@ -370,6 +370,12 @@ type SurplusCirculationStore interface {
 	// If no explicit aggregate row exists, it derives total_annual_surplus_pence
 	// by summing all SurplusCirculations whose period matches.
 	SnapshotAggregate(ctx context.Context, period string) (repro.SocialCapitalAggregate, error)
+	// UpsertAggregateShares writes the Department I / II share split (basis
+	// points, summing to 10000) onto the SocialCapitalAggregate for the given
+	// period, creating the row if absent and leaving the other columns intact.
+	// Ch. 20/21 reproduction ticks call this to populate the placeholders Ch. 17
+	// reserved (issue #215).
+	UpsertAggregateShares(ctx context.Context, period string, deptIShareBP, deptIIShareBP int64) (repro.SocialCapitalAggregate, error)
 	// ListRealisationPuzzles returns all canonical RealisationPuzzle rows.
 	ListRealisationPuzzles(ctx context.Context) ([]repro.RealisationPuzzle, error)
 }

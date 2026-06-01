@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -135,6 +136,23 @@ func exchangeToResponse(e repro.InterDepartmentExchange) interdepartmentExchange
 		Kind:           string(e.Kind),
 		Description:    e.Description,
 	}
+}
+
+// projectDepartmentShares recomputes the Department I/II share split (basis
+// points) from a reproduction scheme's two departments and persists it onto the
+// period's SocialCapitalAggregate, wiring Ch. 20/21 reproduction back into the
+// Ch. 17 aggregate placeholders (issue #215). A scheme missing either
+// department — or with no advanced capital — is a no-op.
+func (h *Handler) projectDepartmentShares(ctx context.Context, period string, deptI, deptII *repro.DepartmentalCapital) error {
+	if deptI == nil || deptII == nil {
+		return nil
+	}
+	deptIShareBP, deptIIShareBP := repro.ComputeDepartmentSharesBP(deptI.AdvancedPence(), deptII.AdvancedPence())
+	if deptIShareBP == 0 && deptIIShareBP == 0 {
+		return nil
+	}
+	_, err := h.SurplusCirculations.UpsertAggregateShares(ctx, period, deptIShareBP, deptIIShareBP)
+	return err
 }
 
 // --- handlers ---
@@ -272,6 +290,17 @@ func (h *Handler) AdvanceReproductionTick(w http.ResponseWriter, r *http.Request
 			writeError(w, http.StatusNotFound, "scheme not found")
 			return
 		}
+		h.writeServerError(w, err)
+		return
+	}
+	// Project the two departments' advanced capital back onto the period's
+	// social-capital aggregate (issue #215).
+	scheme, err := h.SimpleReproduction.GetSimpleReproductionScheme(r.Context(), id)
+	if err != nil {
+		h.writeServerError(w, err)
+		return
+	}
+	if err := h.projectDepartmentShares(r.Context(), scheme.Period, scheme.DepartmentI, scheme.DepartmentII); err != nil {
 		h.writeServerError(w, err)
 		return
 	}

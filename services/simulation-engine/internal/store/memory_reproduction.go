@@ -147,6 +147,30 @@ func (m *Memory) SnapshotAggregate(_ context.Context, period string) (repro.Soci
 	return agg, nil
 }
 
+// UpsertAggregateShares sets the Department I/II share split on the aggregate
+// for the given period, updating the existing row in place or appending a new
+// one. Other aggregate fields are left untouched.
+func (m *Memory) UpsertAggregateShares(_ context.Context, period string, deptIShareBP, deptIIShareBP int64) (repro.SocialCapitalAggregate, error) {
+	m.reproduction.mu.Lock()
+	defer m.reproduction.mu.Unlock()
+
+	for i := range m.reproduction.aggregates {
+		if m.reproduction.aggregates[i].Period == period {
+			m.reproduction.aggregates[i].DepartmentIShareBP = deptIShareBP
+			m.reproduction.aggregates[i].DepartmentIIShareBP = deptIIShareBP
+			return m.reproduction.aggregates[i], nil
+		}
+	}
+
+	agg := repro.SocialCapitalAggregate{
+		Period:              period,
+		DepartmentIShareBP:  deptIShareBP,
+		DepartmentIIShareBP: deptIIShareBP,
+	}
+	m.reproduction.aggregates = append(m.reproduction.aggregates, agg)
+	return agg, nil
+}
+
 // ListRealisationPuzzles returns all canonical RealisationPuzzle rows.
 func (m *Memory) ListRealisationPuzzles(_ context.Context) ([]repro.RealisationPuzzle, error) {
 	m.reproduction.mu.RLock()

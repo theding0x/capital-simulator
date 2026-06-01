@@ -212,6 +212,25 @@ type SocialCapitalAggregate struct {
 	DepartmentIIShareBP int64 `json:"department_ii_share_bp"`
 }
 
+// ComputeDepartmentSharesBP returns the basis-point shares of total advanced
+// capital (c + v) held by Department I and Department II. The two shares always
+// sum to exactly 10000 — Department II's share is taken as the residual so that
+// rounding can never break the partition. A non-positive total yields (0, 0).
+//
+// This is the writer Ch. 17 reserved DepartmentIShareBP / DepartmentIIShareBP
+// for: the Ch. 20 (simple) and Ch. 21 (extended) reproduction ticks project
+// their two departments' advanced capital back onto the period's
+// SocialCapitalAggregate (issue #215).
+func ComputeDepartmentSharesBP(deptIAdvancedPence, deptIIAdvancedPence int64) (deptIShareBP, deptIIShareBP int64) {
+	total := deptIAdvancedPence + deptIIAdvancedPence
+	if total <= 0 {
+		return 0, 0
+	}
+	deptIShareBP = (deptIAdvancedPence*10000 + total/2) / total
+	deptIIShareBP = 10000 - deptIShareBP
+	return deptIShareBP, deptIIShareBP
+}
+
 // --- RealisationPuzzle ------------------------------------------------------
 
 // RealisationPuzzle captures the canonical formulation of Marx's

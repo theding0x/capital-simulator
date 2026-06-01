@@ -275,6 +275,12 @@ func (h *Handler) handleTickExtendedScheme(w http.ResponseWriter, r *http.Reques
 		}
 		return
 	}
+	// Project the post-tick (grown) departments' advanced capital back onto the
+	// period's social-capital aggregate (issue #215).
+	if err := h.projectDepartmentShares(r.Context(), s.Period, s.DepartmentI, s.DepartmentII); err != nil {
+		h.writeServerError(w, err)
+		return
+	}
 	writeJSON(w, http.StatusCreated, extendedSchemeToResponse(s))
 }
 
