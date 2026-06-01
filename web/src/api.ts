@@ -3008,4 +3008,24 @@ export const financeApi = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  // Vol. III Ch. 50 — Illusions Created by Competition
+  listCompetitionIllusions: () =>
+    http<{ items: import("./types").CompetitionIllusion[] }>("/v1/revenue/competition-illusions").then(
+      (r) => r.items ?? [],
+    ),
+  createCostPriceFetish: (body: import("./types").CreateCostPriceFetishInput) =>
+    http<import("./types").CostPriceFetish>("/v1/revenue/cost-price-fetishes", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  createAnnualRevenueAccount: (body: import("./types").CreateAnnualRevenueAccountInput) =>
+    http<import("./types").AnnualRevenueAccount>("/v1/revenue/annual-accounts", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  listValueAppearanceContrasts: () =>
+    http<{ items: import("./types").ValueAppearanceContrast[] }>("/v1/revenue/value-contrasts").then(
+      (r) => r.items ?? [],
+    ),
 };

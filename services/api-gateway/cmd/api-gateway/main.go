@@ -541,6 +541,11 @@ func main() {
 	srv.Handle("/v1/revenue/annual-compositions", financeProxy)
 	srv.Handle("/v1/revenue/annual-compositions/{rest...}", financeProxy)
 	srv.Handle("/v1/revenue/surplus-partitions", financeProxy)
+	// Vol. III Ch. 50 — Illusions Created by Competition → finance-service
+	srv.Handle("/v1/revenue/competition-illusions", financeProxy)
+	srv.Handle("/v1/revenue/cost-price-fetishes", financeProxy)
+	srv.Handle("/v1/revenue/annual-accounts", financeProxy)
+	srv.Handle("/v1/revenue/value-contrasts", financeProxy)
 
 	srv.MarkReady(true)
 

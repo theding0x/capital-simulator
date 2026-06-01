@@ -4729,3 +4729,11 @@ export interface AnnualCompositionResponse { composition: AnnualValueComposition
 export interface CreateAnnualCompositionInput { constant_capital_labour_minutes: number; variable_capital_labour_minutes: number; surplus_value_labour_minutes: number; }
 export interface SurplusValuePartition { id: string; composition_id: string; total_surplus_value_lm: number; profit_enterprise_lm: number; interest_lm: number; ground_rent_lm: number; residual_surplus_lm: number; created_at: string; }
 export interface CreateSurplusPartitionInput { composition_id: string; profit_enterprise_lm: number; interest_lm: number; ground_rent_lm: number; residual_surplus_lm: number; }
+
+// Vol. III Ch. 50 — Illusions Created by Competition
+export interface CompetitionIllusion { id: string; name: string; surface_appearance: string; real_relation: string; produced_by: string; created_at: string; }
+export interface CostPriceFetish { id: string; constant_capital_bp: number; variable_capital_bp: number; cost_price_bp: number; profit_bp: number; actual_value_bp: number; created_at: string; }
+export interface CreateCostPriceFetishInput { constant_capital_bp: number; variable_capital_bp: number; profit_bp: number; }
+export interface AnnualRevenueAccount { id: string; new_value_created_lm: number; wages_share_lm: number; profit_and_rent_share_lm: number; constant_capital_lm: number; total_social_product_lm: number; created_at: string; }
+export interface CreateAnnualRevenueAccountInput { constant_capital_lm: number; wages_share_lm: number; profit_and_rent_share_lm: number; }
+export interface ValueAppearanceContrast { id: string; illusion_id: string; surface: string; reality: string; created_at: string; }
