@@ -12,11 +12,13 @@ import (
 )
 
 // newExtendedHandler returns an httpapi.Handler wired to a fresh in-memory store
-// with the ExtendedReproduction store set.
+// with the ExtendedReproduction store set. SurplusCirculations is wired to the
+// same store because the tick endpoint projects department shares onto the
+// social-capital aggregate (issue #215).
 func newExtendedHandler(t *testing.T) *Handler {
 	t.Helper()
 	mem := store.NewMemory()
-	return New(nil, Deps{ExtendedReproduction: mem})
+	return New(nil, Deps{ExtendedReproduction: mem, SurplusCirculations: mem})
 }
 
 // createExtendedSchemeInner calls the handler and returns the created scheme ID

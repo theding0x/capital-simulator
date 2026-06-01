@@ -165,6 +165,14 @@ func (d DepartmentalCapital) VplusSPence() int64 {
 	return d.VariablePence + d.SurplusPence
 }
 
+// AdvancedPence returns c + v — the capital actually advanced (laid out) by the
+// department in the period, excluding the surplus-value it produces. This is
+// the magnitude the SocialCapitalAggregate department shares partition
+// (issue #215).
+func (d DepartmentalCapital) AdvancedPence() int64 {
+	return d.ConstantPence + d.VariablePence
+}
+
 // --- SimpleReproductionScheme -----------------------------------------------
 
 // SimpleReproductionScheme is the aggregating root that links both departments
