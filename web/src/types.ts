@@ -4721,3 +4721,11 @@ export interface RevenueFetishForm { id: string; source: RevenueSourceKind; surf
 export interface TrinityStreamInput { apparent_revenue_bp: number; actual_source_bp: number; is_fetishised: boolean; }
 export interface CreateTrinityFormulaInput { capital_stream: TrinityStreamInput; land_stream: TrinityStreamInput; labour_stream: TrinityStreamInput; }
 export interface TrinityFormulaResponse { formula: TrinityFormula; streams: RevenueStream[]; }
+
+// Vol. III Ch. 49 — Concerning the Analysis of the Process of Production
+export interface AnnualValueComposition { id: string; constant_capital_labour_minutes: number; variable_capital_labour_minutes: number; surplus_value_labour_minutes: number; total_value_labour_minutes: number; new_value_labour_minutes: number; created_at: string; }
+export interface RevenueLimit { id: string; composition_id: string; max_distributable_revenue_lm: number; constant_capital_replacement: number; created_at: string; }
+export interface AnnualCompositionResponse { composition: AnnualValueComposition; revenue_limit: RevenueLimit; }
+export interface CreateAnnualCompositionInput { constant_capital_labour_minutes: number; variable_capital_labour_minutes: number; surplus_value_labour_minutes: number; }
+export interface SurplusValuePartition { id: string; composition_id: string; total_surplus_value_lm: number; profit_enterprise_lm: number; interest_lm: number; ground_rent_lm: number; residual_surplus_lm: number; created_at: string; }
+export interface CreateSurplusPartitionInput { composition_id: string; profit_enterprise_lm: number; interest_lm: number; ground_rent_lm: number; residual_surplus_lm: number; }
