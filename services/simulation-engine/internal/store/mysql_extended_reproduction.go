@@ -129,13 +129,14 @@ func (m *MySQL) ListExtendedReproductionSchemes(ctx context.Context, period stri
 // extended_departmental_capitals table for a given scheme + department.
 func (m *MySQL) getExtendedDepartmentalCapital(ctx context.Context, schemeID repro.ExtendedReproductionSchemeID, dept repro.CapitalDepartment) (repro.DepartmentalCapital, error) {
 	const q = `SELECT id, scheme_id, department, constant_pence, variable_pence,
-		surplus_pence, total_pence
+		surplus_pence, total_pence, turnover_number_bp
 		FROM extended_departmental_capitals WHERE scheme_id = ? AND department = ?`
 	row := m.db.QueryRowContext(ctx, q, string(schemeID), string(dept))
 	var d repro.DepartmentalCapital
 	var did, sid, department string
 	if err := row.Scan(&did, &sid, &department,
-		&d.ConstantPence, &d.VariablePence, &d.SurplusPence, &d.TotalPence); err != nil {
+		&d.ConstantPence, &d.VariablePence, &d.SurplusPence, &d.TotalPence,
+		&d.TurnoverNumberBP); err != nil {
 		if err == sql.ErrNoRows {
 			return repro.DepartmentalCapital{}, ErrNotFound
 		}
@@ -175,12 +176,12 @@ func (m *MySQL) AddExtendedDepartmentToScheme(ctx context.Context, schemeID repr
 	}
 
 	const q = `INSERT INTO extended_departmental_capitals
-		(id, scheme_id, department, constant_pence, variable_pence, surplus_pence, total_pence, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		(id, scheme_id, department, constant_pence, variable_pence, surplus_pence, total_pence, turnover_number_bp, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	if _, err := m.db.ExecContext(ctx, q,
 		string(dept.ID), string(schemeID), string(dept.Department),
 		dept.ConstantPence, dept.VariablePence, dept.SurplusPence, dept.TotalPence,
-		m.now(),
+		dept.TurnoverNumberBP, m.now(),
 	); err != nil {
 		if isDuplicateKey(err) {
 			return repro.DepartmentalCapital{}, ErrAlreadyExists
@@ -365,13 +366,14 @@ func (m *MySQL) TickExtendedScheme(ctx context.Context, schemeID repro.ExtendedR
 // getExtendedDeptForUpdate reads a departmental capital row with SELECT FOR UPDATE.
 func (m *MySQL) getExtendedDeptForUpdate(ctx context.Context, tx *sql.Tx, schemeID repro.ExtendedReproductionSchemeID, dept repro.CapitalDepartment) (repro.DepartmentalCapital, error) {
 	const q = `SELECT id, scheme_id, department, constant_pence, variable_pence,
-		surplus_pence, total_pence
+		surplus_pence, total_pence, turnover_number_bp
 		FROM extended_departmental_capitals WHERE scheme_id = ? AND department = ? FOR UPDATE`
 	row := tx.QueryRowContext(ctx, q, string(schemeID), string(dept))
 	var d repro.DepartmentalCapital
 	var did, sid, department string
 	if err := row.Scan(&did, &sid, &department,
-		&d.ConstantPence, &d.VariablePence, &d.SurplusPence, &d.TotalPence); err != nil {
+		&d.ConstantPence, &d.VariablePence, &d.SurplusPence, &d.TotalPence,
+		&d.TurnoverNumberBP); err != nil {
 		if err == sql.ErrNoRows {
 			return repro.DepartmentalCapital{}, ErrNotFound
 		}

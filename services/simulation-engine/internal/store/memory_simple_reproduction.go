@@ -201,6 +201,7 @@ func (m *Memory) CheckSchemeBalance(_ context.Context, id repro.SimpleReproducti
 		res.DeptIIConstantPence = s.DepartmentII.ConstantPence
 	}
 	res.DeficitPence = res.DeptIVplusSPence - res.DeptIIConstantPence
+	repro.ApplyAnnualisedSettlement(&res, s.DepartmentI, s.DepartmentII)
 	return res, nil
 }
 

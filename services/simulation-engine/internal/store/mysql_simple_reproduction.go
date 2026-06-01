@@ -124,12 +124,12 @@ func (m *MySQL) AddDepartmentToScheme(ctx context.Context, id repro.SimpleReprod
 
 	const q = `INSERT INTO departmental_capitals
 		(id, scheme_id, department, constant_pence, variable_pence,
-		 surplus_pence, total_pence, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+		 surplus_pence, total_pence, turnover_number_bp, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	if _, err := m.db.ExecContext(ctx, q,
 		string(d.ID), string(id), string(d.Department),
 		d.ConstantPence, d.VariablePence, d.SurplusPence, d.TotalPence,
-		m.now(),
+		d.TurnoverNumberBP, m.now(),
 	); err != nil {
 		if isDuplicateKey(err) {
 			return repro.DepartmentalCapital{}, ErrAlreadyExists
@@ -151,13 +151,14 @@ func (m *MySQL) AddDepartmentToScheme(ctx context.Context, id repro.SimpleReprod
 // getDepartmentalCapital loads a single DepartmentalCapital for a scheme + department.
 func (m *MySQL) getDepartmentalCapital(ctx context.Context, schemeID repro.SimpleReproductionSchemeID, dept repro.CapitalDepartment) (repro.DepartmentalCapital, error) {
 	const q = `SELECT id, scheme_id, department, constant_pence, variable_pence,
-		surplus_pence, total_pence
+		surplus_pence, total_pence, turnover_number_bp
 		FROM departmental_capitals WHERE scheme_id = ? AND department = ?`
 	row := m.db.QueryRowContext(ctx, q, string(schemeID), string(dept))
 	var d repro.DepartmentalCapital
 	var did, sid, department string
 	if err := row.Scan(&did, &sid, &department,
-		&d.ConstantPence, &d.VariablePence, &d.SurplusPence, &d.TotalPence); err != nil {
+		&d.ConstantPence, &d.VariablePence, &d.SurplusPence, &d.TotalPence,
+		&d.TurnoverNumberBP); err != nil {
 		if err == sql.ErrNoRows {
 			return repro.DepartmentalCapital{}, ErrNotFound
 		}
@@ -293,6 +294,7 @@ func (m *MySQL) CheckSchemeBalance(ctx context.Context, id repro.SimpleReproduct
 		res.DeptIIConstantPence = s.DepartmentII.ConstantPence
 	}
 	res.DeficitPence = res.DeptIVplusSPence - res.DeptIIConstantPence
+	repro.ApplyAnnualisedSettlement(&res, s.DepartmentI, s.DepartmentII)
 	return res, nil
 }
 

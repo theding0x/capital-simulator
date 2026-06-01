@@ -155,6 +155,12 @@ function CanonicalFixture({ scheme }: CanonicalFixtureProps) {
           {balanced ? "✓ Extended reproduction balance holds" : "✗ Balance fails"}
         </span>
       </div>
+      <p className="ch21-turnover-note">
+        Turnover (Ch. 14):&nbsp;Dept I{" "}
+        {((scheme?.department_i?.turnover_number_bp ?? 10000) / 10000).toLocaleString(undefined, { maximumFractionDigits: 2 })}× / yr
+        &nbsp;·&nbsp;Dept II{" "}
+        {((scheme?.department_ii?.turnover_number_bp ?? 10000) / 10000).toLocaleString(undefined, { maximumFractionDigits: 2 })}× / yr
+      </p>
     </div>
   );
 }

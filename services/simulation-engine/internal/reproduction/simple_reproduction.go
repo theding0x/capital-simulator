@@ -41,6 +41,10 @@ var (
 	// TotalPence != ConstantPence + VariablePence + SurplusPence.
 	ErrDepartmentTotalMismatch = errors.New("reproduction: total_pence != c + v + s")
 
+	// ErrNegativeTurnover is returned when a DepartmentalCapital carries a
+	// negative TurnoverNumberBP. Zero is allowed and treated as annual (10000).
+	ErrNegativeTurnover = errors.New("reproduction: turnover_number_bp must not be negative")
+
 	// ErrInvalidExchangeKind is returned when an ExchangeKind is not recognised.
 	ErrInvalidExchangeKind = errors.New("reproduction: invalid exchange_kind")
 
@@ -146,6 +150,12 @@ type DepartmentalCapital struct {
 	VariablePence int64                      `json:"variable_pence"`
 	SurplusPence  int64                      `json:"surplus_pence"`
 	TotalPence    int64                      `json:"total_pence"`
+	// TurnoverNumberBP is the department's turnover number in basis points
+	// (10000 = one turnover per year = annual). When Dept I and Dept II turn
+	// over at different speeds the keystone exchange settles on annualised
+	// flows rather than raw per-period magnitudes (issue #221). A zero value
+	// is treated as annual.
+	TurnoverNumberBP int64 `json:"turnover_number_bp"`
 }
 
 // Validate checks the total invariant.
@@ -155,6 +165,9 @@ func (d DepartmentalCapital) Validate() error {
 	}
 	if d.TotalPence != d.ConstantPence+d.VariablePence+d.SurplusPence {
 		return ErrDepartmentTotalMismatch
+	}
+	if d.TurnoverNumberBP < 0 {
+		return ErrNegativeTurnover
 	}
 	return nil
 }
@@ -171,6 +184,29 @@ func (d DepartmentalCapital) VplusSPence() int64 {
 // (issue #215).
 func (d DepartmentalCapital) AdvancedPence() int64 {
 	return d.ConstantPence + d.VariablePence
+}
+
+// turnoverNumberOrAnnual returns the turnover number in basis points, treating
+// a non-positive (unset) value as annual (10000 = one turnover per year).
+func (d DepartmentalCapital) turnoverNumberOrAnnual() int64 {
+	if d.TurnoverNumberBP <= 0 {
+		return 10000
+	}
+	return d.TurnoverNumberBP
+}
+
+// AnnualisedVplusSPence returns (v + s) scaled by the department's turnover
+// number — the annual flow of variable capital plus surplus that the keystone
+// exchange settles against when departments turn over at different speeds
+// (issue #221).
+func (d DepartmentalCapital) AnnualisedVplusSPence() int64 {
+	return d.VplusSPence() * d.turnoverNumberOrAnnual() / 10000
+}
+
+// AnnualisedConstantPence returns constant capital scaled by the department's
+// turnover number — the annual demand for means of production.
+func (d DepartmentalCapital) AnnualisedConstantPence() int64 {
+	return d.ConstantPence * d.turnoverNumberOrAnnual() / 10000
 }
 
 // --- SimpleReproductionScheme -----------------------------------------------
@@ -210,6 +246,32 @@ type BalanceCheckResult struct {
 	DeptIVplusSPence    int64  `json:"dept_i_v_plus_s_pence"`
 	DeptIIConstantPence int64  `json:"dept_ii_constant_pence"`
 	DeficitPence        int64  `json:"deficit_pence"`
+	// Annualised settlement (issue #221): the keystone flows scaled by each
+	// department's turnover number. When both departments turn over at the same
+	// speed these equal the raw figures above; when they differ, a scheme that
+	// is balanced per period can be unbalanced on an annual basis.
+	DeptITurnoverBP               int64 `json:"dept_i_turnover_bp"`
+	DeptIITurnoverBP              int64 `json:"dept_ii_turnover_bp"`
+	DeptIVplusSAnnualisedPence    int64 `json:"dept_i_v_plus_s_annualised_pence"`
+	DeptIIConstantAnnualisedPence int64 `json:"dept_ii_constant_annualised_pence"`
+	AnnualisedDeficitPence        int64 `json:"annualised_deficit_pence"`
+	AnnualisedBalanced            bool  `json:"annualised_balanced"`
+}
+
+// ApplyAnnualisedSettlement fills the annualised settlement fields of res from
+// the two departments' turnover numbers (issue #221). Either department may be
+// nil (an incomplete scheme); a missing department contributes zero.
+func ApplyAnnualisedSettlement(res *BalanceCheckResult, deptI, deptII *DepartmentalCapital) {
+	if deptI != nil {
+		res.DeptITurnoverBP = deptI.turnoverNumberOrAnnual()
+		res.DeptIVplusSAnnualisedPence = deptI.AnnualisedVplusSPence()
+	}
+	if deptII != nil {
+		res.DeptIITurnoverBP = deptII.turnoverNumberOrAnnual()
+		res.DeptIIConstantAnnualisedPence = deptII.AnnualisedConstantPence()
+	}
+	res.AnnualisedDeficitPence = res.DeptIVplusSAnnualisedPence - res.DeptIIConstantAnnualisedPence
+	res.AnnualisedBalanced = deptI != nil && deptII != nil && res.AnnualisedDeficitPence == 0
 }
 
 // --- InterDepartmentExchange ------------------------------------------------

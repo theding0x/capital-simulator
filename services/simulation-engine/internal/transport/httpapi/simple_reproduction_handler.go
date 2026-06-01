@@ -18,11 +18,12 @@ type createSimpleReproductionSchemeRequest struct {
 }
 
 type addDepartmentRequest struct {
-	Department    string `json:"department"`
-	ConstantPence int64  `json:"constant_pence"`
-	VariablePence int64  `json:"variable_pence"`
-	SurplusPence  int64  `json:"surplus_pence"`
-	TotalPence    int64  `json:"total_pence"`
+	Department       string `json:"department"`
+	ConstantPence    int64  `json:"constant_pence"`
+	VariablePence    int64  `json:"variable_pence"`
+	SurplusPence     int64  `json:"surplus_pence"`
+	TotalPence       int64  `json:"total_pence"`
+	TurnoverNumberBP int64  `json:"turnover_number_bp"`
 }
 
 type recordExchangeRequest struct {
@@ -42,13 +43,14 @@ type recordMoneyLoopRequest struct {
 // --- response types ---
 
 type departmentalCapitalResponse struct {
-	ID            string `json:"id"`
-	SchemeID      string `json:"scheme_id"`
-	Department    string `json:"department"`
-	ConstantPence int64  `json:"constant_pence"`
-	VariablePence int64  `json:"variable_pence"`
-	SurplusPence  int64  `json:"surplus_pence"`
-	TotalPence    int64  `json:"total_pence"`
+	ID               string `json:"id"`
+	SchemeID         string `json:"scheme_id"`
+	Department       string `json:"department"`
+	ConstantPence    int64  `json:"constant_pence"`
+	VariablePence    int64  `json:"variable_pence"`
+	SurplusPence     int64  `json:"surplus_pence"`
+	TotalPence       int64  `json:"total_pence"`
+	TurnoverNumberBP int64  `json:"turnover_number_bp"`
 }
 
 type simpleReproductionSchemeResponse struct {
@@ -84,6 +86,13 @@ type balanceCheckResponse struct {
 	DeptIVplusSPence    int64  `json:"dept_i_v_plus_s_pence"`
 	DeptIIConstantPence int64  `json:"dept_ii_constant_pence"`
 	DeficitPence        int64  `json:"deficit_pence"`
+
+	DeptITurnoverBP               int64 `json:"dept_i_turnover_bp"`
+	DeptIITurnoverBP              int64 `json:"dept_ii_turnover_bp"`
+	DeptIVplusSAnnualisedPence    int64 `json:"dept_i_v_plus_s_annualised_pence"`
+	DeptIIConstantAnnualisedPence int64 `json:"dept_ii_constant_annualised_pence"`
+	AnnualisedDeficitPence        int64 `json:"annualised_deficit_pence"`
+	AnnualisedBalanced            bool  `json:"annualised_balanced"`
 }
 
 type moneyClosedLoopResponse struct {
@@ -98,13 +107,14 @@ type moneyClosedLoopResponse struct {
 
 func deptCapToResponse(d repro.DepartmentalCapital) departmentalCapitalResponse {
 	return departmentalCapitalResponse{
-		ID:            string(d.ID),
-		SchemeID:      string(d.SchemeID),
-		Department:    string(d.Department),
-		ConstantPence: d.ConstantPence,
-		VariablePence: d.VariablePence,
-		SurplusPence:  d.SurplusPence,
-		TotalPence:    d.TotalPence,
+		ID:               string(d.ID),
+		SchemeID:         string(d.SchemeID),
+		Department:       string(d.Department),
+		ConstantPence:    d.ConstantPence,
+		VariablePence:    d.VariablePence,
+		SurplusPence:     d.SurplusPence,
+		TotalPence:       d.TotalPence,
+		TurnoverNumberBP: d.TurnoverNumberBP,
 	}
 }
 
@@ -223,13 +233,18 @@ func (h *Handler) AddDepartmentToScheme(w http.ResponseWriter, r *http.Request) 
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	turnoverBP := req.TurnoverNumberBP
+	if turnoverBP <= 0 {
+		turnoverBP = 10000 // default: one turnover per year (annual)
+	}
 	d := repro.DepartmentalCapital{
-		ID:            repro.NewDepartmentalCapitalID(),
-		Department:    repro.CapitalDepartment(req.Department),
-		ConstantPence: req.ConstantPence,
-		VariablePence: req.VariablePence,
-		SurplusPence:  req.SurplusPence,
-		TotalPence:    req.TotalPence,
+		ID:               repro.NewDepartmentalCapitalID(),
+		Department:       repro.CapitalDepartment(req.Department),
+		ConstantPence:    req.ConstantPence,
+		VariablePence:    req.VariablePence,
+		SurplusPence:     req.SurplusPence,
+		TotalPence:       req.TotalPence,
+		TurnoverNumberBP: turnoverBP,
 	}
 	if err := d.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -326,11 +341,17 @@ func (h *Handler) GetSchemeBalanceCheck(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusOK, balanceCheckResponse{
-		SchemeID:            res.SchemeID,
-		IsBalanced:          res.IsBalanced,
-		DeptIVplusSPence:    res.DeptIVplusSPence,
-		DeptIIConstantPence: res.DeptIIConstantPence,
-		DeficitPence:        res.DeficitPence,
+		SchemeID:                      res.SchemeID,
+		IsBalanced:                    res.IsBalanced,
+		DeptIVplusSPence:              res.DeptIVplusSPence,
+		DeptIIConstantPence:           res.DeptIIConstantPence,
+		DeficitPence:                  res.DeficitPence,
+		DeptITurnoverBP:               res.DeptITurnoverBP,
+		DeptIITurnoverBP:              res.DeptIITurnoverBP,
+		DeptIVplusSAnnualisedPence:    res.DeptIVplusSAnnualisedPence,
+		DeptIIConstantAnnualisedPence: res.DeptIIConstantAnnualisedPence,
+		AnnualisedDeficitPence:        res.AnnualisedDeficitPence,
+		AnnualisedBalanced:            res.AnnualisedBalanced,
 	})
 }
 

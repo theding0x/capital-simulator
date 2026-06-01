@@ -2839,6 +2839,7 @@ export interface DepartmentalCapital {
   variable_pence: number;
   surplus_pence: number;
   total_pence: number;
+  turnover_number_bp: number;
 }
 
 export interface SimpleReproductionScheme {
@@ -2874,6 +2875,12 @@ export interface BalanceCheckResult {
   dept_i_v_plus_s_pence: number;
   dept_ii_constant_pence: number;
   deficit_pence: number;
+  dept_i_turnover_bp: number;
+  dept_ii_turnover_bp: number;
+  dept_i_v_plus_s_annualised_pence: number;
+  dept_ii_constant_annualised_pence: number;
+  annualised_deficit_pence: number;
+  annualised_balanced: boolean;
 }
 
 export interface MoneyClosedLoop {

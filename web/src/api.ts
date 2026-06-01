@@ -1852,7 +1852,7 @@ export const simpleReproductionApi = {
       `/v1/reproduction/simple/schemes${period ? `?period=${encodeURIComponent(period)}` : ""}`
     ),
 
-  addDepartment: (id: string, input: { department: string; constant_pence: number; variable_pence: number; surplus_pence: number; total_pence: number }) =>
+  addDepartment: (id: string, input: { department: string; constant_pence: number; variable_pence: number; surplus_pence: number; total_pence: number; turnover_number_bp?: number }) =>
     http<import("./types").DepartmentalCapital>(`/v1/reproduction/simple/schemes/${id}/departments`, {
       method: "POST", body: JSON.stringify(input),
     }),
@@ -1891,7 +1891,7 @@ export const extendedReproductionApi = {
   getScheme: (id: string) =>
     http<import("./types").ExtendedReproductionScheme>(`/v1/reproduction/extended/schemes/${id}`),
 
-  addDepartment: (id: string, input: { department: string; constant_pence: number; variable_pence: number; surplus_pence: number; total_pence: number }) =>
+  addDepartment: (id: string, input: { department: string; constant_pence: number; variable_pence: number; surplus_pence: number; total_pence: number; turnover_number_bp?: number }) =>
     http<import("./types").DepartmentalCapital>(`/v1/reproduction/extended/schemes/${id}/departments`, {
       method: "POST", body: JSON.stringify(input),
     }),
