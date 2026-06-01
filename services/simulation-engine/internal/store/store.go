@@ -428,9 +428,10 @@ type SimpleReproductionSchemeStore interface {
 	RecordInterDepartmentExchange(ctx context.Context, id repro.SimpleReproductionSchemeID, e repro.InterDepartmentExchange) (repro.InterDepartmentExchange, error)
 	// ListInterDepartmentExchanges returns all exchange flows for a scheme.
 	ListInterDepartmentExchanges(ctx context.Context, schemeID repro.SimpleReproductionSchemeID) ([]repro.InterDepartmentExchange, error)
-	// AdvanceReproductionTick increments TickCount on the scheme and persists
-	// a ReproductionTick record.
-	AdvanceReproductionTick(ctx context.Context, id repro.SimpleReproductionSchemeID) (repro.ReproductionTick, error)
+	// AdvanceReproductionTick increments TickCount on the scheme and persists a
+	// ReproductionTick. workerPoolSize and subsistenceBasketPence drive the
+	// labour-force reproduction assertion (issue #220); pass 0 to skip it.
+	AdvanceReproductionTick(ctx context.Context, id repro.SimpleReproductionSchemeID, workerPoolSize, subsistenceBasketPence int64) (repro.ReproductionTick, error)
 	// CheckSchemeBalance returns a BalanceCheckResult for the scheme, surfacing
 	// the keystone-equation components for diagnostic purposes.
 	CheckSchemeBalance(ctx context.Context, id repro.SimpleReproductionSchemeID) (repro.BalanceCheckResult, error)

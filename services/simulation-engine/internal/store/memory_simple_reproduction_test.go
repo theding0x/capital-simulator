@@ -244,7 +244,7 @@ func TestMemoryAdvanceReproductionTick(t *testing.T) {
 
 	s := buildMarxScheme(t, mem)
 
-	tick, err := mem.AdvanceReproductionTick(ctx, s.ID)
+	tick, err := mem.AdvanceReproductionTick(ctx, s.ID, 0, 0)
 	if err != nil {
 		t.Fatalf("advance tick: %v", err)
 	}
@@ -255,7 +255,7 @@ func TestMemoryAdvanceReproductionTick(t *testing.T) {
 		t.Fatal("expected balanced tick for canonical Marx fixture")
 	}
 
-	tick2, err := mem.AdvanceReproductionTick(ctx, s.ID)
+	tick2, err := mem.AdvanceReproductionTick(ctx, s.ID, 0, 0)
 	if err != nil {
 		t.Fatalf("advance tick 2: %v", err)
 	}
@@ -263,7 +263,7 @@ func TestMemoryAdvanceReproductionTick(t *testing.T) {
 		t.Fatalf("tick number 2: want 2, got %d", tick2.TickNumber)
 	}
 
-	_, err = mem.AdvanceReproductionTick(ctx, "ghost-id")
+	_, err = mem.AdvanceReproductionTick(ctx, "ghost-id", 0, 0)
 	if !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("expected ErrNotFound for ghost scheme, got %v", err)
 	}

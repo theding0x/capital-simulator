@@ -1862,9 +1862,9 @@ export const simpleReproductionApi = {
       method: "POST", body: JSON.stringify(input),
     }),
 
-  advanceTick: (id: string) =>
+  advanceTick: (id: string, input?: { worker_pool_size?: number; subsistence_basket_pence?: number }) =>
     http<import("./types").ReproductionTick>(`/v1/reproduction/simple/schemes/${id}/tick`, {
-      method: "POST", body: "{}",
+      method: "POST", body: JSON.stringify(input ?? {}),
     }),
 
   balanceCheck: (id: string) =>

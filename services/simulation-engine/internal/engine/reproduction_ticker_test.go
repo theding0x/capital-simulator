@@ -24,7 +24,7 @@ func (f *fakeReproStore) ListSimpleReproductionSchemes(context.Context, string) 
 	return f.simple, nil
 }
 
-func (f *fakeReproStore) AdvanceReproductionTick(_ context.Context, id repro.SimpleReproductionSchemeID) (repro.ReproductionTick, error) {
+func (f *fakeReproStore) AdvanceReproductionTick(_ context.Context, id repro.SimpleReproductionSchemeID, _, _ int64) (repro.ReproductionTick, error) {
 	if id == f.failSimple {
 		return repro.ReproductionTick{}, errReproBoom
 	}

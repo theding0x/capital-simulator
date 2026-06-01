@@ -2867,6 +2867,11 @@ export interface ReproductionTick {
   tick_number: number;
   period: string;
   is_balanced: boolean;
+  worker_pool_size: number;
+  wage_bill_pence: number;
+  subsistence_basket_pence: number;
+  subsistence_covered: boolean;
+  status: string;
 }
 
 export interface BalanceCheckResult {
