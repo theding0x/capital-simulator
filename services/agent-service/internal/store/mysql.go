@@ -209,6 +209,63 @@ func (m *MySQL) ListCircuits(ctx context.Context, agentID agent.ID) ([]agent.Cap
 	return out, rows.Err()
 }
 
+// CreateCircuitLeg inserts one closed leg of a multi-agent exchange. It is a
+// single insert — no balance mutation, no agent existence check (#216).
+func (m *MySQL) CreateCircuitLeg(ctx context.Context, l agent.CircuitLeg) (agent.CircuitLeg, error) {
+	if err := l.Validate(); err != nil {
+		return agent.CircuitLeg{}, err
+	}
+	if l.ID.IsZero() {
+		l.ID = agent.NewID()
+	}
+	l.CreatedAt = m.now().UTC()
+	const q = `INSERT INTO circuit_legs
+		(id, agent_id, kind, counterparty_id, commodity_id, value_minutes, exchange_id, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := m.db.ExecContext(ctx, q,
+		string(l.ID), string(l.AgentID), string(l.Kind), string(l.CounterpartyID),
+		l.CommodityID, int64(l.ValueMinutes), l.ExchangeID, l.CreatedAt,
+	)
+	if err != nil {
+		return agent.CircuitLeg{}, err
+	}
+	return l, nil
+}
+
+func (m *MySQL) ListCircuitLegs(ctx context.Context, agentID agent.ID) ([]agent.CircuitLeg, error) {
+	const q = `SELECT id, agent_id, kind, counterparty_id, commodity_id, value_minutes, exchange_id, created_at
+		FROM circuit_legs WHERE agent_id = ? ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q, string(agentID))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []agent.CircuitLeg
+	for rows.Next() {
+		l, err := scanCircuitLeg(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, l)
+	}
+	return out, rows.Err()
+}
+
+func scanCircuitLeg(rows *sql.Rows) (agent.CircuitLeg, error) {
+	var l agent.CircuitLeg
+	var id, agentID, kind, counterparty string
+	var value int64
+	if err := rows.Scan(&id, &agentID, &kind, &counterparty, &l.CommodityID, &value, &l.ExchangeID, &l.CreatedAt); err != nil {
+		return agent.CircuitLeg{}, err
+	}
+	l.ID = agent.ID(id)
+	l.AgentID = agent.ID(agentID)
+	l.Kind = agent.CircuitLegKind(kind)
+	l.CounterpartyID = agent.ID(counterparty)
+	l.ValueMinutes = agent.LabourMinutes(value)
+	return l, nil
+}
+
 func scanAgent(row *sql.Row) (agent.Agent, error) {
 	var a agent.Agent
 	var id, class string

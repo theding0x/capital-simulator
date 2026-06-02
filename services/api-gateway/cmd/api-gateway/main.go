@@ -96,6 +96,7 @@ func main() {
 	srv.Handle("/v1/agents", agentProxy)
 	srv.Handle("/v1/agents/{rest...}", agentProxy)
 	srv.Handle("/v1/circuit-probes", agentProxy)
+	srv.Handle("/v1/circuit-legs", agentProxy)
 	srv.Handle("/v1/exchange-simulations", agentProxy)
 
 	// Ch. 6 — labour-power routes proxy to agent-service

@@ -169,6 +169,20 @@ export interface Circuit {
   created_at: string;
 }
 
+// agent-service (Ch. 4: coordinated multi-agent exchange settlement, #216).
+// One closed leg landed on an owner's circuit by a market exchange — distinct
+// from the market C-M-C CircuitLeg above. Value is a labour-minute magnitude.
+export interface AgentCircuitLeg {
+  id: string;
+  agent_id: string;
+  kind: "sale" | "purchase";
+  counterparty_id: string;
+  commodity_id: string;
+  value_minutes: number;
+  exchange_id: string;
+  created_at: string;
+}
+
 export interface Hoard {
   id: string;
   owner_id: string;

@@ -10,9 +10,11 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("DELETE /v1/agents/{id}", h.Delete)
 	s.HandleFunc("POST /v1/agents/{id}/circuits", h.CreateCircuit)
 	s.HandleFunc("GET /v1/agents/{id}/circuits", h.ListCircuits)
+	s.HandleFunc("GET /v1/agents/{id}/circuit-legs", h.ListCircuitLegs)
 	s.HandleFunc("POST /v1/agents/{id}/reinvest", h.Reinvest)
 	s.HandleFunc("POST /v1/agents/{id}/hoard", h.Hoard)
 	s.HandleFunc("POST /v1/circuit-probes", h.ComputeCircuit)
+	s.HandleFunc("POST /v1/circuit-legs", h.RecordExchangeSettlement)
 	s.HandleFunc("POST /v1/exchange-simulations", h.ComputeExchange)
 	// Ch. 6 — The Buying and Selling of Labour-Power
 	s.HandleFunc("POST /v1/workers", h.CreateWorker)

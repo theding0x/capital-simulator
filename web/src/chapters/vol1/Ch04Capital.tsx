@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
-import type { Agent, CapitalCircuit } from "../../types";
+import type { Agent, AgentCircuitLeg, CapitalCircuit } from "../../types";
 import { usePounds } from "../../CurrencyContext";
 import "./Ch04Capital.css";
 
@@ -261,6 +261,9 @@ function AgentCard({
   const [showCircuits, setShowCircuits] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [loadingCircuits, setLoadingCircuits] = useState(false);
+  const [legs, setLegs] = useState<AgentCircuitLeg[]>([]);
+  const [showLegs, setShowLegs] = useState(false);
+  const [loadingLegs, setLoadingLegs] = useState(false);
 
   async function loadCircuits() {
     setErr(null);
@@ -273,6 +276,22 @@ function AgentCard({
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setLoadingCircuits(false);
+    }
+  }
+
+  // Ch. 25 → Ch. 4 (#216): legs closed on this owner's circuit by a market
+  // exchange with a counterparty, settled cross-service from market-service.
+  async function loadLegs() {
+    setErr(null);
+    setLoadingLegs(true);
+    try {
+      const list = await api.listAgentCircuitLegs(a.id);
+      setLegs(list);
+      setShowLegs(true);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoadingLegs(false);
     }
   }
 
@@ -307,6 +326,9 @@ function AgentCard({
         <button onClick={loadCircuits} type="button" disabled={loadingCircuits}>
           {loadingCircuits ? "Loading…" : showCircuits ? "Refresh circuits" : "Show circuits"}
         </button>
+        <button onClick={loadLegs} type="button" disabled={loadingLegs}>
+          {loadingLegs ? "Loading…" : showLegs ? "Refresh exchange legs" : "Show exchange legs"}
+        </button>
         {a.class === "miser" && !a.hoarding && (
           <button onClick={hoard} type="button">
             Hoard
@@ -329,7 +351,27 @@ function AgentCard({
           )}
         </>
       )}
+      {showLegs && <CircuitLegList legs={legs} />}
     </div>
+  );
+}
+
+// CircuitLegList shows the legs a market exchange closed on this owner's circuit
+// — the counterparty side that Ch. 4 previously left open (#216).
+function CircuitLegList({ legs }: { legs: AgentCircuitLeg[] }) {
+  if (legs.length === 0) {
+    return <p className="small muted">No exchange legs settled on this owner yet.</p>;
+  }
+  return (
+    <ul className="v1-ch04-leg-list">
+      {legs.map((l) => (
+        <li key={l.id} className="small">
+          <span className="item-tag">{l.kind}</span>{" "}
+          {l.value_minutes} min · counterparty {l.counterparty_id.slice(0, 8)}… · commodity{" "}
+          {l.commodity_id.slice(0, 8)}…
+        </li>
+      ))}
+    </ul>
   );
 }
 

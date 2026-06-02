@@ -61,6 +61,15 @@ type CircuitStore interface {
 	ListCircuits(ctx context.Context, agentID agent.ID) ([]agent.CapitalCircuit, error)
 }
 
+// CircuitLegStore is the persistence contract for CircuitLeg records — the legs
+// closed on each owner by a coordinated multi-agent exchange (#216). Unlike
+// CircuitStore it does not mutate any balance and does not require the agent to
+// exist, since an owner may live only in market-service.
+type CircuitLegStore interface {
+	CreateCircuitLeg(ctx context.Context, l agent.CircuitLeg) (agent.CircuitLeg, error)
+	ListCircuitLegs(ctx context.Context, agentID agent.ID) ([]agent.CircuitLeg, error)
+}
+
 // LabourPowerStore is the persistence contract for Ch. 6 labour-power domain objects.
 type LabourPowerStore interface {
 	CreateWorker(ctx context.Context, w agent.Worker) (agent.Worker, error)

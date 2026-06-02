@@ -12,20 +12,21 @@ import (
 
 // Memory implements Store, CircuitStore, and LabourPowerStore for tests and local dev.
 type Memory struct {
-	mu                sync.RWMutex
-	agents            map[agent.ID]agent.Agent
-	circuits          map[agent.ID]agent.CapitalCircuit
-	labourWorkers     map[agent.AgentID]agent.Worker
-	labourCapitalists map[agent.AgentID]agent.Capitalist
-	offerings         map[agent.AgentID]agent.LabourPowerOffering
-	purchases         map[agent.PurchaseID]agent.LabourPowerPurchase
-	labourProcesses   map[agent.LabourProcessID]agent.LabourProcess
-	workingDays       map[agent.WorkingDayID]agent.WorkingDay
-	relaySchedules    map[agent.RelayScheduleID]agent.RelaySchedule
-	cooperations      map[agent.CooperationID]agent.Cooperation
-	manufactures      map[agent.ManufactureID]agent.Manufacture
-	wageForms         map[agent.AgentID]agent.WageForm
-	workingSessions   map[agent.WorkingSessionID]agent.WorkingSession
+	mu                  sync.RWMutex
+	agents              map[agent.ID]agent.Agent
+	circuits            map[agent.ID]agent.CapitalCircuit
+	circuitLegs         map[agent.ID]agent.CircuitLeg
+	labourWorkers       map[agent.AgentID]agent.Worker
+	labourCapitalists   map[agent.AgentID]agent.Capitalist
+	offerings           map[agent.AgentID]agent.LabourPowerOffering
+	purchases           map[agent.PurchaseID]agent.LabourPowerPurchase
+	labourProcesses     map[agent.LabourProcessID]agent.LabourProcess
+	workingDays         map[agent.WorkingDayID]agent.WorkingDay
+	relaySchedules      map[agent.RelayScheduleID]agent.RelaySchedule
+	cooperations        map[agent.CooperationID]agent.Cooperation
+	manufactures        map[agent.ManufactureID]agent.Manufacture
+	wageForms           map[agent.AgentID]agent.WageForm
+	workingSessions     map[agent.WorkingSessionID]agent.WorkingSession
 	pieceWages          map[agent.AgentID]agent.PieceWage
 	subContracts        map[agent.SubContractID]agent.SubContract
 	nationalIntensities map[agent.CountryCode]agent.NationalIntensity
@@ -36,19 +37,20 @@ type Memory struct {
 
 func NewMemory() *Memory {
 	return &Memory{
-		agents:            make(map[agent.ID]agent.Agent),
-		circuits:          make(map[agent.ID]agent.CapitalCircuit),
-		labourWorkers:     make(map[agent.AgentID]agent.Worker),
-		labourCapitalists: make(map[agent.AgentID]agent.Capitalist),
-		offerings:         make(map[agent.AgentID]agent.LabourPowerOffering),
-		purchases:         make(map[agent.PurchaseID]agent.LabourPowerPurchase),
-		labourProcesses:   make(map[agent.LabourProcessID]agent.LabourProcess),
-		workingDays:       make(map[agent.WorkingDayID]agent.WorkingDay),
-		relaySchedules:    make(map[agent.RelayScheduleID]agent.RelaySchedule),
-		cooperations:      make(map[agent.CooperationID]agent.Cooperation),
-		manufactures:      make(map[agent.ManufactureID]agent.Manufacture),
-		wageForms:         make(map[agent.AgentID]agent.WageForm),
-		workingSessions:   make(map[agent.WorkingSessionID]agent.WorkingSession),
+		agents:              make(map[agent.ID]agent.Agent),
+		circuits:            make(map[agent.ID]agent.CapitalCircuit),
+		circuitLegs:         make(map[agent.ID]agent.CircuitLeg),
+		labourWorkers:       make(map[agent.AgentID]agent.Worker),
+		labourCapitalists:   make(map[agent.AgentID]agent.Capitalist),
+		offerings:           make(map[agent.AgentID]agent.LabourPowerOffering),
+		purchases:           make(map[agent.PurchaseID]agent.LabourPowerPurchase),
+		labourProcesses:     make(map[agent.LabourProcessID]agent.LabourProcess),
+		workingDays:         make(map[agent.WorkingDayID]agent.WorkingDay),
+		relaySchedules:      make(map[agent.RelayScheduleID]agent.RelaySchedule),
+		cooperations:        make(map[agent.CooperationID]agent.Cooperation),
+		manufactures:        make(map[agent.ManufactureID]agent.Manufacture),
+		wageForms:           make(map[agent.AgentID]agent.WageForm),
+		workingSessions:     make(map[agent.WorkingSessionID]agent.WorkingSession),
 		pieceWages:          make(map[agent.AgentID]agent.PieceWage),
 		subContracts:        make(map[agent.SubContractID]agent.SubContract),
 		nationalIntensities: make(map[agent.CountryCode]agent.NationalIntensity),
@@ -182,6 +184,41 @@ func (m *Memory) ListCircuits(_ context.Context, agentID agent.ID) ([]agent.Capi
 	for _, c := range m.circuits {
 		if c.AgentID == agentID {
 			out = append(out, c)
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
+			return out[i].ID < out[j].ID
+		}
+		return out[i].CreatedAt.Before(out[j].CreatedAt)
+	})
+	return out, nil
+}
+
+// CreateCircuitLeg records one closed leg of a coordinated multi-agent
+// exchange. Unlike CreateCircuit it touches no balance and does not require the
+// agent to exist — an owner may live only in market-service.
+func (m *Memory) CreateCircuitLeg(_ context.Context, l agent.CircuitLeg) (agent.CircuitLeg, error) {
+	if err := l.Validate(); err != nil {
+		return agent.CircuitLeg{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if l.ID.IsZero() {
+		l.ID = agent.NewID()
+	}
+	l.CreatedAt = m.now()
+	m.circuitLegs[l.ID] = l
+	return l, nil
+}
+
+func (m *Memory) ListCircuitLegs(_ context.Context, agentID agent.ID) ([]agent.CircuitLeg, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var out []agent.CircuitLeg
+	for _, l := range m.circuitLegs {
+		if l.AgentID == agentID {
+			out = append(out, l)
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool {
