@@ -500,6 +500,76 @@ function AnnualisedSettlement({ balance }: AnnualisedSettlementProps) {
   );
 }
 
+// ── Widget — Build from Annual Rates (Ch. 16 → Ch. 20, issue #222) ────────────
+
+function BuildFromAnnualRates() {
+  const [rateI, setRateI] = useState(100);
+  const [rateII, setRateII] = useState(100);
+  const [result, setResult] = useState<SimpleReproductionScheme | null>(null);
+  const [building, setBuilding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleBuild() {
+    setBuilding(true);
+    setError(null);
+    try {
+      const scheme = await simpleReproductionApi.buildFromAnnualRates({
+        period: "from-annual-rates",
+        departments: [
+          { department: "department_i", constant_pence: 4000000, variable_pence: 1000000, annual_surplus_bp: Math.round(rateI * 100) },
+          { department: "department_ii", constant_pence: 2000000, variable_pence: 500000, annual_surplus_bp: Math.round(rateII * 100) },
+        ],
+      });
+      setResult(scheme);
+    } catch {
+      setError("Failed to build — is the backend running?");
+    } finally {
+      setBuilding(false);
+    }
+  }
+
+  return (
+    <div className="ch20-widget">
+      <p className="ch20-section-title">Build from Annual Rates (Ch. 16 → Ch. 20)</p>
+      <p>
+        An alternative entry point: derive the scheme from Ch. 16 annual rates of
+        surplus-value instead of entering surplus directly. Each department's
+        surplus is v × annual-rate, so the two layers cannot drift.
+      </p>
+      <div className="ch20-labour-inputs">
+        <label>
+          Dept I annual rate %
+          <input type="number" min={0} value={rateI}
+            onChange={(e) => setRateI(Math.max(0, Number(e.target.value)))} />
+        </label>
+        <label>
+          Dept II annual rate %
+          <input type="number" min={0} value={rateII}
+            onChange={(e) => setRateII(Math.max(0, Number(e.target.value)))} />
+        </label>
+      </div>
+      <button className="ch20-tick-btn" onClick={handleBuild} disabled={building}>
+        {building ? "Building…" : "Build scheme from annual rates →"}
+      </button>
+      {error && <p className="ch20-tick-error">{error}</p>}
+      {result && (
+        <div className={`ch20-balance-badge ${result.is_balanced ? "balanced" : "imbalanced"}`}>
+          <span className="ch20-balance-eq">
+            I(v + s) = {fmt(toAbstract((result.department_i?.variable_pence ?? 0) + (result.department_i?.surplus_pence ?? 0)))}
+            &nbsp;&nbsp;{result.is_balanced ? "==" : "≠"}&nbsp;&nbsp;
+            II(c) = {fmt(toAbstract(result.department_ii?.constant_pence ?? 0))}
+          </span>
+          <span className="ch20-balance-verdict">
+            {result.is_balanced
+              ? "✓ Balanced — built from annual rates"
+              : "✗ Imbalanced at these rates"}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Root export ───────────────────────────────────────────────────────────────
 
 export function Ch20SimpleReproduction() {
@@ -557,6 +627,7 @@ export function Ch20SimpleReproduction() {
       <TickDemonstrator scheme={scheme} onTick={handleTick} />
       <ImbalanceToy scheme={scheme} balance={balance} />
       <AnnualisedSettlement balance={balance} />
+      <BuildFromAnnualRates />
       <MoneyClosedLoop scheme={scheme} />
     </div>
   );

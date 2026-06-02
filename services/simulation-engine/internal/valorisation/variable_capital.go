@@ -261,6 +261,51 @@ func ComputeAnnualSurplusRateContrast(
 	}
 }
 
+// PriceAdjustedAnnualRate records how a Ch. 15 value revolution on output
+// shifts the Ch. 16 annual rate of surplus-value (issue #222). A price change
+// of PriceBasisPointsChange on the realised product re-prices the value added
+// (v + s); because the advance is fixed, the whole swing accrues to surplus
+// measured against the original advance, which is then re-annualised by n.
+type PriceAdjustedAnnualRate struct {
+	VariablePence                 Pence `json:"variable_pence"`
+	BaseSurplusPence              Pence `json:"base_surplus_pence"`
+	PriceBasisPointsChange        int64 `json:"price_basis_points_change"`
+	AdjustedSurplusPence          Pence `json:"adjusted_surplus_pence"`
+	NBasisPoints                  int64 `json:"n_basis_points"`
+	BasePerCircuitBasisPoints     int64 `json:"base_per_circuit_basis_points"`
+	AdjustedPerCircuitBasisPoints int64 `json:"adjusted_per_circuit_basis_points"`
+	BaseAnnualBasisPoints         int64 `json:"base_annual_basis_points"`
+	AdjustedAnnualBasisPoints     int64 `json:"adjusted_annual_basis_points"`
+}
+
+// ComputeAdjustedAnnualRate applies a value-revolution price change (priceBP, in
+// basis points, signed) to the per-circuit surplus and re-annualises by n.
+// AdjustedSurplus = baseSurplus + (v + baseSurplus) × priceBP / 10000; the
+// per-circuit and annual rates are recomputed from it. A non-positive variable
+// capital yields zero rates (issue #222).
+func ComputeAdjustedAnnualRate(variablePence, baseSurplusPence Pence, nBasisPoints, priceBasisPointsChange int64) PriceAdjustedAnnualRate {
+	v := int64(variablePence)
+	s := int64(baseSurplusPence)
+	adjustedSurplus := s + (v+s)*priceBasisPointsChange/10_000
+
+	var basePerCircuit, adjPerCircuit int64
+	if v > 0 {
+		basePerCircuit = 10_000 * s / v
+		adjPerCircuit = 10_000 * adjustedSurplus / v
+	}
+	return PriceAdjustedAnnualRate{
+		VariablePence:                 variablePence,
+		BaseSurplusPence:              baseSurplusPence,
+		PriceBasisPointsChange:        priceBasisPointsChange,
+		AdjustedSurplusPence:          Pence(adjustedSurplus),
+		NBasisPoints:                  nBasisPoints,
+		BasePerCircuitBasisPoints:     basePerCircuit,
+		AdjustedPerCircuitBasisPoints: adjPerCircuit,
+		BaseAnnualBasisPoints:         nBasisPoints * basePerCircuit / 10_000,
+		AdjustedAnnualBasisPoints:     nBasisPoints * adjPerCircuit / 10_000,
+	}
+}
+
 // ComputeVariableCapitalReproduction derives the annual reproduction magnitudes.
 //
 // TotalVariablePaidAnnualPence = adv.Pence × adv.TurnoversPerYearBasisPoints / 10,000.

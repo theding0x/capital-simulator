@@ -273,6 +273,60 @@ function SpinMillCard({ repro }: { repro: VariableCapitalReproduction | null }) 
 
 // ── Root component ────────────────────────────────────────────────────────────
 
+// Widget 6 — Price-adjusted annual rate (Ch. 15 → Ch. 16 bridge, issue #222).
+// Client-side mirror of valorisation.ComputeAdjustedAnnualRate.
+function PriceAdjustedRate() {
+  const [v, setV] = useState(1000);
+  const [s, setS] = useState(1000);
+  const [n, setN] = useState(1);
+  const [pricePct, setPricePct] = useState(0);
+
+  const priceBP = Math.round(pricePct * 100);
+  const nBP = Math.round(n * 10000);
+  const valueAdded = v + s;
+  const adjustedSurplus = s + Math.trunc((valueAdded * priceBP) / 10000);
+  const basePerCircuit = v > 0 ? Math.trunc((10000 * s) / v) : 0;
+  const adjPerCircuit = v > 0 ? Math.trunc((10000 * adjustedSurplus) / v) : 0;
+  const baseAnnual = Math.trunc((nBP * basePerCircuit) / 10000);
+  const adjAnnual = Math.trunc((nBP * adjPerCircuit) / 10000);
+
+  return (
+    <div className="ch16-price-adjusted">
+      <p>
+        A Ch. 15 price revolution on output re-prices the value added (v + s);
+        because the advance is fixed, the swing accrues to surplus against the
+        original advance, lifting or cutting the annual rate of surplus-value.
+      </p>
+      <div className="ch16-adj-inputs">
+        <label>
+          v (pence)
+          <input type="number" min={1} value={v}
+            onChange={(e) => setV(Math.max(1, Math.floor(Number(e.target.value))))} />
+        </label>
+        <label>
+          s (pence)
+          <input type="number" min={0} value={s}
+            onChange={(e) => setS(Math.max(0, Math.floor(Number(e.target.value))))} />
+        </label>
+        <label>
+          turnovers / yr
+          <input type="number" min={1} value={n}
+            onChange={(e) => setN(Math.max(1, Math.floor(Number(e.target.value))))} />
+        </label>
+        <label>
+          output price Δ %
+          <input type="number" value={pricePct}
+            onChange={(e) => setPricePct(Number(e.target.value))} />
+        </label>
+      </div>
+      <div className="ch16-adj-result">
+        <span>Base annual rate: <strong>{bpToPercent(baseAnnual)}</strong></span>
+        <span>Price-adjusted annual rate: <strong>{bpToPercent(adjAnnual)}</strong></span>
+      </div>
+    </div>
+  );
+}
+
 export function Ch16TurnoverOfVariableCapital() {
   const [annualRates1871, setAnnualRates1871] = useState<AnnualSurplusRate[]>([]);
   const [spinMillRepro, setSpinMillRepro] =
@@ -346,6 +400,14 @@ export function Ch16TurnoverOfVariableCapital() {
       {/* Widget 5 — SpinMill 1871 */}
       <section>
         <SpinMillCard repro={spinMillRepro} />
+      </section>
+
+      {/* Widget 6 — Price-adjusted annual rate (issue #222) */}
+      <section>
+        <p className="ch16-section-title">
+          Price-adjusted annual rate — Ch. 15 value revolution → Ch. 16
+        </p>
+        <PriceAdjustedRate />
       </section>
     </div>
   );

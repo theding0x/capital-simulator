@@ -1870,6 +1870,11 @@ export const simpleReproductionApi = {
   balanceCheck: (id: string) =>
     http<import("./types").BalanceCheckResult>(`/v1/reproduction/simple/schemes/${id}/balance-check`),
 
+  buildFromAnnualRates: (input: { period: string; departments: { department: string; constant_pence: number; variable_pence: number; annual_surplus_bp: number }[] }) =>
+    http<import("./types").SimpleReproductionScheme>(`/v1/reproduction/simple/schemes/from-annual-rates`, {
+      method: "POST", body: JSON.stringify(input),
+    }),
+
   recordMoneyLoop: (id: string, input: { period: string; is_closed: boolean; net_flow_pence: number }) =>
     http<import("./types").MoneyClosedLoop>(`/v1/reproduction/simple/schemes/${id}/money-loop`, {
       method: "POST", body: JSON.stringify(input),

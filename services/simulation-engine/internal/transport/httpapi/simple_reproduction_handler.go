@@ -47,6 +47,19 @@ type advanceTickRequest struct {
 	SubsistenceBasketPence int64 `json:"subsistence_basket_pence"`
 }
 
+// buildFromAnnualRatesRequest is the body for building a scheme from Ch. 16
+// annual rates (issue #222). Each department supplies c, v, and its annual
+// surplus rate in basis points; surplus is derived as v × bp / 10000.
+type buildFromAnnualRatesRequest struct {
+	Period      string `json:"period"`
+	Departments []struct {
+		Department      string `json:"department"`
+		ConstantPence   int64  `json:"constant_pence"`
+		VariablePence   int64  `json:"variable_pence"`
+		AnnualSurplusBP int64  `json:"annual_surplus_bp"`
+	} `json:"departments"`
+}
+
 // --- response types ---
 
 type departmentalCapitalResponse struct {
@@ -350,6 +363,33 @@ func (h *Handler) AdvanceReproductionTick(w http.ResponseWriter, r *http.Request
 		SubsistenceCovered:     tick.SubsistenceCovered,
 		Status:                 tick.Status,
 	})
+}
+
+// BuildReproductionFromAnnualRates handles
+// POST /v1/reproduction/simple/schemes/from-annual-rates. It derives a scheme
+// from Ch. 16 annual rates and returns it (without persisting) so the two
+// layers stay consistent (issue #222).
+func (h *Handler) BuildReproductionFromAnnualRates(w http.ResponseWriter, r *http.Request) {
+	var req buildFromAnnualRatesRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.Period == "" {
+		writeError(w, http.StatusBadRequest, "period is required")
+		return
+	}
+	depts := make([]repro.AnnualRateDepartment, len(req.Departments))
+	for i, d := range req.Departments {
+		depts[i] = repro.AnnualRateDepartment{
+			Department:      repro.CapitalDepartment(d.Department),
+			ConstantPence:   d.ConstantPence,
+			VariablePence:   d.VariablePence,
+			AnnualSurplusBP: d.AnnualSurplusBP,
+		}
+	}
+	scheme := repro.BuildReproductionFromAnnualRates(req.Period, depts)
+	writeJSON(w, http.StatusOK, schemeToResponse(scheme))
 }
 
 // GetSchemeBalanceCheck handles GET /v1/reproduction/simple/schemes/{id}/balance-check.

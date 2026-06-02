@@ -234,3 +234,33 @@
   color: var(--red);
   text-align: center;
 }
+
+.ch16-adj-inputs {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0;
+}
+
+.ch16-adj-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.ch16-adj-inputs input {
+  width: 7rem;
+  padding: 0.3rem 0.5rem;
+  background: var(--surface-3, #111128);
+  border: 1px solid var(--border, #2a2a4a);
+  border-radius: 4px;
+  color: inherit;
+}
+
+.ch16-adj-result {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+}

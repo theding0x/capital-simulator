@@ -3,10 +3,12 @@ package httpapi
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
+	val "github.com/theding0x/capital-simulator/services/simulation-engine/internal/valorisation"
 )
 
 // Vol. II Ch. 15 — The Effects of a Change of Prices.
@@ -265,6 +267,44 @@ func (h *Handler) GetPriceRevolution(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, toPriceRevolutionRecordResponse(rec))
+}
+
+// GetAdjustedAnnualRate handles GET /v1/price-revolutions/{id}/adjusted-annual-rate.
+// It loads the value-revolution event and re-prices the Ch. 16 annual surplus
+// rate (supplied via query params variable_pence, surplus_pence, and optional
+// n_basis_points) by the event's basis-points change (issue #222).
+func (h *Handler) GetAdjustedAnnualRate(w http.ResponseWriter, r *http.Request) {
+	id := circulation.ValueRevolutionEventID(r.PathValue("id"))
+	rec, err := h.PriceRevolutions.GetPriceRevolution(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "price revolution not found")
+			return
+		}
+		h.writeServerError(w, err)
+		return
+	}
+	variablePence, err := strconv.ParseInt(r.URL.Query().Get("variable_pence"), 10, 64)
+	if err != nil || variablePence <= 0 {
+		writeError(w, http.StatusBadRequest, "variable_pence must be a positive integer")
+		return
+	}
+	surplusPence, err := strconv.ParseInt(r.URL.Query().Get("surplus_pence"), 10, 64)
+	if err != nil || surplusPence < 0 {
+		writeError(w, http.StatusBadRequest, "surplus_pence must be a non-negative integer")
+		return
+	}
+	nBP := int64(10000)
+	if q := r.URL.Query().Get("n_basis_points"); q != "" {
+		parsed, perr := strconv.ParseInt(q, 10, 64)
+		if perr != nil || parsed <= 0 {
+			writeError(w, http.StatusBadRequest, "n_basis_points must be a positive integer")
+			return
+		}
+		nBP = parsed
+	}
+	result := val.ComputeAdjustedAnnualRate(val.Pence(variablePence), val.Pence(surplusPence), nBP, rec.Event.BasisPointsChange)
+	writeJSON(w, http.StatusOK, result)
 }
 
 // RecordPriceRevolutionCase handles POST /v1/price-revolutions/{id}/price-case.
