@@ -134,3 +134,65 @@ func (h *Handler) ListWorkingSessions(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, out)
 }
+
+type nominalWageRequest struct {
+	DailyLabourPowerValue int64 `json:"daily_labour_power_value"`
+	WorkingDayMinutes     int64 `json:"working_day_minutes"`
+	OvertimeHours         int64 `json:"overtime_hours,omitempty"`
+	OvertimeRatePence     int64 `json:"overtime_rate_pence,omitempty"`
+
+	// Optional Ch. 25 reserve-army overlay (see agent.ReserveArmyPressure).
+	ReserveArmyMagnitude      int64 `json:"reserve_army_magnitude,omitempty"`
+	ReserveArmyWorkforceTotal int64 `json:"reserve_army_workforce_total,omitempty"`
+}
+
+type nominalWageResponse struct {
+	NominalWage           agent.NominalWage `json:"nominal_wage"`
+	ReserveArmyPressureBP int64             `json:"reserve_army_pressure_bp,omitempty"`
+	CompressedWagePence   int64             `json:"compressed_wage_pence,omitempty"`
+}
+
+// ComputeNominalWage is a stateless endpoint: POST /v1/time-wages/nominal-wage.
+// It returns the nominal money-wage for a working session and, when a reserve
+// army overlay is supplied, the wage compressed below it (Ch. 25 → Ch. 20).
+func (h *Handler) ComputeNominalWage(w http.ResponseWriter, r *http.Request) {
+	var req nominalWageRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if req.DailyLabourPowerValue <= 0 {
+		writeError(w, http.StatusBadRequest, "daily_labour_power_value must be positive")
+		return
+	}
+	if req.WorkingDayMinutes < 60 {
+		writeError(w, http.StatusBadRequest, "working_day_minutes must be at least 60")
+		return
+	}
+	if req.OvertimeHours < 0 || req.OvertimeRatePence < 0 {
+		writeError(w, http.StatusBadRequest, "overtime values cannot be negative")
+		return
+	}
+	session := agent.WorkingSession{
+		DailyLabourPowerValue: agent.DailyLabourPowerValue{Pence: req.DailyLabourPowerValue},
+		WorkingDayMinutes:     agent.WorkingDayMinutes{Minutes: agent.LabourMinutes(req.WorkingDayMinutes)},
+		OvertimeHours:         agent.OvertimeHours{Hours: req.OvertimeHours},
+		OvertimeRatePence:     agent.OvertimeRatePence{Pence: req.OvertimeRatePence},
+		WagePeriod:            agent.WagePeriodDaily,
+	}
+	nominal := agent.ComputeSessionWage(session)
+	resp := nominalWageResponse{NominalWage: nominal}
+	if req.ReserveArmyMagnitude != 0 || req.ReserveArmyWorkforceTotal != 0 {
+		pressure := agent.ReserveArmyPressure{
+			Magnitude:      req.ReserveArmyMagnitude,
+			WorkforceTotal: req.ReserveArmyWorkforceTotal,
+		}
+		if err := pressure.Validate(); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		resp.ReserveArmyPressureBP = pressure.PressureBP()
+		resp.CompressedWagePence = pressure.CompressPence(nominal.Pence)
+	}
+	writeJSON(w, http.StatusOK, resp)
+}

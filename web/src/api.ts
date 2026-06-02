@@ -104,6 +104,8 @@ import type {
   AbsoluteSurplusValueResult,
   LabourScenarioInput,
   LabourScenarioResult,
+  NominalWageComputeInput,
+  NominalWageComputeResult,
   RelativeSurplusValueInput,
   RelativeSurplusValueResult,
   SurplusValueRateResult,
@@ -734,6 +736,12 @@ export const api = {
 
   computeHourlyPrice: (input: ComputeHourlyPriceInput) =>
     http<HourlyPriceOfLabour>("/v1/time-wages/hourly-price", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  computeNominalWage: (input: NominalWageComputeInput) =>
+    http<NominalWageComputeResult>("/v1/time-wages/nominal-wage", {
       method: "POST",
       body: JSON.stringify(input),
     }),

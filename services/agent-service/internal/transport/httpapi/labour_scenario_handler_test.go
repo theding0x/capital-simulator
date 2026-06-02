@@ -124,3 +124,80 @@ func TestComputeLabourScenario_DefaultsFactorsToOne(t *testing.T) {
 		t.Errorf("default factors should yield daily value 720, got %d", got.DailyValueMinutes)
 	}
 }
+
+// Ch. 25 → Ch. 17: with a quarter of the workforce in the reserve army, the
+// wage is bid down to 270 min, below the 360-min value of labour-power.
+func TestComputeLabourScenario_ReserveArmyCompression(t *testing.T) {
+	t.Parallel()
+	ts := newScenarioTestServer(t)
+	body := `{
+		"working_day_minutes": 720,
+		"necessary_labour_minutes": 360,
+		"intensity_factor": 1.0,
+		"productivity_factor": 1.0,
+		"reserve_army_magnitude": 250000,
+		"reserve_army_workforce_total": 1000000
+	}`
+	res, err := http.Post(ts.URL+"/v1/labour-scenarios", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", res.StatusCode)
+	}
+	var got labourScenarioResponse
+	if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.LabourPowerValueMinutes != 360 {
+		t.Errorf("value of labour-power: got %d, want 360", got.LabourPowerValueMinutes)
+	}
+	if got.ReserveArmyPressureBP != 2500 {
+		t.Errorf("pressure: got %d bp, want 2500", got.ReserveArmyPressureBP)
+	}
+	if got.CompressedWageMinutes != 270 {
+		t.Errorf("compressed wage: got %d, want 270", got.CompressedWageMinutes)
+	}
+	if got.CompressedWageMinutes >= got.LabourPowerValueMinutes {
+		t.Error("reserve army must push the wage below the value of labour-power")
+	}
+}
+
+// An empty (no overlay) scenario must not report any compression.
+func TestComputeLabourScenario_NoReserveArmyLeavesWageAtValue(t *testing.T) {
+	t.Parallel()
+	ts := newScenarioTestServer(t)
+	body := `{"working_day_minutes":720,"necessary_labour_minutes":360}`
+	res, err := http.Post(ts.URL+"/v1/labour-scenarios", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer res.Body.Close()
+	var got labourScenarioResponse
+	if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.ReserveArmyPressureBP != 0 || got.CompressedWageMinutes != 0 {
+		t.Errorf("no overlay should leave compression zero, got bp=%d wage=%d", got.ReserveArmyPressureBP, got.CompressedWageMinutes)
+	}
+}
+
+func TestComputeLabourScenario_RejectsReserveArmyExceedingWorkforce(t *testing.T) {
+	t.Parallel()
+	ts := newScenarioTestServer(t)
+	body := `{
+		"working_day_minutes": 720,
+		"necessary_labour_minutes": 360,
+		"reserve_army_magnitude": 1200000,
+		"reserve_army_workforce_total": 1000000
+	}`
+	res, err := http.Post(ts.URL+"/v1/labour-scenarios", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", res.StatusCode)
+	}
+}

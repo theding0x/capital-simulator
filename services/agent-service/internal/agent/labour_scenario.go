@@ -16,6 +16,12 @@ type LabourScenario struct {
 	WorkingDay   WorkingDay         `json:"working_day"`
 	Intensity    LabourIntensity    `json:"intensity"`
 	Productivity LabourProductivity `json:"productivity"`
+
+	// Pressure is an optional industrial-reserve-army overlay (Ch. 25 → Ch. 17):
+	// when set and active, ComputeOutcome reports the wage the reserve army's
+	// competition pushes the worker down to, below the value of labour-power.
+	// Nil means full employment — no compression.
+	Pressure *ReserveArmyPressure `json:"reserve_army_pressure,omitempty"`
 }
 
 // ScenarioOutcome is the result of evaluating a LabourScenario: the daily
@@ -28,6 +34,13 @@ type ScenarioOutcome struct {
 	SurplusLabourMinutes    LabourMinutes `json:"surplus_labour_minutes"`
 	LabourPowerValueMinutes LabourMinutes `json:"labour_power_value_minutes"`
 	RateOfSurplusValue      float64       `json:"rate_of_surplus_value"`
+
+	// ReserveArmyPressureBP and CompressedWageMinutes are populated only when the
+	// scenario carries an active ReserveArmyPressure. CompressedWageMinutes is the
+	// value of labour-power after the reserve army's downward pull; it is
+	// <= LabourPowerValueMinutes, the gap being the wage pushed below its value.
+	ReserveArmyPressureBP int64         `json:"reserve_army_pressure_bp,omitempty"`
+	CompressedWageMinutes LabourMinutes `json:"compressed_wage_minutes,omitempty"`
 }
 
 var ErrScenarioNecessaryExceedsDay = errors.New("agent: necessary labour cannot exceed working day total")
@@ -44,6 +57,11 @@ func (s LabourScenario) Validate() error {
 	}
 	if int64(s.WorkingDay.NecessaryLabourMinutes) > s.WorkingDay.TotalMinutes() {
 		return ErrScenarioNecessaryExceedsDay
+	}
+	if s.Pressure != nil {
+		if err := s.Pressure.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -80,13 +98,21 @@ func ComputeOutcome(s LabourScenario) ScenarioOutcome {
 	if necessary > 0 {
 		rate = float64(surplus) / float64(necessary)
 	}
-	return ScenarioOutcome{
+	outcome := ScenarioOutcome{
 		DailyValueMinutes:       dailyValue,
 		NecessaryLabourMinutes:  necessary,
 		SurplusLabourMinutes:    surplus,
 		LabourPowerValueMinutes: necessary,
 		RateOfSurplusValue:      rate,
 	}
+	// Ch. 25 → Ch. 17: an active reserve army bids the price of labour down
+	// below the value of labour-power (= necessary labour). The partition above
+	// is untouched — only the wage actually paid is compressed.
+	if s.Pressure != nil && s.Pressure.IsActive() {
+		outcome.ReserveArmyPressureBP = s.Pressure.PressureBP()
+		outcome.CompressedWageMinutes = s.Pressure.CompressMinutes(necessary)
+	}
+	return outcome
 }
 
 // LawConstantDailyValue encodes Ch. 17 §1 Law 1: at normal intensity,

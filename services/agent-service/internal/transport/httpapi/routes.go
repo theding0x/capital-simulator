@@ -58,6 +58,7 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/wage-forms/{agentID}", h.GetWageForm)
 	// Ch. 20 — Time-Wages
 	s.HandleFunc("POST /v1/time-wages/hourly-price", h.ComputeHourlyPrice)
+	s.HandleFunc("POST /v1/time-wages/nominal-wage", h.ComputeNominalWage)
 	s.HandleFunc("POST /v1/time-wages/sessions", h.CreateWorkingSession)
 	s.HandleFunc("GET /v1/time-wages/sessions/{id}", h.GetWorkingSession)
 	s.HandleFunc("GET /v1/agents/{id}/time-wages/sessions", h.ListWorkingSessions)
