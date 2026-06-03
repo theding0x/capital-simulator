@@ -19,7 +19,7 @@ export function Ch48Trinity() {
 
   // Trinity-formula builder fields (defaults = Ch. 48 seed fixture).
   const [capApparent, setCapApparent] = useState(20);
-  const [capActual, setCapActual] = useState(20);
+  const [capActual, setCapActual] = useState(17); // profit of enterprise 12 + interest 5 (rent already deducted)
   const [landApparent, setLandApparent] = useState(3);
   const [landActual, setLandActual] = useState(3);
   const [labApparent, setLabApparent] = useState(80); // wages = variable capital
@@ -27,7 +27,9 @@ export function Ch48Trinity() {
   const [result, setResult] = useState<TrinityFormulaResponse | null>(null);
 
   const sumApparent = capApparent + landApparent + labApparent;
-  const sumSurplus = capActual + landActual; // the labour stream's actual surplus is always 0
+  const sumSurplus = capActual + landActual; // profit + rent = the single surplus-value s (labour's actual is 0)
+  const newValue = sumSurplus + labApparent; // v + s — all the living labour added
+  const fetishOvershoot = sumApparent - newValue; // the rent counted twice — the measure of the fetish
 
   async function refreshLists() {
     try {
@@ -95,9 +97,13 @@ export function Ch48Trinity() {
           <strong>variable capital</strong> (v), not surplus-value.
         </p>
         <p className="v3-ch48-note">
-          Magnitudes in basis points (bp). The seed fixture: average profit&nbsp;20 (interest&nbsp;5
-          + profit of enterprise&nbsp;15) + ground-rent&nbsp;3 = surplus-value&nbsp;23; wages&nbsp;80
-          = variable capital; apparent revenue&nbsp;103 = s&nbsp;+&nbsp;v.
+          Magnitudes in basis points (bp). The seed fixture: average profit&nbsp;20, of which
+          ground-rent&nbsp;3 is paid to the landlord, leaving the capitalist&nbsp;17 (profit of
+          enterprise&nbsp;12 + interest&nbsp;5). Profit&nbsp;17 + rent&nbsp;3 = the single
+          surplus-value&nbsp;s&nbsp;=&nbsp;20; wages&nbsp;80 = variable capital&nbsp;v. Apparent
+          revenue&nbsp;103 overshoots newly-created value&nbsp;v&nbsp;+&nbsp;s&nbsp;=&nbsp;100 by
+          exactly the rent&nbsp;3 — that overshoot is the fetish (rent appears as income with no
+          value behind it), not extra wealth.
         </p>
       </section>
 
@@ -159,8 +165,9 @@ export function Ch48Trinity() {
         </div>
         <p className="v3-ch48-totals">
           apparent revenue&nbsp;= <strong>{sumApparent}</strong>&nbsp;bp&nbsp;·&nbsp; surplus-value
-          behind it&nbsp;= <strong>{sumSurplus}</strong>&nbsp;bp&nbsp;·&nbsp; new value
-          (s&nbsp;+&nbsp;v)&nbsp;= <strong>{sumSurplus + labApparent}</strong>&nbsp;bp
+          behind it (profit&nbsp;+&nbsp;rent)&nbsp;= <strong>{sumSurplus}</strong>&nbsp;bp&nbsp;·&nbsp;
+          new value (s&nbsp;+&nbsp;v)&nbsp;= <strong>{newValue}</strong>&nbsp;bp&nbsp;·&nbsp; fetish
+          overshoot (should&nbsp;=&nbsp;rent)&nbsp;= <strong>{fetishOvershoot}</strong>&nbsp;bp
         </p>
         <button className="v3-ch48-btn" onClick={handleCreate}>
           Bind trinity formula
@@ -171,7 +178,8 @@ export function Ch48Trinity() {
             <div className="v3-ch48-preview">
               <strong>
                 Bound — apparent revenue {result.formula.total_apparent_revenue_bp}&nbsp;bp,
-                surplus-value {result.formula.total_surplus_value_bp}&nbsp;bp
+                surplus-value {result.formula.total_surplus_value_bp}&nbsp;bp, fetish overshoot{" "}
+                {result.fetish_overshoot_bp}&nbsp;bp
               </strong>
               <span className="v3-ch48-hint">Formula ID: {result.formula.id}</span>
             </div>

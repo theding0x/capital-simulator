@@ -15,9 +15,16 @@ package revenue
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
 )
+
+// ErrSurplusNotConserved is returned when a trinity's streams do not partition a
+// single surplus-value: the apparent-revenue overshoot above newly-created value
+// (v + s) must equal the ground-rent — that overshoot is the trinity's one
+// fetish (rent appears as income with no value behind it), not extra wealth.
+var ErrSurplusNotConserved = errors.New("revenue: trinity does not conserve surplus-value (apparent-revenue overshoot must equal ground-rent)")
 
 // RevenueSourceKind enumerates the three apparent sources of the trinity formula.
 type RevenueSourceKind int
@@ -125,6 +132,61 @@ func VariableCapitalBP(streams []RevenueStream) int64 {
 		}
 	}
 	return v
+}
+
+// ProfitBP returns the capital streams' actual share of surplus-value — the
+// profit of enterprise plus interest the capitalist retains *after* ground-rent
+// is deducted. It is a part of the single social surplus-value, not an addition.
+func ProfitBP(streams []RevenueStream) int64 {
+	var p int64
+	for _, s := range streams {
+		if s.Source == RevenueSourceCapital {
+			p += s.ActualSourceBP
+		}
+	}
+	return p
+}
+
+// RentBP returns the land streams' actual share of surplus-value — the portion
+// the landed-property barrier redirects to the landlord. Rent is a deduction
+// from the single social surplus-value, not value newly created by the land.
+func RentBP(streams []RevenueStream) int64 {
+	var r int64
+	for _, s := range streams {
+		if s.Source == RevenueSourceLand {
+			r += s.ActualSourceBP
+		}
+	}
+	return r
+}
+
+// NewValueBP returns the newly-created value v + s: the variable capital the
+// wages recover plus the undivided surplus-value the streams partition
+// (profit + rent). This is all the living labour added — nothing more exists to
+// be distributed.
+func NewValueBP(streams []RevenueStream) int64 {
+	return VariableCapitalBP(streams) + SumActualSourceBP(streams)
+}
+
+// FetishOvershootBP returns the amount by which the trinity's apparent revenues
+// exceed the value actually created (v + s). Marx's point: this overshoot is not
+// extra wealth. It is the ground-rent counted twice — once inside the
+// capitalist's average profit and again as the landlord's "independent" income
+// from land. Land creates no value; the overshoot is the measure of the fetish.
+// A faithful trinity has FetishOvershootBP == RentBP.
+func FetishOvershootBP(streams []RevenueStream) int64 {
+	return SumApparentRevenueBP(streams) - NewValueBP(streams)
+}
+
+// CheckConservation reports whether the streams form a trinity that conserves
+// surplus-value: wages carry no surplus-value and the apparent-revenue overshoot
+// above v + s equals the ground-rent (profit + rent partition one s). Returns
+// ErrSurplusNotConserved otherwise.
+func CheckConservation(streams []RevenueStream) error {
+	if FetishOvershootBP(streams) != RentBP(streams) {
+		return ErrSurplusNotConserved
+	}
+	return nil
 }
 
 // newID returns a fresh 96-bit hex string from crypto/rand.

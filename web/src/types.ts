@@ -4793,7 +4793,7 @@ export interface TrinityFormula { id: string; capital_stream_id: string; land_st
 export interface RevenueFetishForm { id: string; source: RevenueSourceKind; surface_formula: string; real_relation: string; mystification_kind: string; created_at: string; }
 export interface TrinityStreamInput { apparent_revenue_bp: number; actual_source_bp: number; is_fetishised: boolean; }
 export interface CreateTrinityFormulaInput { capital_stream: TrinityStreamInput; land_stream: TrinityStreamInput; labour_stream: TrinityStreamInput; }
-export interface TrinityFormulaResponse { formula: TrinityFormula; streams: RevenueStream[]; }
+export interface TrinityFormulaResponse { formula: TrinityFormula; streams: RevenueStream[]; fetish_overshoot_bp: number; }
 
 // Vol. III Ch. 49 — Concerning the Analysis of the Process of Production
 export interface AnnualValueComposition { id: string; constant_capital_labour_minutes: number; variable_capital_labour_minutes: number; surplus_value_labour_minutes: number; total_value_labour_minutes: number; new_value_labour_minutes: number; created_at: string; }

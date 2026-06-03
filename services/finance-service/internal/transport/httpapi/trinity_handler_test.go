@@ -12,7 +12,11 @@ import (
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/store"
 )
 
-const trinityValidBody = `{"capital_stream":{"apparent_revenue_bp":20,"actual_source_bp":20,"is_fetishised":true},` +
+// trinityValidBody is the faithful Ch. 48 trinity: capital's apparent revenue is
+// the average profit 20, but its actual surplus share is 17 (profit of enterprise
+// 12 + interest 5) after the ground-rent 3 is deducted. Profit 17 + rent 3 = one
+// surplus-value s = 20; apparent 103 overshoots v+s = 100 by exactly the rent 3.
+const trinityValidBody = `{"capital_stream":{"apparent_revenue_bp":20,"actual_source_bp":17,"is_fetishised":true},` +
 	`"land_stream":{"apparent_revenue_bp":3,"actual_source_bp":3,"is_fetishised":true},` +
 	`"labour_stream":{"apparent_revenue_bp":80,"actual_source_bp":0,"is_fetishised":true}}`
 
@@ -35,11 +39,32 @@ func TestCreateTrinityFormulaCreated(t *testing.T) {
 	if resp.Formula.TotalApparentRevenueBP != 103 {
 		t.Errorf("TotalApparentRevenueBP = %d, want 103", resp.Formula.TotalApparentRevenueBP)
 	}
-	if resp.Formula.TotalSurplusValueBP != 23 {
-		t.Errorf("TotalSurplusValueBP = %d, want 23", resp.Formula.TotalSurplusValueBP)
+	if resp.Formula.TotalSurplusValueBP != 20 {
+		t.Errorf("TotalSurplusValueBP = %d, want 20 (profit 17 + rent 3, one s)", resp.Formula.TotalSurplusValueBP)
+	}
+	// The fetish overshoot is surfaced and equals the doubly-counted ground-rent.
+	if resp.FetishOvershootBP != 3 {
+		t.Errorf("FetishOvershootBP = %d, want 3 (apparent 103 - new value 100 = rent)", resp.FetishOvershootBP)
 	}
 	if len(resp.Streams) != 3 {
 		t.Fatalf("streams = %d, want 3", len(resp.Streams))
+	}
+}
+
+// TestCreateTrinityFormulaDoubleCountRejected pins the #377 regression: a trinity
+// whose capital actual double-counts the rent (s would be 23) no longer conserves
+// surplus-value and must be rejected with 422.
+func TestCreateTrinityFormulaDoubleCountRejected(t *testing.T) {
+	t.Parallel()
+	h := New(store.NewMemory(), nil)
+	body := `{"capital_stream":{"apparent_revenue_bp":20,"actual_source_bp":20,"is_fetishised":true},` +
+		`"land_stream":{"apparent_revenue_bp":3,"actual_source_bp":3,"is_fetishised":true},` +
+		`"labour_stream":{"apparent_revenue_bp":80,"actual_source_bp":0,"is_fetishised":true}}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/revenue/trinity-formulas", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+	h.CreateTrinityFormula(rec, req)
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422; body=%s", rec.Code, rec.Body.String())
 	}
 }
 
