@@ -169,6 +169,19 @@ Runs `go vet ./...`, `go test ./...`, and builds every service binary
 into `bin/`. The full test suite is required to be green before any PR
 merges.
 
+### First-clone git config
+
+This repo ships a [`.git-blame-ignore-revs`](.git-blame-ignore-revs) so
+`git blame` skips the bulk EOL-renormalization commit (#251) and attributes
+each line to the commit that actually wrote it. Opt in once per clone:
+
+```sh
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
+GitHub's web blame view honors the file automatically — this step only
+affects local `git blame`.
+
 ### Web dev loop
 
 ```sh
