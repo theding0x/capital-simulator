@@ -22,6 +22,17 @@ import (
 // and keep floating point out of the value layer.
 const basisPoints = 10000
 
+// roundHalfUp computes (numer + denom/2) / denom — the canonical round-half-up
+// division used throughout the simulator for basis-point arithmetic (also in
+// credit.roundHalfUp, merchant.roundHalfUp, rent.roundHalfUp). Callers guard
+// denom > 0 before invoking. Capital III's worked rates are whole percentages,
+// so the rounding only bites at the margins, but it keeps profit's basis points
+// exactly consistent with the avgprofit general rate that bounds the rate of
+// interest in Part V.
+func roundHalfUp(numer, denom int64) int64 {
+	return (numer + denom/2) / denom
+}
+
 // ProfitRateID identifies a stored rate-of-profit analysis. 96-bit hex from
 // crypto/rand, like every other domain ID in the simulator.
 type ProfitRateID string
@@ -75,7 +86,7 @@ func ComputeRateOfProfit(s SurplusValue, c ConstantCapital, v VariableCapital) R
 	total := TotalCapital(int64(c) + int64(v))
 	var bp int64
 	if total > 0 {
-		bp = int64(s) * basisPoints / int64(total)
+		bp = roundHalfUp(int64(s)*basisPoints, int64(total))
 	}
 	return RateOfProfit{SurplusValue: s, TotalCapital: total, BasisPoints: bp}
 }
@@ -87,7 +98,7 @@ func ComputeRateOfSurplusValue(s SurplusValue, v VariableCapital) RateOfSurplusV
 	if v <= 0 {
 		return 0
 	}
-	return RateOfSurplusValue(int64(s) * basisPoints / int64(v))
+	return RateOfSurplusValue(roundHalfUp(int64(s)*basisPoints, int64(v)))
 }
 
 // ProfitRateAnalysis records a single capital decomposition c + v + s alongside
@@ -116,7 +127,7 @@ func ComputeProfitRateAnalysis(c ConstantCapital, v VariableCapital, s SurplusVa
 	sPrime := ComputeRateOfSurplusValue(s, v)
 	var myst MystificationDegree
 	if sPrime > 0 {
-		myst = MystificationDegree((int64(sPrime) - pPrime.BasisPoints) * basisPoints / int64(sPrime))
+		myst = MystificationDegree(roundHalfUp((int64(sPrime)-pPrime.BasisPoints)*basisPoints, int64(sPrime)))
 	}
 	return ProfitRateAnalysis{
 		ConstantCapital:  c,
