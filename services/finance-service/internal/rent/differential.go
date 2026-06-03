@@ -5,9 +5,22 @@ package rent
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
 )
+
+// Money-unit bridge for the Ch. 38 surplus-profit ≙ differential-rent identity.
+// Surplus-profit is recorded in pence (£1 = 100 pence) while differential rent
+// is recorded in LabourMinutes (£1 = 480 LM). See #370 on unifying these.
+const (
+	pencePerPound         = 100
+	labourMinutesPerPound = 480
+)
+
+// ErrSurplusProfitRentMismatch is returned when a DifferentialRent's recorded
+// surplus-profit and its annual rent do not denote the same money-magnitude.
+var ErrSurplusProfitRentMismatch = errors.New("rent: surplus-profit does not equal differential rent (the surplus-profit IS the rent)")
 
 // roundHalfUp computes (numer + denom/2) / denom — canonical round-half-up
 // division for basis-point arithmetic. Private to this package (same body as
@@ -42,10 +55,34 @@ type PriceOfProductionSurplusProfit struct {
 	CreatedAt                     time.Time                        `json:"created_at"`
 }
 
-// ComputeSurplusProfit returns the surplus-profit (general − individual) in the
-// same unit as its inputs. May be zero or negative; not clamped.
-func ComputeSurplusProfit(generalBP, individualBP int64) int64 {
-	return generalBP - individualBP
+// ComputeSurplusProfit returns the surplus-profit: the gap between the
+// market-regulating (general) price of production and the capital's *individual
+// price of production*. Callers must pass the individual PRICE OF PRODUCTION
+// (cost-price + average profit — see IndividualPriceOfProduction), not the bare
+// individual cost-price, which would overstate the surplus-profit by the average
+// profit. May be zero or negative; not clamped. Same unit as its inputs.
+func ComputeSurplusProfit(generalBP, individualPriceOfProductionBP int64) int64 {
+	return generalBP - individualPriceOfProductionBP
+}
+
+// IndividualPriceOfProduction returns a capital's individual price of production:
+// its individual cost-price plus the average profit it earns. In Ch. 38's
+// waterfall example the waterfall factory's cost-price is £90 (9000 bp) and the
+// absolute average profit £15 (1500 bp), so its individual price of production is
+// £105 (10500 bp) — £10 below the general price of production £115, and that £10
+// is the surplus-profit that becomes differential rent.
+func IndividualPriceOfProduction(individualCostPriceBP, averageProfitBP int64) int64 {
+	return individualCostPriceBP + averageProfitBP
+}
+
+// SurplusProfitMatchesRent reports whether a surplus-profit (in pence) and an
+// annual differential rent (in LabourMinutes) denote the same money-magnitude.
+// Marx's Ch. 38 identity: the surplus-profit the waterfall capital earns above
+// the general price of production IS the differential rent landed property
+// captures — the same £, only the unit differs. The comparison cross-multiplies
+// to the common £-scale to avoid integer-division rounding.
+func SurplusProfitMatchesRent(surplusProfitBP, annualRentLabourMinutes int64) bool {
+	return surplusProfitBP*labourMinutesPerPound == annualRentLabourMinutes*pencePerPound
 }
 
 // MonopolisedNaturalForceID identifies a persisted monopolised-natural-force record.
@@ -92,6 +129,18 @@ type DifferentialRent struct {
 	SurplusProfitBP         int64              `json:"surplus_profit_bp"`
 	AnnualRentLabourMinutes int64              `json:"annual_rent_labour_minutes"`
 	CreatedAt               time.Time          `json:"created_at"`
+}
+
+// Validate checks the Ch. 38 identity surplus_profit ≙ differential_rent: the
+// recorded surplus-profit (pence) and annual rent (LabourMinutes) must denote
+// the same money-magnitude. Marx: the surplus-profit converted into rent IS the
+// rent — a DifferentialRent whose two fields disagree is internally
+// contradictory. Returns ErrSurplusProfitRentMismatch when they diverge.
+func (d DifferentialRent) Validate() error {
+	if !SurplusProfitMatchesRent(d.SurplusProfitBP, d.AnnualRentLabourMinutes) {
+		return ErrSurplusProfitRentMismatch
+	}
+	return nil
 }
 
 // CapitalisedRentPriceID identifies a persisted capitalised-rent-price record.

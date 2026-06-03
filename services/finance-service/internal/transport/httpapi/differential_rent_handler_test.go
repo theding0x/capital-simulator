@@ -38,7 +38,9 @@ func TestCreatePoPSurplusProfit_Valid(t *testing.T) {
 	t.Parallel()
 	ts, _ := newDiffRentTestServer(t)
 
-	body := `{"capital_id":"waterfall-capital-001","general_price_of_production_bp":11500,"individual_price_of_production_bp":9000}`
+	// Individual PRICE OF PRODUCTION = cost-price £90 + average profit £15 = £105
+	// (10500). Surplus-profit = general 11500 − 10500 = 1000 (£10), the rent.
+	body := `{"capital_id":"waterfall-capital-001","general_price_of_production_bp":11500,"individual_price_of_production_bp":10500}`
 	res, err := http.Post(ts.URL+"/v1/rent/surplus-profits", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("post: %v", err)
@@ -58,8 +60,8 @@ func TestCreatePoPSurplusProfit_Valid(t *testing.T) {
 		t.Fatalf("decode: %v", err)
 	}
 	// Server must compute the surplus-profit regardless of what the client sent.
-	if s.SurplusProfitBP != 2500 {
-		t.Errorf("surplus_profit_bp = %d, want 2500 (server-computed)", s.SurplusProfitBP)
+	if s.SurplusProfitBP != 1000 {
+		t.Errorf("surplus_profit_bp = %d, want 1000 (server-computed: general 11500 − individual PoP 10500)", s.SurplusProfitBP)
 	}
 	if s.ID == "" {
 		t.Error("expected a non-empty id in response body")
@@ -271,7 +273,8 @@ func TestCreateDifferentialRent_Valid(t *testing.T) {
 	t.Parallel()
 	ts, _ := newDiffRentTestServer(t)
 
-	body := `{"parcel_id":"highland-parcel-005","surplus_profit_bp":2500,"annual_rent_labour_minutes":4800}`
+	// surplus-profit £10 (1000 pence) ≙ annual rent £10 (4800 LM) — the identity.
+	body := `{"parcel_id":"highland-parcel-005","surplus_profit_bp":1000,"annual_rent_labour_minutes":4800}`
 	res, err := http.Post(ts.URL+"/v1/rent/differential-rents", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("post: %v", err)
@@ -284,6 +287,25 @@ func TestCreateDifferentialRent_Valid(t *testing.T) {
 	loc := res.Header.Get("Location")
 	if !strings.HasPrefix(loc, "/v1/rent/differential-rents/") {
 		t.Errorf("Location = %q, want /v1/rent/differential-rents/ prefix", loc)
+	}
+}
+
+// TestCreateDifferentialRent_SurplusRentMismatch pins the Ch. 38 identity (#378):
+// a rent whose surplus-profit and annual rent denote different money-magnitudes
+// (£25 surplus next to £10 rent — the original seed's contradiction) is rejected.
+func TestCreateDifferentialRent_SurplusRentMismatch(t *testing.T) {
+	t.Parallel()
+	ts, _ := newDiffRentTestServer(t)
+
+	body := `{"parcel_id":"highland-parcel-006","surplus_profit_bp":2500,"annual_rent_labour_minutes":4800}`
+	res, err := http.Post(ts.URL+"/v1/rent/differential-rents", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("post: %v", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusUnprocessableEntity {
+		t.Errorf("status = %d, want 422 (surplus-profit must equal the rent)", res.StatusCode)
 	}
 }
 
