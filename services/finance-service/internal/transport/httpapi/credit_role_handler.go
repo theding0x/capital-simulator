@@ -148,3 +148,20 @@ func (h *Handler) ListCooperativeFactories(w http.ResponseWriter, r *http.Reques
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
+
+// GetCooperativeFactory handles GET /v1/credit/cooperative-factories/{id}.
+// CreateCooperativeFactory advertises this path in its Location header, so it
+// must be retrievable. Returns 404 when no factory has that id.
+func (h *Handler) GetCooperativeFactory(w http.ResponseWriter, r *http.Request) {
+	id := credit.CooperativeFactoryID(r.PathValue("id"))
+	cf, err := h.Store.GetCooperativeFactory(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		writeStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, cf)
+}

@@ -298,6 +298,70 @@ func TestListCooperativeFactories_NonNull(t *testing.T) {
 	}
 }
 
+// The Location header set by CreateCooperativeFactory must resolve: POST then
+// GET the returned id and confirm the factory round-trips.
+func TestGetCooperativeFactory_RoundTrip(t *testing.T) {
+	t.Parallel()
+	ts, _ := newFinanceTestServer(t)
+
+	body := `{
+		"name": "Rochdale Pioneers",
+		"worker_owned": true,
+		"worker_count": 28,
+		"capital_advanced": 2800,
+		"description": "First modern workers cooperative (1844)"
+	}`
+	res, err := http.Post(ts.URL+"/v1/credit/cooperative-factories", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	location := res.Header.Get("Location")
+	if location == "" {
+		t.Fatal("expected Location header")
+	}
+
+	var created credit.CooperativeFactory
+	if err := json.NewDecoder(res.Body).Decode(&created); err != nil {
+		t.Fatal(err)
+	}
+
+	// Follow the advertised Location header directly — it must resolve.
+	getRes, err := http.Get(ts.URL + location)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer getRes.Body.Close()
+	if getRes.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 from Location %q, got %d", location, getRes.StatusCode)
+	}
+
+	var fetched credit.CooperativeFactory
+	if err := json.NewDecoder(getRes.Body).Decode(&fetched); err != nil {
+		t.Fatal(err)
+	}
+	if fetched.ID != created.ID {
+		t.Errorf("id mismatch: got %q, want %q", fetched.ID, created.ID)
+	}
+	if fetched.WorkerCount != created.WorkerCount {
+		t.Errorf("worker_count mismatch: got %d, want %d", fetched.WorkerCount, created.WorkerCount)
+	}
+}
+
+func TestGetCooperativeFactory_NotFound(t *testing.T) {
+	t.Parallel()
+	ts, _ := newFinanceTestServer(t)
+
+	res, err := http.Get(ts.URL + "/v1/credit/cooperative-factories/doesnotexist")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", res.StatusCode)
+	}
+}
+
 // ── Store (Memory) tests ──────────────────────────────────────────────────────
 
 func TestStockCompanyStore_ErrNotFound(t *testing.T) {
