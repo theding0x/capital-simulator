@@ -117,7 +117,7 @@ export function Ch06CostsOfCirculation() {
           <div className="aggregate-block">
             <div className="agg-card">
               <span className="agg-label">Total reserved</span>
-              <span className="agg-value">{penceStr(fauxFrais.total_pence)}</span>
+              <span className="agg-value">{penceStr(fauxFrais.total_reserve_pence)}</span>
             </div>
             <div className="agg-card">
               <span className="agg-label">Annual replacement</span>

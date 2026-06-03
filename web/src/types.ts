@@ -2207,18 +2207,11 @@ export interface AggregateCirculationCostsResult {
   total_pence: number;
 }
 
-export interface SystemFauxFraisItem {
-  id: string;
-  industrial_capital_id: string;
-  pence: number;
-  annual_replacement_pence: number;
-}
-
 export interface SystemFauxFraisResult {
   period: string;
-  items: SystemFauxFraisItem[];
-  total_pence: number;
+  total_reserve_pence: number;
   total_annual_replacement_pence: number;
+  items: MoneyAsFauxFrais[];
 }
 
 // Vol. II Ch. 7 — The Turnover Time and the Number of Turnovers
