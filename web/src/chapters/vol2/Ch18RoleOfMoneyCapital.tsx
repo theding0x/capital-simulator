@@ -47,11 +47,11 @@ function ApportionmentPie() {
     );
   }
 
-  const total = appt.total_circulating_money_pence;
+  const total = appt.total_social_money_pence;
   const bars: { label: string; pence: number; css: string }[] = [
-    { label: "Dept I (means of production)",       pence: appt.department_i_reserve_pence,  css: "bar-dept-i"  },
-    { label: "Dept II (articles of consumption)",  pence: appt.department_ii_reserve_pence, css: "bar-dept-ii" },
-    { label: "Wage-rotation fund",                 pence: appt.wage_rotation_fund_pence,    css: "bar-wage"    },
+    { label: "Dept I (means of production)",       pence: appt.dept_i_reserve_pence,  css: "bar-dept-i"  },
+    { label: "Dept II (articles of consumption)",  pence: appt.dept_ii_reserve_pence, css: "bar-dept-ii" },
+    { label: "Wage-rotation fund",                 pence: appt.wage_rotation_pence,    css: "bar-wage"    },
     { label: "Idle hoard",                         pence: appt.idle_hoard_pence,            css: "bar-idle"    },
   ];
 
@@ -197,7 +197,7 @@ function TwoDeptFlowDiagram() {
   }, []);
 
   const flowLabel = settlement
-    ? penceToPounds(settlement.amount_pence)
+    ? penceToPounds(settlement.settled_pence)
     : "£208";
 
   return (
