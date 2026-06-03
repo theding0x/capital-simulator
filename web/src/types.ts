@@ -3742,6 +3742,39 @@ export interface HistoricalTradingSystemResponse {
   wage_labour: boolean;
 }
 
+// ── Vol. III Part V — credit enum types ──────────────────────────────────────
+// Named TS unions mirroring the Go integer enum types in
+// services/finance-service/internal/credit/. The response interfaces below
+// reference these instead of bare `number`, preserving the enum/range
+// constraints across the wire boundary (Go marshals each as its underlying
+// integer). Request (Create*Input) bodies keep `number` — form state is an
+// unconstrained number until the server validates it.
+
+// IndustrialCyclePhase mirrors credit.IndustrialCyclePhase.
+// 1=Inactivity, 2=Revival, 3=Prosperity, 4=Overproduction, 5=Crisis.
+export type IndustrialCyclePhase = 1 | 2 | 3 | 4 | 5;
+
+// CapitalOwnershipForm mirrors credit.CapitalOwnershipForm.
+// 1=OwnerOperator (no external lender), 2=Separated (borrower pays interest).
+export type CapitalOwnershipForm = 1 | 2;
+
+// MystificationIndex mirrors credit.MystificationIndex — basis points in the
+// closed range [0, 10000]. A named alias rather than a literal union (the range
+// is too large to enumerate); the bound is enforced server-side, as in Go.
+export type MystificationIndex = number;
+
+// FictitiousKind mirrors credit.FictitiousKind.
+// 1=bill, 2=bank-note, 3=public-debt, 4=share.
+export type FictitiousKind = 1 | 2 | 3 | 4;
+
+// BankActRegime mirrors credit.BankActRegime.
+// 1=Pre-Act 1844, 2=Bank Act 1844, 3=Suspended.
+export type BankActRegime = 1 | 2 | 3;
+
+// CapitalReleaseCause mirrors credit.CapitalReleaseCause.
+// 1=input-price fall, 2=merchant idle money, 3=rentier savings, 4=revenue passthrough.
+export type CapitalReleaseCause = 1 | 2 | 3 | 4;
+
 // InterestBearingCapital mirrors credit.InterestBearingCapital (Vol. III Ch. 21).
 // Interest-bearing capital advances money at an interest rate for a loan term.
 // InterestEarned = roundHalfUp(money_advanced * interest_rate_bp, 10000).
@@ -3773,7 +3806,7 @@ export interface RateOfInterest {
   id: string;
   rate_bp: number;                // bp; >= 0
   average_profit_rate_bp: number; // bp; > 0
-  cycle_phase: number;            // 1..5
+  cycle_phase: IndustrialCyclePhase;            // 1..5
   period: string;
   created_at: string;
 }
@@ -3810,9 +3843,9 @@ export interface ProfitDivision {
   total_profit_bp: number;             // bp; > 0
   interest_bp: number;                 // bp; >= 0
   profit_of_enterprise_bp: number;     // bp; = total - interest; >= 0
-  ownership_form: number;              // 1=OwnerOperator, 2=Separated
+  ownership_form: CapitalOwnershipForm;              // 1=OwnerOperator, 2=Separated
   wages_of_superintendence: WagesOfSuperintendence;
-  mystification_index: number;         // bp [0,10000]
+  mystification_index: MystificationIndex;         // bp [0,10000]
   created_at: string;
 }
 
@@ -3851,7 +3884,7 @@ export interface BillOfExchange {
 // kind: 1=bill, 2=bank-note, 3=public-debt, 4=share.
 export interface FictitiousCapital {
   id: string;
-  kind: number;                // 1=bill, 2=bank-note, 3=public-debt, 4=share
+  kind: FictitiousKind;                // 1=bill, 2=bank-note, 3=public-debt, 4=share
   name: string;
   annual_income: number;       // > 0; pence
   rate_bp: number;             // > 0; prevailing interest rate in basis points
@@ -3867,7 +3900,7 @@ export interface FictitiousCapital {
 // Records an interest-rate reading tied to a phase of the industrial cycle.
 // phase: 1=Inactivity, 2=Revival, 3=Prosperity, 4=Overproduction, 5=Crisis.
 export interface InterestCycleObservation {
-  phase: number;             // 1..5
+  phase: IndustrialCyclePhase;             // 1..5
   interest_rate_bp: number;  // bp; >= 0
   period: string;
 }
@@ -4046,7 +4079,7 @@ export interface CommercialCreditCircuit {
 export interface RealCapitalAccumulation {
   id: string;
   name: string;
-  phase: number; // 1..5
+  phase: IndustrialCyclePhase; // 1..5
   accumulation_correspondence: AccumulationCorrespondence;
   credit_limit: {
     reserve_capital: number; // pence; >= 0
@@ -4135,7 +4168,7 @@ export interface LoanCapitalOverstatement {
 // is false.
 export interface MeansOfPaymentDemand {
   id: string;
-  phase: number; // 1..5
+  phase: IndustrialCyclePhase; // 1..5
   amount: number; // pence
   is_productive_capital_demand: boolean;
   description: string;
@@ -4151,7 +4184,7 @@ export interface CapitalRelease {
   id: string;
   name: string;
   released_amount: number; // pence; >= 0
-  cause: number; // 1..4
+  cause: CapitalReleaseCause; // 1..4
   reinvested: boolean;
   loan_capital_overstatement: LoanCapitalOverstatement;
   description: string;
@@ -4269,7 +4302,7 @@ export interface CreateClearingHouseSettlementInput {
 export interface NoteIssueConstraint {
   id: string;
   name: string;
-  regime: number;          // 1=Pre-Act 1844, 2=Bank Act 1844, 3=Suspended
+  regime: BankActRegime;          // 1=Pre-Act 1844, 2=Bank Act 1844, 3=Suspended
   max_notes: number;       // pence; derived = gold_backing + unbacked_limit
   gold_backing: number;    // pence; >= 0
   unbacked_limit: number;  // pence; >= 0

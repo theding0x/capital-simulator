@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { financeApi } from "../../api";
-import type { RealCapitalAccumulation } from "../../types";
+import type { IndustrialCyclePhase, RealCapitalAccumulation } from "../../types";
 import "./Ch30MoneyRealCapital.css";
 
 const PHASES: { value: number; label: string }[] = [
@@ -41,7 +41,7 @@ export function Ch30MoneyRealCapital() {
   const [listError, setListError] = useState<string | null>(null);
 
   const [name, setName] = useState("Crisis 1847");
-  const [phase, setPhase] = useState(5);
+  const [phase, setPhase] = useState<IndustrialCyclePhase>(5);
   const [moneyGrowthBP, setMoneyGrowthBP] = useState(800);
   const [realGrowthBP, setRealGrowthBP] = useState(-600);
   const [corresponds, setCorresponds] = useState(false);
@@ -189,7 +189,7 @@ export function Ch30MoneyRealCapital() {
           </label>
           <label>
             Industrial cycle phase
-            <select value={phase} onChange={(e) => setPhase(Number(e.target.value))}>
+            <select value={phase} onChange={(e) => setPhase(Number(e.target.value) as IndustrialCyclePhase)}>
               {PHASES.map((p) => (
                 <option key={p.value} value={p.value}>
                   {p.label}
