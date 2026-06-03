@@ -249,3 +249,17 @@ func TestRunGeneralLaw_OCInvariant(t *testing.T) {
 		}
 	}
 }
+
+// Ch. 25: the relative surplus-population is partitioned into three strata —
+// floating, latent, stagnant — whose sum is the whole reserve army. Pin Total().
+func TestRelativeSurplusPopulation_Total(t *testing.T) {
+	t.Parallel()
+	r := simulation.RelativeSurplusPopulation{Floating: 1200, Latent: 800, Stagnant: 300}
+	if got, want := r.Total(), int64(2300); got != want {
+		t.Errorf("Total() = %d, want %d (floating+latent+stagnant)", got, want)
+	}
+	var empty simulation.RelativeSurplusPopulation
+	if got := empty.Total(); got != 0 {
+		t.Errorf("empty Total() = %d, want 0", got)
+	}
+}

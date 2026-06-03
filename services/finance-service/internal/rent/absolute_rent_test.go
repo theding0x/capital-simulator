@@ -99,6 +99,25 @@ func TestComputeValuePriceGap(t *testing.T) {
 	}
 }
 
+// TestComputeIsBelowAverage pins the precondition for absolute rent: agriculture's
+// organic composition must be strictly below the social average. At or above parity
+// there is no value–price excess, so absolute rent is zero (surplus == avg profit).
+func TestComputeIsBelowAverage(t *testing.T) {
+	t.Parallel()
+	if !ComputeIsBelowAverage(5000, 7000) {
+		t.Error("5000 < 7000 should be below average")
+	}
+	if ComputeIsBelowAverage(7000, 7000) {
+		t.Error("composition == social average is not below average")
+	}
+	if ComputeIsBelowAverage(8000, 7000) {
+		t.Error("composition above the average is not below average")
+	}
+	if got := ComputeAbsoluteRentBP(5000, 5000); got != 0 {
+		t.Errorf("absolute rent at composition parity (surplus == avg profit) = %d, want 0", got)
+	}
+}
+
 // TestCh45NewIDsDistinct verifies that each ID constructor produces 24-char hex
 // strings and that two consecutive calls differ (no repeated values).
 func TestCh45NewIDsDistinct(t *testing.T) {

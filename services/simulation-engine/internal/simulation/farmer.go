@@ -26,6 +26,24 @@ const (
 	TenantFormCapitalistFarmer TenantForm = "capitalist-farmer"
 )
 
+// Order returns the tenant form's position in the historical sequence
+// bailiff (1) → metayer (2) → capitalist-farmer (3). The genesis of the
+// capitalist farmer is a one-way progression through these forms (L-H2); Order
+// makes that ordering comparable. An unrecognised form returns 0, sorting before
+// all defined forms.
+func (f TenantForm) Order() int {
+	switch f {
+	case TenantFormBailiff:
+		return 1
+	case TenantFormMetayer:
+		return 2
+	case TenantFormCapitalistFarmer:
+		return 3
+	default:
+		return 0
+	}
+}
+
 var (
 	ErrFarmTenureFormRequired        = errors.New("simulation: farm tenure form is required")
 	ErrFarmTenureFormInvalid         = errors.New("simulation: form must be bailiff, metayer, or capitalist-farmer")

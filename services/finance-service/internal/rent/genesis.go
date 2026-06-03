@@ -11,8 +11,19 @@ package rent
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"time"
+)
+
+// Ch. 47 sentinel errors.
+var (
+	// ErrInvalidRentFormStage is returned when a stage is outside 1..4.
+	ErrInvalidRentFormStage = errors.New("rent: stage must be 1..4")
+
+	// ErrRentTransitionNotProgressive is returned when a transition is not strictly
+	// progressive (FromStage < ToStage). Rent evolves one way through history.
+	ErrRentTransitionNotProgressive = errors.New("rent: rent-form transition must be progressive (from_stage < to_stage)")
 )
 
 // RentFormStage enumerates the historically ordered stages of rent.
@@ -54,6 +65,14 @@ type RentHistoricalForm struct {
 	CreatedAt     time.Time            `json:"created_at"`
 }
 
+// Validate reports whether the historical form names a defined stage (1..4).
+func (f RentHistoricalForm) Validate() error {
+	if !f.Stage.IsValid() {
+		return ErrInvalidRentFormStage
+	}
+	return nil
+}
+
 // HistoricalRentTransitionID identifies a historical-rent-transition record.
 type HistoricalRentTransitionID string
 
@@ -75,6 +94,20 @@ type HistoricalRentTransition struct {
 	Preconditions string                     `json:"preconditions"`
 	DrivingForce  string                     `json:"driving_force"`
 	CreatedAt     time.Time                  `json:"created_at"`
+}
+
+// Validate enforces that a transition is well-formed and progressive: both stages
+// must be defined (1..4) and the movement must advance (FromStage < ToStage). Rent
+// evolves one way — labour → product → money → capitalist — so a transition that
+// stays put or regresses is not a historical-rent transition.
+func (tr HistoricalRentTransition) Validate() error {
+	if !tr.FromStage.IsValid() || !tr.ToStage.IsValid() {
+		return ErrInvalidRentFormStage
+	}
+	if tr.FromStage >= tr.ToStage {
+		return ErrRentTransitionNotProgressive
+	}
+	return nil
 }
 
 // SmallPeasantProductionID identifies a small-peasant-production record.

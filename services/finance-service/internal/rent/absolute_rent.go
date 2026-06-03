@@ -113,3 +113,14 @@ func ComputeCompositionRatioBP(constantCapitalBP, variableCapitalBP int64) int64
 func ComputeValuePriceGap(valueLabourMinutes, priceOfProductionLabourMinutes int64) int64 {
 	return valueLabourMinutes - priceOfProductionLabourMinutes
 }
+
+// ComputeIsBelowAverage reports whether agriculture's organic composition is below
+// the social average — the precondition for absolute rent. Agriculture's lower
+// composition (more living labour per unit of capital) makes its products embody
+// more surplus-value than the average, so they sell above the price of production
+// and landed property can levy a rent above average profit. When the composition
+// equals or exceeds the social average there is no such excess, and absolute rent
+// is zero.
+func ComputeIsBelowAverage(compositionRatioBP, socialAverageRatioBP int64) bool {
+	return compositionRatioBP < socialAverageRatioBP
+}
