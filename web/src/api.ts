@@ -1773,10 +1773,10 @@ export const moneyCapitalApi = {
     http<import("./types").InterDepartmentSettlement[]>("/v1/reproduction/inter-department-settlements"),
 
   createApportionment: (input: {
-    total_circulating_money_pence: number;
-    department_i_reserve_pence: number;
-    department_ii_reserve_pence: number;
-    wage_rotation_fund_pence: number;
+    total_social_money_pence: number;
+    dept_i_reserve_pence: number;
+    dept_ii_reserve_pence: number;
+    wage_rotation_pence: number;
     idle_hoard_pence: number;
     period: string;
   }) =>
@@ -1793,7 +1793,7 @@ export const moneyCapitalApi = {
   createDepartmentReserve: (input: {
     department: string;
     reserve_pence: number;
-    purpose: string;
+    reserve_purpose: string;
     period: string;
   }) =>
     http<import("./types").DepartmentMoneyReserve>("/v1/reproduction/department-reserves", {
@@ -1806,7 +1806,7 @@ export const moneyCapitalApi = {
     velocity_per_year_basis_points: number;
     period: string;
   }) =>
-    http<import("./types").CirculatingMoneyMass>("/v1/reproduction/circulating-money-mass", {
+    http<import("./types").CirculatingMoneyMass>("/v1/reproduction/circulating-money-masses", {
       method: "POST",
       body: JSON.stringify(input),
     }),
@@ -1825,8 +1825,8 @@ export const moneyCapitalApi = {
   createInterDepartmentSettlement: (input: {
     from_department: string;
     to_department: string;
-    amount_pence: number;
-    purpose: string;
+    settled_pence: number;
+    settlement_purpose: string;
     period: string;
   }) =>
     http<import("./types").InterDepartmentSettlement>("/v1/reproduction/inter-department-settlements", {

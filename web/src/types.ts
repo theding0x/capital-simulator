@@ -2844,10 +2844,10 @@ export interface RealisationPuzzle {
 
 export interface MoneySupplyApportionment {
   id: string;
-  total_circulating_money_pence: number;
-  department_i_reserve_pence: number;
-  department_ii_reserve_pence: number;
-  wage_rotation_fund_pence: number;
+  total_social_money_pence: number;
+  dept_i_reserve_pence: number;
+  dept_ii_reserve_pence: number;
+  wage_rotation_pence: number;
   idle_hoard_pence: number;
   period: string;
 }
@@ -2856,7 +2856,7 @@ export interface DepartmentMoneyReserve {
   id: string;
   department: string;
   reserve_pence: number;
-  purpose: string;
+  reserve_purpose: string;
   period: string;
 }
 
@@ -2880,8 +2880,8 @@ export interface InterDepartmentSettlement {
   id: string;
   from_department: string;
   to_department: string;
-  amount_pence: number;
-  purpose: string;
+  settled_pence: number;
+  settlement_purpose: string;
   period: string;
 }
 
