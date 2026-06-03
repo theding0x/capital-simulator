@@ -186,3 +186,40 @@ func TestNewTurnoverAnalysisID_Unique(t *testing.T) {
 		t.Errorf("id = %q, want 24 hex chars", a)
 	}
 }
+
+// §Manchester — the 1871 Manchester cotton-spinnery Marx works through: total
+// capital C = £12,500, variable capital advanced v = £318, s' = 153 11/13%
+// (≈ 15385 bp), turning over n ≈ 8½ times a year. The integer TurnoverCount
+// cannot hold a half-turnover, so the model floors Marx's 8½ to 8 — yielding
+// p' = 3131 bp and S' = 123080 bp, the integer-model approximation of Marx's
+// idealised 8½ → ≈ 3327 bp (33.27%) / ≈ 130709 bp (1307.09%). The signature
+// worked example is thereby exercised, with its turnover limitation made
+// explicit rather than silently dropped.
+func TestComputeTurnoverAnalysis_Manchester1871(t *testing.T) {
+	t.Parallel()
+	const (
+		c     TotalCapital               = 12500
+		v     VariableCapitalPerTurnover = 318
+		sRate RateOfSurplusValue         = 15385 // 153 11/13% in basis points
+		n     TurnoverCount              = 8      // Marx's 8½ floored to the integer model
+	)
+	a := ComputeTurnoverAnalysis(c, v, sRate, n)
+
+	if got := a.AnnualProfitRate.BasisPoints; got != 3131 {
+		t.Errorf("annual p' = %d bp, want 3131 (s'·n·v/C = 15385·8·318/12500)", got)
+	}
+	if got := int64(a.AnnualSurplusValueRate); got != 123080 {
+		t.Errorf("annual S' = %d bp, want 123080 (s'·n = 15385·8)", got)
+	}
+	if got := a.SingleTurnoverProfitRate; got != 391 {
+		t.Errorf("single-turnover p' = %d bp, want 391 (s'·v/C)", got)
+	}
+	if got := int64(a.AnnualWages); got != 2544 {
+		t.Errorf("annual wage bill vn = %d, want 2544 (v·n = 318·8)", got)
+	}
+	// The annual rate of profit never exceeds the annual rate of surplus-value,
+	// since v ≤ C (the chapter's bounding invariant).
+	if a.AnnualProfitRate.BasisPoints > int64(a.AnnualSurplusValueRate) {
+		t.Errorf("annual p' %d must not exceed annual S' %d", a.AnnualProfitRate.BasisPoints, a.AnnualSurplusValueRate)
+	}
+}
