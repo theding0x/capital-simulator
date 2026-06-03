@@ -892,6 +892,9 @@ export interface LabourScenarioInput {
   necessary_labour_minutes: number;
   intensity_factor: number;
   productivity_factor: number;
+  // Optional Ch. 25 reserve-army overlay; omit (or leave zero) for full employment.
+  reserve_army_magnitude?: number;
+  reserve_army_workforce_total?: number;
 }
 
 export interface LabourScenarioResult {
@@ -901,6 +904,10 @@ export interface LabourScenarioResult {
   labour_power_value_minutes: number;
   rate_of_surplus_value: number;
   law_constant_daily_value: boolean;
+  // Present only when a reserve-army overlay was supplied. compressed_wage_minutes
+  // is the value of labour-power after the reserve army's downward pull.
+  reserve_army_pressure_bp?: number;
+  compressed_wage_minutes?: number;
 }
 
 // Ch. 18 — Various Formula for the Rate of Surplus-Value
@@ -1000,6 +1007,22 @@ export interface HourlyPriceOfLabour {
 
 export interface NominalWage {
   pence: number;
+}
+
+// Ch. 25 → Ch. 20: stateless nominal-wage compute with an optional reserve-army overlay.
+export interface NominalWageComputeInput {
+  daily_labour_power_value: number;
+  working_day_minutes: number;
+  overtime_hours?: number;
+  overtime_rate_pence?: number;
+  reserve_army_magnitude?: number;
+  reserve_army_workforce_total?: number;
+}
+
+export interface NominalWageComputeResult {
+  nominal_wage: NominalWage;
+  reserve_army_pressure_bp?: number;
+  compressed_wage_pence?: number;
 }
 
 export interface WorkingSession {

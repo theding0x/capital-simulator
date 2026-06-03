@@ -373,3 +373,124 @@ func TestCreateWorkingSession_DerivedFromWageForm(t *testing.T) {
 		t.Errorf("nominal_wage = %d, want 36 (derived from wage form lpv)", resp.NominalWage.Pence)
 	}
 }
+
+// Ch. 25 → Ch. 20: a 12-hour day worth 36p, with half the workforce in the
+// reserve army, pays a nominal 36p but a compressed 18p.
+func TestComputeNominalWage_ReserveArmyCompression(t *testing.T) {
+	t.Parallel()
+
+	h := httpapi.New(store.NewMemory(), nil)
+	body := map[string]any{
+		"daily_labour_power_value":     36,
+		"working_day_minutes":          720,
+		"reserve_army_magnitude":       500000,
+		"reserve_army_workforce_total": 1000000,
+	}
+	b, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/nominal-wage", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	h.ComputeNominalWage(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body: %s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		NominalWage struct {
+			Pence int64 `json:"pence"`
+		} `json:"nominal_wage"`
+		ReserveArmyPressureBP int64 `json:"reserve_army_pressure_bp"`
+		CompressedWagePence   int64 `json:"compressed_wage_pence"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.NominalWage.Pence != 36 {
+		t.Errorf("nominal_wage = %d, want 36", resp.NominalWage.Pence)
+	}
+	if resp.ReserveArmyPressureBP != 5000 {
+		t.Errorf("pressure = %d bp, want 5000", resp.ReserveArmyPressureBP)
+	}
+	if resp.CompressedWagePence != 18 {
+		t.Errorf("compressed_wage_pence = %d, want 18", resp.CompressedWagePence)
+	}
+}
+
+func TestComputeNominalWage_NoOverlay(t *testing.T) {
+	t.Parallel()
+
+	h := httpapi.New(store.NewMemory(), nil)
+	body := map[string]any{"daily_labour_power_value": 36, "working_day_minutes": 720}
+	b, _ := json.Marshal(body)
+	req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/nominal-wage", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	h.ComputeNominalWage(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body: %s", rr.Code, rr.Body.String())
+	}
+	var resp struct {
+		NominalWage struct {
+			Pence int64 `json:"pence"`
+		} `json:"nominal_wage"`
+		CompressedWagePence int64 `json:"compressed_wage_pence"`
+	}
+	if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.NominalWage.Pence != 36 {
+		t.Errorf("nominal_wage = %d, want 36", resp.NominalWage.Pence)
+	}
+	if resp.CompressedWagePence != 0 {
+		t.Errorf("no overlay should omit compression, got %d", resp.CompressedWagePence)
+	}
+}
+
+func TestComputeNominalWage_BadRequest(t *testing.T) {
+	t.Parallel()
+
+	h := httpapi.New(store.NewMemory(), nil)
+
+	t.Run("bad json", func(t *testing.T) {
+		t.Parallel()
+		req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/nominal-wage", bytes.NewReader([]byte("{bad}")))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		h.ComputeNominalWage(rr, req)
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400", rr.Code)
+		}
+	})
+
+	t.Run("reserve army exceeds workforce", func(t *testing.T) {
+		t.Parallel()
+		body := map[string]any{
+			"daily_labour_power_value":     36,
+			"working_day_minutes":          720,
+			"reserve_army_magnitude":       1200000,
+			"reserve_army_workforce_total": 1000000,
+		}
+		b, _ := json.Marshal(body)
+		req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/nominal-wage", bytes.NewReader(b))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		h.ComputeNominalWage(rr, req)
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400", rr.Code)
+		}
+	})
+
+	t.Run("sub-hour working day", func(t *testing.T) {
+		t.Parallel()
+		body := map[string]any{"daily_labour_power_value": 36, "working_day_minutes": 30}
+		b, _ := json.Marshal(body)
+		req := httptest.NewRequest(http.MethodPost, "/v1/time-wages/nominal-wage", bytes.NewReader(b))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+		h.ComputeNominalWage(rr, req)
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("status = %d, want 400", rr.Code)
+		}
+	})
+}

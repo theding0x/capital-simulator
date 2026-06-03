@@ -16,6 +16,11 @@ type labourScenarioRequest struct {
 	NecessaryLabourMinutes int64   `json:"necessary_labour_minutes"`
 	IntensityFactor        float64 `json:"intensity_factor"`
 	ProductivityFactor     float64 `json:"productivity_factor"`
+
+	// Optional Ch. 25 reserve-army overlay. When either is supplied the
+	// response reports the wage compressed below the value of labour-power.
+	ReserveArmyMagnitude      int64 `json:"reserve_army_magnitude,omitempty"`
+	ReserveArmyWorkforceTotal int64 `json:"reserve_army_workforce_total,omitempty"`
 }
 
 type labourScenarioResponse struct {
@@ -25,6 +30,10 @@ type labourScenarioResponse struct {
 	LabourPowerValueMinutes int64   `json:"labour_power_value_minutes"`
 	RateOfSurplusValue      float64 `json:"rate_of_surplus_value"`
 	LawConstantDailyValue   bool    `json:"law_constant_daily_value"`
+
+	// Populated only when a reserve-army overlay was supplied.
+	ReserveArmyPressureBP int64 `json:"reserve_army_pressure_bp,omitempty"`
+	CompressedWageMinutes int64 `json:"compressed_wage_minutes,omitempty"`
 }
 
 func (h *Handler) ComputeLabourScenario(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +70,12 @@ func (h *Handler) ComputeLabourScenario(w http.ResponseWriter, r *http.Request) 
 		Intensity:    intensity,
 		Productivity: productivity,
 	}
+	if req.ReserveArmyMagnitude != 0 || req.ReserveArmyWorkforceTotal != 0 {
+		scenario.Pressure = &agent.ReserveArmyPressure{
+			Magnitude:      req.ReserveArmyMagnitude,
+			WorkforceTotal: req.ReserveArmyWorkforceTotal,
+		}
+	}
 	if err := scenario.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
@@ -73,5 +88,7 @@ func (h *Handler) ComputeLabourScenario(w http.ResponseWriter, r *http.Request) 
 		LabourPowerValueMinutes: int64(out.LabourPowerValueMinutes),
 		RateOfSurplusValue:      out.RateOfSurplusValue,
 		LawConstantDailyValue:   agent.LawConstantDailyValue(scenario.WorkingDay, scenario.Intensity, scenario.Productivity.Factor),
+		ReserveArmyPressureBP:   out.ReserveArmyPressureBP,
+		CompressedWageMinutes:   int64(out.CompressedWageMinutes),
 	})
 }

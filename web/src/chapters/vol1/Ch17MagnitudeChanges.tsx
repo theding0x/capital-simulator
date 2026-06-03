@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { fmtHoursLong } from "../../format";
-import type { LabourScenarioResult } from "../../types";
+import type { LabourScenarioInput, LabourScenarioResult } from "../../types";
 import "./Ch17MagnitudeChanges.css";
 
 const BASELINE = { workingDay: 720, necessary: 480, intensity: 1.0, productivity: 1.0 };
@@ -142,22 +142,29 @@ function MagnitudeCalculator() {
   const [activePreset, setActivePreset] = useState<string>(PRESETS[0].id);
   const [result, setResult] = useState<LabourScenarioResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [reserveMagnitude, setReserveMagnitude] = useState(0);
+  const [reserveWorkforce, setReserveWorkforce] = useState(0);
 
   const recompute = useCallback(async () => {
     setErr(null);
     try {
-      const r = await api.computeLabourScenario({
+      const input: LabourScenarioInput = {
         working_day_minutes: workingDay,
         necessary_labour_minutes: necessary,
         intensity_factor: intensity,
         productivity_factor: productivity,
-      });
+      };
+      if (reserveWorkforce > 0) {
+        input.reserve_army_magnitude = reserveMagnitude;
+        input.reserve_army_workforce_total = reserveWorkforce;
+      }
+      const r = await api.computeLabourScenario(input);
       setResult(r);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
       setResult(null);
     }
-  }, [workingDay, necessary, intensity, productivity]);
+  }, [workingDay, necessary, intensity, productivity, reserveMagnitude, reserveWorkforce]);
 
   useEffect(() => {
     void recompute();
@@ -313,6 +320,46 @@ function MagnitudeCalculator() {
         </div>
       </div>
 
+      <div
+        style={{
+          display: "flex",
+          gap: "1rem",
+          alignItems: "flex-end",
+          flexWrap: "wrap",
+          marginTop: "0.75rem",
+        }}
+      >
+        <span className="small muted" style={{ flexBasis: "100%" }}>
+          Reserve army overlay (Ch. 25): the relative surplus-population bids the
+          wage below the value of labour-power. Leave the workforce at 0 for full
+          employment.
+        </span>
+        <label className="small" style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+          Reserve magnitude
+          <input
+            type="number"
+            min={0}
+            value={reserveMagnitude}
+            onChange={(e) => {
+              setActivePreset("");
+              setReserveMagnitude(Math.max(0, Number(e.target.value)));
+            }}
+          />
+        </label>
+        <label className="small" style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+          Workforce total
+          <input
+            type="number"
+            min={0}
+            value={reserveWorkforce}
+            onChange={(e) => {
+              setActivePreset("");
+              setReserveWorkforce(Math.max(0, Number(e.target.value)));
+            }}
+          />
+        </label>
+      </div>
+
       <form onSubmit={submit} style={{ display: "none" }} aria-hidden="true" />
       {err && <p className="error">{err}</p>}
 
@@ -354,6 +401,18 @@ function MagnitudeCalculator() {
               {result.law_constant_daily_value ? "(Law 1 holds)" : "(Law 1 breaks)"}
             </span>
           </div>
+          {result.compressed_wage_minutes != null && result.compressed_wage_minutes > 0 && (
+            <div className="v1-ch17-rate">
+              <span className="v1-ch17-rate-label">wage ↓</span>
+              <span className="v1-ch17-rate-value">
+                {fmtHoursLong(result.compressed_wage_minutes)}
+              </span>
+              <span style={{ color: "var(--ink-muted)", fontSize: "0.75rem" }}>
+                · reserve army {((result.reserve_army_pressure_bp ?? 0) / 100).toFixed(0)}% pulls the
+                wage below the {fmtHoursLong(result.labour_power_value_minutes)} value of labour-power
+              </span>
+            </div>
+          )}
           {(() => {
             const activeLaw = diagnoseLaw(workingDay, necessary, intensity, productivity);
             return (
