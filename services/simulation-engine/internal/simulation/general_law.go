@@ -158,10 +158,16 @@ type GeneralLawSnapshot struct {
 // RunGeneralLaw simulates the general law of capitalist accumulation.
 // Each period: the organic composition is computed from the current stock;
 // labour demand and the reserve army are derived from it; then surplus-value
-// is produced and reinvested. The productivity_growth field raises the
-// composition ratio used when splitting the next period's surplus, so that
-// new constant capital (machinery) is added at an ever-higher proportion —
-// modelling how mechanisation steadily displaces variable capital.
+// is produced and reinvested.
+//
+// The rising composition is modelled stock-vs-flow (§25.1): new capital (the
+// flow) is invested at a "marginal" composition higher than the existing
+// stock, and the aggregate composition recorded each period is the
+// size-weighted average of old stock + the flows accreted onto it.
+// productivity_growth raises the marginal composition by closing a fraction of
+// the remaining gap to full automation, so it asymptotes below 1.0 by
+// mechanism — never pinned to a fictional ceiling — while labour is steadily,
+// but never wholly, displaced.
 func RunGeneralLaw(s GeneralLawScenario) []GeneralLawSnapshot {
 	if s.Periods <= 0 {
 		return []GeneralLawSnapshot{}
@@ -169,6 +175,12 @@ func RunGeneralLaw(s GeneralLawScenario) []GeneralLawSnapshot {
 	result := make([]GeneralLawSnapshot, s.Periods)
 	c := s.ConstantCapital
 	v := s.VariableCapital
+	// marginal is the composition of *new* capital (the flow), carried across
+	// periods. It starts at the stock's composition and, with productivity
+	// growth, climbs toward — but never reaches — full automation, while the
+	// aggregate recorded each period is the size-weighted average of old stock
+	// and the flows accreted onto it.
+	marginal := ComputeOrganicComposition(CapitalStock{ConstantCapital: c, VariableCapital: v}).Ratio
 	for i := int64(0); i < s.Periods; i++ {
 		oc := ComputeOrganicComposition(CapitalStock{ConstantCapital: c, VariableCapital: v})
 		total := c + v
@@ -185,14 +197,15 @@ func RunGeneralLaw(s GeneralLawScenario) []GeneralLawSnapshot {
 			RelativeProportion: army.RelativeProportion,
 		}
 
-		// New capital's composition ratio rises by ProductivityGrowth each period,
-		// modelling the displacement of labour by machinery.
+		// Productivity growth raises the marginal composition by closing a
+		// fraction of the remaining gap to full automation, so new capital is
+		// invested at an ever-higher composition than the existing stock. The
+		// fraction lies in [0,1], so the marginal asymptotes below 1.0 with no
+		// fictional ceiling, and the aggregate trails it as the weighted average.
+		frac := math.Max(0, math.Min(1, s.ProductivityGrowth))
+		marginal += frac * (1 - marginal)
 		sv := ProduceSurplus(v, s.SurplusRate)
-		newOCRatio := oc.Ratio + s.ProductivityGrowth
-		if newOCRatio >= 1.0 {
-			newOCRatio = 0.99
-		}
-		additional := SplitSurplus(sv, s.AccumulationRate, newOCRatio)
+		additional := SplitSurplus(sv, s.AccumulationRate, marginal)
 		c += additional.Constant
 		v += additional.Variable
 	}

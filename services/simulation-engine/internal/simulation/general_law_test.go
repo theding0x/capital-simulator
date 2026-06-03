@@ -263,3 +263,44 @@ func TestRelativeSurplusPopulation_Total(t *testing.T) {
 		t.Errorf("empty Total() = %d, want 0", got)
 	}
 }
+
+// Ch.25 / issue #89: the additive OC bump + fictional 0.99 clamp is replaced by
+// the stock-vs-flow mechanism, so the organic composition asymptotes toward full
+// automation (1.0) by mechanism instead of freezing at 0.99. Over a long,
+// high-productivity run the aggregate OC rises monotonically and climbs *past*
+// the legacy 0.99 ceiling, yet never reaches 1.0 — and variable capital never
+// collapses to zero, so labour is never fully displaced (the reserve army keeps
+// its place in the circuit rather than the model halting at a fake ceiling).
+func TestRunGeneralLaw_CompositionAsymptotesPastLegacyCeiling(t *testing.T) {
+	t.Parallel()
+	s := simulation.GeneralLawScenario{
+		ConstantCapital:    8000,
+		VariableCapital:    2000,
+		SurplusRate:        1.0,
+		AccumulationRate:   1.0,
+		ProductivityGrowth: 0.5,
+		WagePence:          200,
+		WorkerSupply:       50,
+		Periods:            400,
+	}
+	snaps := simulation.RunGeneralLaw(s)
+	if len(snaps) != 400 {
+		t.Fatalf("len = %d, want 400", len(snaps))
+	}
+	for i, sn := range snaps {
+		if sn.OrganicComposition >= 1.0 {
+			t.Errorf("period %d: OC = %v, must stay below full automation (1.0)", i+1, sn.OrganicComposition)
+		}
+		if sn.VariableCapital <= 0 {
+			t.Errorf("period %d: variable capital = %d, labour must never be fully displaced", i+1, sn.VariableCapital)
+		}
+		if i > 0 && sn.OrganicComposition <= snaps[i-1].OrganicComposition {
+			t.Errorf("period %d: OC %v should strictly exceed prior %v (monotonic rise by mechanism)",
+				i+1, sn.OrganicComposition, snaps[i-1].OrganicComposition)
+		}
+	}
+	final := snaps[len(snaps)-1].OrganicComposition
+	if final <= 0.99 {
+		t.Errorf("final OC = %v; with the clamp removed it must climb past the legacy 0.99 ceiling toward full automation", final)
+	}
+}
