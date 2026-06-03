@@ -65,6 +65,40 @@ All Go services share a single root `go.mod` (`github.com/theding0x/capital-simu
 
 This is the *target*; the initial scaffold ships health endpoints only.
 
+## Money scale across packages
+
+Two value units flow through the simulator:
+
+- **`LabourMinutes int64`** — the canonical labour-substance unit (Vol. I
+  production). One magnitude, one meaning everywhere.
+- **`Pence int64`** — the money-form (Vol. II circulation, Vol. III
+  distribution). It is defined **per package**, and the £→pence scale differs
+  between packages:
+
+  | package | £ → pence |
+  |---|---|
+  | `simulation-engine/internal/circulation` | 100 |
+  | `simulation-engine/internal/composition` | 100 |
+  | `simulation-engine/internal/turnover` | 100 |
+  | `simulation-engine/internal/valorisation` | 240 |
+  | `simulation-engine/internal/reproduction` | ×1000 (Marx scheme figures, e.g. £1000 → 1_000_000) |
+  | `market-service/internal/circulation` | 240 |
+  | `market-service/internal/costs` | 240 |
+
+  Each package is internally consistent, and **no asserted law cross-multiplies
+  pence across packages** — every audited invariant is a ratio, a sum, or a
+  same-package balance, all scale-invariant (verified by `/capital-reflection`).
+
+**Rule:** a `Pence` magnitude is meaningful only within its own package. Never
+compare or arithmetically combine pence from two packages without an explicit
+conversion. Seed fixtures and migrations are append-only, so the historical
+scales are frozen; the safe fix for any future cross-package endpoint is to
+convert at the boundary, not to re-scale existing data.
+
+This package-local money scale — and the absence of a `LabourMinutes ↔ Pence`
+bridge — is the subject of the value-composition umbrella (issue #369); the
+scale inconsistency itself is tracked as #370.
+
 ## Roadmap (chapter-driven)
 
 Each chapter of *Capital* turns into a feature branch and PR. Branches are named `volume-X/chapter-Y` where X ∈ {1, 2, 3}. Approximate mapping per volume:

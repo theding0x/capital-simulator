@@ -21,7 +21,11 @@
 // The three flows constitute a closed money loop: money advanced by Dept II
 // returns to its point of origin by the end of the year.
 //
-// All monetary values are in pence (1 GBP = 240 pence).
+// Monetary values are integer money units local to the reproduction package;
+// the £-scale is package-local and not interchangeable with other packages'
+// pence without conversion. See docs/architecture.md → "Money scale across
+// packages". (The Ch. 20/21 reproduction-scheme fixtures scale Marx's figures
+// ×1000, e.g. £1000 → 1_000_000.)
 package reproduction
 
 import (
