@@ -8,12 +8,18 @@ import (
 )
 
 // profitDivisionRequest is the body for POST /v1/credit/profit-division.
+//
+// total_profit_bp is the average profit being split into interest and profit of
+// enterprise; like the rate of interest, its proper source is the general
+// average rate of profit. Set general_rate_id to read total_profit_bp from a
+// stored general-rate record instead (which then takes precedence).
 type profitDivisionRequest struct {
-	TotalProfitBP          int64                       `json:"total_profit_bp"`
-	InterestBP             int64                       `json:"interest_bp"`
-	OwnershipForm          credit.CapitalOwnershipForm `json:"ownership_form"`
-	WagesLabourMinutes     int64                       `json:"wages_labour_minutes"`
-	MystificationIndex     int64                       `json:"mystification_index"`
+	TotalProfitBP      int64                       `json:"total_profit_bp"`
+	GeneralRateID      string                      `json:"general_rate_id"`
+	InterestBP         int64                       `json:"interest_bp"`
+	OwnershipForm      credit.CapitalOwnershipForm `json:"ownership_form"`
+	WagesLabourMinutes int64                       `json:"wages_labour_minutes"`
+	MystificationIndex int64                       `json:"mystification_index"`
 }
 
 // CreateProfitDivision handles POST /v1/credit/profit-division.
@@ -25,9 +31,15 @@ func (h *Handler) CreateProfitDivision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	totalBP, err := h.resolveAverageProfitRate(r.Context(), req.GeneralRateID, req.TotalProfitBP)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
 	wages := credit.WagesOfSuperintendence{LabourMinutes: req.WagesLabourMinutes}
 	pd, err := credit.NewProfitDivision(
-		req.TotalProfitBP,
+		totalBP,
 		req.InterestBP,
 		req.OwnershipForm,
 		wages,
