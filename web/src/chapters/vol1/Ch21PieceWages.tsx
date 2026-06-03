@@ -134,26 +134,38 @@ function DynamicPiecePrice() {
   }
 
   const latest = points.length > 0 ? points[points.length - 1] : null;
+  // The factor-1.0 baseline anchors the daily wage. The per-piece price is
+  // floor(dailyWage / output) in whole farthings, so the realised wage only
+  // equals the baseline exactly when the factor divides it evenly.
+  const baselineDailyWage =
+    points.length > 0 ? points[0].price_pence * points[0].normal_output : 0;
+  const latestDailyWage = latest
+    ? latest.price_pence * latest.normal_output
+    : 0;
 
   return (
     <section className="ch21-section v1-ch21-dynamic">
       <h2>Dynamic piece-price — productivity rises, the price falls</h2>
       <p className="ch21-explainer">
         “The price of labour … falls in the same proportion as the
-        productiveness of labour rises.” The daily wage is unchanged; as the
+        productiveness of labour rises.” The daily wage is the anchor; as the
         socially-normal output grows, the price per piece falls in inverse
         proportion. The simulation-engine tick scheduler drives this from the
         Ch. 15 factory productivity factor — here you can apply a rise by hand.
-        At 2× productivity the seed Spinning Mill price halves, 6f → 3f.
+        At 2× productivity the seed Spinning Mill price halves, 6f → 3f. (Prices
+        are whole farthings, so factors that don’t divide the {baselineDailyWage}
+        f daily wage evenly round down.)
       </p>
       <PiecePriceSeries points={points} />
       {latest && (
         <p className="v1-ch21-series-current">
           Current: <strong>{latest.price_pence}f</strong> per piece at{" "}
           {latest.productivity_factor}× productivity — {latest.normal_output}{" "}
-          pieces/day, daily wage{" "}
-          <strong>{latest.price_pence * latest.normal_output}f</strong> held
-          constant.
+          pieces/day, implied daily wage{" "}
+          <strong>{latestDailyWage}f</strong>
+          {latestDailyWage === baselineDailyWage
+            ? " (the baseline, held exactly)."
+            : ` (baseline ${baselineDailyWage}f; rounded down in whole farthings).`}
         </p>
       )}
       <form onSubmit={handleReprice} className="ch21-form v1-ch21-dynamic-form">
