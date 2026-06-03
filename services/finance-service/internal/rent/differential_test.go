@@ -12,13 +12,20 @@ import (
 func TestComputeSurplusProfit(t *testing.T) {
 	t.Parallel()
 
-	t.Run("waterfall capital earns surplus-profit", func(t *testing.T) {
+	t.Run("waterfall surplus-profit = general PoP − individual PRICE OF PRODUCTION", func(t *testing.T) {
 		t.Parallel()
-		// General PoP 11500 bp; individual (waterfall-aided) 9000 bp.
-		// Surplus-profit = 11500 − 9000 = 2500.
-		got := ComputeSurplusProfit(11500, 9000)
-		if got != 2500 {
-			t.Errorf("ComputeSurplusProfit(11500,9000) = %d, want 2500", got)
+		// Waterfall factory: individual cost-price £90 (9000) + absolute average
+		// profit £15 (1500) = individual price of production £105 (10500). General
+		// (market-regulating) PoP £115 (11500). Surplus-profit = 11500 − 10500 =
+		// 1000 (£10) — NOT 11500 − 9000 = 2500 (£25), which wrongly fed the bare
+		// cost-price.
+		individualPoP := IndividualPriceOfProduction(9000, 1500)
+		if individualPoP != 10500 {
+			t.Fatalf("IndividualPriceOfProduction(9000,1500) = %d, want 10500", individualPoP)
+		}
+		got := ComputeSurplusProfit(11500, individualPoP)
+		if got != 1000 {
+			t.Errorf("ComputeSurplusProfit(11500, individual PoP 10500) = %d, want 1000 (£10)", got)
 		}
 	})
 
@@ -38,6 +45,33 @@ func TestComputeSurplusProfit(t *testing.T) {
 			t.Errorf("ComputeSurplusProfit(9000,11500) = %d, want -2500", got)
 		}
 	})
+}
+
+// TestSurplusProfitEqualsDifferentialRent pins the Ch. 38 identity (#378): the
+// waterfall surplus-profit (£10 = 1000 pence) equals the differential rent it
+// becomes (£10 = 4800 LabourMinutes), and that rent capitalised at 5% is the
+// £200 (96000 LM) land-price seeded alongside.
+func TestSurplusProfitEqualsDifferentialRent(t *testing.T) {
+	t.Parallel()
+	surplusProfitBP := ComputeSurplusProfit(11500, IndividualPriceOfProduction(9000, 1500)) // 1000
+	const rentLM = 4800                                                                      // £10
+	if !SurplusProfitMatchesRent(surplusProfitBP, rentLM) {
+		t.Errorf("surplus-profit %d pence does not match rent %d LM (should both be £10)", surplusProfitBP, rentLM)
+	}
+	// A DifferentialRent built from the matched magnitudes is internally consistent.
+	dr := DifferentialRent{SurplusProfitBP: surplusProfitBP, AnnualRentLabourMinutes: rentLM}
+	if err := dr.Validate(); err != nil {
+		t.Errorf("DifferentialRent.Validate() = %v, want nil", err)
+	}
+	// The old contradictory pairing (£25 surplus next to £10 rent) is rejected.
+	bad := DifferentialRent{SurplusProfitBP: 2500, AnnualRentLabourMinutes: 4800}
+	if err := bad.Validate(); err == nil {
+		t.Error("DifferentialRent{2500 pence, 4800 LM}.Validate() = nil, want mismatch error")
+	}
+	// And the rent capitalises to the seeded £200 land-price at 5%.
+	if got := ComputeCapitalisedPrice(rentLM, 500); got != 96000 {
+		t.Errorf("ComputeCapitalisedPrice(4800,500) = %d, want 96000 (£200)", got)
+	}
 }
 
 // TestComputeCapitalisedPrice verifies the land-purchase-price formula:

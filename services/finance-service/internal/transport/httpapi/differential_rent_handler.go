@@ -146,6 +146,13 @@ func (h *Handler) CreateDifferentialRent(w http.ResponseWriter, r *http.Request)
 		SurplusProfitBP:         req.SurplusProfitBP,
 		AnnualRentLabourMinutes: req.AnnualRentLabourMinutes,
 	}
+	// Ch. 38 identity: the surplus-profit IS the differential rent it becomes —
+	// reject a rent whose surplus-profit (pence) and annual rent (LabourMinutes)
+	// denote different money-magnitudes.
+	if err := dr.Validate(); err != nil {
+		writeError(w, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
 	saved, err := h.Store.CreateDifferentialRent(r.Context(), dr)
 	if err != nil {
 		writeStoreError(w, err)
