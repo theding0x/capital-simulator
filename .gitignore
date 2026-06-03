@@ -75,6 +75,12 @@ web/ruvector.db-wal
 .swarm/*.db-shm
 .swarm/*.db-wal
 
+# Local agent / swarm tooling state (per-developer runtime, not project
+# source) — these mutate on every tool run. See CLAUDE.md "Local tooling
+# state". Matches .claude-flow/ at any depth, including web/.claude-flow/.
+.claude-flow/
+.swarm/state.json
+
 **/__pycache__/
 
 # Design handoff artefacts (not source, not tracked)
