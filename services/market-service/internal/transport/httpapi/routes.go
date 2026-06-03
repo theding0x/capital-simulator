@@ -79,4 +79,8 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/world-money-transfers", h.CreateWorldMoneyTransfer)
 	s.HandleFunc("GET /v1/world-money-transfers", h.ListWorldMoneyTransfers)
 	s.HandleFunc("GET /v1/circulation/money-required", h.MoneyRequired)
+
+	// Vol. I Ch. 3 — the two-leg C—M—C circuit of simple circulation.
+	s.HandleFunc("POST /v1/circuits", h.CreateCircuit)
+	s.HandleFunc("GET /v1/circuits", h.ListCircuits)
 }
