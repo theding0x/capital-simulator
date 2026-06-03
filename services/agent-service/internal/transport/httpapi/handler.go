@@ -27,6 +27,7 @@ type AgentStore interface {
 	store.WageFormStore
 	store.TimeWageStore
 	store.PieceWageStore
+	store.PiecePricePointStore
 	store.NationalWageStore
 }
 
@@ -42,6 +43,7 @@ type Handler struct {
 	WageFormStore      store.WageFormStore
 	TimeWageStore      store.TimeWageStore
 	PieceWageStore     store.PieceWageStore
+	PiecePricePoints   store.PiecePricePointStore
 	NationalWageStore  store.NationalWageStore
 	Logger             *slog.Logger
 }
@@ -64,6 +66,7 @@ func New(s AgentStore, logger *slog.Logger) *Handler {
 		WageFormStore:      s,
 		TimeWageStore:      s,
 		PieceWageStore:     s,
+		PiecePricePoints:   s,
 		NationalWageStore:  s,
 		Logger:             logger,
 	}

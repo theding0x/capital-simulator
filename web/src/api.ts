@@ -122,6 +122,9 @@ import type {
   ComputePiecePriceResult,
   CreatePieceWageInput,
   PieceWage,
+  PiecePricePoint,
+  RepricePieceWageInput,
+  RepricePieceWageResult,
   CreateSubContractInput,
   SubContract,
   NationalIntensity,
@@ -778,6 +781,18 @@ export const api = {
 
   getPieceWage: (agentID: string) =>
     http<PieceWage>(`/v1/agents/${agentID}/piece-wages`),
+
+  listPieceWages: () => http<PieceWage[]>("/v1/piece-wages"),
+
+  // Ch. 21 (#219): apply a productivity factor and append a price point.
+  repricePieceWage: (agentID: string, input: RepricePieceWageInput) =>
+    http<RepricePieceWageResult>(`/v1/piece-wages/${agentID}/reprice`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  listPiecePricePoints: (agentID: string) =>
+    http<PiecePricePoint[]>(`/v1/piece-wages/${agentID}/price-points`),
 
   createSubContract: (input: CreateSubContractInput) =>
     http<SubContract>("/v1/sub-contracts", {

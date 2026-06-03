@@ -134,8 +134,21 @@ type TimeWageStore interface {
 type PieceWageStore interface {
 	CreatePieceWage(ctx context.Context, pw agent.PieceWage) (agent.PieceWage, error)
 	GetPieceWage(ctx context.Context, agentID agent.AgentID) (agent.PieceWage, error)
+	ListPieceWages(ctx context.Context) ([]agent.PieceWage, error)
 	CreateSubContract(ctx context.Context, sc agent.SubContract) (agent.SubContract, error)
 	GetSubContract(ctx context.Context, id agent.SubContractID) (agent.SubContract, error)
+}
+
+// PiecePricePointStore is the persistence contract for the Ch. 21 piece-price
+// time series (#219): the successive (productivity, price) observations the
+// simulation-engine tick scheduler appends as factory productivity rises.
+type PiecePricePointStore interface {
+	// AppendPiecePricePoint atomically assigns the next per-agent sequence and
+	// stores the point — unless its ProductivityFactor equals the latest
+	// recorded point's (a no-change tick), in which case it returns the existing
+	// latest point with appended=false. The caller leaves ID and Sequence unset.
+	AppendPiecePricePoint(ctx context.Context, p agent.PiecePricePoint) (point agent.PiecePricePoint, appended bool, err error)
+	ListPiecePricePoints(ctx context.Context, agentID agent.AgentID) ([]agent.PiecePricePoint, error)
 }
 
 // NationalWageStore is the persistence contract for Ch. 22 national wage records.

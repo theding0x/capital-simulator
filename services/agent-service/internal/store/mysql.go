@@ -1285,6 +1285,111 @@ func (m *MySQL) GetPieceWage(ctx context.Context, agentID agent.AgentID) (agent.
 	return pw, nil
 }
 
+func (m *MySQL) ListPieceWages(ctx context.Context) ([]agent.PieceWage, error) {
+	const q = `SELECT id, agent_id, wage_form_id, price_pence, normal_output, created_at
+		FROM piece_wages ORDER BY id`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	out := make([]agent.PieceWage, 0)
+	for rows.Next() {
+		var pw agent.PieceWage
+		var id, aid string
+		var wfID sql.NullString
+		if err := rows.Scan(&id, &aid, &wfID, &pw.PricePence, &pw.NormalOutput, &pw.CreatedAt); err != nil {
+			return nil, err
+		}
+		pw.ID = agent.PieceWageID(id)
+		pw.AgentID = agent.AgentID(aid)
+		if wfID.Valid {
+			pw.WageFormID = agent.WageFormID(wfID.String)
+		}
+		out = append(out, pw)
+	}
+	return out, rows.Err()
+}
+
+// AppendPiecePricePoint locks the agent's price series, detects whether the
+// productivity factor actually changed, and appends a new point only when it
+// did — keeping the per-agent sequence and the change-detection atomic.
+func (m *MySQL) AppendPiecePricePoint(ctx context.Context, p agent.PiecePricePoint) (agent.PiecePricePoint, bool, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return agent.PiecePricePoint{}, false, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var last agent.PiecePricePoint
+	var lastID, lastAID string
+	err = tx.QueryRowContext(ctx,
+		`SELECT id, agent_id, sequence_num, productivity_factor, price_pence, normal_output, occurred_at
+		 FROM piece_price_points WHERE agent_id = ? ORDER BY sequence_num DESC LIMIT 1 FOR UPDATE`,
+		string(p.AgentID),
+	).Scan(&lastID, &lastAID, &last.Sequence, &last.ProductivityFactor, &last.PricePence, &last.NormalOutput, &last.OccurredAt)
+	hasLast := true
+	if errors.Is(err, sql.ErrNoRows) {
+		hasLast = false
+	} else if err != nil {
+		return agent.PiecePricePoint{}, false, err
+	}
+	if hasLast {
+		last.ID = agent.PiecePricePointID(lastID)
+		last.AgentID = agent.AgentID(lastAID)
+		if last.ProductivityFactor == p.ProductivityFactor {
+			// No-change tick: leave the series untouched.
+			return last, false, nil
+		}
+		p.Sequence = last.Sequence + 1
+	} else {
+		p.Sequence = 0
+	}
+	if p.ID.IsZero() {
+		p.ID = agent.NewPiecePricePointID()
+	}
+	if p.OccurredAt.IsZero() {
+		p.OccurredAt = m.now().UTC()
+	} else {
+		p.OccurredAt = p.OccurredAt.UTC()
+	}
+	const insertQ = `INSERT INTO piece_price_points
+		(id, agent_id, sequence_num, productivity_factor, price_pence, normal_output, occurred_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	if _, err := tx.ExecContext(ctx, insertQ,
+		string(p.ID), string(p.AgentID), p.Sequence, p.ProductivityFactor,
+		p.PricePence, p.NormalOutput, p.OccurredAt,
+	); err != nil {
+		return agent.PiecePricePoint{}, false, err
+	}
+	if err := tx.Commit(); err != nil {
+		return agent.PiecePricePoint{}, false, err
+	}
+	return p, true, nil
+}
+
+func (m *MySQL) ListPiecePricePoints(ctx context.Context, agentID agent.AgentID) ([]agent.PiecePricePoint, error) {
+	const q = `SELECT id, agent_id, sequence_num, productivity_factor, price_pence, normal_output, occurred_at
+		FROM piece_price_points WHERE agent_id = ? ORDER BY sequence_num`
+	rows, err := m.db.QueryContext(ctx, q, string(agentID))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	out := make([]agent.PiecePricePoint, 0)
+	for rows.Next() {
+		var p agent.PiecePricePoint
+		var id, aid string
+		if err := rows.Scan(&id, &aid, &p.Sequence, &p.ProductivityFactor, &p.PricePence, &p.NormalOutput, &p.OccurredAt); err != nil {
+			return nil, err
+		}
+		p.ID = agent.PiecePricePointID(id)
+		p.AgentID = agent.AgentID(aid)
+		out = append(out, p)
+	}
+	return out, rows.Err()
+}
+
 func (m *MySQL) CreateSubContract(ctx context.Context, sc agent.SubContract) (agent.SubContract, error) {
 	if err := sc.Validate(); err != nil {
 		return agent.SubContract{}, err
