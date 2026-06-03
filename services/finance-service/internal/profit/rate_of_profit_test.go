@@ -81,7 +81,7 @@ func TestComputeProfitRateAnalysis_MystificationFormula(t *testing.T) {
 	}
 	for _, tc := range cases {
 		a := ComputeProfitRateAnalysis(tc.c, tc.v, tc.s)
-		want := MystificationDegree((int64(a.SurplusValueRate) - a.ProfitRate.BasisPoints) * basisPoints / int64(a.SurplusValueRate))
+		want := MystificationDegree(roundHalfUp((int64(a.SurplusValueRate)-a.ProfitRate.BasisPoints)*basisPoints, int64(a.SurplusValueRate)))
 		if a.Mystification != want {
 			t.Errorf("c=%d v=%d s=%d: mystification = %d, want %d", tc.c, tc.v, tc.s, a.Mystification, want)
 		}
@@ -109,6 +109,38 @@ func TestComputeRateOfSurplusValue_ZeroVariable(t *testing.T) {
 	a := ComputeProfitRateAnalysis(400, 0, 0)
 	if a.SurplusValueRate != 0 || a.Mystification != 0 {
 		t.Errorf("with v=0: s'=%d myst=%d, want 0/0", a.SurplusValueRate, a.Mystification)
+	}
+}
+
+// The rate of profit rounds half up, matching the avgprofit general rate that
+// bounds the rate of interest in Part V — not truncating (the old behaviour) and
+// not ceiling. Marx's worked rates are whole percentages, so these fixtures are
+// deliberately chosen off-grid to land either side of the .5 boundary.
+//
+//	s=1, C=7  → 1·10000/7 = 1428.57 → 1429 (truncation gives 1428)
+//	s=1, C=12 →  1·10000/12 =  833.33 →  833 (ceiling gives 834)
+func TestComputeRateOfProfit_RoundsHalfUp(t *testing.T) {
+	t.Parallel()
+	if got := ComputeRateOfProfit(1, 6, 1).BasisPoints; got != 1429 {
+		t.Errorf("p'(s=1,c=6,v=1) = %d bp, want 1429 (half up, not 1428 truncated)", got)
+	}
+	if got := ComputeRateOfProfit(1, 11, 1).BasisPoints; got != 833 {
+		t.Errorf("p'(s=1,c=11,v=1) = %d bp, want 833 (half up, not 834 ceiled)", got)
+	}
+}
+
+// The rate of surplus-value rounds half up by the same rule as the rate of
+// profit, so the two rates stay on the same rounding convention.
+//
+//	s=1, v=7  → 1·10000/7 = 1428.57 → 1429 (truncation gives 1428)
+//	s=1, v=12 →  1·10000/12 =  833.33 →  833 (ceiling gives 834)
+func TestComputeRateOfSurplusValue_RoundsHalfUp(t *testing.T) {
+	t.Parallel()
+	if got := ComputeRateOfSurplusValue(1, 7); got != 1429 {
+		t.Errorf("s'(s=1,v=7) = %d bp, want 1429 (half up, not 1428 truncated)", got)
+	}
+	if got := ComputeRateOfSurplusValue(1, 12); got != 833 {
+		t.Errorf("s'(s=1,v=12) = %d bp, want 833 (half up, not 834 ceiled)", got)
 	}
 }
 
