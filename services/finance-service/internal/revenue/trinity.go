@@ -182,6 +182,14 @@ func FetishOvershootBP(streams []RevenueStream) int64 {
 // surplus-value: wages carry no surplus-value and the apparent-revenue overshoot
 // above v + s equals the ground-rent (profit + rent partition one s). Returns
 // ErrSurplusNotConserved otherwise.
+//
+// Canonical reading of §48 (issue #403): the apparent side shows capital's full
+// pre-rent yield (20) and ground-rent (3) as independent streams, so total
+// apparent revenue (103) deliberately overshoots newly-created value v + s (100)
+// by exactly the rent. The conserved invariant is therefore this overshoot
+// identity — FetishOvershoot == Rent — not the naive "apparent <= v + s", which
+// the fetish is precisely designed to violate. (The actual side still conserves:
+// Σ ActualSource = profit 17 + rent 3 = s = 20; see #377 / migration 00105.)
 func CheckConservation(streams []RevenueStream) error {
 	if FetishOvershootBP(streams) != RentBP(streams) {
 		return ErrSurplusNotConserved
