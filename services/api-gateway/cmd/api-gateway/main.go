@@ -86,6 +86,13 @@ func main() {
 	srv.Handle("/v1/transport-legs", marketProxy)
 	srv.Handle("/v1/transport-legs/{rest...}", marketProxy)
 
+	// Vol. II Ch. 14 — Circulation-time refinements: distance-lag relations and
+	// circulation-speed improvements (POST + GET) → market-service. The
+	// turnover-time sub-paths added by this chapter are already covered by the
+	// /v1/turnover-time prefixes above.
+	srv.Handle("/v1/distance-lag", marketProxy)
+	srv.Handle("/v1/circulation-speed-improvements", marketProxy)
+
 	// Reverse-proxy routes to agent-service.
 	agentURL := getenv("AGENT_SERVICE_URL", "http://agent-service:8082")
 	agentProxy, err := proxy.New(agentURL, logger)
