@@ -134,6 +134,22 @@ func TestFarmTenure_Validate_NegativeRent(t *testing.T) {
 	}
 }
 
+// Ch. 29 (L-H2): the tenant forms evolve one way — bailiff → metayer →
+// capitalist-farmer. Order() makes that historical sequence strictly comparable.
+func TestTenantForm_Order(t *testing.T) {
+	t.Parallel()
+	if !(simulation.TenantFormBailiff.Order() < simulation.TenantFormMetayer.Order() &&
+		simulation.TenantFormMetayer.Order() < simulation.TenantFormCapitalistFarmer.Order()) {
+		t.Errorf("tenant forms not strictly ordered: bailiff=%d metayer=%d capitalist=%d",
+			simulation.TenantFormBailiff.Order(),
+			simulation.TenantFormMetayer.Order(),
+			simulation.TenantFormCapitalistFarmer.Order())
+	}
+	if got := simulation.TenantForm("unknown").Order(); got != 0 {
+		t.Errorf("unknown form Order() = %d, want 0", got)
+	}
+}
+
 func TestNewFarmTenureID_Unique(t *testing.T) {
 	t.Parallel()
 	id1 := simulation.NewFarmTenureID()

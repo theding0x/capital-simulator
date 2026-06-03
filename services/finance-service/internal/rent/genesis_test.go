@@ -64,6 +64,51 @@ func TestComputeTotalIncome(t *testing.T) {
 	}
 }
 
+// ── Stage ordering & Validate guards ──────────────────────────────────────────
+
+// Rent forms are historically ordered labour(1) < product(2) < money(3) <
+// capitalist(4); the capitalist stage is terminal.
+func TestRentFormStage_Ordering(t *testing.T) {
+	t.Parallel()
+	if !(RentFormLabour < RentFormProduct &&
+		RentFormProduct < RentFormMoney &&
+		RentFormMoney < RentFormCapitalist) {
+		t.Error("rent form stages are not strictly ordered 1<2<3<4")
+	}
+	if RentFormCapitalist != 4 {
+		t.Errorf("capitalist ground-rent stage = %d, want 4 (terminal)", RentFormCapitalist)
+	}
+}
+
+// RentHistoricalForm.Validate accepts defined stages and rejects out-of-range ones.
+func TestRentHistoricalForm_Validate(t *testing.T) {
+	t.Parallel()
+	if err := (RentHistoricalForm{Stage: RentFormMoney}).Validate(); err != nil {
+		t.Errorf("money-rent form should validate, got %v", err)
+	}
+	if err := (RentHistoricalForm{Stage: 0}).Validate(); err != ErrInvalidRentFormStage {
+		t.Errorf("stage 0 → %v, want ErrInvalidRentFormStage", err)
+	}
+}
+
+// HistoricalRentTransition.Validate enforces a strictly progressive, well-formed
+// transition: forward steps pass; stationary, regressive, and out-of-range fail.
+func TestHistoricalRentTransition_Validate(t *testing.T) {
+	t.Parallel()
+	if err := (HistoricalRentTransition{FromStage: RentFormLabour, ToStage: RentFormMoney}).Validate(); err != nil {
+		t.Errorf("progressive transition should validate, got %v", err)
+	}
+	if err := (HistoricalRentTransition{FromStage: RentFormMoney, ToStage: RentFormMoney}).Validate(); err != ErrRentTransitionNotProgressive {
+		t.Errorf("stationary transition → %v, want ErrRentTransitionNotProgressive", err)
+	}
+	if err := (HistoricalRentTransition{FromStage: RentFormCapitalist, ToStage: RentFormLabour}).Validate(); err != ErrRentTransitionNotProgressive {
+		t.Errorf("regressive transition → %v, want ErrRentTransitionNotProgressive", err)
+	}
+	if err := (HistoricalRentTransition{FromStage: 0, ToStage: RentFormMoney}).Validate(); err != ErrInvalidRentFormStage {
+		t.Errorf("invalid from-stage → %v, want ErrInvalidRentFormStage", err)
+	}
+}
+
 // ── ID constructors ───────────────────────────────────────────────────────────
 
 // TestCh47NewIDsDistinct: each New*ID returns a 24-char hex string and two

@@ -179,3 +179,30 @@ func TestRunExtendedReproduction_ZeroPeriods(t *testing.T) {
 		t.Errorf("len = %d, want 0", len(cycles))
 	}
 }
+
+// Ch. 24 (L-W3, cumulative growth): the Abraham-begat-Isaac genealogy's per-period
+// additional capital shrinks (each layer smaller than its parent), but the
+// *cumulative* capital reinvested grows monotonically while any surplus is
+// accumulated (accumRate > 0). Sum the reinvested capital across periods and assert
+// the running total strictly increases — the growth the per-period genealogy hides.
+func TestRunExtendedReproduction_CumulativeCapitalGrows(t *testing.T) {
+	t.Parallel()
+	initial := simulation.CapitalStock{ConstantCapital: 8000, VariableCapital: 2000}
+	cycles := simulation.RunExtendedReproduction(initial, 1.0, 1.0, 0.8, 3)
+	if len(cycles) != 3 {
+		t.Fatalf("len = %d, want 3", len(cycles))
+	}
+	var cumulative int64
+	prev := int64(-1)
+	for _, c := range cycles {
+		reinvested := int64(c.NewConstant) + int64(c.NewVariable)
+		if reinvested <= 0 {
+			t.Fatalf("period %d reinvested %d, want > 0 while accumulating", c.Period, reinvested)
+		}
+		cumulative += reinvested
+		if cumulative <= prev {
+			t.Errorf("period %d: cumulative capital %d did not grow past %d", c.Period, cumulative, prev)
+		}
+		prev = cumulative
+	}
+}
