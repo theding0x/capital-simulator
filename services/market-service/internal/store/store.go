@@ -120,6 +120,10 @@ type MoneyCh3Store interface {
 	// WorldMoneyTransfer operations.
 	CreateWorldMoneyTransfer(ctx context.Context, t market.WorldMoneyTransfer) (market.WorldMoneyTransfer, error)
 	ListWorldMoneyTransfers(ctx context.Context) ([]market.WorldMoneyTransfer, error)
+
+	// Circuit operations — the two-leg C—M—C movement of simple circulation.
+	CreateCircuit(ctx context.Context, c market.Circuit) (market.Circuit, error)
+	ListCircuits(ctx context.Context) ([]market.Circuit, error)
 }
 
 // Store is the persistence contract for market-service domain records.

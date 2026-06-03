@@ -74,6 +74,7 @@ func main() {
 	srv.Handle("/v1/world-money-transfers", marketProxy)
 	srv.Handle("/v1/world-money-transfers/{rest...}", marketProxy)
 	srv.Handle("/v1/circulation/money-required", marketProxy)
+	srv.Handle("/v1/circuits", marketProxy)
 
 	// Vol. II Ch. 6 — Costs of Circulation → market-service
 	srv.Handle("/v1/circulation-costs", marketProxy)

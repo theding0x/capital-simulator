@@ -33,6 +33,11 @@ type createWorldMoneyTransferRequest struct {
 	GoldMg     int64          `json:"gold_mg"`
 }
 
+type createCircuitRequest struct {
+	SaleLeg     market.CircuitLeg `json:"sale_leg"`
+	PurchaseLeg market.CircuitLeg `json:"purchase_leg"`
+}
+
 // --- Hoard handlers ---------------------------------------------------------
 
 // CreateHoard handles POST /v1/hoards.
@@ -161,6 +166,45 @@ func (h *Handler) ListWorldMoneyTransfers(w http.ResponseWriter, r *http.Request
 	}
 	if items == nil {
 		items = []market.WorldMoneyTransfer{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+// --- Circuit handlers -------------------------------------------------------
+
+// CreateCircuit handles POST /v1/circuits — record a two-leg C—M—C circuit.
+// A circuit whose legs are not equivalents (sale value != purchase value) is
+// rejected with 422, surfacing the Ch. 3 simple-circulation invariant.
+func (h *Handler) CreateCircuit(w http.ResponseWriter, r *http.Request) {
+	var req createCircuitRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	created, err := h.Store.CreateCircuit(r.Context(), market.Circuit{
+		SaleLeg:     req.SaleLeg,
+		PurchaseLeg: req.PurchaseLeg,
+	})
+	if err != nil {
+		if errors.Is(err, market.ErrCircuitNotEquivalent) {
+			writeError(w, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusCreated, created)
+}
+
+// ListCircuits handles GET /v1/circuits.
+func (h *Handler) ListCircuits(w http.ResponseWriter, r *http.Request) {
+	items, err := h.Store.ListCircuits(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if items == nil {
+		items = []market.Circuit{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }

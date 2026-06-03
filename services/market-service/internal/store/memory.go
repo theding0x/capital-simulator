@@ -52,10 +52,11 @@ type Memory struct {
 	transportTariffs    map[costs.CommodityID]costs.TransportTariff
 	transportLegs       map[costs.TransportLegID]costs.TransportLeg
 
-	// Vol. I Ch. 3 — money-form records (hoards, payment obligations, world-money transfers).
+	// Vol. I Ch. 3 — money-form records (hoards, payment obligations, world-money transfers, C—M—C circuits).
 	hoards              map[market.HoardID]market.Hoard
 	paymentObligations  map[market.PaymentObligationID]market.PaymentObligation
 	worldMoneyTransfers map[market.WorldMoneyTransferID]market.WorldMoneyTransfer
+	circuits            map[market.CircuitID]market.Circuit
 }
 
 // NewMemory returns an empty in-memory store.
@@ -93,6 +94,7 @@ func NewMemory() *Memory {
 		hoards:              make(map[market.HoardID]market.Hoard),
 		paymentObligations:  make(map[market.PaymentObligationID]market.PaymentObligation),
 		worldMoneyTransfers: make(map[market.WorldMoneyTransferID]market.WorldMoneyTransfer),
+		circuits:            make(map[market.CircuitID]market.Circuit),
 	}
 }
 

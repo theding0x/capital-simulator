@@ -137,3 +137,35 @@ func (m *Memory) ListWorldMoneyTransfers(_ context.Context) ([]market.WorldMoney
 	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt.Before(out[j].CreatedAt) })
 	return out, nil
 }
+
+// --- Circuit ----------------------------------------------------------------
+
+func (m *Memory) CreateCircuit(_ context.Context, c market.Circuit) (market.Circuit, error) {
+	if err := c.Validate(); err != nil {
+		return market.Circuit{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if c.ID.IsZero() {
+		c.ID = market.NewCircuitID()
+	}
+	if _, exists := m.circuits[c.ID]; exists {
+		return market.Circuit{}, ErrAlreadyExists
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+	m.circuits[c.ID] = c
+	return c, nil
+}
+
+func (m *Memory) ListCircuits(_ context.Context) ([]market.Circuit, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]market.Circuit, 0, len(m.circuits))
+	for _, c := range m.circuits {
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt.Before(out[j].CreatedAt) })
+	return out, nil
+}

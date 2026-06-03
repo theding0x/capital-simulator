@@ -218,3 +218,85 @@ func (m *MySQL) ListWorldMoneyTransfers(ctx context.Context) ([]market.WorldMone
 	}
 	return out, rows.Err()
 }
+
+// --- Circuit ----------------------------------------------------------------
+
+func (m *MySQL) CreateCircuit(ctx context.Context, c market.Circuit) (market.Circuit, error) {
+	if err := c.Validate(); err != nil {
+		return market.Circuit{}, err
+	}
+	if c.ID.IsZero() {
+		c.ID = market.NewCircuitID()
+	}
+	if c.CreatedAt.IsZero() {
+		c.CreatedAt = m.now().UTC()
+	}
+	const q = `INSERT INTO circuits
+		(id, sale_kind, sale_commodity_id, sale_money_id, sale_owner_id, sale_value,
+		 purchase_kind, purchase_commodity_id, purchase_money_id, purchase_owner_id, purchase_value, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	if _, err := m.db.ExecContext(ctx, q,
+		string(c.ID),
+		string(c.SaleLeg.Kind), string(c.SaleLeg.CommodityID), string(c.SaleLeg.MoneyID), string(c.SaleLeg.OwnerID), int64(c.SaleLeg.Value),
+		string(c.PurchaseLeg.Kind), string(c.PurchaseLeg.CommodityID), string(c.PurchaseLeg.MoneyID), string(c.PurchaseLeg.OwnerID), int64(c.PurchaseLeg.Value),
+		c.CreatedAt,
+	); err != nil {
+		if isDuplicate(err) {
+			return market.Circuit{}, ErrAlreadyExists
+		}
+		return market.Circuit{}, err
+	}
+	return c, nil
+}
+
+func (m *MySQL) ListCircuits(ctx context.Context) ([]market.Circuit, error) {
+	const q = `SELECT id, sale_kind, sale_commodity_id, sale_money_id, sale_owner_id, sale_value,
+		purchase_kind, purchase_commodity_id, purchase_money_id, purchase_owner_id, purchase_value, created_at
+		FROM circuits ORDER BY created_at ASC`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []market.Circuit
+	for rows.Next() {
+		c, err := scanCircuit(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func scanCircuit(r rowScanner) (market.Circuit, error) {
+	var c market.Circuit
+	var idStr string
+	var saleKind, saleCommodity, saleMoney, saleOwner string
+	var saleValue int64
+	var purchaseKind, purchaseCommodity, purchaseMoney, purchaseOwner string
+	var purchaseValue int64
+	if err := r.Scan(&idStr,
+		&saleKind, &saleCommodity, &saleMoney, &saleOwner, &saleValue,
+		&purchaseKind, &purchaseCommodity, &purchaseMoney, &purchaseOwner, &purchaseValue,
+		&c.CreatedAt,
+	); err != nil {
+		return market.Circuit{}, err
+	}
+	c.ID = market.CircuitID(idStr)
+	c.SaleLeg = market.CircuitLeg{
+		Kind:        market.LegKind(saleKind),
+		CommodityID: market.CommodityID(saleCommodity),
+		MoneyID:     market.CommodityID(saleMoney),
+		OwnerID:     market.OwnerID(saleOwner),
+		Value:       market.RealisedValue(saleValue),
+	}
+	c.PurchaseLeg = market.CircuitLeg{
+		Kind:        market.LegKind(purchaseKind),
+		CommodityID: market.CommodityID(purchaseCommodity),
+		MoneyID:     market.CommodityID(purchaseMoney),
+		OwnerID:     market.OwnerID(purchaseOwner),
+		Value:       market.RealisedValue(purchaseValue),
+	}
+	return c, nil
+}
