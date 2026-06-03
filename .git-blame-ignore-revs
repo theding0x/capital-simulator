@@ -1,0 +1,10 @@
+# Revisions git blame should skip (see `git config blame.ignoreRevsFile`).
+#
+# Opt in once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub's web blame view honors this file automatically — no setup needed.
+
+# chore: add .gitattributes and normalize line endings to LF (#251)
+# Purely CRLF→LF across ~285 files, zero content changes — blame should
+# attribute each line to the commit that actually wrote it, not this one.
+1da45b6c8f390af8f8411cf1ec0d8ce46f15556d
