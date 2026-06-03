@@ -17,7 +17,11 @@
 //
 // Balance check: I.v(1000) + ΔvI(100) + consumed_I(500) = 1600 = II.c(1500) + ΔcII(100). Balanced.
 //
-// All monetary values are in pence (1 GBP = 240 pence).
+// Monetary values are integer money units local to the reproduction package;
+// the £-scale is package-local and not interchangeable with other packages'
+// pence without conversion. See docs/architecture.md → "Money scale across
+// packages". The Ch. 20/21 reproduction-scheme fixtures scale Marx's figures
+// ×1000 (e.g. £1000 → 1_000_000).
 // Accumulation rates are in basis points (10000 bps = 100%).
 package reproduction
 
