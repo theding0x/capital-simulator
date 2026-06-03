@@ -4,6 +4,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -13,13 +14,20 @@ import (
 	"github.com/theding0x/capital-simulator/services/market-service/internal/store"
 )
 
-// Handler bundles the dependencies for the HTTP layer.
-type Handler struct {
-	Store  store.Store
-	Logger *slog.Logger
+// ExchangeNotifier is told of completed exchanges so the counterparty's circuit
+// leg can be closed in agent-service (#216). A nil Notifier disables it.
+type ExchangeNotifier interface {
+	NotifyExchange(ctx context.Context, e market.Exchange) error
 }
 
-// New constructs a Handler.
+// Handler bundles the dependencies for the HTTP layer.
+type Handler struct {
+	Store    store.Store
+	Notifier ExchangeNotifier
+	Logger   *slog.Logger
+}
+
+// New constructs a Handler. The notifier is optional and set by the caller.
 func New(s store.Store, logger *slog.Logger) *Handler {
 	if logger == nil {
 		logger = slog.Default()
@@ -186,6 +194,13 @@ func (h *Handler) CreateExchange(w http.ResponseWriter, r *http.Request) {
 		}
 		writeStoreError(w, err)
 		return
+	}
+	// Best-effort cross-service settlement: close the counterparty's circuit leg
+	// in agent-service (#216). A failure here must not fail the recorded exchange.
+	if h.Notifier != nil {
+		if err := h.Notifier.NotifyExchange(r.Context(), created); err != nil {
+			h.Logger.Warn("failed to notify agent-service of exchange", "exchange_id", created.ID, "err", err)
+		}
 	}
 	writeJSON(w, http.StatusCreated, created)
 }

@@ -14,6 +14,7 @@ import type {
   SplitSurplusInput,
   SplitSurplusResult,
   Agent,
+  AgentCircuitLeg,
   CapitalCircuit,
   CapitalCompositionResult,
   Circuit,
@@ -372,6 +373,9 @@ export const api = {
 
   listAgentCircuits: (agentId: string) =>
     http<{ items: CapitalCircuit[] }>(`/v1/agents/${agentId}/circuits`).then((r) => r.items),
+
+  listAgentCircuitLegs: (agentId: string) =>
+    http<AgentCircuitLeg[]>(`/v1/agents/${agentId}/circuit-legs`),
 
   reinvestAgent: (agentId: string, commodityId: string, mReturned: number) =>
     http<CapitalCircuit>(`/v1/agents/${agentId}/reinvest`, {

@@ -18,6 +18,7 @@ import (
 type AgentStore interface {
 	store.Store
 	store.CircuitStore
+	store.CircuitLegStore
 	store.LabourPowerStore
 	store.LabourProcessStore
 	store.WorkingDayStore
@@ -32,6 +33,7 @@ type AgentStore interface {
 type Handler struct {
 	Store              store.Store
 	CircuitStore       store.CircuitStore
+	CircuitLegStore    store.CircuitLegStore
 	LabourPowerStore   store.LabourPowerStore
 	LabourProcessStore store.LabourProcessStore
 	WorkingDayStore    store.WorkingDayStore
@@ -53,6 +55,7 @@ func New(s AgentStore, logger *slog.Logger) *Handler {
 	return &Handler{
 		Store:              s,
 		CircuitStore:       s,
+		CircuitLegStore:    s,
 		LabourPowerStore:   s,
 		LabourProcessStore: s,
 		WorkingDayStore:    s,

@@ -13,6 +13,7 @@ import (
 	"github.com/theding0x/capital-simulator/pkg/httpx"
 	applog "github.com/theding0x/capital-simulator/pkg/log"
 	pmysql "github.com/theding0x/capital-simulator/pkg/mysql"
+	"github.com/theding0x/capital-simulator/services/market-service/internal/notify"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/store"
 	"github.com/theding0x/capital-simulator/services/market-service/internal/transport/httpapi"
 )
@@ -40,7 +41,9 @@ func main() {
 	addr := getenv("SERVICE_ADDR", ":8083")
 	srv := httpx.New(httpx.Config{Addr: addr}, logger)
 
-	httpapi.Register(srv, httpapi.New(st, logger))
+	h := httpapi.New(st, logger)
+	h.Notifier = notify.New(getenv("AGENT_SERVICE_URL", "http://agent-service:8082"))
+	httpapi.Register(srv, h)
 	srv.MarkReady(true)
 
 	if err := srv.Run(ctx); err != nil {
@@ -86,4 +89,3 @@ func getenv(key, fallback string) string {
 	}
 	return fallback
 }
-
