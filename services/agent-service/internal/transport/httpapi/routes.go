@@ -68,6 +68,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/agents/{id}/piece-wages", h.CreatePieceWage)
 	s.HandleFunc("GET /v1/agents/{id}/piece-wages", h.GetPieceWage)
 	s.HandleFunc("POST /v1/piece-price", h.ComputePiecePrice)
+	s.HandleFunc("GET /v1/piece-wages", h.ListPieceWages)
+	s.HandleFunc("POST /v1/piece-wages/{agentID}/reprice", h.RepricePieceWage)
+	s.HandleFunc("GET /v1/piece-wages/{agentID}/price-points", h.ListPiecePricePoints)
 	s.HandleFunc("POST /v1/sub-contracts", h.CreateSubContract)
 	s.HandleFunc("GET /v1/sub-contracts/{id}", h.GetSubContract)
 	// Ch. 22 — National Differences in Wages

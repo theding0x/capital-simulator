@@ -17,6 +17,7 @@ import (
 	applog "github.com/theding0x/capital-simulator/pkg/log"
 	pmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/piecewage"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/productivity"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/transport/httpapi"
@@ -80,16 +81,20 @@ func main() {
 
 	agentURL := getenv("AGENT_SERVICE_URL", "http://agent-service:8082")
 	pf := productivity.New(agentURL, st)
+	repricer := piecewage.New(agentURL)
 
 	// Issue #214 — the automatic tick scheduler. It advances every persisted
 	// factory (Ch. 15) and reproduction scheme (Ch. 20/21) one period per pass
 	// on a fixed interval, writing one engine_ticks audit row per pass.
 	// Operator-controlled via POST /v1/engine/start and /stop; set
 	// SIM_TICK_AUTOSTART=true to start it on boot. It is stopped gracefully
-	// after the HTTP server drains on SIGTERM.
+	// after the HTTP server drains on SIGTERM. The piece-price ticker (#219)
+	// turns rising Ch. 15 factory productivity into falling Ch. 21 piece prices
+	// by repricing every piece-wage in agent-service each pass.
 	scheduler := engine.NewScheduler(tickInterval(), []engine.Ticker{
 		engine.NewFactoryTicker(st),
 		engine.NewReproductionTicker(st),
+		engine.NewPiecePriceTicker(engine.NewFactoryProductivitySource(st), repricer),
 	}, st, logger)
 
 	srv.HandleFunc("/v1/sim/status", func(w http.ResponseWriter, _ *http.Request) {

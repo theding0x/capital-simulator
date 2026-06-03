@@ -139,6 +139,8 @@ func main() {
 
 	// Ch. 21 — piece-wage routes proxy to agent-service
 	srv.Handle("/v1/piece-price", agentProxy)
+	srv.Handle("/v1/piece-wages", agentProxy)
+	srv.Handle("/v1/piece-wages/{rest...}", agentProxy)
 	srv.Handle("/v1/sub-contracts", agentProxy)
 	srv.Handle("/v1/sub-contracts/{rest...}", agentProxy)
 	// Ch. 22 — National Differences in Wages

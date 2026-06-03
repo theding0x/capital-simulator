@@ -244,3 +244,65 @@
   font-size: 0.8rem;
   color: var(--gold);
 }
+
+/* Ch. 21 (#219) — dynamic piece-price series */
+.v1-ch21-dynamic {
+  border-left: 3px solid var(--gold);
+}
+
+.v1-ch21-series {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin: 1rem 0;
+}
+
+.v1-ch21-series-svg {
+  width: 320px;
+  max-width: 100%;
+  background: var(--surface-raised);
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.v1-ch21-series-line {
+  stroke: var(--red);
+  stroke-width: 2;
+}
+
+.v1-ch21-series-dot {
+  fill: var(--gold);
+}
+
+.v1-ch21-series-table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.v1-ch21-series-table th,
+.v1-ch21-series-table td {
+  border: 1px solid var(--lead-dim);
+  padding: 0.25rem 0.6rem;
+  text-align: right;
+}
+
+.v1-ch21-series-table th {
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.v1-ch21-series-empty {
+  color: var(--ink-muted);
+  font-style: italic;
+  margin: 1rem 0;
+}
+
+.v1-ch21-series-current {
+  margin: 0.5rem 0 1rem;
+  color: var(--ink-muted);
+}
+
+.v1-ch21-dynamic-form {
+  align-items: flex-end;
+}

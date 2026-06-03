@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api";
 import type {
   ComputePiecePriceResult,
+  PiecePricePoint,
   PieceWage,
   SubContract,
 } from "../../types";
@@ -22,6 +23,168 @@ function PieceWageInsight() {
         pockets the difference. The piece-wage form hides this gap by appearing
         to pay for the product itself, as if no time had been bought at all.
       </p>
+    </section>
+  );
+}
+
+// The seed Spinning Mill worker (agent migration 00019/00031). Its piece-wage
+// baseline is 6 farthings at 24 pieces (144f implied daily wage).
+const SPINNING_MILL_AGENT_ID = "5eed000000000000001900ff";
+
+function PiecePriceSeries({ points }: { points: PiecePricePoint[] }) {
+  if (points.length === 0) {
+    return (
+      <p className="v1-ch21-series-empty">
+        No productivity ticks recorded yet — apply a productivity rise to begin
+        the series.
+      </p>
+    );
+  }
+  const W = 320;
+  const H = 140;
+  const pad = 24;
+  const maxPrice = Math.max(...points.map((p) => p.price_pence), 1);
+  const x = (i: number) =>
+    points.length === 1 ? W / 2 : pad + (i / (points.length - 1)) * (W - 2 * pad);
+  const y = (price: number) => pad + (1 - price / maxPrice) * (H - 2 * pad);
+  return (
+    <div className="v1-ch21-series">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="v1-ch21-series-svg"
+        role="img"
+        aria-label="Price per piece falling as productivity rises"
+      >
+        <polyline
+          className="v1-ch21-series-line"
+          fill="none"
+          points={points.map((p, i) => `${x(i)},${y(p.price_pence)}`).join(" ")}
+        />
+        {points.map((p, i) => (
+          <circle
+            key={p.id}
+            cx={x(i)}
+            cy={y(p.price_pence)}
+            r={3.5}
+            className="v1-ch21-series-dot"
+          >
+            <title>{`${p.productivity_factor}× productivity → ${p.price_pence}f per piece`}</title>
+          </circle>
+        ))}
+      </svg>
+      <table className="v1-ch21-series-table">
+        <thead>
+          <tr>
+            <th>Productivity</th>
+            <th>Price / piece</th>
+            <th>Normal output</th>
+            <th>Daily wage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {points.map((p) => (
+            <tr key={p.id}>
+              <td>{p.productivity_factor}×</td>
+              <td>{p.price_pence}f</td>
+              <td>{p.normal_output}</td>
+              <td>{p.price_pence * p.normal_output}f</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function DynamicPiecePrice() {
+  const [points, setPoints] = useState<PiecePricePoint[]>([]);
+  const [factor, setFactor] = useState(2);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    api
+      .listPiecePricePoints(SPINNING_MILL_AGENT_ID)
+      .then((pts) => {
+        if (active) setPoints(pts);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : String(err));
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleReprice(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await api.repricePieceWage(SPINNING_MILL_AGENT_ID, {
+        productivity_factor: factor,
+      });
+      setPoints(res.points);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const latest = points.length > 0 ? points[points.length - 1] : null;
+  // The factor-1.0 baseline anchors the daily wage. The per-piece price is
+  // floor(dailyWage / output) in whole farthings, so the realised wage only
+  // equals the baseline exactly when the factor divides it evenly.
+  const baselineDailyWage =
+    points.length > 0 ? points[0].price_pence * points[0].normal_output : 0;
+  const latestDailyWage = latest
+    ? latest.price_pence * latest.normal_output
+    : 0;
+
+  return (
+    <section className="ch21-section v1-ch21-dynamic">
+      <h2>Dynamic piece-price — productivity rises, the price falls</h2>
+      <p className="ch21-explainer">
+        “The price of labour … falls in the same proportion as the
+        productiveness of labour rises.” The daily wage is the anchor; as the
+        socially-normal output grows, the price per piece falls in inverse
+        proportion. The simulation-engine tick scheduler drives this from the
+        Ch. 15 factory productivity factor — here you can apply a rise by hand.
+        At 2× productivity the seed Spinning Mill price halves, 6f → 3f. (Prices
+        are whole farthings, so factors that don’t divide the {baselineDailyWage}
+        f daily wage evenly round down.)
+      </p>
+      <PiecePriceSeries points={points} />
+      {latest && (
+        <p className="v1-ch21-series-current">
+          Current: <strong>{latest.price_pence}f</strong> per piece at{" "}
+          {latest.productivity_factor}× productivity — {latest.normal_output}{" "}
+          pieces/day, implied daily wage{" "}
+          <strong>{latestDailyWage}f</strong>
+          {latestDailyWage === baselineDailyWage
+            ? " (the baseline, held exactly)."
+            : ` (baseline ${baselineDailyWage}f; rounded down in whole farthings).`}
+        </p>
+      )}
+      <form onSubmit={handleReprice} className="ch21-form v1-ch21-dynamic-form">
+        <label>
+          Productivity factor (× baseline)
+          <input
+            type="number"
+            min={0.1}
+            step={0.1}
+            value={factor}
+            onChange={(e) => setFactor(Number(e.target.value))}
+            required
+          />
+        </label>
+        <button type="submit" disabled={loading}>
+          {loading ? "Applying…" : "Apply productivity rise"}
+        </button>
+      </form>
+      {error && <p className="ch21-error">{error}</p>}
     </section>
   );
 }
@@ -162,6 +325,7 @@ export function Ch21PieceWages() {
   return (
     <div className="ch21-piece-wage">
       <PieceWageInsight />
+      <DynamicPiecePrice />
       <section className="ch21-section">
         <h2>Piece-Wage Calculator</h2>
         <p className="ch21-explainer">

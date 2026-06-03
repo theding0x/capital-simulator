@@ -1117,6 +1117,30 @@ export interface ComputePiecePriceResult {
   actual_earnings: number;
 }
 
+// Ch. 21 (#219): one observation in the dynamic piece-price series. As factory
+// productivity rises the daily wage holds constant and the price per piece falls
+// in inverse proportion.
+export interface PiecePricePoint {
+  id: string;
+  agent_id: string;
+  sequence: number;
+  productivity_factor: number;
+  price_pence: number;
+  normal_output: number;
+  occurred_at: string;
+}
+
+export interface RepricePieceWageInput {
+  productivity_factor: number;
+}
+
+export interface RepricePieceWageResult {
+  piece_wage: PieceWage;
+  current: PiecePricePoint;
+  appended: boolean;
+  points: PiecePricePoint[];
+}
+
 // --- agent-service types (Ch. 22: National Differences of Wages) ---
 
 export interface NationalIntensity {

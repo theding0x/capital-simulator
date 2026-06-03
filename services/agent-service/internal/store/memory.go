@@ -29,6 +29,7 @@ type Memory struct {
 	workingSessions     map[agent.WorkingSessionID]agent.WorkingSession
 	pieceWages          map[agent.AgentID]agent.PieceWage
 	subContracts        map[agent.SubContractID]agent.SubContract
+	piecePricePoints    map[agent.AgentID][]agent.PiecePricePoint
 	nationalIntensities map[agent.CountryCode]agent.NationalIntensity
 	dayWages            map[agent.CountryCode]agent.DayWage
 	spindleRatios       map[agent.CountryCode]agent.SpindleRatio
@@ -53,6 +54,7 @@ func NewMemory() *Memory {
 		workingSessions:     make(map[agent.WorkingSessionID]agent.WorkingSession),
 		pieceWages:          make(map[agent.AgentID]agent.PieceWage),
 		subContracts:        make(map[agent.SubContractID]agent.SubContract),
+		piecePricePoints:    make(map[agent.AgentID][]agent.PiecePricePoint),
 		nationalIntensities: make(map[agent.CountryCode]agent.NationalIntensity),
 		dayWages:            make(map[agent.CountryCode]agent.DayWage),
 		spindleRatios:       make(map[agent.CountryCode]agent.SpindleRatio),
@@ -701,6 +703,44 @@ func (m *Memory) GetPieceWage(_ context.Context, agentID agent.AgentID) (agent.P
 		return agent.PieceWage{}, ErrNotFound
 	}
 	return pw, nil
+}
+
+func (m *Memory) ListPieceWages(_ context.Context) ([]agent.PieceWage, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]agent.PieceWage, 0, len(m.pieceWages))
+	for _, pw := range m.pieceWages {
+		out = append(out, pw)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out, nil
+}
+
+func (m *Memory) AppendPiecePricePoint(_ context.Context, p agent.PiecePricePoint) (agent.PiecePricePoint, bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	existing := m.piecePricePoints[p.AgentID]
+	if n := len(existing); n > 0 && existing[n-1].ProductivityFactor == p.ProductivityFactor {
+		return existing[n-1], false, nil
+	}
+	if p.ID.IsZero() {
+		p.ID = agent.NewPiecePricePointID()
+	}
+	p.Sequence = int64(len(existing))
+	if p.OccurredAt.IsZero() {
+		p.OccurredAt = m.now()
+	}
+	m.piecePricePoints[p.AgentID] = append(existing, p)
+	return p, true, nil
+}
+
+func (m *Memory) ListPiecePricePoints(_ context.Context, agentID agent.AgentID) ([]agent.PiecePricePoint, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	pts := m.piecePricePoints[agentID]
+	out := make([]agent.PiecePricePoint, len(pts))
+	copy(out, pts)
+	return out, nil
 }
 
 func (m *Memory) CreateSubContract(_ context.Context, sc agent.SubContract) (agent.SubContract, error) {
