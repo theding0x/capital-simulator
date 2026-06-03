@@ -1,24 +1,58 @@
 package httpapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 )
 
 // rateOfInterestRequest is the body for POST /v1/credit/rate-of-interest.
+//
+// The ceiling of the rate of interest is the *general* average rate of profit
+// (Vol. III Part V), so average_profit_rate_bp must be that general rate
+// (ΣS/ΣC from /v1/avgprofit/general-rate), not an individual firm's p′. Set
+// general_rate_id to source it from a stored general-rate record instead, which
+// enforces that provenance; when general_rate_id is set, average_profit_rate_bp
+// is ignored.
 type rateOfInterestRequest struct {
 	RateBP              int64                       `json:"rate_bp"`
 	AverageProfitRateBP int64                       `json:"average_profit_rate_bp"`
+	GeneralRateID       string                      `json:"general_rate_id"`
 	CyclePhase          credit.IndustrialCyclePhase `json:"cycle_phase"`
 	Period              string                      `json:"period"`
 }
 
 // interestRateAnalysisRequest is the body for POST /v1/credit/interest-rate-analysis.
+//
+// As with rate-of-interest, average_profit_rate_bp must be the general average
+// rate of profit; set general_rate_id to read it from a stored general-rate
+// record instead (which then takes precedence over average_profit_rate_bp).
 type interestRateAnalysisRequest struct {
-	AverageProfitRateBP int64 `json:"average_profit_rate_bp"`
-	InterestRateBP      int64 `json:"interest_rate_bp"`
+	AverageProfitRateBP int64  `json:"average_profit_rate_bp"`
+	GeneralRateID       string `json:"general_rate_id"`
+	InterestRateBP      int64  `json:"interest_rate_bp"`
+}
+
+// resolveAverageProfitRate determines the average/total profit rate that bounds
+// the Part V split between interest and profit of enterprise. Marx makes the
+// *general* average rate of profit (ΣS/ΣC, round-half-up) the ceiling of the
+// rate of interest — not an individual firm's p′. When generalRateID is set, the
+// rate is read from the stored general-rate record, enforcing that provenance,
+// and fallbackBP is ignored; an id that names no record yields store.ErrNotFound.
+// When generalRateID is empty, fallbackBP is used (the request field is
+// documented as requiring the general rate).
+func (h *Handler) resolveAverageProfitRate(ctx context.Context, generalRateID string, fallbackBP int64) (int64, error) {
+	if generalRateID == "" {
+		return fallbackBP, nil
+	}
+	g, err := h.Store.GetGeneralProfitRate(ctx, avgprofit.GeneralProfitRateID(generalRateID))
+	if err != nil {
+		return 0, err
+	}
+	return int64(g.Rate), nil
 }
 
 // CreateRateOfInterest handles POST /v1/credit/rate-of-interest.
@@ -30,7 +64,13 @@ func (h *Handler) CreateRateOfInterest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roi, err := credit.NewRateOfInterest(req.RateBP, req.AverageProfitRateBP, req.CyclePhase, req.Period)
+	avgBP, err := h.resolveAverageProfitRate(r.Context(), req.GeneralRateID, req.AverageProfitRateBP)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	roi, err := credit.NewRateOfInterest(req.RateBP, avgBP, req.CyclePhase, req.Period)
 	if err != nil {
 		if errors.Is(err, credit.ErrNegativeRate) ||
 			errors.Is(err, credit.ErrNonPositiveAverageProfit) ||
@@ -87,7 +127,13 @@ func (h *Handler) ComputeInterestRateAnalysis(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	analysis, err := credit.NewInterestRateAnalysis(req.AverageProfitRateBP, req.InterestRateBP)
+	avgBP, err := h.resolveAverageProfitRate(r.Context(), req.GeneralRateID, req.AverageProfitRateBP)
+	if err != nil {
+		writeStoreError(w, err)
+		return
+	}
+
+	analysis, err := credit.NewInterestRateAnalysis(avgBP, req.InterestRateBP)
 	if err != nil {
 		if errors.Is(err, credit.ErrNegativeRate) ||
 			errors.Is(err, credit.ErrNonPositiveAverageProfit) ||

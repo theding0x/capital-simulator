@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 )
 
@@ -120,6 +121,71 @@ func TestCreateProfitDivision_ValidationError(t *testing.T) {
 
 	if resp.StatusCode != http.StatusUnprocessableEntity {
 		t.Errorf("status = %d, want 422", resp.StatusCode)
+	}
+}
+
+// TestCreateProfitDivision_GeneralRateProvenance asserts total_profit_bp is sourced
+// from the stored general rate when general_rate_id is supplied, ignoring any
+// caller-supplied total_profit_bp.
+func TestCreateProfitDivision_GeneralRateProvenance(t *testing.T) {
+	t.Parallel()
+
+	ts, st := newFinanceTestServer(t)
+	gr, err := st.CreateGeneralProfitRate(t.Context(), avgprofit.GeneralProfitRate{Rate: 2000})
+	if err != nil {
+		t.Fatalf("seed general rate: %v", err)
+	}
+
+	body, _ := json.Marshal(map[string]any{
+		"total_profit_bp":      9999, // wrong on purpose — must be ignored
+		"general_rate_id":      string(gr.ID),
+		"interest_bp":          500,
+		"ownership_form":       int(credit.FormSeparated),
+		"wages_labour_minutes": 0,
+		"mystification_index":  5000,
+	})
+	resp, err := http.Post(ts.URL+"/v1/credit/profit-division", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("status = %d, want 201", resp.StatusCode)
+	}
+	var pd credit.ProfitDivision
+	if err := json.NewDecoder(resp.Body).Decode(&pd); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if pd.TotalProfitBP != 2000 {
+		t.Errorf("TotalProfitBP = %d, want 2000 (from stored general rate, not the supplied 9999)", pd.TotalProfitBP)
+	}
+	if pd.ProfitOfEnterpriseBP != 1500 {
+		t.Errorf("ProfitOfEnterpriseBP = %d, want 1500 (2000 - 500)", pd.ProfitOfEnterpriseBP)
+	}
+}
+
+// TestCreateProfitDivision_UnknownGeneralRate asserts an unknown general_rate_id yields 404.
+func TestCreateProfitDivision_UnknownGeneralRate(t *testing.T) {
+	t.Parallel()
+
+	ts, _ := newFinanceTestServer(t)
+
+	body, _ := json.Marshal(map[string]any{
+		"general_rate_id":      "doesnotexist",
+		"interest_bp":          500,
+		"ownership_form":       int(credit.FormSeparated),
+		"wages_labour_minutes": 0,
+		"mystification_index":  5000,
+	})
+	resp, err := http.Post(ts.URL+"/v1/credit/profit-division", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("status = %d, want 404", resp.StatusCode)
 	}
 }
 

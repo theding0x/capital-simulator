@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/avgprofit"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/credit"
 )
 
@@ -189,5 +190,67 @@ func TestComputeInterestRateAnalysis_ValidationError(t *testing.T) {
 
 	if resp.StatusCode != http.StatusUnprocessableEntity {
 		t.Errorf("status = %d, want 422", resp.StatusCode)
+	}
+}
+
+// TestCreateRateOfInterest_GeneralRateProvenance asserts that when general_rate_id
+// is supplied, the average profit rate is sourced from the stored general rate
+// (ΣS/ΣC) — Marx's ceiling for the rate of interest — and any caller-supplied
+// average_profit_rate_bp is ignored.
+func TestCreateRateOfInterest_GeneralRateProvenance(t *testing.T) {
+	t.Parallel()
+
+	ts, st := newFinanceTestServer(t)
+	gr, err := st.CreateGeneralProfitRate(t.Context(), avgprofit.GeneralProfitRate{Rate: 2000})
+	if err != nil {
+		t.Fatalf("seed general rate: %v", err)
+	}
+
+	body, _ := json.Marshal(map[string]any{
+		"rate_bp":                150,
+		"average_profit_rate_bp": 9999, // wrong on purpose — must be ignored
+		"general_rate_id":        string(gr.ID),
+		"cycle_phase":            int(credit.PhaseProsperity),
+		"period":                 "1843",
+	})
+	resp, err := http.Post(ts.URL+"/v1/credit/rate-of-interest", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("status = %d, want 201", resp.StatusCode)
+	}
+	var roi credit.RateOfInterest
+	if err := json.NewDecoder(resp.Body).Decode(&roi); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if roi.AverageProfitRateBP != 2000 {
+		t.Errorf("AverageProfitRateBP = %d, want 2000 (from stored general rate, not the supplied 9999)", roi.AverageProfitRateBP)
+	}
+}
+
+// TestCreateRateOfInterest_UnknownGeneralRate asserts a general_rate_id that names
+// no stored record yields 404 rather than silently falling back.
+func TestCreateRateOfInterest_UnknownGeneralRate(t *testing.T) {
+	t.Parallel()
+
+	ts, _ := newFinanceTestServer(t)
+
+	body, _ := json.Marshal(map[string]any{
+		"rate_bp":         150,
+		"general_rate_id": "doesnotexist",
+		"cycle_phase":     int(credit.PhaseProsperity),
+		"period":          "1843",
+	})
+	resp, err := http.Post(ts.URL+"/v1/credit/rate-of-interest", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("status = %d, want 404", resp.StatusCode)
 	}
 }
