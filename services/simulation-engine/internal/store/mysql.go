@@ -746,16 +746,51 @@ func (m *MySQL) CreateFarmTenure(ctx context.Context, f simulation.FarmTenure) (
 	if f.CreatedAt.IsZero() {
 		f.CreatedAt = m.now()
 	}
+
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return simulation.FarmTenure{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// L-H2: a stage's tenant form cannot regress below a form already recorded.
+	// FOR UPDATE serialises concurrent inserts for the same stage.
+	rows, err := tx.QueryContext(ctx,
+		`SELECT form FROM farm_tenures WHERE historical_stage_id = ? FOR UPDATE`,
+		string(f.HistoricalStageID))
+	if err != nil {
+		return simulation.FarmTenure{}, err
+	}
+	existing := make([]simulation.TenantForm, 0)
+	for rows.Next() {
+		var form string
+		if err := rows.Scan(&form); err != nil {
+			rows.Close()
+			return simulation.FarmTenure{}, err
+		}
+		existing = append(existing, simulation.TenantForm(form))
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return simulation.FarmTenure{}, err
+	}
+	rows.Close()
+	if err := simulation.CheckTenantFormProgression(existing, f.Form); err != nil {
+		return simulation.FarmTenure{}, err
+	}
+
 	const q = `INSERT INTO farm_tenures
 		(id, historical_stage_id, form, lease_period_years, rent_pence, capital_advanced_pence, revenue_pence, wage_costs_pence, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err := m.db.ExecContext(ctx, q,
+	if _, err := tx.ExecContext(ctx, q,
 		string(f.ID), string(f.HistoricalStageID),
 		string(f.Form), f.LeasePeriodYears,
 		int64(f.RentPence), int64(f.CapitalAdvancedPence),
 		int64(f.RevenuePence), int64(f.WageCostsPence),
-		f.CreatedAt)
-	if err != nil {
+		f.CreatedAt); err != nil {
+		return simulation.FarmTenure{}, err
+	}
+	if err := tx.Commit(); err != nil {
 		return simulation.FarmTenure{}, err
 	}
 	return f, nil
@@ -968,6 +1003,27 @@ func (m *MySQL) ListNationalDebtsByStage(ctx context.Context, stageID simulation
 		out = append(out, d)
 	}
 	return out, rows.Err()
+}
+
+func (m *MySQL) CreateProtectionSystem(ctx context.Context, s simulation.ProtectionSystem) (simulation.ProtectionSystem, error) {
+	if err := s.Validate(); err != nil {
+		return simulation.ProtectionSystem{}, err
+	}
+	if s.ID.IsZero() {
+		s.ID = simulation.NewProtectionSystemID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now()
+	}
+	const q = `INSERT INTO protection_systems
+		(id, historical_stage_id, tariff_rate_bps, beneficiary, period_start, period_end, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
+	if _, err := m.db.ExecContext(ctx, q,
+		string(s.ID), string(s.HistoricalStageID),
+		s.TariffRateBps, s.Beneficiary, s.PeriodStart, s.PeriodEnd, s.CreatedAt); err != nil {
+		return simulation.ProtectionSystem{}, err
+	}
+	return s, nil
 }
 
 func (m *MySQL) ListProtectionSystemsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.ProtectionSystem, error) {

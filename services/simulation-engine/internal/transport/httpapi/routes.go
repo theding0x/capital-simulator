@@ -138,6 +138,7 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/historical-stages/{id}/capital-origins", h.CreateCapitalOrigin)
 	s.HandleFunc("POST /v1/historical-stages/{id}/colonial-transfers", h.CreateColonialTransfer)
 	s.HandleFunc("POST /v1/historical-stages/{id}/national-debts", h.CreateNationalDebt)
+	s.HandleFunc("POST /v1/historical-stages/{id}/protection-systems", h.CreateProtectionSystem)
 	s.HandleFunc("GET /v1/historical-stages/{id}/genesis", h.GetIndustrialCapitalGenesis)
 
 	// Ch. 32 — Historical Tendency of Capitalist Accumulation

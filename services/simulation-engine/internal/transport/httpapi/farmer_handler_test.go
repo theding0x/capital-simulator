@@ -70,6 +70,37 @@ func TestCreateFarmTenure_Created(t *testing.T) {
 	}
 }
 
+// L-H2 (#412): once a stage has recorded the capitalist-farmer form, a later
+// regression to bailiff is rejected at the API with 409 Conflict; recording the
+// same (highest) form again is still allowed.
+func TestCreateFarmTenure_FormRegression(t *testing.T) {
+	t.Parallel()
+	h, mem := newFarmerHandler(t)
+	stage := seedStageForFarmer(t, mem)
+
+	post := func(form string) int {
+		body, _ := json.Marshal(map[string]any{
+			"form": form, "lease_period_years": 1, "capital_advanced_pence": 100,
+			"revenue_pence": 200, "wage_costs_pence": 50,
+		})
+		req := httptest.NewRequest(http.MethodPost, "/v1/historical-stages/"+string(stage.ID)+"/farm-tenures", bytes.NewReader(body))
+		req.SetPathValue("id", string(stage.ID))
+		w := httptest.NewRecorder()
+		h.CreateFarmTenure(w, req)
+		return w.Code
+	}
+
+	if code := post("capitalist-farmer"); code != http.StatusCreated {
+		t.Fatalf("seed capitalist-farmer: want 201, got %d", code)
+	}
+	if code := post("bailiff"); code != http.StatusConflict {
+		t.Fatalf("regress to bailiff: want 409, got %d", code)
+	}
+	if code := post("capitalist-farmer"); code != http.StatusCreated {
+		t.Fatalf("repeat capitalist-farmer: want 201, got %d", code)
+	}
+}
+
 func TestCreateFarmTenure_StageNotFound(t *testing.T) {
 	t.Parallel()
 	h, _ := newFarmerHandler(t)

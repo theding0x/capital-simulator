@@ -109,6 +109,10 @@ func (h *Handler) CreateFarmTenure(w http.ResponseWriter, r *http.Request) {
 
 	created, err := h.FarmTenures.CreateFarmTenure(r.Context(), ft)
 	if err != nil {
+		if errors.Is(err, simulation.ErrFarmTenureFormRegression) {
+			writeError(w, http.StatusConflict, err.Error())
+			return
+		}
 		h.writeServerError(w, err)
 		return
 	}

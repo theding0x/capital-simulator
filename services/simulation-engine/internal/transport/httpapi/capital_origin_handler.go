@@ -50,6 +50,13 @@ type createNationalDebtRequest struct {
 	CreditorClass   string `json:"creditor_class"`
 }
 
+type createProtectionSystemRequest struct {
+	TariffRateBps int64  `json:"tariff_rate_bps"`
+	Beneficiary   string `json:"beneficiary"`
+	PeriodStart   string `json:"period_start"`
+	PeriodEnd     string `json:"period_end"`
+}
+
 type nationalDebtResponse struct {
 	ID                string `json:"id"`
 	HistoricalStageID string `json:"historical_stage_id"`
@@ -170,6 +177,51 @@ func (h *Handler) CreateCapitalOrigin(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Location", fmt.Sprintf("/v1/historical-stages/%s/capital-origins", string(stageID)))
 	writeJSON(w, http.StatusCreated, toCapitalOriginResponse(created))
+}
+
+// CreateProtectionSystem handles POST /v1/historical-stages/{id}/protection-systems.
+func (h *Handler) CreateProtectionSystem(w http.ResponseWriter, r *http.Request) {
+	stageID := simulation.HistoricalStageID(r.PathValue("id"))
+	if stageID.IsZero() {
+		writeError(w, http.StatusBadRequest, "id is required")
+		return
+	}
+
+	if _, err := h.HistoricalStages.GetHistoricalStage(r.Context(), stageID); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "historical stage not found")
+			return
+		}
+		h.writeServerError(w, err)
+		return
+	}
+
+	var req createProtectionSystemRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	s := simulation.ProtectionSystem{
+		HistoricalStageID: stageID,
+		TariffRateBps:     req.TariffRateBps,
+		Beneficiary:       req.Beneficiary,
+		PeriodStart:       req.PeriodStart,
+		PeriodEnd:         req.PeriodEnd,
+	}
+	if err := s.Validate(); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	created, err := h.ProtectionSystems.CreateProtectionSystem(r.Context(), s)
+	if err != nil {
+		h.writeServerError(w, err)
+		return
+	}
+
+	w.Header().Set("Location", fmt.Sprintf("/v1/historical-stages/%s/protection-systems", string(stageID)))
+	writeJSON(w, http.StatusCreated, toProtectionSystemResponse(created))
 }
 
 // CreateColonialTransfer handles POST /v1/historical-stages/{id}/colonial-transfers.

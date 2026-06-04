@@ -171,6 +171,23 @@ type ProtectionSystem struct {
 	CreatedAt         time.Time          `json:"created_at"`
 }
 
+var (
+	ErrProtectionSystemBeneficiaryRequired = errors.New("simulation: protection system beneficiary is required")
+	ErrProtectionSystemTariffNegative      = errors.New("simulation: tariff_rate_bps cannot be negative")
+)
+
+// Validate enforces invariants on a protection system record: a beneficiary must
+// be named and the tariff rate cannot be negative.
+func (s ProtectionSystem) Validate() error {
+	if s.Beneficiary == "" {
+		return ErrProtectionSystemBeneficiaryRequired
+	}
+	if s.TariffRateBps < 0 {
+		return ErrProtectionSystemTariffNegative
+	}
+	return nil
+}
+
 // IndustrialCapitalGenesis aggregates all primitive-accumulation mechanisms
 // that produced the industrial capitalist for a given historical stage.
 //
