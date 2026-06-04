@@ -4851,3 +4851,49 @@ export interface ClassIncomeSource { id: string; class_id: string; revenue_form:
 export interface ClassTendency { id: string; class_id: string; description: string; direction: string; created_at: string; }
 export interface ClassAmbiguity { id: string; intermediate_group: string; income_source: string; why_not_a_class: string; created_at: string; }
 export interface SocialClassDetail { class: SocialClass; income_sources: ClassIncomeSource[]; tendencies: ClassTendency[]; }
+
+// --- Atlas Observatory (simulation-engine: GET /v1/observatory/snapshot) ---
+
+export interface FieldCapital {
+  id: string;
+  total_pence: number;
+  money_pence: number;
+  production_pence: number;
+  commodity_pence: number;
+  cost_price_pence: number;
+  surplus_pence: number;
+  status: string;
+}
+
+export interface AggregateVitals {
+  total_social_capital_pence: number;
+  cost_price_pence: number;
+  surplus_pence: number;
+  avg_rate_of_profit_bp: number;
+}
+
+export interface ObservatorySnapshot {
+  tick: number;
+  running: boolean;
+  interval_ms: number;
+  capitals: FieldCapital[];
+  aggregate: AggregateVitals;
+}
+
+export interface EngineStatus {
+  running: boolean;
+  tick: number;
+  last_tick_at?: string;
+  interval_ms: number;
+  tickers: string[];
+}
+
+export interface EngineTick {
+  id: string;
+  sequence: number;
+  occurred_at: string;
+  duration_ms: number;
+  tickers_run: number;
+  entities_advanced: number;
+  error_count: number;
+}

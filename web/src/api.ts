@@ -197,6 +197,9 @@ import type {
   Perishability,
   MarketSeparation,
   ActiveFractionResponse,
+  ObservatorySnapshot,
+  EngineStatus,
+  EngineTick,
 } from "./types";
 
 const BASE = "/api";
@@ -224,6 +227,21 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // --- Atlas Observatory (simulation-engine) ---
+  getObservatorySnapshot: () =>
+    http<ObservatorySnapshot>("/v1/observatory/snapshot"),
+
+  getEngineStatus: () => http<EngineStatus>("/v1/engine/status"),
+
+  startEngine: () =>
+    http<{ status: EngineStatus }>("/v1/engine/start", { method: "POST" }),
+
+  stopEngine: () =>
+    http<{ status: EngineStatus }>("/v1/engine/stop", { method: "POST" }),
+
+  listEngineTicks: (limit = 60) =>
+    http<EngineTick[]>(`/v1/engine/ticks?limit=${limit}`),
+
   listCommodities: () =>
     http<{ items: Commodity[] }>("/v1/commodities").then((r) => r.items),
 
