@@ -8,15 +8,13 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/money"
 )
 
-// Money-unit bridge for the Ch. 38 surplus-profit ≙ differential-rent identity.
-// Surplus-profit is recorded in pence (£1 = 100 pence) while differential rent
-// is recorded in LabourMinutes (£1 = 480 LM). See #370 on unifying these.
-const (
-	pencePerPound         = 100
-	labourMinutesPerPound = 480
-)
+// The Ch. 38 surplus-profit ≙ differential-rent identity bridges pence and
+// LabourMinutes through the shared money package's canonical scale
+// (£1 = 100 pence = 480 LM), so rent stays commensurable with avgprofit (#411).
 
 // ErrSurplusProfitRentMismatch is returned when a DifferentialRent's recorded
 // surplus-profit and its annual rent do not denote the same money-magnitude.
@@ -82,7 +80,7 @@ func IndividualPriceOfProduction(individualCostPriceBP, averageProfitBP int64) i
 // captures — the same £, only the unit differs. The comparison cross-multiplies
 // to the common £-scale to avoid integer-division rounding.
 func SurplusProfitMatchesRent(surplusProfitBP, annualRentLabourMinutes int64) bool {
-	return surplusProfitBP*labourMinutesPerPound == annualRentLabourMinutes*pencePerPound
+	return surplusProfitBP*money.LabourMinutesPerPound == annualRentLabourMinutes*money.PencePerPound
 }
 
 // MonopolisedNaturalForceID identifies a persisted monopolised-natural-force record.

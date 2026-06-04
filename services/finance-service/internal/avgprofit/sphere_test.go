@@ -101,28 +101,29 @@ func TestComputeProductionSphere_HighComposition(t *testing.T) {
 
 // --- LabourPowerIndex exact value tests ---
 
-// Sphere A: v=100, C=700 → labourPowerIndex = 100*3600*100/700 = 51428.
+// Sphere A: v=100, C=700 → labourPowerIndex = 100*480*100/700 = 6857.
 func TestLabourPowerIndex_SphereA(t *testing.T) {
 	t.Parallel()
 	sp := ComputeProductionSphere("Sphere A", 700, 100, 10000)
-	if sp.LabourPowerIndex != 51428 {
-		t.Errorf("LabourPowerIndex = %d, want 51428", sp.LabourPowerIndex)
+	if sp.LabourPowerIndex != 6857 {
+		t.Errorf("LabourPowerIndex = %d, want 6857", sp.LabourPowerIndex)
 	}
 }
 
-// Sphere B: v=600, C=700 → labourPowerIndex = 600*3600*100/700 = 308571.
-// Note: do NOT assert B == 6*A; truncation makes that off by 3.
-// 6*51428=308568 vs 308571: they differ.
+// Sphere B: v=600, C=700 → labourPowerIndex = 600*480*100/700 = 41142.
+// B carries 6× Sphere A's variable capital at the same total capital, and at the
+// canonical 480 scale the truncated index lands exactly on 6× A's (6857·6 =
+// 41142) — the integer-division divergence the old 3600 scale showed is gone.
 func TestLabourPowerIndex_SphereB(t *testing.T) {
 	t.Parallel()
 	sp := ComputeProductionSphere("Sphere B", 700, 600, 10000)
-	if sp.LabourPowerIndex != 308571 {
-		t.Errorf("LabourPowerIndex = %d, want 308571", sp.LabourPowerIndex)
+	if sp.LabourPowerIndex != 41142 {
+		t.Errorf("LabourPowerIndex = %d, want 41142", sp.LabourPowerIndex)
 	}
-	// Verify they are NOT equal to 6*SphereA (integer truncation divergence).
+	// B's index is exactly 6× Sphere A's (same C, 6× v).
 	spA := ComputeProductionSphere("Sphere A", 700, 100, 10000)
-	if sp.LabourPowerIndex == LabourPowerIndex(6*int64(spA.LabourPowerIndex)) {
-		t.Error("B.LabourPowerIndex must not equal 6*A.LabourPowerIndex (truncation makes them diverge by 3)")
+	if sp.LabourPowerIndex != LabourPowerIndex(6*int64(spA.LabourPowerIndex)) {
+		t.Errorf("B.LabourPowerIndex = %d, want 6×A = %d", sp.LabourPowerIndex, 6*int64(spA.LabourPowerIndex))
 	}
 }
 
