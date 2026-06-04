@@ -173,6 +173,9 @@ func main() {
 	srv.Handle("/v1/engine/status", simProxy)
 	srv.Handle("/v1/engine/ticks", simProxy)
 
+	// Atlas Observatory snapshot → simulation-engine
+	srv.Handle("/v1/observatory/snapshot", simProxy)
+
 	// Ch. 11 — Rate and Mass of Surplus-Value → simulation-engine
 	srv.Handle("/v1/surplus/mass", simProxy)
 	srv.Handle("/v1/surplus/limits", simProxy)
