@@ -51,12 +51,15 @@ func (f ProfitRateFormula) TotalCapital() TotalCapital {
 // ProfitRate returns p' = s' · v / C = s' · v / (c + v) in basis points. With
 // no capital advanced (c = v = 0) the rate is zero; so too when v = 0, since
 // variable capital is the sole source of the surplus-value the rate measures.
+// The quotient is rounded half-up (the Vol. III house convention shared with
+// avgprofit and tendency), so the same s'·v/C lands on identical basis points
+// wherever it is computed.
 func (f ProfitRateFormula) ProfitRate() int64 {
 	total := int64(f.C) + int64(f.V)
 	if total == 0 {
 		return 0
 	}
-	return int64(f.SRate) * int64(f.V) / total
+	return roundHalfUp(int64(f.SRate)*int64(f.V), total)
 }
 
 // CompositionRatio returns the value-composition v/C of this decomposition.

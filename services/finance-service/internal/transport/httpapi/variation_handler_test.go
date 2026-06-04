@@ -10,7 +10,7 @@ import (
 )
 
 // §I.4a: s' held at 100%, value-composition raised (c 80→100); p' falls
-// 20% → 16⅔% (2000 → 1666 bp).
+// 20% → 16⅔% (2000 → 1667 bp, rounded half-up).
 func TestCreateVariation_Marx(t *testing.T) {
 	t.Parallel()
 	ts, _ := newFinanceTestServer(t)
@@ -34,8 +34,8 @@ func TestCreateVariation_Marx(t *testing.T) {
 	if a.Case != profit.CaseSConstantVCVariable {
 		t.Errorf("case = %q, want %q", a.Case, profit.CaseSConstantVCVariable)
 	}
-	if a.OldProfitRate != 2000 || a.NewProfitRate != 1666 {
-		t.Errorf("rates = %d → %d, want 2000 → 1666", a.OldProfitRate, a.NewProfitRate)
+	if a.OldProfitRate != 2000 || a.NewProfitRate != 1667 {
+		t.Errorf("rates = %d → %d, want 2000 → 1667", a.OldProfitRate, a.NewProfitRate)
 	}
 	if a.ProportionalChange {
 		t.Error("ProportionalChange = true, want false for the s'-constant case")
