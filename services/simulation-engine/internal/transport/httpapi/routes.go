@@ -9,6 +9,9 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/engine/status", h.EngineStatus)
 	s.HandleFunc("GET /v1/engine/ticks", h.ListEngineTicks)
 
+	// Atlas — the whole-circuit Observatory (field snapshot read-model)
+	s.HandleFunc("GET /v1/observatory/snapshot", h.GetObservatorySnapshot)
+
 	// Vol. II Ch. 1 — The Circuit of Money-Capital
 	s.HandleFunc("POST /v1/money-circuits", h.CreateMoneyCircuit)
 	s.HandleFunc("GET /v1/money-circuits", h.ListMoneyCircuits)
