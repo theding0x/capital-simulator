@@ -108,14 +108,15 @@ func (e ConstantCapitalEconomy) ProfitRateGain() int64 {
 	return e.NewProfitRate() - e.OldProfitRate()
 }
 
-// profitRateBP forms s / (c + v) in basis points, guarding a zero denominator:
-// with nothing advanced there is no rate of self-expansion to express.
+// profitRateBP forms s / (c + v) in basis points, rounded half-up (the Vol. III
+// house convention), guarding a zero denominator: with nothing advanced there is
+// no rate of self-expansion to express.
 func profitRateBP(s SurplusValue, c ConstantCapital, v VariableCapital) int64 {
 	total := int64(c) + int64(v)
 	if total <= 0 {
 		return 0
 	}
-	return int64(s) * basisPoints / total
+	return roundHalfUp(int64(s)*basisPoints, total)
 }
 
 // SharedCondition models §III's economy from conditions of production used in

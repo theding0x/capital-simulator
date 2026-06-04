@@ -14,7 +14,7 @@ func TestProfitRateFormula_ProfitRate_Marx(t *testing.T) {
 	}{
 		{"s'=100%", ProfitRateFormula{C: 80, V: 20, SRate: 10000}, 2000},
 		{"s'=50%", ProfitRateFormula{C: 80, V: 20, SRate: 5000}, 1000},
-		{"§I.3 C=120", ProfitRateFormula{C: 100, V: 20, SRate: 10000}, 1666},
+		{"§I.3 C=120", ProfitRateFormula{C: 100, V: 20, SRate: 10000}, 1667},
 		{"§I.3 C=80", ProfitRateFormula{C: 60, V: 20, SRate: 10000}, 2500},
 	}
 	for _, tc := range cases {
@@ -41,9 +41,9 @@ func TestProfitRateFormula_Invariant(t *testing.T) {
 	t.Parallel()
 	f := ProfitRateFormula{C: 84, V: 16, SRate: 12500}
 	total := int64(f.C) + int64(f.V)
-	want := int64(f.SRate) * int64(f.V) / total
+	want := roundHalfUp(int64(f.SRate)*int64(f.V), total)
 	if got := f.ProfitRate(); got != want {
-		t.Errorf("ProfitRate() = %d, want %d (= s'·v/C)", got, want)
+		t.Errorf("ProfitRate() = %d, want %d (= round-half-up s'·v/C)", got, want)
 	}
 }
 
@@ -119,8 +119,8 @@ func TestComputeVariationAnalysis_SConstant(t *testing.T) {
 		t.Errorf("v/C falling: NewProfitRate %d should be < OldProfitRate %d",
 			falling.NewProfitRate, falling.OldProfitRate)
 	}
-	if falling.OldProfitRate != 2000 || falling.NewProfitRate != 1666 {
-		t.Errorf("rates = %d → %d, want 2000 → 1666", falling.OldProfitRate, falling.NewProfitRate)
+	if falling.OldProfitRate != 2000 || falling.NewProfitRate != 1667 {
+		t.Errorf("rates = %d → %d, want 2000 → 1667", falling.OldProfitRate, falling.NewProfitRate)
 	}
 
 	// v/C rises (c falls 80→60): p' rises 20% → 25%.

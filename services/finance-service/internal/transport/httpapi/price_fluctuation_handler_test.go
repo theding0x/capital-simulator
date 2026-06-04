@@ -98,7 +98,7 @@ func TestGetPriceFluctuationAnalysis_NotFound(t *testing.T) {
 }
 
 // §I falling branch: £20 fixed + £380 raw material, the price halved (factor 50),
-// raises p' from 20% (2000 bp) to 32.26% (3225 bp, truncated).
+// raises p' from 20% (2000 bp) to 32.26% (3226 bp, rounded half-up).
 func TestCreateThenGetPriceFluctuationAnalysis(t *testing.T) {
 	t.Parallel()
 	ts, _ := newFinanceTestServer(t)
@@ -112,8 +112,8 @@ func TestCreateThenGetPriceFluctuationAnalysis(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&created); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if created.OldProfitRate != 2000 || created.NewProfitRate != 3225 {
-		t.Errorf("got old=%d new=%d, want 2000/3225", created.OldProfitRate, created.NewProfitRate)
+	if created.OldProfitRate != 2000 || created.NewProfitRate != 3226 {
+		t.Errorf("got old=%d new=%d, want 2000/3226", created.OldProfitRate, created.NewProfitRate)
 	}
 	if created.Kind != profit.KindFall {
 		t.Errorf("kind = %q, want fall", created.Kind)

@@ -56,12 +56,13 @@ type AnnualProfitRate struct {
 
 // ComputeAnnualProfitRate forms p' = s' · n · (v / C) in basis points. With no
 // capital advanced (C = 0) the rate is zero. The multiplication is carried out
-// before the division so the integer result matches Marx's worked rates exactly
+// before the division, and the quotient is rounded half-up (the Vol. III house
+// convention), so the integer result matches Marx's worked rates exactly
 // (Capital A: 100% · 2 · 20/100 = 40%).
 func ComputeAnnualProfitRate(sRate RateOfSurplusValue, n TurnoverCount, v VariableCapitalPerTurnover, c TotalCapital) AnnualProfitRate {
 	var bp int64
 	if c > 0 {
-		bp = int64(sRate) * int64(n) * int64(v) / int64(c)
+		bp = roundHalfUp(int64(sRate)*int64(n)*int64(v), int64(c))
 	}
 	return AnnualProfitRate{
 		SurplusValueRate: sRate,
@@ -134,7 +135,7 @@ func ComputeTurnoverAnalysis(c TotalCapital, v VariableCapitalPerTurnover, sRate
 	annual := ComputeAnnualProfitRate(sRate, n, v, c)
 	var single int64
 	if c > 0 {
-		single = int64(sRate) * int64(v) / int64(c)
+		single = roundHalfUp(int64(sRate)*int64(v), int64(c))
 	}
 	return TurnoverAnalysis{
 		C:                        c,

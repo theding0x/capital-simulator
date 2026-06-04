@@ -219,13 +219,14 @@ func (m CapitalMagnitudeChange) RateUnchanged() bool {
 	return m.NewRate() == m.OldRate()
 }
 
-// magnitudeRateBP forms profit / capital in basis points, guarding a zero
-// denominator: with nothing advanced there is no rate to express.
+// magnitudeRateBP forms profit / capital in basis points, rounded half-up (the
+// Vol. III house convention), guarding a zero denominator: with nothing advanced
+// there is no rate to express.
 func magnitudeRateBP(profit, capital int64) int64 {
 	if capital <= 0 {
 		return 0
 	}
-	return profit * basisPoints / capital
+	return roundHalfUp(profit*basisPoints, capital)
 }
 
 // MagnitudeChangeID identifies a stored capital-magnitude change.

@@ -44,7 +44,7 @@ func TestConstantCapitalPriceEffectDoubling(t *testing.T) {
 // material + £100 v + £100 s also shows p' = 20%. Halving the price of the raw
 // material shrinks the circulating component from £380 to £190, so c falls from
 // £400 to £210 and C' = £310; the rate of profit rises to 100/310 = 32.26%
-// (3225 bp under the simulator's truncating basis-point division).
+// (3226 bp, rounded half-up — the Vol. III house convention).
 func TestConstantCapitalPriceEffectHalving(t *testing.T) {
 	t.Parallel()
 
@@ -61,8 +61,8 @@ func TestConstantCapitalPriceEffectHalving(t *testing.T) {
 	if got := e.OldProfitRate(); got != 2000 {
 		t.Errorf("old p': got %d bp, want 2000", got)
 	}
-	if got := e.NewProfitRate(); got != 3225 {
-		t.Errorf("new p': got %d bp, want 3225", got)
+	if got := e.NewProfitRate(); got != 3226 {
+		t.Errorf("new p': got %d bp, want 3226", got)
 	}
 	// Invariant [§I]: a price fall raises the rate of profit (s, v unchanged).
 	if e.Kind() != KindFall {
