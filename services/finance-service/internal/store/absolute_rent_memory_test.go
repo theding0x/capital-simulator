@@ -35,9 +35,9 @@ func ch45AbsoluteRent() rent.AbsoluteRent {
 	return rent.AbsoluteRent{
 		ParcelID:        "parcel-alpha",
 		ValuePriceGapID: "vg-001",
-		SurplusValueBP:  40,
-		AverageProfitBP: 20,
-		AbsoluteRentBP:  20,
+		SurplusValueLabourMinutes:  40,
+		AverageProfitLabourMinutes: 20,
+		AbsoluteRentLabourMinutes:  20,
 	}
 }
 
@@ -237,14 +237,14 @@ func TestMemory_Ch45_CreateAbsoluteRent_RoundTrip(t *testing.T) {
 	if saved.ParcelID != "parcel-alpha" {
 		t.Errorf("ParcelID = %q, want parcel-alpha", saved.ParcelID)
 	}
-	if saved.AbsoluteRentBP != 20 {
-		t.Errorf("AbsoluteRentBP = %d, want 20", saved.AbsoluteRentBP)
+	if saved.AbsoluteRentLabourMinutes != 20 {
+		t.Errorf("AbsoluteRentLabourMinutes = %d, want 20", saved.AbsoluteRentLabourMinutes)
 	}
-	if saved.SurplusValueBP != 40 {
-		t.Errorf("SurplusValueBP = %d, want 40", saved.SurplusValueBP)
+	if saved.SurplusValueLabourMinutes != 40 {
+		t.Errorf("SurplusValueLabourMinutes = %d, want 40", saved.SurplusValueLabourMinutes)
 	}
-	if saved.AverageProfitBP != 20 {
-		t.Errorf("AverageProfitBP = %d, want 20", saved.AverageProfitBP)
+	if saved.AverageProfitLabourMinutes != 20 {
+		t.Errorf("AverageProfitLabourMinutes = %d, want 20", saved.AverageProfitLabourMinutes)
 	}
 }
 
@@ -265,8 +265,8 @@ func TestMemory_Ch45_GetAbsoluteRent_RoundTrip(t *testing.T) {
 	if got.ID != saved.ID {
 		t.Errorf("get ID = %q, want %q", got.ID, saved.ID)
 	}
-	if got.AbsoluteRentBP != saved.AbsoluteRentBP {
-		t.Errorf("get AbsoluteRentBP = %d, want %d", got.AbsoluteRentBP, saved.AbsoluteRentBP)
+	if got.AbsoluteRentLabourMinutes != saved.AbsoluteRentLabourMinutes {
+		t.Errorf("get AbsoluteRentLabourMinutes = %d, want %d", got.AbsoluteRentLabourMinutes, saved.AbsoluteRentLabourMinutes)
 	}
 }
 

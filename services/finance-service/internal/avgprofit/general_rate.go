@@ -144,10 +144,13 @@ type SocialCapitalAggregate struct {
 	TotalPricesOfProduction ProductionPrice     `json:"total_prices_of_production"`
 	SumAverageProfits       Profit              `json:"sum_average_profits"`
 	ValueConserved          bool                `json:"value_conserved"`
+	ProfitConserved         bool                `json:"profit_conserved"`
 }
 
 // ComputeSocialCapitalAggregate derives the weighted general rate over all
-// spheres and computes per-sphere prices of production, then checks conservation.
+// spheres and computes per-sphere prices of production, then checks both halves
+// of L-dM6 conservation: ValueConserved (Σprice = Σvalue) and ProfitConserved
+// (Σprofit = Σsurplus-value).
 // For each sphere, k = C (= c+v), value = C + s,
 // price = ComputePriceOfProduction("", CostPrice(k), weightedRate, CommodityValue(value)).
 func ComputeSocialCapitalAggregate(spheres []ProductionSphere) SocialCapitalAggregate {
@@ -180,5 +183,6 @@ func ComputeSocialCapitalAggregate(spheres []ProductionSphere) SocialCapitalAggr
 		TotalPricesOfProduction: totalPrices,
 		SumAverageProfits:       sumAvgProfits,
 		ValueConserved:          totalValues == CommodityValue(totalPrices),
+		ProfitConserved:         sumAvgProfits == Profit(g.SumSurplusValues),
 	}
 }

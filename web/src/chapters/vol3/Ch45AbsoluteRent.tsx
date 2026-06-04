@@ -107,8 +107,8 @@ export function Ch45AbsoluteRent() {
       const result = await financeApi.createAbsoluteRent({
         parcel_id: arParcelId,
         value_price_gap_id: arGapId,
-        surplus_value_bp: arSurplus,
-        average_profit_bp: arAvgProfit,
+        surplus_value_labour_minutes: arSurplus,
+        average_profit_labour_minutes: arAvgProfit,
       });
       setLastAr(result);
       await refreshLists();
@@ -331,7 +331,7 @@ export function Ch45AbsoluteRent() {
         <p className="v3-ch45-subintro">
           Compute the absolute rent for a parcel given the surplus-value and average profit
           (both in basis points). The server computes{" "}
-          <code>absolute_rent_bp = max(0, surplus_value_bp&nbsp;&minus;&nbsp;average_profit_bp)</code>.
+          <code>absolute_rent_labour_minutes = max(0, surplus_value_labour_minutes&nbsp;&minus;&nbsp;average_profit_labour_minutes)</code>.
           Seed fixture: parcel <code>4502</code>, S&nbsp;=&nbsp;40&nbsp;bp,
           average&nbsp;profit&nbsp;=&nbsp;20&nbsp;bp, absolute&nbsp;rent&nbsp;=&nbsp;20&nbsp;bp.
         </p>
@@ -383,9 +383,9 @@ export function Ch45AbsoluteRent() {
           <div className="v3-ch45-preview">
             <strong>
               Saved — parcel&nbsp;{lastAr.parcel_id.slice(0, 8)}&hellip;,
-              S&nbsp;=&nbsp;{lastAr.surplus_value_bp}&nbsp;bp,
-              avg&nbsp;profit&nbsp;=&nbsp;{lastAr.average_profit_bp}&nbsp;bp,
-              absolute&nbsp;rent&nbsp;=&nbsp;{lastAr.absolute_rent_bp}&nbsp;bp
+              S&nbsp;=&nbsp;{lastAr.surplus_value_labour_minutes}&nbsp;LM,
+              avg&nbsp;profit&nbsp;=&nbsp;{lastAr.average_profit_labour_minutes}&nbsp;LM,
+              absolute&nbsp;rent&nbsp;=&nbsp;{lastAr.absolute_rent_labour_minutes}&nbsp;LM
             </strong>
             <span className="v3-ch45-hint">ID: {lastAr.id}</span>
           </div>
@@ -407,9 +407,9 @@ export function Ch45AbsoluteRent() {
                   <tr key={r.id}>
                     <td title={r.id}>{r.id.slice(0, 8)}&hellip;</td>
                     <td title={r.parcel_id}>{r.parcel_id.slice(0, 8)}&hellip;</td>
-                    <td>{r.surplus_value_bp}</td>
-                    <td>{r.average_profit_bp}</td>
-                    <td>{r.absolute_rent_bp}</td>
+                    <td>{r.surplus_value_labour_minutes}</td>
+                    <td>{r.average_profit_labour_minutes}</td>
+                    <td>{r.absolute_rent_labour_minutes}</td>
                   </tr>
                 ))}
               </tbody>

@@ -80,6 +80,13 @@ func TestComputeSocialCapitalAggregate_FiveSpheres(t *testing.T) {
 		t.Errorf("SumAverageProfits %d != SumSurplusValues %d (conservation broken)",
 			agg.SumAverageProfits, agg.SumSurplusValues)
 	}
+	if !agg.ProfitConserved {
+		t.Errorf("ProfitConserved = false, want true (Σprofit %d == Σsurplus-value %d)",
+			agg.SumAverageProfits, agg.SumSurplusValues)
+	}
+	if !agg.ValueConserved {
+		t.Error("ValueConserved = false, want true (Σprice == Σvalue)")
+	}
 	if agg.WeightedGeneralRate != 2200 {
 		t.Errorf("WeightedGeneralRate = %d, want 2200", agg.WeightedGeneralRate)
 	}

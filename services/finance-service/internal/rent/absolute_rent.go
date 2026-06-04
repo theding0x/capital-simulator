@@ -63,15 +63,16 @@ func NewAbsoluteRentID() AbsoluteRentID {
 	return AbsoluteRentID(hex.EncodeToString(b[:]))
 }
 
-// AbsoluteRent records the absolute rent on a parcel. AbsoluteRentBP=max(0,S−P).
+// AbsoluteRent records the absolute rent on a parcel, in LabourMinutes.
+// AbsoluteRentLabourMinutes = max(0, S−P).
 type AbsoluteRent struct {
-	ID              AbsoluteRentID `json:"id"`
-	ParcelID        string         `json:"parcel_id"`
-	ValuePriceGapID string         `json:"value_price_gap_id"`
-	SurplusValueBP  int64          `json:"surplus_value_bp"`
-	AverageProfitBP int64          `json:"average_profit_bp"`
-	AbsoluteRentBP  int64          `json:"absolute_rent_bp"`
-	CreatedAt       time.Time      `json:"created_at"`
+	ID                         AbsoluteRentID `json:"id"`
+	ParcelID                   string         `json:"parcel_id"`
+	ValuePriceGapID            string         `json:"value_price_gap_id"`
+	SurplusValueLabourMinutes  int64          `json:"surplus_value_labour_minutes"`
+	AverageProfitLabourMinutes int64          `json:"average_profit_labour_minutes"`
+	AbsoluteRentLabourMinutes  int64          `json:"absolute_rent_labour_minutes"`
+	CreatedAt                  time.Time      `json:"created_at"`
 }
 
 type AbsoluteRentLimitID string
@@ -93,10 +94,11 @@ type AbsoluteRentLimit struct {
 	CreatedAt    time.Time           `json:"created_at"`
 }
 
-// ComputeAbsoluteRentBP returns max(0, surplusValueBP − averageProfitBP).
-func ComputeAbsoluteRentBP(surplusValueBP, averageProfitBP int64) int64 {
-	if surplusValueBP > averageProfitBP {
-		return surplusValueBP - averageProfitBP
+// ComputeAbsoluteRentLabourMinutes returns max(0, surplusValue − averageProfit),
+// all in LabourMinutes.
+func ComputeAbsoluteRentLabourMinutes(surplusValueLabourMinutes, averageProfitLabourMinutes int64) int64 {
+	if surplusValueLabourMinutes > averageProfitLabourMinutes {
+		return surplusValueLabourMinutes - averageProfitLabourMinutes
 	}
 	return 0
 }

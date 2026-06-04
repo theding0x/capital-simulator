@@ -11,15 +11,15 @@ import (
 	"testing"
 )
 
-// TestComputeAbsoluteRentBP verifies max(0, S−P) using Marx Ch. 45 numerics.
-func TestComputeAbsoluteRentBP(t *testing.T) {
+// TestComputeAbsoluteRentLabourMinutes verifies max(0, S−P) using Marx Ch. 45 numerics.
+func TestComputeAbsoluteRentLabourMinutes(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name            string
-		surplusValueBP  int64
-		averageProfitBP int64
-		want            int64
+		name          string
+		surplusValue  int64
+		averageProfit int64
+		want          int64
 	}{
 		{"surplus exceeds average: rent = difference", 40, 20, 20},
 		{"surplus equals average: rent = zero", 20, 20, 0},
@@ -29,10 +29,10 @@ func TestComputeAbsoluteRentBP(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			got := ComputeAbsoluteRentBP(tc.surplusValueBP, tc.averageProfitBP)
+			got := ComputeAbsoluteRentLabourMinutes(tc.surplusValue, tc.averageProfit)
 			if got != tc.want {
-				t.Errorf("ComputeAbsoluteRentBP(%d, %d) = %d, want %d",
-					tc.surplusValueBP, tc.averageProfitBP, got, tc.want)
+				t.Errorf("ComputeAbsoluteRentLabourMinutes(%d, %d) = %d, want %d",
+					tc.surplusValue, tc.averageProfit, got, tc.want)
 			}
 		})
 	}
@@ -113,7 +113,7 @@ func TestComputeIsBelowAverage(t *testing.T) {
 	if ComputeIsBelowAverage(8000, 7000) {
 		t.Error("composition above the average is not below average")
 	}
-	if got := ComputeAbsoluteRentBP(5000, 5000); got != 0 {
+	if got := ComputeAbsoluteRentLabourMinutes(5000, 5000); got != 0 {
 		t.Errorf("absolute rent at composition parity (surplus == avg profit) = %d, want 0", got)
 	}
 }
