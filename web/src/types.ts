@@ -3354,6 +3354,7 @@ export interface SocialCapitalAggregateResponse {
   total_prices_of_production: number;
   sum_average_profits: number;
   value_conserved: boolean;
+  profit_conserved: boolean;
 }
 
 // MarketValueResponse mirrors avgprofit.MarketValue.
@@ -4769,16 +4770,16 @@ export interface AbsoluteRent {
   id: string;
   parcel_id: string;
   value_price_gap_id: string;
-  surplus_value_bp: number;
-  average_profit_bp: number;
-  absolute_rent_bp: number;
+  surplus_value_labour_minutes: number;
+  average_profit_labour_minutes: number;
+  absolute_rent_labour_minutes: number;
   created_at: string;
 }
 export interface CreateAbsoluteRentInput {
   parcel_id: string;
   value_price_gap_id: string;
-  surplus_value_bp: number;
-  average_profit_bp: number;
+  surplus_value_labour_minutes: number;
+  average_profit_labour_minutes: number;
 }
 export interface AbsoluteRentLimit {
   id: string;

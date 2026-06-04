@@ -168,13 +168,14 @@ func NewAdjustedGeneralRate(productiveCapital, commercialCapital, surplusValue i
 
 // SurplusValueDeduction records the division of the total surplus-value between
 // the productive capitalist and the merchant, in proportion to their respective
-// capital advances (LabourMinutes as the unit for the value magnitudes).
+// capital advances (pence as the unit for the value magnitudes, matching the
+// sibling CommercialProfit in this file — #413).
 //
 // Conservation invariant: ProductiveCapitalistShare + MerchantShare == TotalSurplusValue.
 type SurplusValueDeduction struct {
-	TotalSurplusValue          int64 `json:"total_surplus_value"`          // LabourMinutes
-	ProductiveCapitalistShare  int64 `json:"productive_capitalist_share"`  // LabourMinutes
-	MerchantShare              int64 `json:"merchant_share"`               // LabourMinutes
+	TotalSurplusValue          int64 `json:"total_surplus_value"`          // pence
+	ProductiveCapitalistShare  int64 `json:"productive_capitalist_share"`  // pence
+	MerchantShare              int64 `json:"merchant_share"`               // pence
 }
 
 // NewSurplusValueDeduction builds a SurplusValueDeduction, splitting

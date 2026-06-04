@@ -123,10 +123,10 @@ func (h *Handler) ListValuePriceGaps(w http.ResponseWriter, r *http.Request) {
 
 // createAbsoluteRentRequest is the body for POST /v1/rent/absolute-rents.
 type createAbsoluteRentRequest struct {
-	ParcelID        string `json:"parcel_id"`
-	ValuePriceGapID string `json:"value_price_gap_id"`
-	SurplusValueBP  int64  `json:"surplus_value_bp"`
-	AverageProfitBP int64  `json:"average_profit_bp"`
+	ParcelID                   string `json:"parcel_id"`
+	ValuePriceGapID            string `json:"value_price_gap_id"`
+	SurplusValueLabourMinutes  int64  `json:"surplus_value_labour_minutes"`
+	AverageProfitLabourMinutes int64  `json:"average_profit_labour_minutes"`
 }
 
 // CreateAbsoluteRent handles POST /v1/rent/absolute-rents.
@@ -141,21 +141,21 @@ func (h *Handler) CreateAbsoluteRent(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnprocessableEntity, "parcel_id must not be empty")
 		return
 	}
-	if req.SurplusValueBP < 0 {
-		writeError(w, http.StatusUnprocessableEntity, "surplus_value_bp must be >= 0")
+	if req.SurplusValueLabourMinutes < 0 {
+		writeError(w, http.StatusUnprocessableEntity, "surplus_value_labour_minutes must be >= 0")
 		return
 	}
-	if req.AverageProfitBP < 0 {
-		writeError(w, http.StatusUnprocessableEntity, "average_profit_bp must be >= 0")
+	if req.AverageProfitLabourMinutes < 0 {
+		writeError(w, http.StatusUnprocessableEntity, "average_profit_labour_minutes must be >= 0")
 		return
 	}
-	absoluteRent := rent.ComputeAbsoluteRentBP(req.SurplusValueBP, req.AverageProfitBP)
+	absoluteRent := rent.ComputeAbsoluteRentLabourMinutes(req.SurplusValueLabourMinutes, req.AverageProfitLabourMinutes)
 	rec := rent.AbsoluteRent{
-		ParcelID:        req.ParcelID,
-		ValuePriceGapID: req.ValuePriceGapID,
-		SurplusValueBP:  req.SurplusValueBP,
-		AverageProfitBP: req.AverageProfitBP,
-		AbsoluteRentBP:  absoluteRent,
+		ParcelID:                   req.ParcelID,
+		ValuePriceGapID:            req.ValuePriceGapID,
+		SurplusValueLabourMinutes:  req.SurplusValueLabourMinutes,
+		AverageProfitLabourMinutes: req.AverageProfitLabourMinutes,
+		AbsoluteRentLabourMinutes:  absoluteRent,
 	}
 	saved, err := h.Store.CreateAbsoluteRent(r.Context(), rec)
 	if err != nil {

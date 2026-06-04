@@ -6200,9 +6200,9 @@ func (m *MySQL) CreateAbsoluteRent(ctx context.Context, ar rent.AbsoluteRent) (r
 		string(ar.ID),
 		ar.ParcelID,
 		ar.ValuePriceGapID,
-		ar.SurplusValueBP,
-		ar.AverageProfitBP,
-		ar.AbsoluteRentBP,
+		ar.SurplusValueLabourMinutes,
+		ar.AverageProfitLabourMinutes,
+		ar.AbsoluteRentLabourMinutes,
 		ar.CreatedAt,
 	)
 	if err != nil {
@@ -6263,10 +6263,10 @@ func scanAbsoluteRent(s rowScanner) (rent.AbsoluteRent, error) {
 		ID:              rent.AbsoluteRentID(id),
 		ParcelID:        parcelID,
 		ValuePriceGapID: valuePriceGapID,
-		SurplusValueBP:  surplusValueBP,
-		AverageProfitBP: averageProfitBP,
-		AbsoluteRentBP:  absoluteRentBP,
-		CreatedAt:       createdAt,
+		SurplusValueLabourMinutes:  surplusValueBP,
+		AverageProfitLabourMinutes: averageProfitBP,
+		AbsoluteRentLabourMinutes:  absoluteRentBP,
+		CreatedAt:                  createdAt,
 	}, nil
 }
 

@@ -145,13 +145,13 @@ func TestCreateValuePriceGap_EmptyProductID_Returns422(t *testing.T) {
 
 // ── POST /v1/rent/absolute-rents ─────────────────────────────────────────────
 
-// TestCreateAbsoluteRent_HappyPath: surplus_value=40 bp, average_profit=20 bp
-// → absolute_rent_bp=20. Captures the returned ID for subsequent GET tests.
+// TestCreateAbsoluteRent_HappyPath: surplus_value=40, average_profit=20
+// → absolute_rent_labour_minutes=20. Captures the returned ID for subsequent GET tests.
 func TestCreateAbsoluteRent_HappyPath(t *testing.T) {
 	t.Parallel()
 	ts, _ := newAbsoluteRentTestServer(t)
 
-	body := `{"parcel_id":"P1","value_price_gap_id":"VG1","surplus_value_bp":40,"average_profit_bp":20}`
+	body := `{"parcel_id":"P1","value_price_gap_id":"VG1","surplus_value_labour_minutes":40,"average_profit_labour_minutes":20}`
 	res, err := http.Post(ts.URL+"/v1/rent/absolute-rents", "application/json",
 		strings.NewReader(body))
 	if err != nil {
@@ -170,8 +170,8 @@ func TestCreateAbsoluteRent_HappyPath(t *testing.T) {
 	if saved.ID == "" {
 		t.Error("response id must be non-empty")
 	}
-	if saved.AbsoluteRentBP != 20 {
-		t.Errorf("absolute_rent_bp = %d, want 20", saved.AbsoluteRentBP)
+	if saved.AbsoluteRentLabourMinutes != 20 {
+		t.Errorf("absolute_rent_labour_minutes = %d, want 20", saved.AbsoluteRentLabourMinutes)
 	}
 }
 
@@ -181,7 +181,7 @@ func TestGetAbsoluteRent_RoundTrip(t *testing.T) {
 	ts, _ := newAbsoluteRentTestServer(t)
 
 	// create
-	body := `{"parcel_id":"P1","value_price_gap_id":"VG1","surplus_value_bp":40,"average_profit_bp":20}`
+	body := `{"parcel_id":"P1","value_price_gap_id":"VG1","surplus_value_labour_minutes":40,"average_profit_labour_minutes":20}`
 	createRes, err := http.Post(ts.URL+"/v1/rent/absolute-rents", "application/json",
 		strings.NewReader(body))
 	if err != nil {
@@ -214,8 +214,8 @@ func TestGetAbsoluteRent_RoundTrip(t *testing.T) {
 	if got.ID != created.ID {
 		t.Errorf("get id = %q, want %q", got.ID, created.ID)
 	}
-	if got.AbsoluteRentBP != 20 {
-		t.Errorf("get absolute_rent_bp = %d, want 20", got.AbsoluteRentBP)
+	if got.AbsoluteRentLabourMinutes != 20 {
+		t.Errorf("get absolute_rent_labour_minutes = %d, want 20", got.AbsoluteRentLabourMinutes)
 	}
 }
 
@@ -237,7 +237,7 @@ func TestCreateAbsoluteRent_EmptyParcelID_Returns422(t *testing.T) {
 	t.Parallel()
 	ts, _ := newAbsoluteRentTestServer(t)
 
-	body := `{"parcel_id":"","value_price_gap_id":"VG1","surplus_value_bp":40,"average_profit_bp":20}`
+	body := `{"parcel_id":"","value_price_gap_id":"VG1","surplus_value_labour_minutes":40,"average_profit_labour_minutes":20}`
 	res, err := http.Post(ts.URL+"/v1/rent/absolute-rents", "application/json",
 		strings.NewReader(body))
 	if err != nil {

@@ -721,7 +721,7 @@ type Store interface {
 	ListValuePriceGaps(ctx context.Context) ([]rent.ValuePriceGap, error)
 
 	// CreateAbsoluteRent persists an absolute-rent record (Vol. III Ch. 45 —
-	// AbsoluteRentBP=max(0,surplus−average); requires landed-property monopoly),
+	// AbsoluteRentLabourMinutes=max(0,surplus−average); requires landed-property monopoly),
 	// assigning an ID and created-at timestamp when absent. Returns ErrAlreadyExists on ID collision.
 	CreateAbsoluteRent(ctx context.Context, ar rent.AbsoluteRent) (rent.AbsoluteRent, error)
 	// GetAbsoluteRent returns the absolute-rent record with the given ID, or ErrNotFound.
