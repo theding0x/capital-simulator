@@ -24,8 +24,10 @@ function clientProfitRate(s: number, c: number): number {
 function clientVariablePercent(v: number, c: number): number {
   return c > 0 ? Math.floor((v * 100) / c) : 0;
 }
+// Mirrors the server's avgprofit.labourPowerIndex, sharing the canonical
+// money.LabourMinutesPerPound = 480 (£1 = one working day); see issue #411.
 function clientLabourPowerIndex(v: number, c: number): number {
-  return c > 0 ? Math.floor((v * 3600 * 100) / c) : 0;
+  return c > 0 ? Math.floor((v * 480 * 100) / c) : 0;
 }
 
 // Marx's international comparison presets.

@@ -18,16 +18,13 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/money"
 )
 
 // basisPoints is the fixed-point scale: 1% = 100 bp, so s′ of 100% = 10000 bp.
 // Integer basis points keep rate computations exact across Marx's worked examples.
 const basisPoints = 10000
-
-// labourMinutesPerPound is the value of one unit of variable capital (£1) in
-// labour-minutes. Marx's §"£100 ... 6,000 working-hours" — £1 of variable
-// capital = one labour-power-week = 60 working-hours = 3600 labour-minutes.
-const labourMinutesPerPound = 3600
 
 // LabourMinutes is the canonical value-magnitude unit for this package.
 type LabourMinutes int64
@@ -139,13 +136,13 @@ func variablePercent(v VariableCapital, c TotalCapital) int64 {
 	return int64(v) * 100 / int64(c)
 }
 
-// labourPowerIndex computes (v·labourMinutesPerPound)·100 / C.
+// labourPowerIndex computes (v·money.LabourMinutesPerPound)·100 / C.
 // It measures the living labour-minutes set in motion per £100 of total capital.
 func labourPowerIndex(v VariableCapital, c TotalCapital) LabourPowerIndex {
 	if c <= 0 {
 		return 0
 	}
-	return LabourPowerIndex(int64(v) * labourMinutesPerPound * 100 / int64(c))
+	return LabourPowerIndex(int64(v) * money.LabourMinutesPerPound * 100 / int64(c))
 }
 
 // ComputeProductionSphere derives all fields from the user-supplied inputs.
