@@ -1472,6 +1472,34 @@ func (m *Memory) TickSinkingFund(_ context.Context, id circulation.IndustrialCap
 	return sf, nil
 }
 
+// FieldSnapshot implements IndustrialCapitalStore for the Atlas Observatory.
+func (m *Memory) FieldSnapshot(_ context.Context) ([]circulation.FieldCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := []circulation.FieldCapital{}
+	for id, ic := range m.industrialCapitals {
+		fc := circulation.FieldCapital{
+			ID:         id,
+			TotalPence: ic.TotalPence,
+			MoneyPence: ic.TotalPence, // default when no distribution recorded
+			Status:     ic.Status,
+		}
+		if sds := m.stageDistributions[id]; len(sds) > 0 {
+			latest := sds[len(sds)-1]
+			fc.MoneyPence = latest.MoneyPence
+			fc.ProductionPence = latest.ProductionPence
+			fc.CommodityPence = latest.CommodityPence
+		}
+		if sdis := m.supplyDemand[id]; len(sdis) > 0 {
+			latest := sdis[len(sdis)-1]
+			fc.CostPricePence = latest.DemandPence
+			fc.SurplusPence = latest.ExcessPence
+		}
+		out = append(out, fc)
+	}
+	return out, nil
+}
+
 // Vol. II Ch. 10 — Theories of Fixed and Circulating Capital.
 
 // ListEconomistAttributions returns the pre-seeded attribution records,

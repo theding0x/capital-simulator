@@ -2828,3 +2828,63 @@ func scanStageBlock(scan func(...any) error) (circulation.StageBlock, error) {
 	}
 	return b, nil
 }
+
+// FieldSnapshot implements IndustrialCapitalStore for the Atlas Observatory.
+func (m *MySQL) FieldSnapshot(ctx context.Context) ([]circulation.FieldCapital, error) {
+	const q = `
+SELECT ic.id, ic.total_pence, ic.status,
+       sd.money_pence, sd.production_pence, sd.commodity_pence,
+       sdi.demand_pence, sdi.excess_pence
+FROM industrial_capitals ic
+LEFT JOIN (
+    SELECT s.industrial_capital_id, s.money_pence, s.production_pence, s.commodity_pence
+    FROM stage_distributions s
+    JOIN (
+        SELECT industrial_capital_id, MAX(at_time) AS mt
+        FROM stage_distributions GROUP BY industrial_capital_id
+    ) lt ON lt.industrial_capital_id = s.industrial_capital_id AND lt.mt = s.at_time
+) sd ON sd.industrial_capital_id = ic.id
+LEFT JOIN (
+    SELECT d.industrial_capital_id, d.demand_pence, d.excess_pence
+    FROM supply_demand_imbalances d
+    JOIN (
+        SELECT industrial_capital_id, MAX(period) AS mp
+        FROM supply_demand_imbalances GROUP BY industrial_capital_id
+    ) lp ON lp.industrial_capital_id = d.industrial_capital_id AND lp.mp = d.period
+) sdi ON sdi.industrial_capital_id = ic.id
+ORDER BY ic.id`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []circulation.FieldCapital{}
+	for rows.Next() {
+		var (
+			id, status        string
+			total             int64
+			money, prod, comm sql.NullInt64
+			demand, excess    sql.NullInt64
+		)
+		if err := rows.Scan(&id, &total, &status, &money, &prod, &comm, &demand, &excess); err != nil {
+			return nil, err
+		}
+		fc := circulation.FieldCapital{
+			ID:         circulation.IndustrialCapitalID(id),
+			TotalPence: circulation.Pence(total),
+			Status:     circulation.IndustrialCapitalStatus(status),
+			MoneyPence: circulation.Pence(total), // default when no distribution
+		}
+		if money.Valid {
+			fc.MoneyPence = circulation.Pence(money.Int64)
+			fc.ProductionPence = circulation.Pence(prod.Int64)
+			fc.CommodityPence = circulation.Pence(comm.Int64)
+		}
+		if demand.Valid {
+			fc.CostPricePence = circulation.Pence(demand.Int64)
+			fc.SurplusPence = circulation.Pence(excess.Int64)
+		}
+		out = append(out, fc)
+	}
+	return out, rows.Err()
+}

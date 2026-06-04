@@ -224,6 +224,10 @@ type IndustrialCapitalStore interface {
 	AggregateSupplyDemand(ctx context.Context, period string) (circulation.AggregateSupplyDemandImbalance, error)
 	SetSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID, sf circulation.SinkingFund) (circulation.SinkingFund, error)
 	TickSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID) (circulation.SinkingFund, error)
+	// FieldSnapshot returns every industrial capital projected to a FieldCapital
+	// for the Atlas Observatory: latest stage distribution + latest cost-price
+	// and surplus. Capitals with no recorded distribution default to all-money.
+	FieldSnapshot(ctx context.Context) ([]circulation.FieldCapital, error)
 }
 
 // TurnoverStore is the persistence contract for Vol. II Ch. 7 —
