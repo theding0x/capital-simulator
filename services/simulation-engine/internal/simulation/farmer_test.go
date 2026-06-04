@@ -1,6 +1,7 @@
 package simulation_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
@@ -147,6 +148,40 @@ func TestTenantForm_Order(t *testing.T) {
 	}
 	if got := simulation.TenantForm("unknown").Order(); got != 0 {
 		t.Errorf("unknown form Order() = %d, want 0", got)
+	}
+}
+
+// Ch. 29 (L-H2): the tenant-form sequence is one-way, so a stage cannot record a
+// form below the highest it has already reached. CheckTenantFormProgression
+// enforces that; equal or higher forms are allowed.
+func TestCheckTenantFormProgression(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name     string
+		existing []simulation.TenantForm
+		next     simulation.TenantForm
+		wantErr  bool
+	}{
+		{"empty accepts bailiff", nil, simulation.TenantFormBailiff, false},
+		{"bailiff → metayer advances", []simulation.TenantForm{simulation.TenantFormBailiff}, simulation.TenantFormMetayer, false},
+		{"metayer repeats", []simulation.TenantForm{simulation.TenantFormMetayer}, simulation.TenantFormMetayer, false},
+		{"→ capitalist-farmer advances", []simulation.TenantForm{simulation.TenantFormBailiff, simulation.TenantFormMetayer}, simulation.TenantFormCapitalistFarmer, false},
+		{"capitalist-farmer → bailiff regresses", []simulation.TenantForm{simulation.TenantFormCapitalistFarmer}, simulation.TenantFormBailiff, true},
+		{"metayer → bailiff regresses", []simulation.TenantForm{simulation.TenantFormBailiff, simulation.TenantFormMetayer}, simulation.TenantFormBailiff, true},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := simulation.CheckTenantFormProgression(tc.existing, tc.next)
+			if tc.wantErr {
+				if !errors.Is(err, simulation.ErrFarmTenureFormRegression) {
+					t.Errorf("want ErrFarmTenureFormRegression, got %v", err)
+				}
+			} else if err != nil {
+				t.Errorf("want nil, got %v", err)
+			}
+		})
 	}
 }
 

@@ -123,6 +123,7 @@ type NationalDebtStore interface {
 
 // ProtectionSystemStore is the persistence contract for Ch. 31 protection system records.
 type ProtectionSystemStore interface {
+	CreateProtectionSystem(ctx context.Context, s simulation.ProtectionSystem) (simulation.ProtectionSystem, error)
 	ListProtectionSystemsByStage(ctx context.Context, stageID simulation.HistoricalStageID) ([]simulation.ProtectionSystem, error)
 }
 

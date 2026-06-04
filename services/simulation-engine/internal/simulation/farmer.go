@@ -44,6 +44,32 @@ func (f TenantForm) Order() int {
 	}
 }
 
+// HighestTenantForm returns the highest Order() among the given tenant forms, or
+// 0 when there are none — the high-water mark of a stage's progression through
+// bailiff → metayer → capitalist-farmer.
+func HighestTenantForm(forms []TenantForm) int {
+	highest := 0
+	for _, f := range forms {
+		if o := f.Order(); o > highest {
+			highest = o
+		}
+	}
+	return highest
+}
+
+// CheckTenantFormProgression enforces L-H2: the genesis of the capitalist farmer
+// is a one-way progression, so a stage that has already reached a given tenant
+// form cannot afterwards record a lower one. It returns ErrFarmTenureFormRegression
+// when next.Order() is below the highest form already present; equal or higher
+// forms are allowed (a stage may record several tenures at its current form and
+// may advance).
+func CheckTenantFormProgression(existing []TenantForm, next TenantForm) error {
+	if next.Order() < HighestTenantForm(existing) {
+		return ErrFarmTenureFormRegression
+	}
+	return nil
+}
+
 var (
 	ErrFarmTenureFormRequired        = errors.New("simulation: farm tenure form is required")
 	ErrFarmTenureFormInvalid         = errors.New("simulation: form must be bailiff, metayer, or capitalist-farmer")
@@ -51,6 +77,7 @@ var (
 	ErrFarmTenureRentNegative        = errors.New("simulation: rent_pence cannot be negative")
 	ErrFarmTenureCapitalNegative     = errors.New("simulation: capital_advanced_pence cannot be negative")
 	ErrDepreciationFactorInvalid     = errors.New("simulation: depreciation_factor must be in (0, 1]")
+	ErrFarmTenureFormRegression      = errors.New("simulation: farm tenure form cannot regress below an existing form for the stage (L-H2 is one-way)")
 )
 
 // FarmTenureID is a 96-bit hex identifier for a persisted farm tenure record.

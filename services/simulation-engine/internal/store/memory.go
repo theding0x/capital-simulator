@@ -513,6 +513,16 @@ func (m *Memory) CreateFarmTenure(_ context.Context, f simulation.FarmTenure) (s
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	// L-H2: a stage's tenant form cannot regress below a form already recorded.
+	existing := make([]simulation.TenantForm, 0)
+	for _, t := range m.farmTenures {
+		if t.HistoricalStageID == f.HistoricalStageID {
+			existing = append(existing, t.Form)
+		}
+	}
+	if err := simulation.CheckTenantFormProgression(existing, f.Form); err != nil {
+		return simulation.FarmTenure{}, err
+	}
 	if f.ID.IsZero() {
 		f.ID = simulation.NewFarmTenureID()
 	}
@@ -645,6 +655,22 @@ func (m *Memory) ListNationalDebtsByStage(_ context.Context, stageID simulation.
 		}
 	}
 	return out, nil
+}
+
+func (m *Memory) CreateProtectionSystem(_ context.Context, s simulation.ProtectionSystem) (simulation.ProtectionSystem, error) {
+	if err := s.Validate(); err != nil {
+		return simulation.ProtectionSystem{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if s.ID.IsZero() {
+		s.ID = simulation.NewProtectionSystemID()
+	}
+	if s.CreatedAt.IsZero() {
+		s.CreatedAt = m.now()
+	}
+	m.protectionSystems = append(m.protectionSystems, s)
+	return s, nil
 }
 
 func (m *Memory) ListProtectionSystemsByStage(_ context.Context, stageID simulation.HistoricalStageID) ([]simulation.ProtectionSystem, error) {
