@@ -1,0 +1,38 @@
+/* Atlas Observatory — uses the brand tokens from index.css (:root). */
+.atlas-shell { position: fixed; inset: 0; display: flex; flex-direction: column;
+  background: radial-gradient(circle at 50% 42%, #12141b, var(--bg) 78%); color: var(--ink); }
+.atlas-top { display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; height: var(--topbar-h); border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+.atlas-top .brand { color: var(--red); font-weight: 600; letter-spacing: .5px; }
+.atlas-top .nav a { color: var(--ink-muted); text-decoration: none; margin-left: 14px; font-size: 13px; }
+.atlas-top .nav a:hover { color: var(--ink); }
+.atlas-body { flex: 1 1 auto; display: flex; min-height: 0; }
+.atlas-rail { width: 220px; flex: 0 0 auto; border-right: 1px solid var(--border);
+  padding: 16px; overflow-y: auto; background: rgba(13,15,20,.6); }
+.atlas-field-wrap { flex: 1 1 auto; position: relative; overflow: hidden; }
+.atlas-field { position: absolute; inset: 0; display: flex; flex-wrap: wrap;
+  align-content: center; justify-content: center; gap: 22px; padding: 28px; }
+.atlas-field-centre { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  text-align: center; pointer-events: none; opacity: .5; z-index: 0; }
+.atlas-field-centre .pbar { font: 700 22px 'IBM Plex Mono', monospace; color: var(--gold-bright); }
+.atlas-field-centre .lbl { font: 600 9px 'IBM Plex Mono', monospace; letter-spacing: 1px; color: var(--ink-muted); }
+.atlas-orbit { position: relative; z-index: 1; }
+.atlas-orbit svg { display: block; }
+.atlas-orbit.halted { opacity: .4; filter: grayscale(.6); }
+.atlas-flow { transform-box: view-box; transform-origin: center; animation: atlas-spin linear infinite; }
+@keyframes atlas-spin { to { transform: rotate(360deg); } }
+.atlas-bottom { flex: 0 0 auto; display: flex; align-items: center; gap: 14px;
+  height: 56px; padding: 0 16px; border-top: 1px solid var(--border); background: rgba(16,18,24,.7); }
+.atlas-btn { background: var(--surface-raised); color: var(--ink); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; font-size: 14px; }
+.atlas-btn:hover { background: var(--surface-hover); }
+.atlas-speed { color: var(--ink-muted); font: 600 11px 'IBM Plex Mono', monospace; cursor: pointer;
+  padding: 3px 6px; border-radius: 3px; }
+.atlas-speed.active { color: var(--gold-bright); background: var(--gold-bg); }
+.atlas-ecg { flex: 1 1 auto; height: 28px; }
+.atlas-turn { font: 600 12px 'IBM Plex Mono', monospace; color: var(--ink-muted); }
+.atlas-stale { color: var(--red); font-size: 11px; }
+.atlas-vital { margin-bottom: 14px; }
+.atlas-vital .k { font: 600 8.5px 'IBM Plex Mono', monospace; letter-spacing: 1px; color: var(--ink-muted); text-transform: uppercase; }
+.atlas-vital .v { font: 600 18px 'IBM Plex Mono', monospace; color: var(--ink); margin-top: 3px; }
+.atlas-vital .v.gold { color: var(--gold-bright); }
