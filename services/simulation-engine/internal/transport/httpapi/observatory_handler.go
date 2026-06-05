@@ -48,6 +48,9 @@ type abodeDTO struct {
 	ReserveArmyPressureBP  int64                 `json:"reserve_army_pressure_bp"`
 	EmployedCount          int64                 `json:"employed_count"`
 	WagePence              int64                 `json:"wage_pence"`
+	SurplusRateBaseBP      int64                 `json:"surplus_rate_base_bp"`
+	BaseWagePence          int64                 `json:"base_wage_pence"`
+	AccumulationRateBP     int64                 `json:"accumulation_rate_bp"`
 	LawSeries              []generalLawPeriodDTO `json:"law_series"`
 }
 
@@ -132,6 +135,9 @@ func (h *Handler) GetObservatorySnapshot(w http.ResponseWriter, r *http.Request)
 			ReserveArmyPressureBP:  ar.ReserveArmyPressureBP,
 			EmployedCount:          ar.EmployedCount,
 			WagePence:              ar.WagePence,
+			SurplusRateBaseBP:      state.SurplusRateBaseBP,
+			BaseWagePence:          state.BaseWagePence,
+			AccumulationRateBP:     state.AccumulationRateBP,
 			LawSeries:              law,
 		}
 	}

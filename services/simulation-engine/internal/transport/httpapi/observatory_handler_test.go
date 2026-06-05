@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
@@ -84,6 +85,51 @@ func TestGetObservatorySnapshot(t *testing.T) {
 	}
 	if ab.NecessaryLabourMinutes+ab.SurplusLabourMinutes == 0 {
 		t.Error("working day minutes not populated")
+	}
+	if resp.Abode.AccumulationRateBP == 0 && resp.Abode.BaseWagePence == 0 {
+		t.Error("abode block missing base lever values (accumulation_rate_bp / base_wage_pence)")
+	}
+}
+
+func TestSetObservatoryLevers(t *testing.T) {
+	t.Parallel()
+	m := store.NewMemory()
+	h := New(nil, Deps{AbodeStates: m}) // mirror TestGetObservatorySnapshot's handler construction
+
+	body := `{"accumulation_rate_bp": 0, "surplus_rate_base_bp": 30000}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/observatory/levers", strings.NewReader(body))
+	rec := httptest.NewRecorder()
+	h.SetObservatoryLevers(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("code = %d, want 200; body = %s", rec.Code, rec.Body.String())
+	}
+	var resp struct {
+		SurplusRateBaseBP  int64 `json:"surplus_rate_base_bp"`
+		BaseWagePence      int64 `json:"base_wage_pence"`
+		AccumulationRateBP int64 `json:"accumulation_rate_bp"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.AccumulationRateBP != 0 || resp.SurplusRateBaseBP != 30000 {
+		t.Errorf("levers not applied: %+v", resp)
+	}
+	if resp.BaseWagePence != 2500 {
+		t.Errorf("untouched wage = %d, want 2500 (default)", resp.BaseWagePence)
+	}
+
+	// Persisted on the live abode.
+	st, _ := m.GetAbodeState(req.Context())
+	if st.AccumulationRateBP != 0 || st.SurplusRateBaseBP != 30000 {
+		t.Errorf("not persisted: %+v", st)
+	}
+
+	// Malformed body → 400.
+	bad := httptest.NewRequest(http.MethodPost, "/v1/observatory/levers", strings.NewReader("{"))
+	badRec := httptest.NewRecorder()
+	h.SetObservatoryLevers(badRec, bad)
+	if badRec.Code != http.StatusBadRequest {
+		t.Errorf("malformed code = %d, want 400", badRec.Code)
 	}
 }
 

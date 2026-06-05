@@ -11,6 +11,7 @@ func Register(s *httpx.Server, h *Handler) {
 
 	// Atlas — the whole-circuit Observatory (field snapshot read-model)
 	s.HandleFunc("GET /v1/observatory/snapshot", h.GetObservatorySnapshot)
+	s.HandleFunc("POST /v1/observatory/levers", h.SetObservatoryLevers)
 
 	// Vol. II Ch. 1 — The Circuit of Money-Capital
 	s.HandleFunc("POST /v1/money-circuits", h.CreateMoneyCircuit)
