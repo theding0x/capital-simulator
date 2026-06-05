@@ -173,3 +173,55 @@ func AdvanceGeneralLaw(s AbodeState) (AbodeState, GeneralLawPeriod) {
 
 	return next, period
 }
+
+// LeverUpdate is a partial perturbation of the live abode's law parameters
+// (Slice 3 — the levers). Non-nil fields are applied; nil fields are left
+// unchanged. The three levers are the working day (the rate of surplus-value),
+// the wage (the value of labour-power), and the accumulation rate α.
+type LeverUpdate struct {
+	SurplusRateBaseBP  *int64 `json:"surplus_rate_base_bp,omitempty"` // working day: necessary↔surplus
+	BaseWagePence      *int64 `json:"base_wage_pence,omitempty"`      // value of labour-power
+	AccumulationRateBP *int64 `json:"accumulation_rate_bp,omitempty"` // α
+}
+
+// IsEmpty reports whether the update would change nothing.
+func (u LeverUpdate) IsEmpty() bool {
+	return u.SurplusRateBaseBP == nil && u.BaseWagePence == nil && u.AccumulationRateBP == nil
+}
+
+// ApplyLevers returns a copy of the state with the supplied levers applied, each
+// clamped so the law cannot be driven to a degenerate state: the base rate of
+// surplus-value to [0, 100000] (0–1000%), the wage to at least 1 pence (a
+// positive value of labour-power, so employment v/wage stays finite), and α to
+// [0, 10000] basis points.
+func (a AbodeState) ApplyLevers(u LeverUpdate) AbodeState {
+	next := a
+	if u.SurplusRateBaseBP != nil {
+		v := *u.SurplusRateBaseBP
+		if v < 0 {
+			v = 0
+		}
+		if v > 100000 {
+			v = 100000
+		}
+		next.SurplusRateBaseBP = v
+	}
+	if u.BaseWagePence != nil {
+		v := *u.BaseWagePence
+		if v < 1 {
+			v = 1
+		}
+		next.BaseWagePence = v
+	}
+	if u.AccumulationRateBP != nil {
+		v := *u.AccumulationRateBP
+		if v < 0 {
+			v = 0
+		}
+		if v > 10000 {
+			v = 10000
+		}
+		next.AccumulationRateBP = v
+	}
+	return next
+}

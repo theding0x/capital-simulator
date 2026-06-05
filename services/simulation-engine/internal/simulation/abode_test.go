@@ -86,3 +86,41 @@ func TestAdvanceGeneralLawConserves(t *testing.T) {
 			s.ConstantPence+s.VariablePence, next.ConstantPence+next.VariablePence)
 	}
 }
+
+func TestApplyLevers(t *testing.T) {
+	t.Parallel()
+	s := NewAbodeState() // surplus_rate_base=10000, base_wage=2500, accum=5000
+
+	sr, wage, ac := int64(20000), int64(4000), int64(8000)
+	got := s.ApplyLevers(LeverUpdate{SurplusRateBaseBP: &sr, BaseWagePence: &wage, AccumulationRateBP: &ac})
+	if got.SurplusRateBaseBP != 20000 || got.BaseWagePence != 4000 || got.AccumulationRateBP != 8000 {
+		t.Errorf("levers not applied: %+v", got)
+	}
+
+	// A partial update leaves the other parameters untouched.
+	only := s.ApplyLevers(LeverUpdate{AccumulationRateBP: &ac})
+	if only.AccumulationRateBP != 8000 || only.BaseWagePence != s.BaseWagePence || only.SurplusRateBaseBP != s.SurplusRateBaseBP {
+		t.Errorf("partial update bled into other fields: %+v", only)
+	}
+
+	// Clamps: α to [0,10000]; wage floored at 1; base surplus rate to [0,100000].
+	big, zero, huge := int64(99999), int64(0), int64(500000)
+	cl := s.ApplyLevers(LeverUpdate{AccumulationRateBP: &big, BaseWagePence: &zero, SurplusRateBaseBP: &huge})
+	if cl.AccumulationRateBP != 10000 {
+		t.Errorf("alpha not clamped: %d", cl.AccumulationRateBP)
+	}
+	if cl.BaseWagePence != 1 {
+		t.Errorf("wage not floored: %d", cl.BaseWagePence)
+	}
+	if cl.SurplusRateBaseBP != 100000 {
+		t.Errorf("surplus rate not clamped: %d", cl.SurplusRateBaseBP)
+	}
+
+	// An empty update changes nothing and reports empty.
+	if !(LeverUpdate{}).IsEmpty() {
+		t.Error("empty LeverUpdate should report IsEmpty")
+	}
+	if got := s.ApplyLevers(LeverUpdate{}); got != s {
+		t.Error("empty update should be a no-op")
+	}
+}
