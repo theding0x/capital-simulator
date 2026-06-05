@@ -9,7 +9,7 @@ const SocialWorkingDayMinutes = 600
 // below full automation, so new capital always still hires some labour and the
 // variable part of capital keeps growing in absolute magnitude (it just grows in
 // an ever-diminishing proportion). Prevents the degenerate v→0 collapse.
-const maxMarginalCompositionBP = 9500
+const maxMarginalCompositionBP = 9900
 
 // AbodeState is the evolving aggregate class relation beneath the field of
 // capitals — "the hidden abode of production, on whose threshold there hangs the
@@ -80,29 +80,32 @@ type AbodeReadout struct {
 }
 
 // reservePressureBP returns reserve / workforce in basis points, clamped to
-// [0, 9000]. The active labour army never fully vanishes, so pressure never pegs
-// at 100% — the ceiling keeps the wage above absolute zero and s′ bounded. Zero
+// [0, 9900]. The active labour army never fully vanishes, so pressure never pegs
+// at 100% — the ceiling keeps the wage above subsistence and s′ bounded. Zero
 // reserve or workforce is no pressure.
 func reservePressureBP(reserve, workforce int64) int64 {
 	if reserve <= 0 || workforce <= 0 {
 		return 0
 	}
 	bp := reserve * 10000 / workforce
-	if bp > 9000 {
-		return 9000
+	if bp > 9900 {
+		return 9900
 	}
 	return bp
 }
 
 // compressWage drives the price of labour below the value of labour-power as the
-// reserve army grows (Vol. I Ch. 25 §3): nominal × (1 − pressure), rounded half
-// up, floored at half the value of labour-power (subsistence).
+// reserve army grows (Vol. I Ch. 25 §3). It interpolates linearly from the full
+// value of labour-power (no pressure) down to subsistence — half the value —
+// only at full pressure, so the wage keeps falling across the whole reserve-army
+// range instead of slamming to the floor once pressure passes 50%.
 func compressWage(baseWage, pressureBP int64) int64 {
 	if baseWage <= 0 || pressureBP <= 0 {
 		return baseWage
 	}
-	w := (baseWage*(10000-pressureBP) + 5000) / 10000
-	if floor := baseWage / 2; w < floor {
+	floor := baseWage / 2
+	w := floor + (baseWage-floor)*(10000-pressureBP)/10000
+	if w < floor {
 		return floor
 	}
 	return w
