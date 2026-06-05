@@ -4873,12 +4873,35 @@ export interface AggregateVitals {
   avg_rate_of_profit_bp: number;
 }
 
+export interface GeneralLawTrendPoint {
+  period: number;
+  wage_pence: number;
+  rate_of_exploitation_bp: number;
+  reserve_army_count: number;
+  organic_composition_bp: number;
+}
+
+export interface AbodeReadout {
+  total_variable_pence: number;
+  total_surplus_pence: number;
+  rate_of_exploitation_bp: number;
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+  organic_composition_bp: number;
+  reserve_army_count: number;
+  reserve_army_pressure_bp: number;
+  employed_count: number;
+  wage_pence: number;
+  law_series: GeneralLawTrendPoint[];
+}
+
 export interface ObservatorySnapshot {
   tick: number;
   running: boolean;
   interval_ms: number;
   capitals: FieldCapital[];
   aggregate: AggregateVitals;
+  abode: AbodeReadout;
 }
 
 export interface EngineStatus {

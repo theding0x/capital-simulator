@@ -85,3 +85,33 @@ export function targetScale(totalPence: number, reference: number): number {
   if (reference <= 0) return 1;
   return Math.min(4, Math.max(0.4, Math.sqrt(Math.max(0, totalPence) / reference)));
 }
+
+/** Minutes → "Hh Mm" working-day label, e.g. 272 → "4h 32m". */
+export function formatMinutes(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = Math.round(min % 60);
+  return `${h}h ${m}m`;
+}
+
+/**
+ * Build an SVG polyline path for a sparkline of `values` fitted to a `w`×`h`
+ * box (with 2px padding). Auto-scales to the value range; a flat series draws a
+ * mid-line. Pure + deterministic.
+ */
+export function sparklinePath(values: number[], w: number, h: number): string {
+  if (values.length === 0) return "";
+  const pad = 2;
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
+  const span = hi - lo || 1;
+  const innerW = w - pad * 2;
+  const innerH = h - pad * 2;
+  const step = values.length > 1 ? innerW / (values.length - 1) : 0;
+  return values
+    .map((v, i) => {
+      const x = pad + i * step;
+      const y = pad + innerH * (1 - (v - lo) / span);
+      return `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
