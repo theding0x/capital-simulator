@@ -4892,7 +4892,22 @@ export interface AbodeReadout {
   reserve_army_pressure_bp: number;
   employed_count: number;
   wage_pence: number;
+  surplus_rate_base_bp: number;
+  base_wage_pence: number;
+  accumulation_rate_bp: number;
   law_series: GeneralLawTrendPoint[];
+}
+
+export interface LeverUpdate {
+  surplus_rate_base_bp?: number;
+  base_wage_pence?: number;
+  accumulation_rate_bp?: number;
+}
+
+export interface LeverState {
+  surplus_rate_base_bp: number;
+  base_wage_pence: number;
+  accumulation_rate_bp: number;
 }
 
 export interface ObservatorySnapshot {

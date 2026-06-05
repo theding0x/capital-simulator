@@ -105,3 +105,14 @@
 .abode-trend { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 .abode-trend svg { background: #0d0f14; border-radius: 6px; }
 .abode-trend-legend { display: flex; gap: 14px; font-size: 12px; }
+
+/* --- The levers (Slice 3) ------------------------------------------------- */
+.levers { display: flex; flex-direction: column; gap: 12px; }
+.lever { display: flex; flex-direction: column; gap: 4px; }
+.lever > span { color: #cdd3e0; font-size: 13px; }
+.lever > span > b { color: #c8a240; font-weight: 600; }
+.lever > input[type="range"] {
+  width: 100%;
+  accent-color: #c8a240;
+  cursor: pointer;
+}

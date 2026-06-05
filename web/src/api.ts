@@ -231,6 +231,12 @@ export const api = {
   getObservatorySnapshot: () =>
     http<ObservatorySnapshot>("/v1/observatory/snapshot"),
 
+  setObservatoryLevers: (u: import("./types").LeverUpdate) =>
+    http<import("./types").LeverState>("/v1/observatory/levers", {
+      method: "POST",
+      body: JSON.stringify(u),
+    }),
+
   getEngineStatus: () => http<EngineStatus>("/v1/engine/status"),
 
   startEngine: () =>

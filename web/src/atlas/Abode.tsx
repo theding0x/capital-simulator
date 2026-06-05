@@ -1,6 +1,7 @@
 import type { AbodeReadout } from "../types";
 import { formatBP, formatPence, formatMinutes } from "./animation";
 import { GeneralLawTrend } from "./GeneralLawTrend";
+import { Levers } from "./Levers";
 
 interface AbodeProps {
   abode: AbodeReadout;
@@ -61,6 +62,8 @@ export function Abode({ abode }: AbodeProps) {
         <div className="abode-card-k">The general law in motion</div>
         <GeneralLawTrend series={abode.law_series} />
       </section>
+
+      <Levers abode={abode} />
     </div>
   );
 }
