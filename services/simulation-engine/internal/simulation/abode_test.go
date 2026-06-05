@@ -87,6 +87,40 @@ func TestAdvanceGeneralLawConserves(t *testing.T) {
 	}
 }
 
+func TestAdvanceGeneralLawDoesNotCollapse(t *testing.T) {
+	t.Parallel()
+	s := NewAbodeState()
+	seedV := s.VariablePence
+	seedReserve := s.Readout().ReserveArmyCount
+	// Run the law well past where the old machinery-destroys-v mechanism stranded
+	// variable capital at a few pence — the degenerate collapse the user hit:
+	// Σv = 0, wage pressure pegged at 100%, the whole workforce idle in the reserve.
+	for i := 0; i < 60; i++ {
+		s, _ = AdvanceGeneralLaw(s)
+	}
+	r := s.Readout()
+	// Variable capital (living labour) GROWS in absolute magnitude — never destroyed
+	// (Vol. I Ch. 25 §2: "the variable part... increases, but in a diminishing proportion").
+	if s.VariablePence <= seedV {
+		t.Errorf("variable capital did not grow over 60 periods: %d (seed %d) — living labour collapsed", s.VariablePence, seedV)
+	}
+	if r.EmployedCount <= 0 {
+		t.Errorf("employment collapsed to %d — no living labour employed", r.EmployedCount)
+	}
+	if r.TotalVariablePence <= 0 {
+		t.Errorf("Σv collapsed to %d", r.TotalVariablePence)
+	}
+	// The active army always persists, so pressure never fully pegs at 100%.
+	if r.ReserveArmyPressureBP >= 10000 {
+		t.Errorf("wage pressure pegged at %d bp (100%%) — the active army vanished", r.ReserveArmyPressureBP)
+	}
+	// The reserve army still grows (relative surplus population) — immiseration,
+	// not degeneration.
+	if r.ReserveArmyCount <= seedReserve {
+		t.Errorf("reserve army did not grow: %d (seed %d)", r.ReserveArmyCount, seedReserve)
+	}
+}
+
 func TestApplyLevers(t *testing.T) {
 	t.Parallel()
 	s := NewAbodeState() // surplus_rate_base=10000, base_wage=2500, accum=5000

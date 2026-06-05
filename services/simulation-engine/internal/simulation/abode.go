@@ -5,6 +5,12 @@ package simulation
 // from unpaid (surplus) labour. Ten hours — the post-1850 normal working day.
 const SocialWorkingDayMinutes = 600
 
+// maxMarginalCompositionBP caps the composition of newly-accumulated capital
+// below full automation, so new capital always still hires some labour and the
+// variable part of capital keeps growing in absolute magnitude (it just grows in
+// an ever-diminishing proportion). Prevents the degenerate v→0 collapse.
+const maxMarginalCompositionBP = 9500
+
 // AbodeState is the evolving aggregate class relation beneath the field of
 // capitals — "the hidden abode of production, on whose threshold there hangs the
 // notice 'No admittance except on business'" (Vol. I Ch. 6 fin.). It is the
@@ -40,10 +46,10 @@ func NewAbodeState() AbodeState {
 		WorkerSupply:          150,    // 30 already in the reserve army
 		SurplusRateBaseBP:     10000,  // 100% rate of surplus-value
 		AccumulationRateBP:    5000,   // reinvest 50% of surplus
-		MarginalCompositionBP: 6667,   // new capital starts at the stock composition c/(c+v)
-		DisplacementRateBP:    1800,   // machinery repels 18% of the wages bill per period
-		ProductivityGrowthBP:  500,    // marginal composition closes 5% of its gap to full automation
-		PopulationGrowthBP:    150,    // the labouring population grows 1.5% per period
+		MarginalCompositionBP: 8000,   // new capital more machine-heavy than the 2:1 stock → composition rises from period 0
+		DisplacementRateBP:    1800,   // legacy; no longer drives the law (kept for the persisted column)
+		ProductivityGrowthBP:  500,    // marginal composition closes 5% of its gap to full automation per period
+		PopulationGrowthBP:    150,    // legacy; supply now grows with the scale of capital (kept for the persisted column)
 	}
 }
 
@@ -74,14 +80,16 @@ type AbodeReadout struct {
 }
 
 // reservePressureBP returns reserve / workforce in basis points, clamped to
-// [0, 10000]. Zero reserve or workforce is no pressure.
+// [0, 9000]. The active labour army never fully vanishes, so pressure never pegs
+// at 100% — the ceiling keeps the wage above absolute zero and s′ bounded. Zero
+// reserve or workforce is no pressure.
 func reservePressureBP(reserve, workforce int64) int64 {
 	if reserve <= 0 || workforce <= 0 {
 		return 0
 	}
 	bp := reserve * 10000 / workforce
-	if bp > 10000 {
-		return 10000
+	if bp > 9000 {
+		return 9000
 	}
 	return bp
 }
@@ -129,11 +137,14 @@ func (a AbodeState) Readout() AbodeReadout {
 
 // AdvanceGeneralLaw runs one period of the general law, returning the next state
 // and the GeneralLawPeriod recorded for the immiseration series. The loop
-// (Vol. I Ch. 25): the heightened surplus is re-accumulated at the marginal
-// (machine-heavier) composition; machinery then repels a share of the wages bill
-// into constant capital, holding v down and swelling the reserve army; the
-// labouring population grows and the marginal composition climbs toward — but
-// never reaches — full automation. The circle closes.
+// (Vol. I Ch. 25): the heightened surplus is re-accumulated as new capital at
+// the marginal (machine-heavier) composition, so the organic composition rises
+// while c AND v both grow — variable capital is never destroyed. The working
+// population grows with the scale of capital, but the rising composition makes
+// the demand for labour grow more slowly, so a relatively redundant population —
+// the reserve army — swells, pressing the wage below the value of labour-power
+// and raising s′; the heightened surplus re-accumulates. The circle closes
+// without driving living labour to zero.
 func AdvanceGeneralLaw(s AbodeState) (AbodeState, GeneralLawPeriod) {
 	r := s.Readout()
 	period := GeneralLawPeriod{
@@ -148,28 +159,38 @@ func AdvanceGeneralLaw(s AbodeState) (AbodeState, GeneralLawPeriod) {
 	next := s
 	next.Period = s.Period + 1
 
-	// Re-accumulate α·s at the marginal composition (new capital is more
-	// machine-heavy than the existing stock).
+	// Re-accumulate α·s as NEW capital at the marginal (machine-heavier)
+	// composition. Both c and v grow in absolute magnitude; because new capital
+	// is more constant-heavy than the existing stock, the organic composition
+	// rises while variable capital (living labour) keeps growing — never
+	// destroyed (Vol. I Ch. 25 §2: "the variable part... increases, but in a
+	// constantly diminishing proportion").
 	capitalised := r.TotalSurplusPence * s.AccumulationRateBP / 10000
 	dc := capitalised * s.MarginalCompositionBP / 10000
 	dv := capitalised - dc
 	next.ConstantPence = s.ConstantPence + Pence(dc)
 	next.VariablePence = s.VariablePence + Pence(dv)
 
-	// Machinery repels living labour: a share of the wages bill is converted to
-	// constant capital — the working population "produces the means by which it
-	// is made relatively superfluous" (§25.3). This holds v down so the reserve
-	// army grows even as total capital accumulates.
-	displaced := int64(next.VariablePence) * s.DisplacementRateBP / 10000
-	next.VariablePence -= Pence(displaced)
-	next.ConstantPence += Pence(displaced)
+	// The labouring population grows with the scale of accumulating capital
+	// (capital draws population into its orbit). Because the rising composition
+	// makes the demand for labour (v) grow more slowly than total capital, supply
+	// outruns demand: a relatively redundant population — the industrial reserve
+	// army — grows and its pressure rises, while the active army still grows in
+	// absolute magnitude (§25.3).
+	oldTotal := int64(s.ConstantPence + s.VariablePence)
+	newTotal := int64(next.ConstantPence + next.VariablePence)
+	if oldTotal > 0 {
+		growthBP := (newTotal - oldTotal) * 10000 / oldTotal
+		next.WorkerSupply = s.WorkerSupply + s.WorkerSupply*growthBP/10000
+	}
 
-	// The labouring population grows; the marginal composition asymptotes below
-	// full automation (no fictional ceiling — it closes a fixed fraction of the
-	// remaining gap each period).
-	next.WorkerSupply = s.WorkerSupply + s.WorkerSupply*s.PopulationGrowthBP/10000
+	// The marginal composition climbs toward — but never reaches — full
+	// automation, capped so new capital always still hires some labour.
 	next.MarginalCompositionBP = s.MarginalCompositionBP +
-		s.ProductivityGrowthBP*(10000-s.MarginalCompositionBP)/10000
+		s.ProductivityGrowthBP*(maxMarginalCompositionBP-s.MarginalCompositionBP)/10000
+	if next.MarginalCompositionBP > maxMarginalCompositionBP {
+		next.MarginalCompositionBP = maxMarginalCompositionBP
+	}
 
 	return next, period
 }
