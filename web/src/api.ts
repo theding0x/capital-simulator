@@ -201,13 +201,14 @@ import type {
   EngineStatus,
   EngineTick,
 } from "./types";
+import { atlasSessionHeader } from "./atlas/session";
 
 const BASE = "/api";
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
     ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
   });
   if (res.status === 204) {
     return undefined as T;
@@ -228,12 +229,15 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // --- Atlas Observatory (simulation-engine) ---
-  getObservatorySnapshot: () =>
-    http<ObservatorySnapshot>("/v1/observatory/snapshot"),
+  getObservatorySnapshot: (advance = 1) =>
+    http<ObservatorySnapshot>(`/v1/observatory/snapshot?advance=${advance}`, {
+      headers: atlasSessionHeader,
+    }),
 
   setObservatoryLevers: (u: import("./types").LeverUpdate) =>
     http<import("./types").LeverState>("/v1/observatory/levers", {
       method: "POST",
+      headers: atlasSessionHeader,
       body: JSON.stringify(u),
     }),
 

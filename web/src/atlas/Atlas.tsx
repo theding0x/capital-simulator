@@ -5,8 +5,8 @@ import { AtlasSurface } from "./surface";
 import { VitalSigns } from "./VitalSigns";
 import { Abode } from "./Abode";
 import { Transport } from "./TickHeartbeat";
-import { api } from "../api";
 import { clamp, formatBP } from "./animation";
+import { loadPrefs, savePrefs } from "./prefs";
 
 /** Animated scrollTop tween (inOutCubic) on the stage container. */
 function useAnimatedScroll(stageRef: React.RefObject<HTMLDivElement | null>) {
@@ -40,16 +40,23 @@ function useAnimatedScroll(stageRef: React.RefObject<HTMLDivElement | null>) {
 /** The Observatory — one continuous vertical world: the orrery surface above,
  *  the hidden abode below; descending is literal travel through a gilded gate. */
 export default function Atlas() {
-  const { snapshot } = useSnapshot();
   const prefersReduced =
     typeof window !== "undefined" &&
     window.matchMedia &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const [running, setRunning] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [reduced, setReduced] = useState(!!prefersReduced);
+  const [running, setRunning] = useState(true);
+  const [speed, setSpeed] = useState(() => loadPrefs().speed);
+  const [reduced, setReduced] = useState(() => loadPrefs().reduced || !!prefersReduced);
   const [depth, setDepth] = useState(0);
+
+  // Advance the session's in-memory run by `speed` periods per poll while running.
+  const { snapshot } = useSnapshot(running ? speed : 0);
+
+  // Persist UI preferences across reloads (the run itself does not persist).
+  useEffect(() => {
+    savePrefs({ speed, reduced });
+  }, [speed, reduced]);
 
   const surfaceRef = useRef<AtlasSurface | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -77,10 +84,6 @@ export default function Atlas() {
   useEffect(() => {
     surfaceRef.current?.setSpeed(speed);
   }, [speed]);
-  // reflect the server's run state on first load
-  useEffect(() => {
-    if (snapshot) setRunning(snapshot.running);
-  }, [snapshot?.running]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const depthRaf = useRef(0);
   const onScroll = useCallback(() => {
@@ -104,9 +107,6 @@ export default function Atlas() {
     const next = !running;
     setRunning(next);
     surfaceRef.current?.setRunning(next);
-    void (next ? api.startEngine() : api.stopEngine()).catch(() => {
-      /* poll reflects truth */
-    });
   };
 
   const descended = depth > 0.5;
