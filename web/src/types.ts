@@ -4863,6 +4863,7 @@ export interface FieldCapital {
   cost_price_pence: number;
   surplus_pence: number;
   status: string;
+  turnover_number: number;
 }
 
 export interface AggregateVitals {
