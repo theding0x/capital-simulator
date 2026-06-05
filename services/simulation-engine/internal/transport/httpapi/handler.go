@@ -39,6 +39,7 @@ type Handler struct {
 	CommodityCircuits     store.CommodityCircuitStore
 	MoneyCircuits         store.MoneyCircuitStore
 	IndustrialCapitals    store.IndustrialCapitalStore
+	AbodeStates           store.AbodeStateStore
 	Turnovers             store.TurnoverStore
 	Composition           store.CompositionStore
 	AggregateTurnovers    store.AggregateTurnoverStore
@@ -81,6 +82,7 @@ type Deps struct {
 	CommodityCircuits     store.CommodityCircuitStore
 	MoneyCircuits         store.MoneyCircuitStore
 	IndustrialCapitals    store.IndustrialCapitalStore
+	AbodeStates           store.AbodeStateStore
 	Turnovers             store.TurnoverStore
 	Composition           store.CompositionStore
 	AggregateTurnovers    store.AggregateTurnoverStore
@@ -123,6 +125,7 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		CommodityCircuits:     d.CommodityCircuits,
 		MoneyCircuits:         d.MoneyCircuits,
 		IndustrialCapitals:    d.IndustrialCapitals,
+		AbodeStates:           d.AbodeStates,
 		Turnovers:             d.Turnovers,
 		Composition:           d.Composition,
 		AggregateTurnovers:    d.AggregateTurnovers,

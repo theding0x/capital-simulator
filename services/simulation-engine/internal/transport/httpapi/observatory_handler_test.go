@@ -34,7 +34,7 @@ func TestGetObservatorySnapshot(t *testing.T) {
 		DemandPence: 250000, SupplyPence: 275000, ExcessPence: 25000,
 	})
 
-	h := New(nil, Deps{IndustrialCapitals: m}) // Scheduler nil → tick 0, not running
+	h := New(nil, Deps{IndustrialCapitals: m, AbodeStates: m}) // Scheduler nil → tick 0, not running
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/observatory/snapshot", nil)
 	rec := httptest.NewRecorder()
@@ -67,6 +67,23 @@ func TestGetObservatorySnapshot(t *testing.T) {
 		if c.TurnoverNumber < 1 {
 			t.Errorf("capital %s turnover_number = %d, want >= 1 (memory default)", c.ID, c.TurnoverNumber)
 		}
+	}
+
+	// Snapshot v2 carries the hidden-abode block.
+	ab := resp.Abode
+	if ab.TotalVariablePence <= 0 {
+		t.Errorf("abode Σv = %d, want > 0", ab.TotalVariablePence)
+	}
+	if ab.LawSeries == nil {
+		t.Error("abode.law_series must be non-nil (never null)")
+	}
+	// s/v == round(10000 * Σs / Σv) — the rate of exploitation.
+	wantSV := (ab.TotalSurplusPence*10000 + ab.TotalVariablePence/2) / ab.TotalVariablePence
+	if ab.RateOfExploitationBP != wantSV {
+		t.Errorf("s/v = %d, want %d (round 10000*Σs/Σv)", ab.RateOfExploitationBP, wantSV)
+	}
+	if ab.NecessaryLabourMinutes+ab.SurplusLabourMinutes == 0 {
+		t.Error("working day minutes not populated")
 	}
 }
 

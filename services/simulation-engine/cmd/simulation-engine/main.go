@@ -46,6 +46,7 @@ type machineryStore interface {
 	store.CommodityCircuitStore
 	store.MoneyCircuitStore
 	store.IndustrialCapitalStore
+	store.AbodeStateStore
 	store.TurnoverStore
 	store.CompositionStore
 	store.AggregateTurnoverStore
@@ -97,6 +98,7 @@ func main() {
 		engine.NewReproductionTicker(st),
 		engine.NewPiecePriceTicker(engine.NewFactoryProductivitySource(st), repricer),
 		engine.NewAccumulationTicker(st, accumulationRateBP()),
+		engine.NewGeneralLawTicker(st),
 	}, st, logger)
 
 	srv.HandleFunc("/v1/sim/status", func(w http.ResponseWriter, _ *http.Request) {
@@ -124,6 +126,7 @@ func main() {
 		CommodityCircuits:     st,
 		MoneyCircuits:         st,
 		IndustrialCapitals:    st,
+		AbodeStates:           st,
 		Turnovers:             st,
 		Composition:           st,
 		AggregateTurnovers:    st,
