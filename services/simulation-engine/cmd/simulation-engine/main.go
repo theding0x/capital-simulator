@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -95,6 +96,7 @@ func main() {
 		engine.NewFactoryTicker(st),
 		engine.NewReproductionTicker(st),
 		engine.NewPiecePriceTicker(engine.NewFactoryProductivitySource(st), repricer),
+		engine.NewAccumulationTicker(st, accumulationRateBP()),
 	}, st, logger)
 
 	srv.HandleFunc("/v1/sim/status", func(w http.ResponseWriter, _ *http.Request) {
@@ -190,6 +192,24 @@ func handleStatus(w http.ResponseWriter, st engine.SchedulerStatus) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// accumulationRateBP returns the share of surplus reinvested per scheduler pass,
+// in basis points, from SIM_ACCUMULATION_RATE_BP (default 5000 = 50%). Clamped
+// to [0, 10000].
+func accumulationRateBP() int64 {
+	v := os.Getenv("SIM_ACCUMULATION_RATE_BP")
+	if v == "" {
+		return 5000
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
+	if err != nil || n < 0 {
+		return 5000
+	}
+	if n > 10000 {
+		return 10000
+	}
+	return n
 }
 
 // tickInterval reads SIM_TICK_INTERVAL (a Go duration like "5s" or "250ms")
