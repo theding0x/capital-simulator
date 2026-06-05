@@ -63,6 +63,11 @@ func TestGetObservatorySnapshot(t *testing.T) {
 	if resp.Aggregate.SurplusPence != 105000 || resp.Aggregate.CostPricePence != 650000 {
 		t.Errorf("aggregate cost/surplus = %d/%d", resp.Aggregate.CostPricePence, resp.Aggregate.SurplusPence)
 	}
+	for _, c := range resp.Capitals {
+		if c.TurnoverNumber < 1 {
+			t.Errorf("capital %s turnover_number = %d, want >= 1 (memory default)", c.ID, c.TurnoverNumber)
+		}
+	}
 }
 
 func TestGetObservatorySnapshotEmptyFieldNeverNull(t *testing.T) {

@@ -2832,7 +2832,7 @@ func scanStageBlock(scan func(...any) error) (circulation.StageBlock, error) {
 // FieldSnapshot implements IndustrialCapitalStore for the Atlas Observatory.
 func (m *MySQL) FieldSnapshot(ctx context.Context) ([]circulation.FieldCapital, error) {
 	const q = `
-SELECT ic.id, ic.total_pence, ic.status,
+SELECT ic.id, ic.total_pence, ic.status, ic.turnover_number,
        sd.money_pence, sd.production_pence, sd.commodity_pence,
        sdi.demand_pence, sdi.excess_pence
 FROM industrial_capitals ic
@@ -2862,18 +2862,19 @@ ORDER BY ic.id`
 	for rows.Next() {
 		var (
 			id, status        string
-			total             int64
+			total, turnover   int64
 			money, prod, comm sql.NullInt64
 			demand, excess    sql.NullInt64
 		)
-		if err := rows.Scan(&id, &total, &status, &money, &prod, &comm, &demand, &excess); err != nil {
+		if err := rows.Scan(&id, &total, &status, &turnover, &money, &prod, &comm, &demand, &excess); err != nil {
 			return nil, err
 		}
 		fc := circulation.FieldCapital{
-			ID:         circulation.IndustrialCapitalID(id),
-			TotalPence: circulation.Pence(total),
-			Status:     circulation.IndustrialCapitalStatus(status),
-			MoneyPence: circulation.Pence(total), // default when no distribution
+			ID:             circulation.IndustrialCapitalID(id),
+			TotalPence:     circulation.Pence(total),
+			Status:         circulation.IndustrialCapitalStatus(status),
+			MoneyPence:     circulation.Pence(total), // default when no distribution
+			TurnoverNumber: turnover,
 		}
 		if money.Valid {
 			fc.MoneyPence = circulation.Pence(money.Int64)
@@ -2887,4 +2888,59 @@ ORDER BY ic.id`
 		out = append(out, fc)
 	}
 	return out, rows.Err()
+}
+
+// AccumulateCapital implements IndustrialCapitalStore (the spiral of accumulation).
+func (m *MySQL) AccumulateCapital(ctx context.Context, id circulation.IndustrialCapitalID, delta circulation.Pence) (circulation.IndustrialCapital, error) {
+	if delta <= 0 {
+		return m.GetIndustrialCapital(ctx, id)
+	}
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var oldTotal int64
+	err = tx.QueryRowContext(ctx, `SELECT total_pence FROM industrial_capitals WHERE id = ? FOR UPDATE`, string(id)).Scan(&oldTotal)
+	if err == sql.ErrNoRows {
+		return circulation.IndustrialCapital{}, ErrNotFound
+	}
+	if err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	newTotal := oldTotal + int64(delta)
+
+	var money, prod, comm int64
+	var lm, lp, lc sql.NullInt64
+	err = tx.QueryRowContext(ctx,
+		`SELECT money_pence, production_pence, commodity_pence FROM stage_distributions
+		 WHERE industrial_capital_id = ? ORDER BY at_time DESC LIMIT 1`, string(id)).Scan(&lm, &lp, &lc)
+	if err != nil && err != sql.ErrNoRows {
+		return circulation.IndustrialCapital{}, err
+	}
+	if lm.Valid && oldTotal > 0 {
+		money = lm.Int64 * newTotal / oldTotal
+		prod = lp.Int64 * newTotal / oldTotal
+		comm = newTotal - money - prod
+	} else {
+		money = newTotal
+	}
+
+	now := time.Now().UTC()
+	if _, err = tx.ExecContext(ctx,
+		`UPDATE industrial_capitals SET total_pence = ?, updated_at = ? WHERE id = ?`,
+		newTotal, now, string(id)); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	if _, err = tx.ExecContext(ctx,
+		`INSERT INTO stage_distributions (id, industrial_capital_id, at_time, money_pence, production_pence, commodity_pence)
+		 VALUES (?, ?, ?, ?, ?, ?)`,
+		string(circulation.NewStageDistributionID()), string(id), now, money, prod, comm); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	if err = tx.Commit(); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	return m.GetIndustrialCapital(ctx, id)
 }

@@ -228,6 +228,11 @@ type IndustrialCapitalStore interface {
 	// for the Atlas Observatory: latest stage distribution + latest cost-price
 	// and surplus. Capitals with no recorded distribution default to all-money.
 	FieldSnapshot(ctx context.Context) ([]circulation.FieldCapital, error)
+	// AccumulateCapital capitalises deltaPence into the capital: total_pence grows
+	// and a new StageDistribution is appended, rescaled to the new total while
+	// preserving the latest M/P/C proportions (the spiral of accumulation). A
+	// non-positive delta is a no-op. ErrNotFound if the capital does not exist.
+	AccumulateCapital(ctx context.Context, id circulation.IndustrialCapitalID, deltaPence circulation.Pence) (circulation.IndustrialCapital, error)
 }
 
 // TurnoverStore is the persistence contract for Vol. II Ch. 7 —

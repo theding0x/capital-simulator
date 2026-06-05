@@ -14,4 +14,5 @@ type FieldCapital struct {
 	CostPricePence  Pence // c + v (SupplyDemandImbalance.DemandPence)
 	SurplusPence    Pence // s     (SupplyDemandImbalance.ExcessPence)
 	Status          IndustrialCapitalStatus
+	TurnoverNumber  int64 // laps per period; orbit dot lap-rate (Vol. II Ch. 7)
 }

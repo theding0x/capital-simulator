@@ -1479,10 +1479,11 @@ func (m *Memory) FieldSnapshot(_ context.Context) ([]circulation.FieldCapital, e
 	out := []circulation.FieldCapital{}
 	for id, ic := range m.industrialCapitals {
 		fc := circulation.FieldCapital{
-			ID:         id,
-			TotalPence: ic.TotalPence,
-			MoneyPence: ic.TotalPence, // default when no distribution recorded
-			Status:     ic.Status,
+			ID:             id,
+			TotalPence:     ic.TotalPence,
+			MoneyPence:     ic.TotalPence, // default when no distribution recorded
+			Status:         ic.Status,
+			TurnoverNumber: 1,
 		}
 		if sds := m.stageDistributions[id]; len(sds) > 0 {
 			latest := sds[len(sds)-1]
@@ -1498,6 +1499,45 @@ func (m *Memory) FieldSnapshot(_ context.Context) ([]circulation.FieldCapital, e
 		out = append(out, fc)
 	}
 	return out, nil
+}
+
+// AccumulateCapital implements IndustrialCapitalStore (the spiral of accumulation).
+func (m *Memory) AccumulateCapital(_ context.Context, id circulation.IndustrialCapitalID, delta circulation.Pence) (circulation.IndustrialCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	ic, ok := m.industrialCapitals[id]
+	if !ok {
+		return circulation.IndustrialCapital{}, ErrNotFound
+	}
+	if delta <= 0 {
+		return ic, nil
+	}
+	oldTotal := ic.TotalPence
+	newTotal := oldTotal + delta
+
+	var money, prod, comm circulation.Pence
+	if sds := m.stageDistributions[id]; len(sds) > 0 && oldTotal > 0 {
+		last := sds[len(sds)-1]
+		money = last.MoneyPence * newTotal / oldTotal
+		prod = last.ProductionPence * newTotal / oldTotal
+		comm = newTotal - money - prod // absorb integer rounding so the sum == newTotal
+	} else {
+		money = newTotal // default: all value sits as money
+	}
+
+	ic.TotalPence = newTotal
+	ic.UpdatedAt = m.now().UTC()
+	m.industrialCapitals[id] = ic
+
+	m.stageDistributions[id] = append(m.stageDistributions[id], circulation.StageDistribution{
+		ID:                  circulation.NewStageDistributionID(),
+		IndustrialCapitalID: id,
+		At:                  m.now().UTC(),
+		MoneyPence:          money,
+		ProductionPence:     prod,
+		CommodityPence:      comm,
+	})
+	return ic, nil
 }
 
 // Vol. II Ch. 10 — Theories of Fixed and Circulating Capital.

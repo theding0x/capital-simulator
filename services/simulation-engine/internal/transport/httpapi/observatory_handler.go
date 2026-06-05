@@ -26,6 +26,7 @@ type fieldCapitalDTO struct {
 	CostPricePence  int64  `json:"cost_price_pence"`
 	SurplusPence    int64  `json:"surplus_pence"`
 	Status          string `json:"status"`
+	TurnoverNumber  int64  `json:"turnover_number"`
 }
 
 type aggregateVitalsDTO struct {
@@ -62,6 +63,7 @@ func (h *Handler) GetObservatorySnapshot(w http.ResponseWriter, r *http.Request)
 			CostPricePence:  int64(fc.CostPricePence),
 			SurplusPence:    int64(fc.SurplusPence),
 			Status:          string(fc.Status),
+			TurnoverNumber:  fc.TurnoverNumber,
 		}
 		sumTotal += int64(fc.TotalPence)
 		sumCost += int64(fc.CostPricePence)
