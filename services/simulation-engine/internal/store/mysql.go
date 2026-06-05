@@ -3050,3 +3050,45 @@ FROM general_law_periods ORDER BY period DESC`
 	}
 	return out, nil
 }
+
+// SetAbodeLevers implements AbodeStateStore (Slice 3 — the levers). It reads the
+// singleton row FOR UPDATE, applies the lever clamp, writes back only the three
+// lever columns, and returns the updated state.
+func (m *MySQL) SetAbodeLevers(ctx context.Context, u simulation.LeverUpdate) (simulation.AbodeState, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return simulation.AbodeState{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var a simulation.AbodeState
+	var c, v int64
+	err = tx.QueryRowContext(ctx, `
+SELECT period, constant_pence, variable_pence, base_wage_pence, worker_supply,
+       surplus_rate_base_bp, accumulation_rate_bp, marginal_composition_bp,
+       displacement_rate_bp, productivity_growth_bp, population_growth_bp
+FROM abode_state WHERE id = ? FOR UPDATE`, abodeStateID).Scan(
+		&a.Period, &c, &v, &a.BaseWagePence, &a.WorkerSupply,
+		&a.SurplusRateBaseBP, &a.AccumulationRateBP, &a.MarginalCompositionBP,
+		&a.DisplacementRateBP, &a.ProductivityGrowthBP, &a.PopulationGrowthBP)
+	if err == sql.ErrNoRows {
+		a = simulation.NewAbodeState()
+	} else if err != nil {
+		return simulation.AbodeState{}, err
+	} else {
+		a.ConstantPence = simulation.Pence(c)
+		a.VariablePence = simulation.Pence(v)
+	}
+
+	next := a.ApplyLevers(u)
+	if _, err = tx.ExecContext(ctx, `
+UPDATE abode_state SET surplus_rate_base_bp = ?, base_wage_pence = ?, accumulation_rate_bp = ?
+WHERE id = ?`,
+		next.SurplusRateBaseBP, next.BaseWagePence, next.AccumulationRateBP, abodeStateID); err != nil {
+		return simulation.AbodeState{}, err
+	}
+	if err = tx.Commit(); err != nil {
+		return simulation.AbodeState{}, err
+	}
+	return next, nil
+}

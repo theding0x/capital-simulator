@@ -245,6 +245,9 @@ type AbodeStateStore interface {
 	GetAbodeState(ctx context.Context) (simulation.AbodeState, error)
 	AdvanceAbode(ctx context.Context, next simulation.AbodeState, period simulation.GeneralLawPeriod) error
 	ListGeneralLawPeriods(ctx context.Context, limit int) ([]simulation.GeneralLawPeriod, error)
+	// SetAbodeLevers applies a partial lever update (Slice 3) to the live abode
+	// and persists it, returning the updated state. Unset fields are unchanged.
+	SetAbodeLevers(ctx context.Context, u simulation.LeverUpdate) (simulation.AbodeState, error)
 }
 
 var _ AbodeStateStore = (*Memory)(nil)

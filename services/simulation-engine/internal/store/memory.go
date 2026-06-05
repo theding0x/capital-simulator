@@ -1577,6 +1577,19 @@ func (m *Memory) ListGeneralLawPeriods(_ context.Context, limit int) ([]simulati
 	return out, nil
 }
 
+// SetAbodeLevers implements AbodeStateStore (Slice 3 — the levers).
+func (m *Memory) SetAbodeLevers(_ context.Context, u simulation.LeverUpdate) (simulation.AbodeState, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cur := simulation.NewAbodeState()
+	if m.abodeState != nil {
+		cur = *m.abodeState
+	}
+	next := cur.ApplyLevers(u)
+	m.abodeState = &next
+	return next, nil
+}
+
 // Vol. II Ch. 10 — Theories of Fixed and Circulating Capital.
 
 // ListEconomistAttributions returns the pre-seeded attribution records,
