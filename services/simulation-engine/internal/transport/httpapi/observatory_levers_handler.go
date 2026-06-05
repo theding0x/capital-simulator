@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -23,34 +22,30 @@ type leversResponse struct {
 	AccumulationRateBP int64 `json:"accumulation_rate_bp"`
 }
 
-// SetObservatoryLevers handles POST /v1/observatory/levers (Slice 3 — the
-// levers). It applies a partial perturbation of the abode's law parameters —
-// the working day (the rate of surplus-value), the wage (the value of
-// labour-power), and the accumulation rate α — to the live state; the effects
-// appear in subsequent snapshots as the General Law responds. Returns the
-// applied (clamped) lever values.
+// SetObservatoryLevers handles POST /v1/observatory/levers. It applies a partial
+// perturbation of the abode's law parameters — the working day (s′), the wage
+// (the value of labour-power), and the accumulation rate α — to the caller's
+// in-memory session run (keyed by X-Atlas-Session). Returns the applied
+// (clamped) values. No store I/O.
 func (h *Handler) SetObservatoryLevers(w http.ResponseWriter, r *http.Request) {
-	if h.AbodeStates == nil {
-		h.writeServerError(w, errors.New("abode state store not configured"))
+	if h.Observatory == nil {
+		h.writeServerError(w, errors.New("observatory not configured"))
 		return
 	}
 	var body leversRequest
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "malformed JSON body")
+	if err := decodeJSON(r, &body); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	state, err := h.AbodeStates.SetAbodeLevers(r.Context(), simulation.LeverUpdate{
+	run := h.Observatory.GetOrCreate(r.Header.Get("X-Atlas-Session"))
+	abode := run.ApplyLevers(simulation.LeverUpdate{
 		SurplusRateBaseBP:  body.SurplusRateBaseBP,
 		BaseWagePence:      body.BaseWagePence,
 		AccumulationRateBP: body.AccumulationRateBP,
 	})
-	if err != nil {
-		h.writeServerError(w, err)
-		return
-	}
 	writeJSON(w, http.StatusOK, leversResponse{
-		SurplusRateBaseBP:  state.SurplusRateBaseBP,
-		BaseWagePence:      state.BaseWagePence,
-		AccumulationRateBP: state.AccumulationRateBP,
+		SurplusRateBaseBP:  abode.SurplusRateBaseBP,
+		BaseWagePence:      abode.BaseWagePence,
+		AccumulationRateBP: abode.AccumulationRateBP,
 	})
 }

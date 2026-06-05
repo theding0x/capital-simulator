@@ -3,12 +3,18 @@ package httpapi
 import (
 	"errors"
 	"net/http"
-	"sort"
+	"strconv"
+
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/observatory"
 )
 
-// observatorySnapshotResponse is the GET /v1/observatory/snapshot body: the
-// whole field of industrial capitals, the aggregate vital-signs, and the
-// engine's current tick/run state. Consumed by the Atlas page.
+// snapshotIntervalMS is the advisory client poll interval echoed in the snapshot.
+// Advancement is driven by the client's `advance` query param, not the server.
+const snapshotIntervalMS = 2000
+
+// observatorySnapshotResponse is the GET /v1/observatory/snapshot body: the whole
+// field of industrial capitals, the aggregate vital-signs, and the hidden abode,
+// for one session's in-memory run. Consumed by the Atlas page.
 type observatorySnapshotResponse struct {
 	Tick       int64              `json:"tick"`
 	Running    bool               `json:"running"`
@@ -62,24 +68,44 @@ type generalLawPeriodDTO struct {
 	OrganicCompositionBP int64 `json:"organic_composition_bp"`
 }
 
-// GetObservatorySnapshot handles GET /v1/observatory/snapshot. The capitals
-// array is always non-null; p̄′ = ΣS/ΣC (round-half-up basis points), 0 when
-// ΣC == 0. Engine tick/running come from the scheduler when configured.
+// GetObservatorySnapshot handles GET /v1/observatory/snapshot?advance=N. It reads
+// the X-Atlas-Session header, advances that session's in-memory run by N periods
+// (default 1), and returns the projection. No store I/O; nothing is persisted.
 func (h *Handler) GetObservatorySnapshot(w http.ResponseWriter, r *http.Request) {
-	if h.IndustrialCapitals == nil {
-		h.writeServerError(w, errors.New("industrial capital store not configured"))
+	if h.Observatory == nil {
+		h.writeServerError(w, errors.New("observatory not configured"))
 		return
 	}
-	field, err := h.IndustrialCapitals.FieldSnapshot(r.Context())
-	if err != nil {
-		h.writeServerError(w, err)
-		return
-	}
-	sort.Slice(field, func(i, j int) bool { return field[i].ID < field[j].ID })
+	advance := parseAdvance(r.URL.Query().Get("advance"))
+	run := h.Observatory.GetOrCreate(r.Header.Get("X-Atlas-Session"))
+	run.Advance(advance)
+	writeJSON(w, http.StatusOK, buildSnapshotResponse(run.Snapshot(), advance))
+}
 
-	resp := observatorySnapshotResponse{Capitals: make([]fieldCapitalDTO, len(field))}
+// parseAdvance returns the requested advance count: empty or invalid → 1, "0" →
+// 0 (paused). Run.Advance clamps the upper bound.
+func parseAdvance(q string) int {
+	if q == "" {
+		return 1
+	}
+	n, err := strconv.Atoi(q)
+	if err != nil || n < 0 {
+		return 1
+	}
+	return n
+}
+
+// buildSnapshotResponse maps a RunSnapshot to the wire DTO. Slices are always
+// non-nil so the client never sees `null`.
+func buildSnapshotResponse(snap observatory.RunSnapshot, advance int) observatorySnapshotResponse {
+	resp := observatorySnapshotResponse{
+		Tick:       snap.Tick,
+		Running:    advance > 0,
+		IntervalMS: snapshotIntervalMS,
+		Capitals:   make([]fieldCapitalDTO, len(snap.Field)),
+	}
 	var sumTotal, sumCost, sumSurplus int64
-	for i, fc := range field {
+	for i, fc := range snap.Field {
 		resp.Capitals[i] = fieldCapitalDTO{
 			ID:              string(fc.ID),
 			TotalPence:      int64(fc.TotalPence),
@@ -101,53 +127,34 @@ func (h *Handler) GetObservatorySnapshot(w http.ResponseWriter, r *http.Request)
 		SurplusPence:            sumSurplus,
 		AvgRateOfProfitBP:       rateBP(sumSurplus, sumCost),
 	}
-	resp.Abode = abodeDTO{LawSeries: []generalLawPeriodDTO{}}
-	if h.AbodeStates != nil {
-		state, err := h.AbodeStates.GetAbodeState(r.Context())
-		if err != nil {
-			h.writeServerError(w, err)
-			return
-		}
-		ar := state.Readout()
-		series, err := h.AbodeStates.ListGeneralLawPeriods(r.Context(), 60)
-		if err != nil {
-			h.writeServerError(w, err)
-			return
-		}
-		law := make([]generalLawPeriodDTO, len(series))
-		for i, p := range series {
-			law[i] = generalLawPeriodDTO{
-				Period:               p.Period,
-				WagePence:            p.WagePence,
-				RateOfExploitationBP: p.RateOfExploitationBP,
-				ReserveArmyCount:     p.ReserveArmyCount,
-				OrganicCompositionBP: p.OrganicCompositionBP,
-			}
-		}
-		resp.Abode = abodeDTO{
-			TotalVariablePence:     ar.TotalVariablePence,
-			TotalSurplusPence:      ar.TotalSurplusPence,
-			RateOfExploitationBP:   ar.RateOfExploitationBP,
-			NecessaryLabourMinutes: ar.NecessaryLabourMinutes,
-			SurplusLabourMinutes:   ar.SurplusLabourMinutes,
-			OrganicCompositionBP:   ar.OrganicCompositionBP,
-			ReserveArmyCount:       ar.ReserveArmyCount,
-			ReserveArmyPressureBP:  ar.ReserveArmyPressureBP,
-			EmployedCount:          ar.EmployedCount,
-			WagePence:              ar.WagePence,
-			SurplusRateBaseBP:      state.SurplusRateBaseBP,
-			BaseWagePence:          state.BaseWagePence,
-			AccumulationRateBP:     state.AccumulationRateBP,
-			LawSeries:              law,
+	ar := snap.Readout
+	law := make([]generalLawPeriodDTO, len(snap.Periods))
+	for i, p := range snap.Periods {
+		law[i] = generalLawPeriodDTO{
+			Period:               p.Period,
+			WagePence:            p.WagePence,
+			RateOfExploitationBP: p.RateOfExploitationBP,
+			ReserveArmyCount:     p.ReserveArmyCount,
+			OrganicCompositionBP: p.OrganicCompositionBP,
 		}
 	}
-	if h.Scheduler != nil {
-		st := h.Scheduler.Status()
-		resp.Tick = st.Tick
-		resp.Running = st.Running
-		resp.IntervalMS = st.IntervalMS
+	resp.Abode = abodeDTO{
+		TotalVariablePence:     ar.TotalVariablePence,
+		TotalSurplusPence:      ar.TotalSurplusPence,
+		RateOfExploitationBP:   ar.RateOfExploitationBP,
+		NecessaryLabourMinutes: ar.NecessaryLabourMinutes,
+		SurplusLabourMinutes:   ar.SurplusLabourMinutes,
+		OrganicCompositionBP:   ar.OrganicCompositionBP,
+		ReserveArmyCount:       ar.ReserveArmyCount,
+		ReserveArmyPressureBP:  ar.ReserveArmyPressureBP,
+		EmployedCount:          ar.EmployedCount,
+		WagePence:              ar.WagePence,
+		SurplusRateBaseBP:      snap.Abode.SurplusRateBaseBP,
+		BaseWagePence:          snap.Abode.BaseWagePence,
+		AccumulationRateBP:     snap.Abode.AccumulationRateBP,
+		LawSeries:              law,
 	}
-	writeJSON(w, http.StatusOK, resp)
+	return resp
 }
 
 // rateBP returns round-half-up(10000 * num / den) basis points; 0 when den <= 0.

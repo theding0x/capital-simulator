@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/observatory"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
@@ -53,6 +54,7 @@ type Handler struct {
 	SimpleReproduction    store.SimpleReproductionSchemeStore
 	ExtendedReproduction  store.ExtendedReproductionStore
 	Scheduler             *engine.Scheduler
+	Observatory           *observatory.Manager
 	EngineTicks           store.EngineTickStore
 }
 
@@ -96,6 +98,7 @@ type Deps struct {
 	SimpleReproduction    store.SimpleReproductionSchemeStore
 	ExtendedReproduction  store.ExtendedReproductionStore
 	Scheduler             *engine.Scheduler
+	Observatory           *observatory.Manager
 	EngineTicks           store.EngineTickStore
 }
 
@@ -139,6 +142,7 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		SimpleReproduction:    d.SimpleReproduction,
 		ExtendedReproduction:  d.ExtendedReproduction,
 		Scheduler:             d.Scheduler,
+		Observatory:           d.Observatory,
 		EngineTicks:           d.EngineTicks,
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	applog "github.com/theding0x/capital-simulator/pkg/log"
 	pmysql "github.com/theding0x/capital-simulator/pkg/mysql"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/observatory"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/piecewage"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/productivity"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
@@ -93,17 +93,33 @@ func main() {
 	// after the HTTP server drains on SIGTERM. The piece-price ticker (#219)
 	// turns rising Ch. 15 factory productivity into falling Ch. 21 piece prices
 	// by repricing every piece-wage in agent-service each pass.
+	// The Atlas run (field accumulation + General Law) is no longer scheduler-driven:
+	// it runs per-session in memory (internal/observatory), advanced on poll, with no
+	// MySQL writes. The scheduler keeps only the MySQL-backed chapter tickers.
 	scheduler := engine.NewScheduler(tickInterval(), []engine.Ticker{
 		engine.NewFactoryTicker(st),
 		engine.NewReproductionTicker(st),
 		engine.NewPiecePriceTicker(engine.NewFactoryProductivitySource(st), repricer),
-		engine.NewAccumulationTicker(st, accumulationRateBP()),
-		engine.NewGeneralLawTicker(st),
 	}, st, logger)
 
 	srv.HandleFunc("/v1/sim/status", func(w http.ResponseWriter, _ *http.Request) {
 		handleStatus(w, scheduler.Status())
 	})
+
+	// Atlas Observatory — load the seed once and hand it to the session Manager.
+	// Each browser session gets its own in-memory run; nothing is written back.
+	seedAbode, err := st.GetAbodeState(ctx)
+	if err != nil {
+		logger.Error("could not load seed abode", "err", err)
+		os.Exit(1)
+	}
+	seedField, err := st.FieldSnapshot(ctx)
+	if err != nil {
+		logger.Error("could not load seed field", "err", err)
+		os.Exit(1)
+	}
+	obsMgr := observatory.NewManager(seedAbode, seedField, logger)
+	obsMgr.StartSweeper(ctx)
 
 	h := httpapi.New(logger, httpapi.Deps{
 		Machines:              st,
@@ -140,6 +156,7 @@ func main() {
 		SimpleReproduction:    st,
 		ExtendedReproduction:  st,
 		Scheduler:             scheduler,
+		Observatory:           obsMgr,
 		EngineTicks:           st,
 	})
 	httpapi.Register(srv, h)
@@ -195,24 +212,6 @@ func handleStatus(w http.ResponseWriter, st engine.SchedulerStatus) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
-}
-
-// accumulationRateBP returns the share of surplus reinvested per scheduler pass,
-// in basis points, from SIM_ACCUMULATION_RATE_BP (default 5000 = 50%). Clamped
-// to [0, 10000].
-func accumulationRateBP() int64 {
-	v := os.Getenv("SIM_ACCUMULATION_RATE_BP")
-	if v == "" {
-		return 5000
-	}
-	n, err := strconv.ParseInt(v, 10, 64)
-	if err != nil || n < 0 {
-		return 5000
-	}
-	if n > 10000 {
-		return 10000
-	}
-	return n
 }
 
 // tickInterval reads SIM_TICK_INTERVAL (a Go duration like "5s" or "250ms")
