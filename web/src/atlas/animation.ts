@@ -79,8 +79,9 @@ export function pacedAngle(
   return frac * 2 * Math.PI; // 0 at top, clockwise (caller offsets)
 }
 
-/** Target CSS scale for an orbit of `totalPence` relative to the field max. */
-export function targetScale(totalPence: number, maxTotal: number): number {
-  if (maxTotal <= 0) return 1;
-  return Math.max(0.4, Math.sqrt(Math.max(0, totalPence) / maxTotal));
+/** Target CSS scale for an orbit of `totalPence` relative to a reference total.
+ *  Capped at 4× so unbounded accumulation can't overflow the field. */
+export function targetScale(totalPence: number, reference: number): number {
+  if (reference <= 0) return 1;
+  return Math.min(4, Math.max(0.4, Math.sqrt(Math.max(0, totalPence) / reference)));
 }
