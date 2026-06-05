@@ -235,6 +235,21 @@ type IndustrialCapitalStore interface {
 	AccumulateCapital(ctx context.Context, id circulation.IndustrialCapitalID, deltaPence circulation.Pence) (circulation.IndustrialCapital, error)
 }
 
+// AbodeStateStore is the persistence contract for the Atlas hidden abode
+// (Slice 2). GetAbodeState returns the single evolving aggregate, defaulting to
+// simulation.NewAbodeState() when none is persisted. AdvanceAbode atomically
+// writes the next state and appends one GeneralLawPeriod. ListGeneralLawPeriods
+// returns the most recent periods in ascending period order (oldest first), for
+// the immiseration sparkline; a non-positive limit returns every row.
+type AbodeStateStore interface {
+	GetAbodeState(ctx context.Context) (simulation.AbodeState, error)
+	AdvanceAbode(ctx context.Context, next simulation.AbodeState, period simulation.GeneralLawPeriod) error
+	ListGeneralLawPeriods(ctx context.Context, limit int) ([]simulation.GeneralLawPeriod, error)
+}
+
+var _ AbodeStateStore = (*Memory)(nil)
+var _ AbodeStateStore = (*MySQL)(nil)
+
 // TurnoverStore is the persistence contract for Vol. II Ch. 7 —
 // The Turnover Time and the Number of Turnovers.
 type TurnoverStore interface {

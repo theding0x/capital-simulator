@@ -62,6 +62,8 @@ type Memory struct {
 	simpleRepro           *memorySimpleReproduction
 	extendedRepro         *memoryExtendedReproduction
 	engineTicks           []engine.ScheduledTick
+	abodeState            *simulation.AbodeState
+	generalLawPeriods     []simulation.GeneralLawPeriod
 	now                   func() time.Time
 }
 
@@ -1538,6 +1540,41 @@ func (m *Memory) AccumulateCapital(_ context.Context, id circulation.IndustrialC
 		CommodityPence:      comm,
 	})
 	return ic, nil
+}
+
+// GetAbodeState implements AbodeStateStore. Defaults to the seeded initial abode
+// when none has been persisted yet (parity with the MySQL migration seed).
+func (m *Memory) GetAbodeState(_ context.Context) (simulation.AbodeState, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.abodeState == nil {
+		return simulation.NewAbodeState(), nil
+	}
+	return *m.abodeState, nil
+}
+
+// AdvanceAbode implements AbodeStateStore: replace the aggregate and append one
+// period to the immiseration series.
+func (m *Memory) AdvanceAbode(_ context.Context, next simulation.AbodeState, period simulation.GeneralLawPeriod) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	state := next
+	m.abodeState = &state
+	m.generalLawPeriods = append(m.generalLawPeriods, period)
+	return nil
+}
+
+// ListGeneralLawPeriods implements AbodeStateStore: the most recent periods in
+// ascending order. A non-positive limit returns the whole series.
+func (m *Memory) ListGeneralLawPeriods(_ context.Context, limit int) ([]simulation.GeneralLawPeriod, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.GeneralLawPeriod, len(m.generalLawPeriods))
+	copy(out, m.generalLawPeriods)
+	if limit > 0 && len(out) > limit {
+		out = out[len(out)-limit:]
+	}
+	return out, nil
 }
 
 // Vol. II Ch. 10 — Theories of Fixed and Circulating Capital.

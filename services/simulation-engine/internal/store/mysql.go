@@ -2944,3 +2944,109 @@ func (m *MySQL) AccumulateCapital(ctx context.Context, id circulation.Industrial
 	}
 	return m.GetIndustrialCapital(ctx, id)
 }
+
+// abodeStateID is the fixed primary key of the singleton abode_state row,
+// seeded by migration 00066.
+const abodeStateID = "5eed000000000000abode1"
+
+// GetAbodeState implements AbodeStateStore. The row is seeded by the migration,
+// so a missing row falls back to the in-code default rather than erroring.
+func (m *MySQL) GetAbodeState(ctx context.Context) (simulation.AbodeState, error) {
+	const q = `
+SELECT period, constant_pence, variable_pence, base_wage_pence, worker_supply,
+       surplus_rate_base_bp, accumulation_rate_bp, marginal_composition_bp,
+       displacement_rate_bp, productivity_growth_bp, population_growth_bp
+FROM abode_state WHERE id = ?`
+	var a simulation.AbodeState
+	var c, v int64
+	err := m.db.QueryRowContext(ctx, q, abodeStateID).Scan(
+		&a.Period, &c, &v, &a.BaseWagePence, &a.WorkerSupply,
+		&a.SurplusRateBaseBP, &a.AccumulationRateBP, &a.MarginalCompositionBP,
+		&a.DisplacementRateBP, &a.ProductivityGrowthBP, &a.PopulationGrowthBP)
+	if err == sql.ErrNoRows {
+		return simulation.NewAbodeState(), nil
+	}
+	if err != nil {
+		return simulation.AbodeState{}, err
+	}
+	a.ConstantPence = simulation.Pence(c)
+	a.VariablePence = simulation.Pence(v)
+	return a, nil
+}
+
+// AdvanceAbode implements AbodeStateStore: update the singleton aggregate and
+// append one immiseration-series row in a single transaction.
+func (m *MySQL) AdvanceAbode(ctx context.Context, next simulation.AbodeState, period simulation.GeneralLawPeriod) error {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err = tx.ExecContext(ctx, `
+UPDATE abode_state SET period = ?, constant_pence = ?, variable_pence = ?,
+       base_wage_pence = ?, worker_supply = ?, surplus_rate_base_bp = ?,
+       accumulation_rate_bp = ?, marginal_composition_bp = ?,
+       displacement_rate_bp = ?, productivity_growth_bp = ?, population_growth_bp = ?
+WHERE id = ?`,
+		next.Period, int64(next.ConstantPence), int64(next.VariablePence),
+		next.BaseWagePence, next.WorkerSupply, next.SurplusRateBaseBP,
+		next.AccumulationRateBP, next.MarginalCompositionBP, next.DisplacementRateBP,
+		next.ProductivityGrowthBP, next.PopulationGrowthBP, abodeStateID); err != nil {
+		return err
+	}
+
+	if _, err = tx.ExecContext(ctx, `
+INSERT INTO general_law_periods
+    (id, period, wage_pence, rate_of_exploitation_bp, reserve_army_count,
+     organic_composition_bp, employed_count, created_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		string(circulation.NewStageDistributionID()), period.Period, period.WagePence,
+		period.RateOfExploitationBP, period.ReserveArmyCount, period.OrganicCompositionBP,
+		period.EmployedCount, time.Now().UTC()); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// ListGeneralLawPeriods implements AbodeStateStore: the most recent periods in
+// ascending period order. A non-positive limit returns the whole series.
+func (m *MySQL) ListGeneralLawPeriods(ctx context.Context, limit int) ([]simulation.GeneralLawPeriod, error) {
+	q := `
+SELECT period, wage_pence, rate_of_exploitation_bp, reserve_army_count,
+       organic_composition_bp, employed_count
+FROM general_law_periods ORDER BY period DESC`
+	if limit > 0 {
+		q += " LIMIT ?"
+	}
+	var rows *sql.Rows
+	var err error
+	if limit > 0 {
+		rows, err = m.db.QueryContext(ctx, q, limit)
+	} else {
+		rows, err = m.db.QueryContext(ctx, q)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var desc []simulation.GeneralLawPeriod
+	for rows.Next() {
+		var p simulation.GeneralLawPeriod
+		if err := rows.Scan(&p.Period, &p.WagePence, &p.RateOfExploitationBP,
+			&p.ReserveArmyCount, &p.OrganicCompositionBP, &p.EmployedCount); err != nil {
+			return nil, err
+		}
+		desc = append(desc, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	// Reverse to ascending (oldest first) for the sparkline.
+	out := make([]simulation.GeneralLawPeriod, len(desc))
+	for i, p := range desc {
+		out[len(desc)-1-i] = p
+	}
+	return out, nil
+}
