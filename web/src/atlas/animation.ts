@@ -93,6 +93,23 @@ export function formatMinutes(min: number): string {
   return `${h}h ${m}m`;
 }
 
+/** Clamp v to [lo, hi]. */
+export function clamp(v: number, lo: number, hi: number): number {
+  return v < lo ? lo : v > hi ? hi : v;
+}
+
+/** Linear interpolation from a to b by t (t in [0,1]). */
+export function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+/** Deterministic 32-bit hash of a string — stable per-id pseudo-randomness. */
+export function hash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
 /**
  * Build an SVG polyline path for a sparkline of `values` fitted to a `w`×`h`
  * box (with 2px padding). Auto-scales to the value range; a flat series draws a
