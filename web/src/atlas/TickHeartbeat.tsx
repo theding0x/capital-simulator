@@ -1,35 +1,40 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import type { EngineTick } from "../types";
 
-interface TickHeartbeatProps {
+interface TransportProps {
   tick: number;
   running: boolean;
-  stale: boolean;
+  onToggle: () => void;
   speed: number;
   onSpeed: (s: number) => void;
+  reduced: boolean;
+  onReduced: (v: boolean) => void;
 }
 
-const SPEEDS = [1, 2, 5, 10];
-
-/** Transport (play/pause/speed), tick counter, and an ECG of recent engine ticks. */
-export function TickHeartbeat({ tick, running, stale, speed, onSpeed }: TickHeartbeatProps) {
+/** The console: play/pause, ×1/2/5/10 speed, an ECG of recent engine ticks, a
+ *  reduced-motion toggle, and the turn counter. */
+export function Transport({
+  tick,
+  running,
+  onToggle,
+  speed,
+  onSpeed,
+  reduced,
+  onReduced,
+}: TransportProps) {
   const [ticks, setTicks] = useState<EngineTick[]>([]);
-  const [localRunning, setLocalRunning] = useState(running);
   const timer = useRef<number | null>(null);
-
-  useEffect(() => setLocalRunning(running), [running]);
-
   useEffect(() => {
     let active = true;
-    async function poll() {
+    const poll = async () => {
       try {
         const t = await api.listEngineTicks(60);
         if (active) setTicks(t);
       } catch {
-        /* heartbeat keeps last-good */
+        /* keep last */
       }
-    }
+    };
     void poll();
     timer.current = window.setInterval(() => void poll(), 2000);
     return () => {
@@ -37,51 +42,47 @@ export function TickHeartbeat({ tick, running, stale, speed, onSpeed }: TickHear
       if (timer.current !== null) window.clearInterval(timer.current);
     };
   }, []);
-
-  async function toggle() {
-    const next = !localRunning;
-    setLocalRunning(next); // optimistic
-    try {
-      if (next) await api.startEngine();
-      else await api.stopEngine();
-    } catch {
-      setLocalRunning(!next); // revert on failure
-    }
-  }
-
-  const points = ecgPoints(ticks);
-
+  const pts = useMemo(() => {
+    if (!ticks.length) return "0,14 240,14";
+    const ordered = [...ticks].reverse(); // oldest → newest
+    const max = Math.max(1, ...ordered.map((t) => t.entities_advanced));
+    const n = ordered.length;
+    return ordered
+      .map(
+        (t, i) =>
+          `${((i / Math.max(1, n - 1)) * 240).toFixed(1)},${(26 - (t.entities_advanced / max) * 24).toFixed(1)}`
+      )
+      .join(" ");
+  }, [ticks]);
   return (
-    <>
-      <button className="atlas-btn" onClick={() => void toggle()} aria-label={localRunning ? "Pause" : "Play"}>
-        {localRunning ? "⏸" : "▶"}
+    <div className="transport">
+      <button className="tp-btn" onClick={onToggle} aria-label={running ? "Pause" : "Play"}>
+        {running ? "❚❚" : "▶"}
       </button>
-      <span role="group" aria-label="Animation speed">
-        {SPEEDS.map((s) => (
-          <span key={s} className={"atlas-speed" + (speed === s ? " active" : "")}
-            onClick={() => onSpeed(s)}>×{s}</span>
+      <div className="tp-speeds" role="group" aria-label="Speed">
+        {[1, 2, 5, 10].map((s) => (
+          <button
+            key={s}
+            className={"tp-speed" + (speed === s ? " active" : "")}
+            onClick={() => onSpeed(s)}
+          >
+            ×{s}
+          </button>
         ))}
-      </span>
-      <svg className="atlas-ecg" viewBox="0 0 240 28" preserveAspectRatio="none" data-testid="atlas-ecg">
-        <polyline points={points} fill="none" stroke="#c8a240" strokeWidth="1.4" opacity="0.85" />
+      </div>
+      <svg className="tp-ecg" viewBox="0 0 240 28" preserveAspectRatio="none">
+        <polyline points={pts} fill="none" stroke="#c8a240" strokeWidth="1.4" opacity="0.85" />
       </svg>
-      <span className="atlas-turn">turn {tick}</span>
-      {stale && <span className="atlas-stale">⚠ reconnecting</span>}
-    </>
+      <button
+        className={"tp-reduced" + (reduced ? " on" : "")}
+        onClick={() => onReduced(!reduced)}
+        title="Reduce motion"
+      >
+        {reduced ? "motion off" : "motion on"}
+      </button>
+      <span className="tp-turn">
+        turn <b>{tick}</b>
+      </span>
+    </div>
   );
-}
-
-/** Map recent ticks' entities_advanced to an ECG polyline over a 240×28 box. */
-function ecgPoints(ticks: EngineTick[]): string {
-  if (ticks.length === 0) return "0,14 240,14";
-  const ordered = [...ticks].reverse(); // oldest → newest
-  const max = Math.max(1, ...ordered.map((t) => t.entities_advanced));
-  const n = ordered.length;
-  return ordered
-    .map((t, i) => {
-      const x = (i / Math.max(1, n - 1)) * 240;
-      const y = 26 - (t.entities_advanced / max) * 24;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
 }

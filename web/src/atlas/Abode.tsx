@@ -1,68 +1,102 @@
 import type { AbodeReadout } from "../types";
-import { formatBP, formatPence, formatMinutes } from "./animation";
-import { GeneralLawTrend } from "./GeneralLawTrend";
+import { formatPence, formatBP, formatMinutes } from "./animation";
+import { ImmiserationChart } from "./ImmiserationChart";
+import { ReserveArmy } from "./ReserveArmy";
 import { Levers } from "./Levers";
 
-interface AbodeProps {
-  abode: AbodeReadout;
-}
-
-/** The hidden abode of production. We have left "the noisy sphere, where
- *  everything takes place on the surface and in view of all men" for the place
- *  where the class relation — surplus as unpaid labour, the reserve army — is
- *  laid bare. The working day divides into necessary (paid, v) and surplus
- *  (unpaid, s) labour; their ratio is the rate of exploitation s/v. */
-export function Abode({ abode }: AbodeProps) {
+/** The social working day (hero): necessary (paid, v) vs surplus (unpaid, s); the
+ *  ratio s/v is the rate of exploitation. */
+function WorkingDay({ abode }: { abode: AbodeReadout }) {
   const day = abode.necessary_labour_minutes + abode.surplus_labour_minutes || 1;
   const necPct = (abode.necessary_labour_minutes / day) * 100;
   const surPct = 100 - necPct;
   return (
-    <div className="abode" data-testid="abode">
-      <div className="abode-head">
-        <h2>The hidden abode of production</h2>
-        <p className="abode-hint">No admittance except on business.</p>
-      </div>
-
-      <section className="abode-card">
-        <div className="abode-card-k">The social working day · s/v {formatBP(abode.rate_of_exploitation_bp)}</div>
-        <div className="workingday" data-testid="workingday">
-          <div className="wd-nec" style={{ width: `${necPct}%` }}>
-            <span>necessary · {formatMinutes(abode.necessary_labour_minutes)}</span>
-          </div>
-          <div className="wd-sur" style={{ width: `${surPct}%` }}>
-            <span>surplus · {formatMinutes(abode.surplus_labour_minutes)}</span>
-          </div>
+    <section className="wd">
+      <div className="wd-head">
+        <div className="wd-eyebrow">The social working day</div>
+        <div className="wd-sv">
+          <span className="wd-sv-num">{formatBP(abode.rate_of_exploitation_bp)}</span>
+          <span className="wd-sv-lbl">rate of exploitation · s / v</span>
         </div>
-      </section>
-
-      <div className="abode-grid">
-        <section className="abode-card">
-          <div className="abode-card-k">Living labour · Σv (paid)</div>
-          <div className="abode-card-v">{formatPence(abode.total_variable_pence)}</div>
-          <div className="abode-hint">{abode.employed_count} employed</div>
-        </section>
-        <section className="abode-card gold">
-          <div className="abode-card-k">Surplus extracted · Σs (unpaid)</div>
-          <div className="abode-card-v">{formatPence(abode.total_surplus_pence)}</div>
-          <div className="abode-hint">rises to the surface as capital</div>
-        </section>
-        <section className="abode-card">
-          <div className="abode-card-k">Industrial reserve army</div>
-          <div className="abode-card-v">{abode.reserve_army_count}</div>
-          <div className="abode-hint">wage pressure {formatBP(abode.reserve_army_pressure_bp)} · paid wage {formatPence(abode.wage_pence)}</div>
-        </section>
-        <section className="abode-card">
-          <div className="abode-card-k">Organic composition · c/v</div>
-          <div className="abode-card-v">{formatBP(abode.organic_composition_bp)}</div>
-          <div className="abode-hint">dead labour dominating living</div>
-        </section>
       </div>
+      <div
+        className="wd-bar"
+        data-testid="workingday"
+        role="img"
+        aria-label={`necessary ${formatMinutes(abode.necessary_labour_minutes)}, surplus ${formatMinutes(abode.surplus_labour_minutes)}`}
+      >
+        <div className="wd-nec" style={{ width: `${necPct}%` }}>
+          <span className="wd-seg-k">necessary</span>
+          <span className="wd-seg-v">{formatMinutes(abode.necessary_labour_minutes)}</span>
+        </div>
+        <div className="wd-sur" style={{ width: `${surPct}%` }}>
+          <span className="wd-seg-k">surplus · unpaid</span>
+          <span className="wd-seg-v">{formatMinutes(abode.surplus_labour_minutes)}</span>
+        </div>
+      </div>
+      <div className="wd-foot">
+        <span>
+          <span className="sw nec"></span> paid — reproduces the value of labour-power
+        </span>
+        <span>
+          <span className="sw sur"></span> unpaid — pumped out as surplus-value
+        </span>
+      </div>
+    </section>
+  );
+}
 
-      <section className="abode-card">
-        <div className="abode-card-k">The general law in motion</div>
-        <GeneralLawTrend series={abode.law_series} />
+/** Demoted stat tiles: living labour Σv, surplus extracted Σs, organic composition c/v. */
+function StatRow({ abode }: { abode: AbodeReadout }) {
+  const tiles = [
+    {
+      k: "Living labour · Σv",
+      v: formatPence(abode.total_variable_pence),
+      sub: `${abode.employed_count} employed`,
+      tone: "lead",
+    },
+    {
+      k: "Surplus extracted · Σs",
+      v: formatPence(abode.total_surplus_pence),
+      sub: "rises to the surface as capital",
+      tone: "gold",
+    },
+    {
+      k: "Organic composition · c/v",
+      v: formatBP(abode.organic_composition_bp),
+      sub: "dead labour dominating living",
+      tone: "",
+    },
+  ];
+  return (
+    <div className="stat-row">
+      {tiles.map((t) => (
+        <div className={"stat" + (t.tone ? " " + t.tone : "")} key={t.k}>
+          <div className="stat-k">{t.k}</div>
+          <div className="stat-v">{t.v}</div>
+          <div className="stat-sub">{t.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** The hidden abode: working-day hero, demoted tiles, the immiseration chart
+ *  (promoted), the reserve army, the levers. */
+export function Abode({ abode }: { abode: AbodeReadout }) {
+  return (
+    <div className="abode-inner" data-testid="abode">
+      <WorkingDay abode={abode} />
+      <StatRow abode={abode} />
+      <section className="chart-card">
+        <div className="chart-eyebrow">The general law in motion</div>
+        <p className="chart-gloss">
+          Accumulation widens the rate of exploitation, swells the reserve army, and presses the
+          wage to its floor — the immiseration of the producer, run in real time.
+        </p>
+        <ImmiserationChart series={abode.law_series} />
       </section>
-
+      <ReserveArmy abode={abode} />
       <Levers abode={abode} />
     </div>
   );
