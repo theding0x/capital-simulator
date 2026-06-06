@@ -16,12 +16,14 @@ const snapshotIntervalMS = 2000
 // field of industrial capitals, the aggregate vital-signs, and the hidden abode,
 // for one session's in-memory run. Consumed by the Atlas page.
 type observatorySnapshotResponse struct {
-	Tick       int64              `json:"tick"`
-	Running    bool               `json:"running"`
-	IntervalMS int64              `json:"interval_ms"`
-	Capitals   []fieldCapitalDTO  `json:"capitals"`
-	Aggregate  aggregateVitalsDTO `json:"aggregate"`
-	Abode      abodeDTO           `json:"abode"`
+	Tick         int64              `json:"tick"`
+	Running      bool               `json:"running"`
+	IntervalMS   int64              `json:"interval_ms"`
+	Capitals     []fieldCapitalDTO  `json:"capitals"`
+	Aggregate    aggregateVitalsDTO `json:"aggregate"`
+	Abode        abodeDTO           `json:"abode"`
+	Circulation  circulationDTO     `json:"circulation"`
+	Distribution distributionDTO    `json:"distribution"`
 }
 
 type fieldCapitalDTO struct {
@@ -54,6 +56,7 @@ type abodeDTO struct {
 	ReserveArmyPressureBP  int64                 `json:"reserve_army_pressure_bp"`
 	EmployedCount          int64                 `json:"employed_count"`
 	WagePence              int64                 `json:"wage_pence"`
+	TotalPopulation        int64                 `json:"total_population"`
 	SurplusRateBaseBP      int64                 `json:"surplus_rate_base_bp"`
 	BaseWagePence          int64                 `json:"base_wage_pence"`
 	AccumulationRateBP     int64                 `json:"accumulation_rate_bp"`
@@ -66,6 +69,46 @@ type generalLawPeriodDTO struct {
 	RateOfExploitationBP int64 `json:"rate_of_exploitation_bp"`
 	ReserveArmyCount     int64 `json:"reserve_army_count"`
 	OrganicCompositionBP int64 `json:"organic_composition_bp"`
+}
+
+type deptCVSDTO struct {
+	C int64 `json:"c"`
+	V int64 `json:"v"`
+	S int64 `json:"s"`
+}
+
+type circulationDTO struct {
+	Departments struct {
+		I  deptCVSDTO `json:"I"`
+		II deptCVSDTO `json:"II"`
+	} `json:"departments"`
+	KeystoneExchangePence int64 `json:"keystone_exchange_pence"`
+	DeptIIConstantPence   int64 `json:"dept_ii_constant_pence"`
+	AccumulationRateBP    int64 `json:"accumulation_rate_bp"`
+	Extended              bool  `json:"extended"`
+}
+
+type distSeriesPointDTO struct {
+	Period          int64 `json:"period"`
+	PprimeBP        int64 `json:"pprime_bp"`
+	ProfitMassPence int64 `json:"profit_mass_pence"`
+	CompositionBP   int64 `json:"composition_bp"`
+	Crisis          bool  `json:"crisis"`
+}
+
+type trinityDTO struct {
+	WagesPence  int64 `json:"wages_pence"`
+	ProfitPence int64 `json:"profit_pence"`
+	RentPence   int64 `json:"rent_pence"`
+}
+
+type distributionDTO struct {
+	GeneralRateBP   int64                `json:"general_rate_bp"`
+	InterestRateBP  int64                `json:"interest_rate_bp"`
+	LoanablePence   int64                `json:"loanable_pence"`
+	FictitiousPence int64                `json:"fictitious_pence"`
+	DistSeries      []distSeriesPointDTO `json:"dist_series"`
+	Trinity         trinityDTO           `json:"trinity"`
 }
 
 // GetObservatorySnapshot handles GET /v1/observatory/snapshot?advance=N. It reads
@@ -125,7 +168,7 @@ func buildSnapshotResponse(snap observatory.RunSnapshot, advance int) observator
 		TotalSocialCapitalPence: sumTotal,
 		CostPricePence:          sumCost,
 		SurplusPence:            sumSurplus,
-		AvgRateOfProfitBP:       rateBP(sumSurplus, sumCost),
+		AvgRateOfProfitBP:       observatory.RateBP(sumSurplus, sumCost),
 	}
 	ar := snap.Readout
 	law := make([]generalLawPeriodDTO, len(snap.Periods))
@@ -149,18 +192,50 @@ func buildSnapshotResponse(snap observatory.RunSnapshot, advance int) observator
 		ReserveArmyPressureBP:  ar.ReserveArmyPressureBP,
 		EmployedCount:          ar.EmployedCount,
 		WagePence:              ar.WagePence,
+		TotalPopulation:        ar.TotalPopulation,
 		SurplusRateBaseBP:      snap.Abode.SurplusRateBaseBP,
 		BaseWagePence:          snap.Abode.BaseWagePence,
 		AccumulationRateBP:     snap.Abode.AccumulationRateBP,
 		LawSeries:              law,
 	}
+	resp.Circulation = mapCirculationDTO(snap.Circulation)
+	resp.Distribution = mapDistributionDTO(snap.Distribution)
 	return resp
 }
 
-// rateBP returns round-half-up(10000 * num / den) basis points; 0 when den <= 0.
-func rateBP(num, den int64) int64 {
-	if den <= 0 {
-		return 0
+func mapCirculationDTO(c observatory.CirculationSnapshot) circulationDTO {
+	dto := circulationDTO{
+		KeystoneExchangePence: c.KeystoneExchangePence,
+		DeptIIConstantPence:   c.DeptIIConstantPence,
+		AccumulationRateBP:    c.AccumulationRateBP,
+		Extended:              c.Extended,
 	}
-	return (num*10000 + den/2) / den
+	dto.Departments.I = deptCVSDTO{C: c.Departments.I.C, V: c.Departments.I.V, S: c.Departments.I.S}
+	dto.Departments.II = deptCVSDTO{C: c.Departments.II.C, V: c.Departments.II.V, S: c.Departments.II.S}
+	return dto
+}
+
+func mapDistributionDTO(d observatory.DistributionSnapshot) distributionDTO {
+	series := make([]distSeriesPointDTO, len(d.DistSeries))
+	for i, p := range d.DistSeries {
+		series[i] = distSeriesPointDTO{
+			Period:          p.Period,
+			PprimeBP:        p.PprimeBP,
+			ProfitMassPence: p.ProfitMassPence,
+			CompositionBP:   p.CompositionBP,
+			Crisis:          p.Crisis,
+		}
+	}
+	return distributionDTO{
+		GeneralRateBP:   d.GeneralRateBP,
+		InterestRateBP:  d.InterestRateBP,
+		LoanablePence:   d.LoanablePence,
+		FictitiousPence: d.FictitiousPence,
+		DistSeries:      series,
+		Trinity: trinityDTO{
+			WagesPence:  d.Trinity.WagesPence,
+			ProfitPence: d.Trinity.ProfitPence,
+			RentPence:   d.Trinity.RentPence,
+		},
+	}
 }

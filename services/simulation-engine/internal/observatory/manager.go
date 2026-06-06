@@ -56,10 +56,11 @@ func NewManager(seedAbode simulation.AbodeState, seedField []circulation.FieldCa
 }
 
 // GetOrCreate returns the Run for sessionID, creating it from the seed template
-// if absent. An empty sessionID returns a fresh, unstored (transient) run, so
-// header-less callers get a clean seed snapshot without populating the map.
+// if absent. An empty or oversized (>256-byte) sessionID returns a fresh, unstored
+// (transient) run, so header-less or abusive callers get a clean seed snapshot
+// without populating the map.
 func (m *Manager) GetOrCreate(sessionID string) *Run {
-	if sessionID == "" {
+	if sessionID == "" || len(sessionID) > 256 {
 		return m.newRun()
 	}
 	m.mu.Lock()

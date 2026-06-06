@@ -4892,6 +4892,7 @@ export interface AbodeReadout {
   reserve_army_pressure_bp: number;
   employed_count: number;
   wage_pence: number;
+  total_population: number;
   surplus_rate_base_bp: number;
   base_wage_pence: number;
   accumulation_rate_bp: number;
@@ -4910,6 +4911,45 @@ export interface LeverState {
   accumulation_rate_bp: number;
 }
 
+// --- Atlas Observatory — deeper strata (Vol II + Vol III) ---
+
+export interface DeptCVS {
+  c: number;
+  v: number;
+  s: number;
+}
+
+export interface CirculationSnapshot {
+  departments: { I: DeptCVS; II: DeptCVS };
+  keystone_exchange_pence: number;
+  dept_ii_constant_pence: number;
+  accumulation_rate_bp: number;
+  extended: boolean;
+}
+
+export interface DistSeriesPoint {
+  period: number;
+  pprime_bp: number;
+  profit_mass_pence: number;
+  composition_bp: number;
+  crisis: boolean;
+}
+
+export interface TrinityRevenues {
+  wages_pence: number;
+  profit_pence: number;
+  rent_pence: number;
+}
+
+export interface DistributionSnapshot {
+  general_rate_bp: number;
+  interest_rate_bp: number;
+  loanable_pence: number;
+  fictitious_pence: number;
+  dist_series: DistSeriesPoint[];
+  trinity: TrinityRevenues;
+}
+
 export interface ObservatorySnapshot {
   tick: number;
   running: boolean;
@@ -4917,6 +4957,8 @@ export interface ObservatorySnapshot {
   capitals: FieldCapital[];
   aggregate: AggregateVitals;
   abode: AbodeReadout;
+  circulation: CirculationSnapshot;
+  distribution: DistributionSnapshot;
 }
 
 export interface EngineStatus {

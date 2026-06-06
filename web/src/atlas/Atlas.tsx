@@ -4,9 +4,18 @@ import { useSnapshot } from "./useSnapshot";
 import { AtlasSurface } from "./surface";
 import { VitalSigns } from "./VitalSigns";
 import { Abode } from "./Abode";
+import { Circulation } from "./Circulation";
+import { Totality } from "./Totality";
 import { Transport } from "./TickHeartbeat";
 import { clamp, formatBP } from "./animation";
 import { loadPrefs, savePrefs } from "./prefs";
+
+const STRATA = [
+  { key: "surface", label: "The surface · the circuit", short: "Surface" },
+  { key: "abode", label: "Vol I · the abode of production", short: "Vol I" },
+  { key: "circulation", label: "Vol II · circulation & reproduction", short: "Vol II" },
+  { key: "totality", label: "Vol III · the totality", short: "Vol III" },
+] as const;
 
 /** Animated scrollTop tween (inOutCubic) on the stage container. */
 function useAnimatedScroll(stageRef: React.RefObject<HTMLDivElement | null>) {
@@ -37,8 +46,8 @@ function useAnimatedScroll(stageRef: React.RefObject<HTMLDivElement | null>) {
   );
 }
 
-/** The Observatory — one continuous vertical world: the orrery surface above,
- *  the hidden abode below; descending is literal travel through a gilded gate. */
+/** The Observatory — one continuous vertical world descending through four strata:
+ *  surface (orrery), abode (Vol I), circulation (Vol II), totality (Vol III). */
 export default function Atlas() {
   const prefersReduced =
     typeof window !== "undefined" &&
@@ -49,6 +58,7 @@ export default function Atlas() {
   const [speed, setSpeed] = useState(() => loadPrefs().speed);
   const [reduced, setReduced] = useState(() => loadPrefs().reduced || !!prefersReduced);
   const [depth, setDepth] = useState(0);
+  const [level, setLevel] = useState(0);
 
   // Advance the session's in-memory run by `speed` periods per poll while running.
   const { snapshot } = useSnapshot(running ? speed : 0);
@@ -61,10 +71,17 @@ export default function Atlas() {
   const surfaceRef = useRef<AtlasSurface | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+
+  // One ref per stratum: surface / abode / circulation / totality.
   const surfaceZoneRef = useRef<HTMLDivElement>(null);
+  const abodeZoneRef = useRef<HTMLDivElement>(null);
+  const circulationZoneRef = useRef<HTMLDivElement>(null);
+  const totalityZoneRef = useRef<HTMLDivElement>(null);
+  const zoneRefs = [surfaceZoneRef, abodeZoneRef, circulationZoneRef, totalityZoneRef];
+
   const animateScroll = useAnimatedScroll(stageRef);
 
-  // instantiate the canvas controller once
+  // Instantiate the canvas controller once.
   useEffect(() => {
     if (!canvasRef.current) return;
     const surf = new AtlasSurface(canvasRef.current);
@@ -74,7 +91,7 @@ export default function Atlas() {
     return () => surf.stop();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // feed the controller each new snapshot
+  // Feed the controller each new snapshot.
   useEffect(() => {
     if (snapshot) surfaceRef.current?.setSnapshot(snapshot);
   }, [snapshot]);
@@ -84,6 +101,20 @@ export default function Atlas() {
   useEffect(() => {
     surfaceRef.current?.setSpeed(speed);
   }, [speed]);
+
+  const goTo = useCallback(
+    (i: number) => {
+      const idx = clamp(i, 0, STRATA.length - 1);
+      const ref = zoneRefs[idx];
+      const target = idx === 0 ? 0 : (ref.current?.offsetTop ?? 0);
+      animateScroll(target, reduced ? 0 : 1100);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [animateScroll, reduced, level]
+  );
+
+  const descend = () => goTo(level + 1);
+  const ascend = () => goTo(level - 1);
 
   const depthRaf = useRef(0);
   const onScroll = useCallback(() => {
@@ -96,12 +127,16 @@ export default function Atlas() {
       setDepth(d);
       surfaceRef.current?.setDepth(d);
       surfaceRef.current?.setRunning(running && d < 0.99);
-    });
-  }, [running]);
 
-  const descend = () =>
-    animateScroll(surfaceZoneRef.current?.offsetHeight || window.innerHeight, reduced ? 0 : 1150);
-  const ascend = () => animateScroll(0, reduced ? 0 : 1000);
+      // Determine which stratum we are in.
+      const mid = el.scrollTop + window.innerHeight * 0.4;
+      let lv = 0;
+      zoneRefs.forEach((r, i) => {
+        if (r.current && r.current.offsetTop <= mid) lv = i;
+      });
+      setLevel(lv);
+    });
+  }, [running]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleRun = () => {
     const next = !running;
@@ -109,7 +144,7 @@ export default function Atlas() {
     surfaceRef.current?.setRunning(next);
   };
 
-  const descended = depth > 0.5;
+  const atBottom = level >= STRATA.length - 1;
 
   return (
     <div className="atlas">
@@ -128,24 +163,37 @@ export default function Atlas() {
 
       <aside className="rail">
         {snapshot && <VitalSigns vitals={snapshot.aggregate} count={snapshot.capitals.length} />}
+        <nav className="strata-nav" aria-label="Strata">
+          {STRATA.map((s, i) => (
+            <button
+              key={s.key}
+              className={"strata-item" + (level === i ? " on" : "")}
+              onClick={() => goTo(i)}
+            >
+              <span className="si-depth">{i === 0 ? "▲" : "▼"}</span>
+              <span className="si-lbl">{s.label}</span>
+            </button>
+          ))}
+        </nav>
         <button
-          className={"descend-btn" + (descended ? " open" : "")}
+          className={"descend-btn" + (level > 0 ? " open" : "")}
           data-testid="threshold"
-          onClick={descended ? ascend : descend}
+          onClick={atBottom ? ascend : descend}
         >
-          <span className="db-arrow">{descended ? "↑" : "↓"}</span>
+          <span className="db-arrow">{atBottom ? "↑" : "↓"}</span>
           <span className="db-label">
-            {descended ? "Ascend to the surface" : "Descend into production"}
+            {atBottom ? "Ascend toward the surface" : "Descend — explain deeper"}
           </span>
         </button>
         <p className="rail-foot">
-          An observatory of the circuit of capital — <span className="i">M—C…P…C′—M′</span> — at the
-          scale of many capitals.
+          The same circuit <span className="i">M—C…P…C′—M′</span>, explained ever deeper
+          — production, then circulation, then the totality.
         </p>
       </aside>
 
       <main className="stage" ref={stageRef} onScroll={onScroll}>
         <div className="world">
+          {/* ── SURFACE ── */}
           <section className="zone-surface" ref={surfaceZoneRef}>
             <canvas className="surface-canvas" ref={canvasRef}></canvas>
             {snapshot && (
@@ -175,13 +223,38 @@ export default function Atlas() {
             </div>
           </section>
 
-          <section className={"zone-abode" + (descended ? " lit" : "")}>
+          {/* ── ABODE (Vol I) ── */}
+          <section className="zone-abode" ref={abodeZoneRef}>
             <div className="abode-seam"></div>
             <div className="abode-head">
-              <div className="abode-eyebrow">The hidden abode of production</div>
+              <div className="abode-eyebrow">Vol I · the hidden abode of production</div>
               <h2 className="abode-title">Where surplus is pumped from living labour</h2>
             </div>
             {snapshot && <Abode abode={snapshot.abode} />}
+          </section>
+
+          {/* ── CIRCULATION (Vol II) ── */}
+          <section className="zone-circulation" ref={circulationZoneRef}>
+            <div className="strat-seam"></div>
+            <div className="strat-head">
+              <div className="ab-eyebrow">Vol II · the process of circulation</div>
+              <h2 className="strat-title">How the surplus comes back — reproduction of the whole</h2>
+            </div>
+            {snapshot?.circulation && (
+              <Circulation circulation={snapshot.circulation} reduced={reduced} />
+            )}
+          </section>
+
+          {/* ── TOTALITY (Vol III) ── */}
+          <section className="zone-totality" ref={totalityZoneRef}>
+            <div className="strat-seam lead"></div>
+            <div className="strat-head">
+              <div className="ab-eyebrow lead">Vol III · capitalist production as a whole</div>
+              <h2 className="strat-title">The totality — where surplus distributes, and the rate falls</h2>
+            </div>
+            {snapshot?.distribution && (
+              <Totality distribution={snapshot.distribution} />
+            )}
           </section>
         </div>
       </main>

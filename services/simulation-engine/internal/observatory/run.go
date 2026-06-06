@@ -30,11 +30,13 @@ type Run struct {
 // RunSnapshot is the read-model projection of a Run at one instant; the
 // transport layer maps it to the observatory snapshot response.
 type RunSnapshot struct {
-	Tick    int64
-	Abode   simulation.AbodeState
-	Readout simulation.AbodeReadout
-	Field   []circulation.FieldCapital
-	Periods []simulation.GeneralLawPeriod
+	Tick         int64
+	Abode        simulation.AbodeState
+	Readout      simulation.AbodeReadout
+	Field        []circulation.FieldCapital
+	Periods      []simulation.GeneralLawPeriod
+	Circulation  CirculationSnapshot
+	Distribution DistributionSnapshot
 }
 
 // Advance runs n periods of the General Law (clamped to [0, maxAdvancePerPoll]),
@@ -77,11 +79,23 @@ func (r *Run) Snapshot() RunSnapshot {
 	copy(field, r.field)
 	periods := make([]simulation.GeneralLawPeriod, len(r.periods))
 	copy(periods, r.periods)
+	readout := r.abode.Readout()
+
+	var sumTotal, sumCost, sumSurplus int64
+	for _, fc := range r.field {
+		sumTotal += int64(fc.TotalPence)
+		sumCost += int64(fc.CostPricePence)
+		sumSurplus += int64(fc.SurplusPence)
+	}
+	generalRateBP := RateBP(sumSurplus, sumCost)
+
 	return RunSnapshot{
-		Tick:    r.tick,
-		Abode:   r.abode,
-		Readout: r.abode.Readout(),
-		Field:   field,
-		Periods: periods,
+		Tick:         r.tick,
+		Abode:        r.abode,
+		Readout:      readout,
+		Field:        field,
+		Periods:      periods,
+		Circulation:  DeriveCirculation(r.abode, readout, sumSurplus, sumTotal),
+		Distribution: DeriveDistribution(periods, readout, sumSurplus, sumCost, sumTotal, generalRateBP),
 	}
 }

@@ -11,6 +11,16 @@ const SocialWorkingDayMinutes = 600
 // an ever-diminishing proportion). Prevents the degenerate v→0 collapse.
 const maxMarginalCompositionBP = 9900
 
+// LondonWorkingPopulation caps the labouring population — the workers who can ever
+// queue at the factory gate. There can be no more workers at the gate than exist
+// in society as a whole: 2.5 million, the population of London around 1850, where
+// Marx began his study of capitalism. While capital is still drawing the
+// population into its orbit the supply grows with accumulation; once the whole of
+// society has been absorbed the supply can grow no further, and a rising organic
+// composition then swells the reserve army toward the whole population — the
+// relative surplus-population pressed against an absolute ceiling (Vol. I Ch. 25).
+const LondonWorkingPopulation = 2_500_000
+
 // AbodeState is the evolving aggregate class relation beneath the field of
 // capitals — "the hidden abode of production, on whose threshold there hangs the
 // notice 'No admittance except on business'" (Vol. I Ch. 6 fin.). It is the
@@ -77,6 +87,7 @@ type AbodeReadout struct {
 	ReserveArmyPressureBP  int64
 	EmployedCount          int64
 	WagePence              int64 // paid wage after reserve-army compression
+	TotalPopulation        int64 // society as a whole — the ceiling on workers at the gate
 }
 
 // reservePressureBP returns reserve / workforce in basis points, clamped to
@@ -116,6 +127,14 @@ func (a AbodeState) Readout() AbodeReadout {
 	oc := ComputeOrganicComposition(CapitalStock{ConstantCapital: a.ConstantPence, VariableCapital: a.VariablePence})
 	employed := ComputeLabourDemand(a.ConstantPence+a.VariablePence, oc, a.BaseWagePence)
 	reserve := ComputeReserveArmy(a.WorkerSupply, employed)
+	// Capital's demand for labour can outstrip the population, but no more workers
+	// can actually be employed than exist in society. Actual employment is the
+	// demand capped at the supply; the unmet demand is a labour shortage, not extra
+	// bodies. With the reserve already floored at zero, employed + reserve == supply.
+	actualEmployed := employed.Workers
+	if actualEmployed > a.WorkerSupply {
+		actualEmployed = a.WorkerSupply
+	}
 	pressure := reservePressureBP(reserve.Size, a.WorkerSupply)
 	effRate := a.SurplusRateBaseBP * (10000 + pressure) / 10000
 	surplus := int64(a.VariablePence) * effRate / 10000
@@ -133,8 +152,9 @@ func (a AbodeState) Readout() AbodeReadout {
 		OrganicCompositionBP:   ocBP,
 		ReserveArmyCount:       reserve.Size,
 		ReserveArmyPressureBP:  pressure,
-		EmployedCount:          employed.Workers,
+		EmployedCount:          actualEmployed,
 		WagePence:              compressWage(a.BaseWagePence, pressure),
+		TotalPopulation:        LondonWorkingPopulation,
 	}
 }
 
@@ -186,6 +206,13 @@ func AdvanceGeneralLaw(s AbodeState) (AbodeState, GeneralLawPeriod) {
 		growthBP := (newTotal - oldTotal) * 10000 / oldTotal
 		next.WorkerSupply = s.WorkerSupply + s.WorkerSupply*growthBP/10000
 	}
+	// The labouring population cannot exceed society as a whole. Once capital has
+	// drawn the whole population into its orbit the supply stops growing; the rising
+	// composition then presses the relative surplus-population against this absolute
+	// ceiling — there are never more workers at the gate than exist in society.
+	if next.WorkerSupply > LondonWorkingPopulation {
+		next.WorkerSupply = LondonWorkingPopulation
+	}
 
 	// The marginal composition climbs toward — but never reaches — full
 	// automation, capped so new capital always still hires some labour.
@@ -234,6 +261,9 @@ func (a AbodeState) ApplyLevers(u LeverUpdate) AbodeState {
 		v := *u.BaseWagePence
 		if v < 1 {
 			v = 1
+		}
+		if v > 1_000_000_000 {
+			v = 1_000_000_000 // £10M ceiling — absurd, but keeps downstream products in int64
 		}
 		next.BaseWagePence = v
 	}
