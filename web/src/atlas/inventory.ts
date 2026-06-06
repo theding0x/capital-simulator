@@ -68,6 +68,48 @@ function R(
   return { volume, part, ch, title, nodes, status, tiers, src, note };
 }
 
+// ─── Helpers for SpineMatrix ──────────────────────────────────────────────────
+
+/** Maps an InventoryNode label to the CircuitNode key used in registry.ts.
+ *  InventoryNode uses Unicode prime (C′) while registry uses "C-prime" etc. */
+export const INVENTORY_TO_REGISTRY: Record<InventoryNode, string> = {
+  "M":         "M",
+  "M-C":       "M-C",
+  "P":         "P",
+  "C′":        "C-prime",
+  "C-M′":      "C-M-prime",
+  "M′":        "M-prime",
+  "ΔM":        "delta-M",
+  "whole":     "whole",
+  "historical":"historical",
+};
+
+/** Canonical cell key: `"${volume}|${node}"`. */
+export function cellKey(volume: 1 | 2 | 3, node: InventoryNode): string {
+  return `${volume}|${node}`;
+}
+
+/** All [key, entries] pairs for non-empty cells, pre-grouped. */
+export function cellEntries(): Map<string, InventoryEntry[]> {
+  const m = new Map<string, InventoryEntry[]>();
+  for (const entry of INVENTORY) {
+    for (const node of entry.nodes) {
+      const k = cellKey(entry.volume, node);
+      const bucket = m.get(k) ?? [];
+      bucket.push(entry);
+      m.set(k, bucket);
+    }
+  }
+  return m;
+}
+
+/** Unique tiers present in a list of entries, in canonical T1→T4 order. */
+export function cellTiers(entries: InventoryEntry[]): Tier[] {
+  const s = new Set<Tier>();
+  for (const e of entries) for (const t of e.tiers) s.add(t);
+  return (["T1", "T2", "T3", "T4"] as Tier[]).filter((t) => s.has(t));
+}
+
 export const INVENTORY: InventoryEntry[] = [
   /* ─────────────── VOLUME I — Production ─────────────── */
   R(1, "I — Commodities & Money", 1, "The Commodity", ["whole"], "partial", ["T2","T3","T1"], "commodity",

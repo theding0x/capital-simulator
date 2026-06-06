@@ -9,6 +9,7 @@ import { Totality } from "./Totality";
 import { Transport } from "./TickHeartbeat";
 import { clamp, formatBP } from "./animation";
 import { loadPrefs, savePrefs } from "./prefs";
+import { SpineMatrix } from "./SpineMatrix";
 
 const STRATA = [
   { key: "surface", label: "The surface · the circuit", short: "Surface" },
@@ -46,9 +47,14 @@ function useAnimatedScroll(stageRef: React.RefObject<HTMLDivElement | null>) {
   );
 }
 
+interface AtlasProps {
+  /** Pre-open the SpineMatrix index overlay on mount, and optionally deep-link to a chapter. */
+  initialChapterId?: string;
+}
+
 /** The Observatory — one continuous vertical world descending through four strata:
  *  surface (orrery), abode (Vol I), circulation (Vol II), totality (Vol III). */
-export default function Atlas() {
+export default function Atlas({ initialChapterId }: AtlasProps = {}) {
   const prefersReduced =
     typeof window !== "undefined" &&
     window.matchMedia &&
@@ -59,6 +65,8 @@ export default function Atlas() {
   const [reduced, setReduced] = useState(() => loadPrefs().reduced || !!prefersReduced);
   const [depth, setDepth] = useState(0);
   const [level, setLevel] = useState(0);
+  // SpineMatrix index overlay: open when initialChapterId is set, or via rail button.
+  const [showIndex, setShowIndex] = useState(!!initialChapterId);
 
   // Advance the session's in-memory run by `speed` periods per poll while running.
   const { snapshot } = useSnapshot(running ? speed : 0);
@@ -157,6 +165,15 @@ export default function Atlas() {
           <a className="active" href="#/">
             Atlas
           </a>
+          <button
+            className={"nav-btn" + (showIndex ? " active" : "")}
+            onClick={() => setShowIndex((v) => !v)}
+            aria-expanded={showIndex}
+            aria-controls="spine-index-overlay"
+            aria-label="Open the chapter index — SpineMatrix"
+          >
+            Index
+          </button>
           <a href="#/chapters">Chapters</a>
         </nav>
       </header>
@@ -184,6 +201,14 @@ export default function Atlas() {
           <span className="db-label">
             {atBottom ? "Ascend toward the surface" : "Descend — explain deeper"}
           </span>
+        </button>
+        <button
+          className={"spine-rail-btn" + (showIndex ? " active" : "")}
+          onClick={() => setShowIndex((v) => !v)}
+          aria-expanded={showIndex}
+          aria-label="Open the chapter index — SpineMatrix"
+        >
+          &#9776; Chapter index
         </button>
         <p className="rail-foot">
           The same circuit <span className="i">M—C…P…C′—M′</span>, explained ever deeper
@@ -272,6 +297,57 @@ export default function Atlas() {
       </footer>
 
       <div className="descent-tint" style={{ opacity: depth * 0.5 }}></div>
+
+      {/* SpineMatrix index overlay */}
+      {showIndex && (
+        <div
+          id="spine-index-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Chapter index — the spine matrix"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 45,
+            background: "rgba(7,8,10,0.88)",
+            overflowY: "auto",
+            padding: "calc(var(--topbar-h, 50px) + 16px) 24px 80px",
+          }}
+        >
+          <div style={{ maxWidth: 860, margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.58rem", letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--ink-dim)", marginBottom: 6 }}>
+                  Atlas · Total Representation
+                </div>
+                <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.5rem", margin: 0, color: "var(--ink)" }}>
+                  The spine matrix
+                </h2>
+              </div>
+              <button
+                onClick={() => setShowIndex(false)}
+                aria-label="Close chapter index"
+                style={{
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm, 4px)",
+                  background: "transparent",
+                  color: "var(--ink-muted)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "1.1rem",
+                  cursor: "pointer",
+                  width: 36,
+                  height: 36,
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                &times;
+              </button>
+            </div>
+            <SpineMatrix initialChapterId={initialChapterId} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

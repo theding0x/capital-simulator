@@ -43,6 +43,9 @@
 .nav a { color: var(--ink-muted); text-decoration: none; font-size: 0.78rem; font-family: var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; transition: color .15s; }
 .nav a:hover { color: var(--ink); }
 .nav a.active { color: var(--gold-bright); }
+.nav-btn { all: unset; cursor: pointer; color: var(--ink-muted); font-size: 0.78rem; font-family: var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; transition: color .15s; }
+.nav-btn:hover { color: var(--ink); }
+.nav-btn.active { color: var(--gold-bright); }
 
 /* ─────────────────────────── Rail ─────────────────────────── */
 .rail {

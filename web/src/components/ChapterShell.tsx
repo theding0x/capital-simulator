@@ -125,7 +125,7 @@ interface PanelProps {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyPanel = ComponentType<any>;
 
-const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
+export const CHAPTER_PANELS: Partial<Record<string, AnyPanel>> = {
   "v1-ch01": Ch01Commodity as AnyPanel,
   "v1-ch02": Ch02Exchange as AnyPanel,
   "v1-ch03": Ch03Money as AnyPanel,

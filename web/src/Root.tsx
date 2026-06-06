@@ -14,9 +14,19 @@ function useHashRoute(): string {
   return route;
 }
 
-/** Minimal two-view router: Atlas at "/", the chapter dashboard at "/chapters". */
+/**
+ * Minimal router:
+ *   "/"                        → Atlas (observatory)
+ *   "/chapters"                → App (chapter dashboard)
+ *   "/atlas/chapter/:id"       → Atlas with SpineMatrix open + drawer pre-opened on :id
+ */
 export default function Root() {
   const route = useHashRoute();
   if (route.startsWith("/chapters")) return <App />;
+
+  // Deep-link: /atlas/chapter/v1-ch07 → open SpineMatrix with that chapter
+  const chMatch = route.match(/^\/atlas\/chapter\/([^/]+)$/);
+  if (chMatch) return <Atlas initialChapterId={chMatch[1]} />;
+
   return <Atlas />;
 }
