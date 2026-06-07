@@ -1,6 +1,7 @@
 import type { DistributionSnapshot } from "../types";
 import { formatBP, formatPence } from "./animation";
 import { TRPFChart } from "./TRPFChart";
+import { RentTerrain } from "./RentTerrain";
 import { FetishismThread } from "./FetishismThread";
 
 interface TotalityProps {
@@ -86,8 +87,25 @@ export function Totality({ distribution }: TotalityProps) {
           own source, when all of it derives from surplus-labour alone.
         </p>
         <p className="trinity-note" style={{ marginTop: "8px", color: "var(--ink-dim)", fontSize: "0.74rem" }}>
-          Note: rent ({formatPence(d.trinity.rent_pence)}) is not yet modelled in this simulation &mdash; ground-rent (Vol III Part VI) is represented as zero.
+          Rent ({formatPence(d.trinity.rent_pence)}) is now modelled as a derived ground-rent
+          terrain (Vol III Ch.&thinsp;37&ndash;47) &mdash; differential rent over the worst-soil
+          waterline, plus the absolute rent of landed property &mdash; charted below.
         </p>
+      </section>
+
+      <section className="rent-card">
+        <div className="strat-eyebrow">
+          Vol III &middot; Ch. 37&ndash;47 &mdash; the ground-rent terrain
+        </div>
+        <p className="strat-gloss">
+          Equal capital on soils of differing fertility: the <span className="l">worst soil</span> in
+          cultivation regulates the market price &mdash; the waterline &mdash; and yields no
+          differential rent. More fertile soils clear more output at that price, and the surplus
+          profit rises above the waterline as <span className="g">differential rent</span>. From
+          agriculture&rsquo;s lower organic composition, landed property exacts an{" "}
+          <span className="r">absolute rent</span> on every soil. Land price is the rent capitalised.
+        </p>
+        <RentTerrain rent={d.rent} />
       </section>
 
       <FetishismThread />

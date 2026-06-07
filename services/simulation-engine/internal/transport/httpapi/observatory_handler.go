@@ -102,12 +102,37 @@ type trinityDTO struct {
 	RentPence   int64 `json:"rent_pence"`
 }
 
+type soilGradeDTO struct {
+	ID                    string `json:"id"`
+	Name                  string `json:"name"`
+	FertilityBP           int64  `json:"fertility_bp"`
+	YieldUnits            int64  `json:"yield_units"`
+	IndividualPricePence  int64  `json:"individual_price_pence"`
+	DifferentialRentPence int64  `json:"differential_rent_pence"`
+	AbsoluteRentPence     int64  `json:"absolute_rent_pence"`
+	TotalRentPence        int64  `json:"total_rent_pence"`
+	LandPricePence        int64  `json:"land_price_pence"`
+	Regulating            bool   `json:"regulating"`
+}
+
+type rentDTO struct {
+	Grades               []soilGradeDTO `json:"grades"`
+	WaterlinePence       int64          `json:"waterline_pence"`
+	CapitalPerGradePence int64          `json:"capital_per_grade_pence"`
+	DifferentialPence    int64          `json:"differential_pence"`
+	AbsolutePence        int64          `json:"absolute_pence"`
+	TotalRentPence       int64          `json:"total_rent_pence"`
+	LandPricePence       int64          `json:"land_price_pence"`
+	InterestRateBP       int64          `json:"interest_rate_bp"`
+}
+
 type distributionDTO struct {
 	GeneralRateBP   int64                `json:"general_rate_bp"`
 	InterestRateBP  int64                `json:"interest_rate_bp"`
 	LoanablePence   int64                `json:"loanable_pence"`
 	FictitiousPence int64                `json:"fictitious_pence"`
 	DistSeries      []distSeriesPointDTO `json:"dist_series"`
+	Rent            rentDTO              `json:"rent"`
 	Trinity         trinityDTO           `json:"trinity"`
 }
 
@@ -226,12 +251,38 @@ func mapDistributionDTO(d observatory.DistributionSnapshot) distributionDTO {
 			Crisis:          p.Crisis,
 		}
 	}
+	grades := make([]soilGradeDTO, len(d.Rent.Grades))
+	for i, g := range d.Rent.Grades {
+		grades[i] = soilGradeDTO{
+			ID:                    g.ID,
+			Name:                  g.Name,
+			FertilityBP:           g.FertilityBP,
+			YieldUnits:            g.YieldUnits,
+			IndividualPricePence:  g.IndividualPricePence,
+			DifferentialRentPence: g.DifferentialRentPence,
+			AbsoluteRentPence:     g.AbsoluteRentPence,
+			TotalRentPence:        g.TotalRentPence,
+			LandPricePence:        g.LandPricePence,
+			Regulating:            g.Regulating,
+		}
+	}
+
 	return distributionDTO{
 		GeneralRateBP:   d.GeneralRateBP,
 		InterestRateBP:  d.InterestRateBP,
 		LoanablePence:   d.LoanablePence,
 		FictitiousPence: d.FictitiousPence,
 		DistSeries:      series,
+		Rent: rentDTO{
+			Grades:               grades,
+			WaterlinePence:       d.Rent.WaterlinePence,
+			CapitalPerGradePence: d.Rent.CapitalPerGradePence,
+			DifferentialPence:    d.Rent.DifferentialPence,
+			AbsolutePence:        d.Rent.AbsolutePence,
+			TotalRentPence:       d.Rent.TotalRentPence,
+			LandPricePence:       d.Rent.LandPricePence,
+			InterestRateBP:       d.Rent.InterestRateBP,
+		},
 		Trinity: trinityDTO{
 			WagesPence:  d.Trinity.WagesPence,
 			ProfitPence: d.Trinity.ProfitPence,

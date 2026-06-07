@@ -425,6 +425,58 @@
 }
 .trinity-note em { font-family: var(--font-display); color: var(--gold-bright); }
 
+/* Vol III · Ch. 37–47 — the ground-rent terrain */
+.strat-gloss .r, .trpf-card .r, .rent-card .r { color: var(--red-hover); }
+.rent-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 22px 24px 18px;
+}
+.rent-terrain { margin-top: 6px; }
+.rent-terrain svg { display: block; height: 248px; }
+.rt-axis {
+  font-family: var(--font-mono); font-size: 11px; fill: var(--ink-muted);
+}
+.rt-axis.dim { font-size: 9px; fill: var(--ink-dim); letter-spacing: 0.04em; }
+.rt-waterlbl {
+  font-family: var(--font-mono); font-size: 9px; fill: var(--gold-bright);
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+.rent-legend {
+  display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px;
+  font-family: var(--font-mono); font-size: 0.66rem; font-variant-numeric: tabular-nums;
+}
+.rent-grades {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 18px; margin-top: 16px;
+}
+.rent-grade {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: baseline;
+  padding: 7px 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius);
+  background: var(--surface-raised);
+}
+.rent-grade.reg { border-color: var(--lead-hover); }
+.rg-id {
+  font-family: var(--font-display); font-style: italic; font-weight: 700; font-size: 1.1rem;
+  color: var(--gold-bright); grid-row: span 2;
+}
+.rg-name { font-size: 0.74rem; color: var(--ink-muted); }
+.rg-reg { color: var(--lead-hover); font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.rg-rent {
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.92rem;
+  color: var(--gold-bright); text-align: right;
+}
+.rg-land {
+  grid-column: 2 / 4; font-family: var(--font-mono); font-size: 0.62rem;
+  color: var(--ink-dim); text-align: right;
+}
+.rent-foot {
+  display: flex; gap: 22px; flex-wrap: wrap; margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  font-size: 0.74rem; color: var(--ink-muted);
+}
+.rent-foot strong { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 500; color: var(--ink); }
+.rent-foot strong.g { color: var(--gold-bright); }
+.rent-foot strong.r { color: var(--red-hover); }
+
 /* strata navigator in the rail */
 .strata-nav {
   display: flex; flex-direction: column; gap: 1px;

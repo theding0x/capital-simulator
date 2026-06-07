@@ -86,7 +86,8 @@ func TestDeriveDistribution_InterestClamped(t *testing.T) {
 }
 
 // TestDeriveDistribution_TrinityWagesAndProfit verifies that the trinity
-// Wages+Profit equals TotalVariablePence+TotalSurplusPence, and Rent == 0.
+// Wages+Profit equals TotalVariablePence+TotalSurplusPence, and that Rent is now
+// the derived rent-terrain total (the honest zero closed by Ch.37–47).
 func TestDeriveDistribution_TrinityWagesAndProfit(t *testing.T) {
 	t.Parallel()
 	abode := seedAbode()
@@ -100,9 +101,117 @@ func TestDeriveDistribution_TrinityWagesAndProfit(t *testing.T) {
 		t.Errorf("Trinity Wages+Profit=%d, want %d (TotalVariable+TotalSurplus)",
 			gotTotal, wantTotal)
 	}
-	if dist.Trinity.RentPence != 0 {
-		t.Errorf("Trinity RentPence=%d, want 0 (honest zero — no rent in engine)",
-			dist.Trinity.RentPence)
+	if dist.Trinity.RentPence != dist.Rent.TotalRentPence {
+		t.Errorf("Trinity RentPence=%d, want %d (the rent-terrain total)",
+			dist.Trinity.RentPence, dist.Rent.TotalRentPence)
+	}
+	if dist.Trinity.RentPence <= 0 {
+		t.Errorf("Trinity RentPence=%d, want > 0 (rent now modelled)", dist.Trinity.RentPence)
+	}
+}
+
+// TestDeriveRent_DifferentialOverWaterline verifies Marx's Differential Rent I
+// (Ch.39): the worst soil regulates the price (the waterline) and yields no
+// differential rent; each more fertile soil yields strictly more differential
+// rent than the last. With yields 1:2:3:4 the differentials run 0 : w : 2w : 3w.
+func TestDeriveRent_DifferentialOverWaterline(t *testing.T) {
+	t.Parallel()
+	abode := seedAbode()
+	r := seedReadout(abode)
+
+	rent := DeriveRent(r, 810000, 1000, 500)
+
+	if len(rent.Grades) != 4 {
+		t.Fatalf("expected 4 soil grades, got %d", len(rent.Grades))
+	}
+	worst := rent.Grades[0]
+	if !worst.Regulating {
+		t.Error("the worst soil (grade A) must be the regulating soil")
+	}
+	if worst.DifferentialRentPence != 0 {
+		t.Errorf("worst soil differential rent=%d, want 0", worst.DifferentialRentPence)
+	}
+	// Differential rent strictly increases with fertility.
+	for i := 1; i < len(rent.Grades); i++ {
+		if rent.Grades[i].DifferentialRentPence <= rent.Grades[i-1].DifferentialRentPence {
+			t.Errorf("differential rent not strictly rising at grade %d: %d <= %d",
+				i, rent.Grades[i].DifferentialRentPence, rent.Grades[i-1].DifferentialRentPence)
+		}
+	}
+	// The differentials are multiples of the waterline (0, w, 2w, 3w).
+	for i, g := range rent.Grades {
+		want := int64(i) * rent.WaterlinePence
+		if g.DifferentialRentPence != want {
+			t.Errorf("grade %s differential=%d, want %d (=%d×waterline)",
+				g.ID, g.DifferentialRentPence, want, i)
+		}
+	}
+}
+
+// TestDeriveRent_AbsoluteOnEverySoil verifies that absolute rent (from
+// agriculture's lower organic composition, Ch.45) is positive and exacted
+// equally on every soil — including the worst, which pays no differential rent.
+func TestDeriveRent_AbsoluteOnEverySoil(t *testing.T) {
+	t.Parallel()
+	abode := seedAbode()
+	r := seedReadout(abode)
+
+	rent := DeriveRent(r, 810000, 1000, 500)
+
+	ar := rent.Grades[0].AbsoluteRentPence
+	if ar <= 0 {
+		t.Fatalf("absolute rent=%d, want > 0 (agriculture's lower composition)", ar)
+	}
+	for _, g := range rent.Grades {
+		if g.AbsoluteRentPence != ar {
+			t.Errorf("grade %s absolute rent=%d, want %d (uniform across soils)",
+				g.ID, g.AbsoluteRentPence, ar)
+		}
+		if g.TotalRentPence != g.DifferentialRentPence+g.AbsoluteRentPence {
+			t.Errorf("grade %s total=%d != differential+absolute=%d",
+				g.ID, g.TotalRentPence, g.DifferentialRentPence+g.AbsoluteRentPence)
+		}
+	}
+	// The worst soil's whole rent is absolute rent.
+	if rent.Grades[0].TotalRentPence != ar {
+		t.Errorf("worst soil total rent=%d, want %d (absolute only)",
+			rent.Grades[0].TotalRentPence, ar)
+	}
+}
+
+// TestDeriveRent_Conservation verifies the terrain totals sum their grades and
+// that land price is each grade's rent capitalised at the interest rate.
+func TestDeriveRent_Conservation(t *testing.T) {
+	t.Parallel()
+	abode := seedAbode()
+	r := seedReadout(abode)
+
+	const interestBP = 500
+	rent := DeriveRent(r, 810000, 1000, interestBP)
+
+	var sumDR, sumTotal, sumLand int64
+	for _, g := range rent.Grades {
+		sumDR += g.DifferentialRentPence
+		sumTotal += g.TotalRentPence
+		sumLand += g.LandPricePence
+		wantLand := (g.TotalRentPence*10000 + interestBP/2) / interestBP
+		if g.LandPricePence != wantLand {
+			t.Errorf("grade %s land price=%d, want %d (rent ÷ interest)",
+				g.ID, g.LandPricePence, wantLand)
+		}
+	}
+	if rent.DifferentialPence != sumDR {
+		t.Errorf("DifferentialPence=%d, want %d", rent.DifferentialPence, sumDR)
+	}
+	if rent.TotalRentPence != sumTotal {
+		t.Errorf("TotalRentPence=%d, want %d", rent.TotalRentPence, sumTotal)
+	}
+	if rent.LandPricePence != sumLand {
+		t.Errorf("LandPricePence=%d, want %d", rent.LandPricePence, sumLand)
+	}
+	if rent.AbsolutePence != rent.Grades[0].AbsoluteRentPence*int64(len(rent.Grades)) {
+		t.Errorf("AbsolutePence=%d, want %d (per-soil × grades)",
+			rent.AbsolutePence, rent.Grades[0].AbsoluteRentPence*int64(len(rent.Grades)))
 	}
 }
 

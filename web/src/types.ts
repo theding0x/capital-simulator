@@ -4941,12 +4941,41 @@ export interface TrinityRevenues {
   rent_pence: number;
 }
 
+// Vol. III Ch. 37–47 — the ground-rent terrain. One soil grade is one band; the
+// worst soil regulates the price (the waterline) and pays only absolute rent.
+// (Named RentSoilGrade to avoid clashing with the finance-service SoilGrade
+// union 1|2|3|4 used by the Ch.39 Differential-Rent-I tables.)
+export interface RentSoilGrade {
+  id: string;
+  name: string;
+  fertility_bp: number;
+  yield_units: number;
+  individual_price_pence: number;
+  differential_rent_pence: number;
+  absolute_rent_pence: number;
+  total_rent_pence: number;
+  land_price_pence: number;
+  regulating: boolean;
+}
+
+export interface RentSnapshot {
+  grades: RentSoilGrade[];
+  waterline_pence: number;
+  capital_per_grade_pence: number;
+  differential_pence: number;
+  absolute_pence: number;
+  total_rent_pence: number;
+  land_price_pence: number;
+  interest_rate_bp: number;
+}
+
 export interface DistributionSnapshot {
   general_rate_bp: number;
   interest_rate_bp: number;
   loanable_pence: number;
   fictitious_pence: number;
   dist_series: DistSeriesPoint[];
+  rent: RentSnapshot;
   trinity: TrinityRevenues;
 }
 
