@@ -477,6 +477,77 @@
 .rent-foot strong.g { color: var(--gold-bright); }
 .rent-foot strong.r { color: var(--red-hover); }
 
+/* Vol I · Ch. 26–33 — the genesis timeline floor (the historical bedrock) */
+.zone-genesis {
+  position: relative; min-height: 100vh; padding: 0 0 120px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(48,18,16,0.34), transparent 60%),
+    linear-gradient(180deg, #0a0607 0%, #080507 50%, #050304 100%);
+}
+.strat-seam.red {
+  background: linear-gradient(90deg, transparent, rgba(192,57,43,0.55), transparent);
+  box-shadow: 0 0 24px 2px rgba(192,57,43,0.22);
+}
+.ab-eyebrow.red { color: var(--red-hover); }
+
+.genesis { max-width: 1000px; margin: 0 auto; padding: 22px 48px 0; }
+.genesis-track {
+  position: relative; display: flex; gap: 4px; overflow-x: auto; overflow-y: hidden;
+  padding: 30px 4px 14px; scrollbar-width: thin;
+}
+.genesis-line {
+  position: absolute; top: 41px; left: 12px; right: 12px; height: 2px;
+  background: linear-gradient(90deg, rgba(192,57,43,0.15), rgba(192,57,43,0.7), rgba(200,162,64,0.6));
+  pointer-events: none;
+}
+.genesis-node {
+  all: unset; cursor: pointer; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  flex: 0 0 132px; padding: 0 8px; position: relative;
+}
+.genesis-node:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+.gn-dot { width: 24px; height: 24px; display: grid; place-items: center; z-index: 1; }
+.gn-dot::before {
+  content: ""; width: calc(7px + var(--mag, 3) * 3px); height: calc(7px + var(--mag, 3) * 3px);
+  border-radius: 50%; background: var(--red); border: 2px solid #0a0607;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.genesis-node.tendency .gn-dot::before { background: var(--gold-bright); }
+.genesis-node:hover .gn-dot::before,
+.genesis-node.on .gn-dot::before {
+  transform: scale(1.18); box-shadow: 0 0 12px 1px rgba(192,57,43,0.55);
+}
+.genesis-node.tendency.on .gn-dot::before { box-shadow: 0 0 12px 1px rgba(200,162,64,0.55); }
+.gn-era {
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.62rem;
+  letter-spacing: 0.06em; color: var(--ink-dim); margin-top: 8px;
+}
+.genesis-node.on .gn-era { color: var(--red-hover); }
+.gn-title {
+  font-family: var(--font-sans); font-size: 0.72rem; line-height: 1.25; color: var(--ink-muted);
+  margin-top: 4px;
+}
+.genesis-node.on .gn-title { color: var(--ink); }
+.genesis-readout {
+  margin-top: 14px; padding: 16px 18px; border: 1px solid var(--border);
+  border-left: 2px solid var(--red); border-radius: var(--radius);
+  background: var(--surface); min-height: 70px;
+}
+.gr-cite {
+  font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--red-hover);
+}
+.gr-blurb {
+  margin: 8px 0 0; font-family: var(--font-display); font-style: italic;
+  font-size: 1.02rem; line-height: 1.5; color: var(--ink-muted); max-width: 70ch;
+}
+.genesis-foot {
+  margin: 16px 0 0; font-size: 0.74rem; color: var(--ink-dim); font-style: italic;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gn-dot::before { transition: none; }
+}
+
 /* strata navigator in the rail */
 .strata-nav {
   display: flex; flex-direction: column; gap: 1px;

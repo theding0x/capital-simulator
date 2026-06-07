@@ -110,6 +110,12 @@ export function cellTiers(entries: InventoryEntry[]): Tier[] {
   return (["T1", "T2", "T3", "T4"] as Tier[]).filter((t) => s.has(t));
 }
 
+/** The inventory entry for a (volume, chapter), or undefined. Used by the
+ *  genesis timeline to open a chapter's panel in the shared ChapterDrawer. */
+export function findEntry(volume: 1 | 2 | 3, ch: number): InventoryEntry | undefined {
+  return INVENTORY.find((e) => e.volume === volume && e.ch === ch);
+}
+
 export const INVENTORY: InventoryEntry[] = [
   /* ─────────────── VOLUME I — Production ─────────────── */
   R(1, "I — Commodities & Money", 1, "The Commodity", ["whole"], "partial", ["T2","T3","T1"], "commodity",

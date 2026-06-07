@@ -12,12 +12,14 @@ import { loadPrefs, savePrefs } from "./prefs";
 import { SpineMatrix } from "./SpineMatrix";
 import { Gloss } from "./Gloss";
 import { GLOSS_MAP } from "./glossContent";
+import { GenesisTimeline } from "./GenesisTimeline";
 
 const STRATA = [
   { key: "surface", label: "The surface · the circuit", short: "Surface" },
   { key: "abode", label: "Vol I · the abode of production", short: "Vol I" },
   { key: "circulation", label: "Vol II · circulation & reproduction", short: "Vol II" },
   { key: "totality", label: "Vol III · the totality", short: "Vol III" },
+  { key: "genesis", label: "The genesis · primitive accumulation", short: "Genesis" },
 ] as const;
 
 /** Animated scrollTop tween (inOutCubic) on the stage container. */
@@ -87,7 +89,14 @@ export default function Atlas({ initialChapterId }: AtlasProps = {}) {
   const abodeZoneRef = useRef<HTMLDivElement>(null);
   const circulationZoneRef = useRef<HTMLDivElement>(null);
   const totalityZoneRef = useRef<HTMLDivElement>(null);
-  const zoneRefs = [surfaceZoneRef, abodeZoneRef, circulationZoneRef, totalityZoneRef];
+  const genesisZoneRef = useRef<HTMLDivElement>(null);
+  const zoneRefs = [
+    surfaceZoneRef,
+    abodeZoneRef,
+    circulationZoneRef,
+    totalityZoneRef,
+    genesisZoneRef,
+  ];
 
   const animateScroll = useAnimatedScroll(stageRef);
 
@@ -290,6 +299,16 @@ export default function Atlas({ initialChapterId }: AtlasProps = {}) {
             {snapshot?.distribution && (
               <Totality distribution={snapshot.distribution} />
             )}
+          </section>
+
+          {/* ── GENESIS (the historical floor) ── */}
+          <section className="zone-genesis" ref={genesisZoneRef}>
+            <div className="strat-seam red"></div>
+            <div className="strat-head">
+              <div className="ab-eyebrow red">Vol I &middot; Ch. 26&ndash;33 &mdash; so-called primitive accumulation</div>
+              <h2 className="strat-title">The genesis &mdash; the bedrock the living world rests on</h2>
+            </div>
+            <GenesisTimeline />
           </section>
         </div>
       </main>
