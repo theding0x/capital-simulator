@@ -5,6 +5,8 @@ import {
   cellEntries,
   cellKey,
   cellTiers,
+  chapterId,
+  volRoman,
   type InventoryEntry,
   type InventoryNode,
 } from "./inventory";
@@ -27,15 +29,6 @@ const VOLS: { v: 1 | 2 | 3; name: string; depth: string }[] = [
   { v: 2, name: "II",  depth: "circulation" },
   { v: 3, name: "III", depth: "totality"    },
 ];
-
-function volRoman(v: 1 | 2 | 3): string {
-  return v === 1 ? "I" : v === 2 ? "II" : "III";
-}
-
-/** Returns the chapter id rule: v${volume}-ch${padded}. */
-function chapterId(entry: InventoryEntry): string {
-  return `v${entry.volume}-ch${String(entry.ch).padStart(2, "0")}`;
-}
 
 /** Gloss content for a T3 chapter: a canonical Marx quote for the curated
  *  fetishism/concept nodes, otherwise the chapter's own qualitative note from

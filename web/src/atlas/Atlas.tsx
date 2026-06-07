@@ -129,7 +129,7 @@ export default function Atlas({ initialChapterId }: AtlasProps = {}) {
       animateScroll(target, reduced ? 0 : 1100);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [animateScroll, reduced, level]
+    [animateScroll, reduced]
   );
 
   const descend = () => goTo(level + 1);

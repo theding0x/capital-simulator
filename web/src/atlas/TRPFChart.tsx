@@ -1,6 +1,6 @@
 import { useId, useMemo } from "react";
 import type { DistSeriesPoint } from "../types";
-import { formatBP, formatPence } from "./animation";
+import { formatBP, formatPence, seriesArea, seriesLine } from "./animation";
 
 interface TRPFChartProps {
   series: DistSeriesPoint[];
@@ -25,19 +25,13 @@ export function TRPFChart({ series }: TRPFChartProps) {
     const massMax = Math.max(...mass, 1);
     const yPP = (v: number) => PAD_T + innerH * (1 - v / (ppMax * 1.1));
     const yM = (v: number) => PAD_T + innerH * (1 - v / (massMax * 1.1));
-    const line = (arr: number[], yfn: (v: number) => number) =>
-      arr
-        .map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${yfn(v).toFixed(1)}`)
-        .join(" ");
-    const area = (arr: number[], yfn: (v: number) => number) =>
-      `${line(arr, yfn)} L${x(n - 1).toFixed(1)} ${PAD_T + innerH} L${x(0).toFixed(1)} ${PAD_T + innerH} Z`;
     const crises = series
       .map((p, i) => (p.crisis ? x(i) : null))
       .filter((v): v is number => v !== null);
     const last = series[n - 1];
     return {
-      ppPath: line(pp, yPP),
-      massArea: area(mass, yM),
+      ppPath: seriesLine(pp, x, yPP),
+      massArea: seriesArea(mass, x, yM, PAD_T + innerH),
       crises,
       last,
       ppDot: [x(n - 1), yPP(pp[n - 1])] as [number, number],

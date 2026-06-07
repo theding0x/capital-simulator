@@ -37,6 +37,12 @@ type RunSnapshot struct {
 	Periods      []simulation.GeneralLawPeriod
 	Circulation  CirculationSnapshot
 	Distribution DistributionSnapshot
+	// Field aggregate, summed once under the lock so the transport layer does not
+	// re-walk the field. GeneralRateBP = round-half-up(ΣS / ΣC).
+	SumTotal      int64
+	SumCost       int64
+	SumSurplus    int64
+	GeneralRateBP int64
 }
 
 // Advance runs n periods of the General Law (clamped to [0, maxAdvancePerPoll]),
@@ -90,12 +96,16 @@ func (r *Run) Snapshot() RunSnapshot {
 	generalRateBP := RateBP(sumSurplus, sumCost)
 
 	return RunSnapshot{
-		Tick:         r.tick,
-		Abode:        r.abode,
-		Readout:      readout,
-		Field:        field,
-		Periods:      periods,
-		Circulation:  DeriveCirculation(r.abode, readout, sumSurplus, sumTotal),
-		Distribution: DeriveDistribution(periods, readout, sumSurplus, sumCost, sumTotal, generalRateBP),
+		Tick:          r.tick,
+		Abode:         r.abode,
+		Readout:       readout,
+		Field:         field,
+		Periods:       periods,
+		Circulation:   DeriveCirculation(r.abode, readout, sumSurplus, sumTotal),
+		Distribution:  DeriveDistribution(periods, readout, sumSurplus, sumCost, sumTotal, generalRateBP),
+		SumTotal:      sumTotal,
+		SumCost:       sumCost,
+		SumSurplus:    sumSurplus,
+		GeneralRateBP: generalRateBP,
 	}
 }

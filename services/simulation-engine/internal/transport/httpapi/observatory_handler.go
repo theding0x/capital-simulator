@@ -172,7 +172,6 @@ func buildSnapshotResponse(snap observatory.RunSnapshot, advance int) observator
 		IntervalMS: snapshotIntervalMS,
 		Capitals:   make([]fieldCapitalDTO, len(snap.Field)),
 	}
-	var sumTotal, sumCost, sumSurplus int64
 	for i, fc := range snap.Field {
 		resp.Capitals[i] = fieldCapitalDTO{
 			ID:              string(fc.ID),
@@ -185,15 +184,13 @@ func buildSnapshotResponse(snap observatory.RunSnapshot, advance int) observator
 			Status:          string(fc.Status),
 			TurnoverNumber:  fc.TurnoverNumber,
 		}
-		sumTotal += int64(fc.TotalPence)
-		sumCost += int64(fc.CostPricePence)
-		sumSurplus += int64(fc.SurplusPence)
 	}
+	// The field aggregate is summed once in Run.Snapshot under the lock; reuse it.
 	resp.Aggregate = aggregateVitalsDTO{
-		TotalSocialCapitalPence: sumTotal,
-		CostPricePence:          sumCost,
-		SurplusPence:            sumSurplus,
-		AvgRateOfProfitBP:       observatory.RateBP(sumSurplus, sumCost),
+		TotalSocialCapitalPence: snap.SumTotal,
+		CostPricePence:          snap.SumCost,
+		SurplusPence:            snap.SumSurplus,
+		AvgRateOfProfitBP:       snap.GeneralRateBP,
 	}
 	ar := snap.Readout
 	law := make([]generalLawPeriodDTO, len(snap.Periods))

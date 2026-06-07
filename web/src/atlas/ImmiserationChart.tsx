@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import type { GeneralLawTrendPoint } from "../types";
-import { formatPence, formatBP } from "./animation";
+import { formatPence, formatBP, seriesArea, seriesLine } from "./animation";
 
 /** The immiseration trend: s/v rising (gold), wage falling (red dashed), reserve
  *  army swelling (lead area). The wage/s-v crossing IS the immiseration story. */
@@ -33,14 +33,10 @@ export function ImmiserationChart({ series }: { series: GeneralLawTrendPoint[] }
     const yS = ny(sv),
       yW = ny(wg),
       yR = ny(ra);
-    const line = (arr: number[], yfn: (v: number) => number) =>
-      arr.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${yfn(v).toFixed(1)}`).join(" ");
-    const area = (arr: number[], yfn: (v: number) => number) =>
-      `${line(arr, yfn)} L${x(n - 1).toFixed(1)} ${padT + innerH} L${x(0).toFixed(1)} ${padT + innerH} Z`;
     return {
-      svPath: line(sv, yS),
-      wgPath: line(wg, yW),
-      raArea: area(ra, yR),
+      svPath: seriesLine(sv, x, yS),
+      wgPath: seriesLine(wg, x, yW),
+      raArea: seriesArea(ra, x, yR, padT + innerH),
       last: series[n - 1],
       n,
       svDot: [x(n - 1), yS(sv[n - 1])] as [number, number],

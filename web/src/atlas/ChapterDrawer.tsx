@@ -1,19 +1,11 @@
 import { useEffect, useRef } from "react";
 import { CHAPTER_PANELS } from "../components/ChapterShell";
-import type { InventoryEntry } from "./inventory";
+import { chapterId, volRoman, type InventoryEntry } from "./inventory";
 import "./spine.css";
 
 interface ChapterDrawerProps {
   entry: InventoryEntry;
   onClose: () => void;
-}
-
-function volRoman(v: 1 | 2 | 3): string {
-  return v === 1 ? "I" : v === 2 ? "II" : "III";
-}
-
-function chapterId(entry: InventoryEntry): string {
-  return `v${entry.volume}-ch${String(entry.ch).padStart(2, "0")}`;
 }
 
 /** Focus-trap: keep Tab/Shift+Tab within the drawer. */
