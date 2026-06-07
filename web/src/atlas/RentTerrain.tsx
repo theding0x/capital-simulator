@@ -7,11 +7,11 @@ interface RentTerrainProps {
 }
 
 const W = 680;
-const H = 248;
+const H = 258;
 const PAD_L = 16;
 const PAD_R = 16;
 const PAD_T = 20;
-const PAD_B = 34;
+const PAD_B = 44;
 
 /** Vol III · Ch. 37–47 — the ground-rent terrain. Each soil is a band: equal
  *  capital yields an equal price of production (lead) plus the absolute rent the
@@ -44,7 +44,9 @@ export function RentTerrain({ rent }: RentTerrainProps) {
       const cx = PAD_L + slot * (i + 0.5);
       const x = cx - barW / 2;
       const hBase = scale(priceProd);
-      const hAbs = scale(g.absolute_rent_pence);
+      // Floor the absolute-rent band so the monopoly levy stays legible on every
+      // soil — including the worst, whose whole rent it is.
+      const hAbs = g.absolute_rent_pence > 0 ? Math.max(scale(g.absolute_rent_pence), 4) : 0;
       const hDiff = scale(g.differential_rent_pence);
       // Stack from the baseline up: price of production, absolute, differential.
       const yBase = baseY - hBase;
@@ -91,6 +93,11 @@ export function RentTerrain({ rent }: RentTerrainProps) {
             <text x={x + barW / 2} y={geom.baseY + 26} textAnchor="middle" className="rt-axis dim">
               {g.yield_units}&times; yield
             </text>
+            {g.regulating && (
+              <text x={x + barW / 2} y={geom.baseY + 38} textAnchor="middle" className="rt-axis reg">
+                regulates
+              </text>
+            )}
           </g>
         ))}
 

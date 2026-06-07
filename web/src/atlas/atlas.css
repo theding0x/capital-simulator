@@ -146,8 +146,8 @@
   background: linear-gradient(90deg, transparent, rgba(200,162,64,0.55), transparent);
   box-shadow: 0 0 26px 2px rgba(200,162,64,0.28);
 }
-.abode-head { padding: 64px 48px 8px; max-width: 980px; margin: 0 auto; }
-.abode-title { font-family: var(--font-display); font-weight: 700; font-size: 2.1rem; letter-spacing: -0.02em; margin: 8px 0 0; color: var(--ink); }
+.abode-head { padding: 60px 48px 8px; max-width: 1000px; margin: 0 auto; }
+.abode-title { font-family: var(--font-display); font-weight: 700; font-size: 2rem; letter-spacing: -0.02em; margin: 8px 0 0; color: var(--ink); }
 .abode-eyebrow { color: var(--gold); }
 .abode-inner { max-width: 980px; margin: 0 auto; padding: 24px 48px 0; display: flex; flex-direction: column; gap: 34px; }
 
@@ -432,11 +432,14 @@
   border-radius: var(--radius-lg); padding: 22px 24px 18px;
 }
 .rent-terrain { margin-top: 6px; }
-.rent-terrain svg { display: block; height: 248px; }
+.rent-terrain svg { display: block; height: 258px; }
 .rt-axis {
   font-family: var(--font-mono); font-size: 11px; fill: var(--ink-muted);
 }
 .rt-axis.dim { font-size: 9px; fill: var(--ink-dim); letter-spacing: 0.04em; }
+.rt-axis.reg {
+  font-size: 8px; fill: var(--red-hover); letter-spacing: 0.1em; text-transform: uppercase;
+}
 .rt-waterlbl {
   font-family: var(--font-mono); font-size: 9px; fill: var(--gold-bright);
   letter-spacing: 0.12em; text-transform: uppercase;
@@ -491,6 +494,23 @@
 .ab-eyebrow.red { color: var(--red-hover); }
 
 .genesis { max-width: 1000px; margin: 0 auto; padding: 22px 48px 0; }
+.genesis-scroller { position: relative; }
+.genesis-scroller::before,
+.genesis-scroller::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 56px;
+  pointer-events: none; z-index: 2; opacity: 1; transition: opacity 0.2s;
+}
+.genesis-scroller::before { left: 0; background: linear-gradient(90deg, #0a0607, rgba(10,6,7,0)); }
+.genesis-scroller::after { right: 0; background: linear-gradient(270deg, #0a0607, rgba(10,6,7,0)); }
+.genesis-scroller.at-start::before { opacity: 0; }
+.genesis-scroller.at-end::after { opacity: 0; }
+.genesis-scrollhint {
+  position: absolute; top: 4px; right: 10px; z-index: 3;
+  font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--red-hover); opacity: 0.8;
+  pointer-events: none; transition: opacity 0.2s;
+}
+.genesis-scroller.at-end .genesis-scrollhint { opacity: 0; }
 .genesis-track {
   position: relative; display: flex; gap: 4px; overflow-x: auto; overflow-y: hidden;
   padding: 30px 4px 14px; scrollbar-width: thin;

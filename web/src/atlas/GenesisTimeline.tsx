@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GENESIS_EPISODES, type GenesisEpisode } from "./genesis";
 import { findEntry, type InventoryEntry } from "./inventory";
 import { ChapterDrawer } from "./ChapterDrawer";
@@ -11,6 +11,22 @@ export function GenesisTimeline() {
   const [activeId, setActiveId] = useState<string>(GENESIS_EPISODES[0].id);
   const [drawerEntry, setDrawerEntry] = useState<InventoryEntry | null>(null);
 
+  // Horizontal-scroll affordance: fade the edges that have more beyond them.
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ atStart: true, atEnd: true });
+  const syncEdges = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const atStart = el.scrollLeft <= 2;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+    setEdges({ atStart, atEnd });
+  }, []);
+  useEffect(() => {
+    syncEdges();
+    window.addEventListener("resize", syncEdges);
+    return () => window.removeEventListener("resize", syncEdges);
+  }, [syncEdges]);
+
   const active =
     GENESIS_EPISODES.find((e) => e.id === activeId) ?? GENESIS_EPISODES[0];
 
@@ -22,7 +38,16 @@ export function GenesisTimeline() {
   return (
     <div className="genesis">
       <div
+        className={
+          "genesis-scroller" +
+          (edges.atStart ? " at-start" : "") +
+          (edges.atEnd ? " at-end" : "")
+        }
+      >
+      <div
         className="genesis-track"
+        ref={trackRef}
+        onScroll={syncEdges}
         role="group"
         aria-label="Primitive accumulation — the historical timeline"
       >
@@ -48,6 +73,10 @@ export function GenesisTimeline() {
             </button>
           );
         })}
+      </div>
+        <span className="genesis-scrollhint" aria-hidden="true">
+          scroll &rarr;
+        </span>
       </div>
 
       <div className="genesis-readout" aria-live="polite" aria-atomic="true">

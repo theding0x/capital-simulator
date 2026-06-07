@@ -441,6 +441,7 @@
   .drawer-close { transition: none; }
   .spine-rail-btn { transition: none; }
   .gloss-reveal { transition: none; }
+  .gloss-icon { transition: none; }
   .ft-icon { transition: none; }
 }
 
@@ -473,6 +474,7 @@
   font-family: var(--font-mono);
   font-size: 0.8rem;
   flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
 }
 .gloss-btn[aria-expanded="true"] .gloss-icon { background: var(--gold); color: #1a1305; }
 .gloss-label {
