@@ -132,3 +132,27 @@ export function sparklinePath(values: number[], w: number, h: number): string {
     })
     .join(" ");
 }
+
+/** SVG polyline path ("M.. L..") over `values`, x from `x(i)`, y from `y(v)`.
+ *  Shared by the strata charts (TRPF, immiseration). Pure. */
+export function seriesLine(
+  values: number[],
+  x: (i: number) => number,
+  y: (v: number) => number
+): string {
+  return values
+    .map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`)
+    .join(" ");
+}
+
+/** `seriesLine` closed down to `baselineY` to form a filled area under the line. */
+export function seriesArea(
+  values: number[],
+  x: (i: number) => number,
+  y: (v: number) => number,
+  baselineY: number
+): string {
+  const n = values.length;
+  if (n === 0) return "";
+  return `${seriesLine(values, x, y)} L${x(n - 1).toFixed(1)} ${baselineY} L${x(0).toFixed(1)} ${baselineY} Z`;
+}

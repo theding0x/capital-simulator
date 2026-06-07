@@ -89,10 +89,12 @@ export class AtlasSurface {
   private _dpr = 1;
   private _w = 0;
   private _h = 0;
+  private _ro: ResizeObserver | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    this._resize(); // measure once up front; the observer keeps it current
   }
 
   setReduced(v: boolean) {
@@ -147,6 +149,12 @@ export class AtlasSurface {
 
   start() {
     if (this._raf) return;
+    // Measure on element resize only — keeps getBoundingClientRect (a forced
+    // synchronous layout reflow) out of the per-frame hot path.
+    if (typeof ResizeObserver !== "undefined" && !this._ro) {
+      this._ro = new ResizeObserver(() => this._resize());
+      this._ro.observe(this.canvas);
+    }
     this._last = performance.now();
     const loop = (now: number) => {
       const dt = Math.min(0.05, (now - this._last) / 1000);
@@ -159,6 +167,8 @@ export class AtlasSurface {
   stop() {
     cancelAnimationFrame(this._raf);
     this._raf = 0;
+    this._ro?.disconnect();
+    this._ro = null;
   }
   setRunning(v: boolean) {
     this.running = v;
@@ -179,7 +189,6 @@ export class AtlasSurface {
   }
 
   private _frame(dt: number) {
-    this._resize();
     const ctx = this.ctx,
       W = this._w,
       H = this._h,

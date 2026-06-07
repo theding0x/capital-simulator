@@ -116,6 +116,17 @@ export function findEntry(volume: 1 | 2 | 3, ch: number): InventoryEntry | undef
   return INVENTORY.find((e) => e.volume === volume && e.ch === ch);
 }
 
+/** Roman numeral for a volume number. */
+export function volRoman(volume: 1 | 2 | 3): string {
+  return volume === 1 ? "I" : volume === 2 ? "II" : "III";
+}
+
+/** Canonical chapter id `v{volume}-ch{NN}` — the registry / gloss-map / deep-link
+ *  key. Load-bearing: GLOSS_MAP and the chapter registry are keyed on this. */
+export function chapterId(entry: InventoryEntry): string {
+  return `v${entry.volume}-ch${String(entry.ch).padStart(2, "0")}`;
+}
+
 export const INVENTORY: InventoryEntry[] = [
   /* ─────────────── VOLUME I — Production ─────────────── */
   R(1, "I — Commodities & Money", 1, "The Commodity", ["whole"], "partial", ["T2","T3","T1"], "commodity",
