@@ -62,6 +62,8 @@ type Memory struct {
 	simpleRepro           *memorySimpleReproduction
 	extendedRepro         *memoryExtendedReproduction
 	engineTicks           []engine.ScheduledTick
+	abodeState            *simulation.AbodeState
+	generalLawPeriods     []simulation.GeneralLawPeriod
 	now                   func() time.Time
 }
 
@@ -1470,6 +1472,122 @@ func (m *Memory) TickSinkingFund(_ context.Context, id circulation.IndustrialCap
 	sf = sf.Tick()
 	m.sinkingFunds[id] = sf
 	return sf, nil
+}
+
+// FieldSnapshot implements IndustrialCapitalStore for the Atlas Observatory.
+func (m *Memory) FieldSnapshot(_ context.Context) ([]circulation.FieldCapital, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := []circulation.FieldCapital{}
+	for id, ic := range m.industrialCapitals {
+		fc := circulation.FieldCapital{
+			ID:             id,
+			TotalPence:     ic.TotalPence,
+			MoneyPence:     ic.TotalPence, // default when no distribution recorded
+			Status:         ic.Status,
+			TurnoverNumber: 1,
+		}
+		if sds := m.stageDistributions[id]; len(sds) > 0 {
+			latest := sds[len(sds)-1]
+			fc.MoneyPence = latest.MoneyPence
+			fc.ProductionPence = latest.ProductionPence
+			fc.CommodityPence = latest.CommodityPence
+		}
+		if sdis := m.supplyDemand[id]; len(sdis) > 0 {
+			latest := sdis[len(sdis)-1]
+			fc.CostPricePence = latest.DemandPence
+			fc.SurplusPence = latest.ExcessPence
+		}
+		out = append(out, fc)
+	}
+	return out, nil
+}
+
+// AccumulateCapital implements IndustrialCapitalStore (the spiral of accumulation).
+func (m *Memory) AccumulateCapital(_ context.Context, id circulation.IndustrialCapitalID, delta circulation.Pence) (circulation.IndustrialCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	ic, ok := m.industrialCapitals[id]
+	if !ok {
+		return circulation.IndustrialCapital{}, ErrNotFound
+	}
+	if delta <= 0 {
+		return ic, nil
+	}
+	oldTotal := ic.TotalPence
+	newTotal := oldTotal + delta
+
+	var money, prod, comm circulation.Pence
+	if sds := m.stageDistributions[id]; len(sds) > 0 && oldTotal > 0 {
+		last := sds[len(sds)-1]
+		money = last.MoneyPence * newTotal / oldTotal
+		prod = last.ProductionPence * newTotal / oldTotal
+		comm = newTotal - money - prod // absorb integer rounding so the sum == newTotal
+	} else {
+		money = newTotal // default: all value sits as money
+	}
+
+	ic.TotalPence = newTotal
+	ic.UpdatedAt = m.now().UTC()
+	m.industrialCapitals[id] = ic
+
+	m.stageDistributions[id] = append(m.stageDistributions[id], circulation.StageDistribution{
+		ID:                  circulation.NewStageDistributionID(),
+		IndustrialCapitalID: id,
+		At:                  m.now().UTC(),
+		MoneyPence:          money,
+		ProductionPence:     prod,
+		CommodityPence:      comm,
+	})
+	return ic, nil
+}
+
+// GetAbodeState implements AbodeStateStore. Defaults to the seeded initial abode
+// when none has been persisted yet (parity with the MySQL migration seed).
+func (m *Memory) GetAbodeState(_ context.Context) (simulation.AbodeState, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.abodeState == nil {
+		return simulation.NewAbodeState(), nil
+	}
+	return *m.abodeState, nil
+}
+
+// AdvanceAbode implements AbodeStateStore: replace the aggregate and append one
+// period to the immiseration series.
+func (m *Memory) AdvanceAbode(_ context.Context, next simulation.AbodeState, period simulation.GeneralLawPeriod) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	state := next
+	m.abodeState = &state
+	m.generalLawPeriods = append(m.generalLawPeriods, period)
+	return nil
+}
+
+// ListGeneralLawPeriods implements AbodeStateStore: the most recent periods in
+// ascending order. A non-positive limit returns the whole series.
+func (m *Memory) ListGeneralLawPeriods(_ context.Context, limit int) ([]simulation.GeneralLawPeriod, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]simulation.GeneralLawPeriod, len(m.generalLawPeriods))
+	copy(out, m.generalLawPeriods)
+	if limit > 0 && len(out) > limit {
+		out = out[len(out)-limit:]
+	}
+	return out, nil
+}
+
+// SetAbodeLevers implements AbodeStateStore (Slice 3 — the levers).
+func (m *Memory) SetAbodeLevers(_ context.Context, u simulation.LeverUpdate) (simulation.AbodeState, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cur := simulation.NewAbodeState()
+	if m.abodeState != nil {
+		cur = *m.abodeState
+	}
+	next := cur.ApplyLevers(u)
+	m.abodeState = &next
+	return next, nil
 }
 
 // Vol. II Ch. 10 — Theories of Fixed and Circulating Capital.

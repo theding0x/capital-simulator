@@ -2828,3 +2828,267 @@ func scanStageBlock(scan func(...any) error) (circulation.StageBlock, error) {
 	}
 	return b, nil
 }
+
+// FieldSnapshot implements IndustrialCapitalStore for the Atlas Observatory.
+func (m *MySQL) FieldSnapshot(ctx context.Context) ([]circulation.FieldCapital, error) {
+	const q = `
+SELECT ic.id, ic.total_pence, ic.status, ic.turnover_number,
+       sd.money_pence, sd.production_pence, sd.commodity_pence,
+       sdi.demand_pence, sdi.excess_pence
+FROM industrial_capitals ic
+LEFT JOIN (
+    SELECT s.industrial_capital_id, s.money_pence, s.production_pence, s.commodity_pence
+    FROM stage_distributions s
+    JOIN (
+        SELECT industrial_capital_id, MAX(at_time) AS mt
+        FROM stage_distributions GROUP BY industrial_capital_id
+    ) lt ON lt.industrial_capital_id = s.industrial_capital_id AND lt.mt = s.at_time
+) sd ON sd.industrial_capital_id = ic.id
+LEFT JOIN (
+    SELECT d.industrial_capital_id, d.demand_pence, d.excess_pence
+    FROM supply_demand_imbalances d
+    JOIN (
+        SELECT industrial_capital_id, MAX(period) AS mp
+        FROM supply_demand_imbalances GROUP BY industrial_capital_id
+    ) lp ON lp.industrial_capital_id = d.industrial_capital_id AND lp.mp = d.period
+) sdi ON sdi.industrial_capital_id = ic.id
+ORDER BY ic.id`
+	rows, err := m.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []circulation.FieldCapital{}
+	for rows.Next() {
+		var (
+			id, status        string
+			total, turnover   int64
+			money, prod, comm sql.NullInt64
+			demand, excess    sql.NullInt64
+		)
+		if err := rows.Scan(&id, &total, &status, &turnover, &money, &prod, &comm, &demand, &excess); err != nil {
+			return nil, err
+		}
+		fc := circulation.FieldCapital{
+			ID:             circulation.IndustrialCapitalID(id),
+			TotalPence:     circulation.Pence(total),
+			Status:         circulation.IndustrialCapitalStatus(status),
+			MoneyPence:     circulation.Pence(total), // default when no distribution
+			TurnoverNumber: turnover,
+		}
+		if money.Valid {
+			fc.MoneyPence = circulation.Pence(money.Int64)
+			fc.ProductionPence = circulation.Pence(prod.Int64)
+			fc.CommodityPence = circulation.Pence(comm.Int64)
+		}
+		if demand.Valid {
+			fc.CostPricePence = circulation.Pence(demand.Int64)
+			fc.SurplusPence = circulation.Pence(excess.Int64)
+		}
+		out = append(out, fc)
+	}
+	return out, rows.Err()
+}
+
+// AccumulateCapital implements IndustrialCapitalStore (the spiral of accumulation).
+func (m *MySQL) AccumulateCapital(ctx context.Context, id circulation.IndustrialCapitalID, delta circulation.Pence) (circulation.IndustrialCapital, error) {
+	if delta <= 0 {
+		return m.GetIndustrialCapital(ctx, id)
+	}
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var oldTotal int64
+	err = tx.QueryRowContext(ctx, `SELECT total_pence FROM industrial_capitals WHERE id = ? FOR UPDATE`, string(id)).Scan(&oldTotal)
+	if err == sql.ErrNoRows {
+		return circulation.IndustrialCapital{}, ErrNotFound
+	}
+	if err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	newTotal := oldTotal + int64(delta)
+
+	var money, prod, comm int64
+	var lm, lp, lc sql.NullInt64
+	err = tx.QueryRowContext(ctx,
+		`SELECT money_pence, production_pence, commodity_pence FROM stage_distributions
+		 WHERE industrial_capital_id = ? ORDER BY at_time DESC LIMIT 1`, string(id)).Scan(&lm, &lp, &lc)
+	if err != nil && err != sql.ErrNoRows {
+		return circulation.IndustrialCapital{}, err
+	}
+	if lm.Valid && oldTotal > 0 {
+		money = lm.Int64 * newTotal / oldTotal
+		prod = lp.Int64 * newTotal / oldTotal
+		comm = newTotal - money - prod
+	} else {
+		money = newTotal
+	}
+
+	now := time.Now().UTC()
+	if _, err = tx.ExecContext(ctx,
+		`UPDATE industrial_capitals SET total_pence = ?, updated_at = ? WHERE id = ?`,
+		newTotal, now, string(id)); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	if _, err = tx.ExecContext(ctx,
+		`INSERT INTO stage_distributions (id, industrial_capital_id, at_time, money_pence, production_pence, commodity_pence)
+		 VALUES (?, ?, ?, ?, ?, ?)`,
+		string(circulation.NewStageDistributionID()), string(id), now, money, prod, comm); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	if err = tx.Commit(); err != nil {
+		return circulation.IndustrialCapital{}, err
+	}
+	return m.GetIndustrialCapital(ctx, id)
+}
+
+// abodeStateID is the fixed primary key of the singleton abode_state row,
+// seeded by migration 00066.
+const abodeStateID = "5eed000000000000abode1"
+
+// GetAbodeState implements AbodeStateStore. The row is seeded by the migration,
+// so a missing row falls back to the in-code default rather than erroring.
+func (m *MySQL) GetAbodeState(ctx context.Context) (simulation.AbodeState, error) {
+	const q = `
+SELECT period, constant_pence, variable_pence, base_wage_pence, worker_supply,
+       surplus_rate_base_bp, accumulation_rate_bp, marginal_composition_bp,
+       displacement_rate_bp, productivity_growth_bp, population_growth_bp
+FROM abode_state WHERE id = ?`
+	var a simulation.AbodeState
+	var c, v int64
+	err := m.db.QueryRowContext(ctx, q, abodeStateID).Scan(
+		&a.Period, &c, &v, &a.BaseWagePence, &a.WorkerSupply,
+		&a.SurplusRateBaseBP, &a.AccumulationRateBP, &a.MarginalCompositionBP,
+		&a.DisplacementRateBP, &a.ProductivityGrowthBP, &a.PopulationGrowthBP)
+	if err == sql.ErrNoRows {
+		return simulation.NewAbodeState(), nil
+	}
+	if err != nil {
+		return simulation.AbodeState{}, err
+	}
+	a.ConstantPence = simulation.Pence(c)
+	a.VariablePence = simulation.Pence(v)
+	return a, nil
+}
+
+// AdvanceAbode implements AbodeStateStore: update the singleton aggregate and
+// append one immiseration-series row in a single transaction.
+func (m *MySQL) AdvanceAbode(ctx context.Context, next simulation.AbodeState, period simulation.GeneralLawPeriod) error {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err = tx.ExecContext(ctx, `
+UPDATE abode_state SET period = ?, constant_pence = ?, variable_pence = ?,
+       base_wage_pence = ?, worker_supply = ?, surplus_rate_base_bp = ?,
+       accumulation_rate_bp = ?, marginal_composition_bp = ?,
+       displacement_rate_bp = ?, productivity_growth_bp = ?, population_growth_bp = ?
+WHERE id = ?`,
+		next.Period, int64(next.ConstantPence), int64(next.VariablePence),
+		next.BaseWagePence, next.WorkerSupply, next.SurplusRateBaseBP,
+		next.AccumulationRateBP, next.MarginalCompositionBP, next.DisplacementRateBP,
+		next.ProductivityGrowthBP, next.PopulationGrowthBP, abodeStateID); err != nil {
+		return err
+	}
+
+	if _, err = tx.ExecContext(ctx, `
+INSERT INTO general_law_periods
+    (id, period, wage_pence, rate_of_exploitation_bp, reserve_army_count,
+     organic_composition_bp, employed_count, created_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		string(circulation.NewStageDistributionID()), period.Period, period.WagePence,
+		period.RateOfExploitationBP, period.ReserveArmyCount, period.OrganicCompositionBP,
+		period.EmployedCount, time.Now().UTC()); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// ListGeneralLawPeriods implements AbodeStateStore: the most recent periods in
+// ascending period order. A non-positive limit returns the whole series.
+func (m *MySQL) ListGeneralLawPeriods(ctx context.Context, limit int) ([]simulation.GeneralLawPeriod, error) {
+	q := `
+SELECT period, wage_pence, rate_of_exploitation_bp, reserve_army_count,
+       organic_composition_bp, employed_count
+FROM general_law_periods ORDER BY period DESC`
+	if limit > 0 {
+		q += " LIMIT ?"
+	}
+	var rows *sql.Rows
+	var err error
+	if limit > 0 {
+		rows, err = m.db.QueryContext(ctx, q, limit)
+	} else {
+		rows, err = m.db.QueryContext(ctx, q)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var desc []simulation.GeneralLawPeriod
+	for rows.Next() {
+		var p simulation.GeneralLawPeriod
+		if err := rows.Scan(&p.Period, &p.WagePence, &p.RateOfExploitationBP,
+			&p.ReserveArmyCount, &p.OrganicCompositionBP, &p.EmployedCount); err != nil {
+			return nil, err
+		}
+		desc = append(desc, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	// Reverse to ascending (oldest first) for the sparkline.
+	out := make([]simulation.GeneralLawPeriod, len(desc))
+	for i, p := range desc {
+		out[len(desc)-1-i] = p
+	}
+	return out, nil
+}
+
+// SetAbodeLevers implements AbodeStateStore (Slice 3 — the levers). It reads the
+// singleton row FOR UPDATE, applies the lever clamp, writes back only the three
+// lever columns, and returns the updated state.
+func (m *MySQL) SetAbodeLevers(ctx context.Context, u simulation.LeverUpdate) (simulation.AbodeState, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return simulation.AbodeState{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var a simulation.AbodeState
+	var c, v int64
+	err = tx.QueryRowContext(ctx, `
+SELECT period, constant_pence, variable_pence, base_wage_pence, worker_supply,
+       surplus_rate_base_bp, accumulation_rate_bp, marginal_composition_bp,
+       displacement_rate_bp, productivity_growth_bp, population_growth_bp
+FROM abode_state WHERE id = ? FOR UPDATE`, abodeStateID).Scan(
+		&a.Period, &c, &v, &a.BaseWagePence, &a.WorkerSupply,
+		&a.SurplusRateBaseBP, &a.AccumulationRateBP, &a.MarginalCompositionBP,
+		&a.DisplacementRateBP, &a.ProductivityGrowthBP, &a.PopulationGrowthBP)
+	if err == sql.ErrNoRows {
+		a = simulation.NewAbodeState()
+	} else if err != nil {
+		return simulation.AbodeState{}, err
+	} else {
+		a.ConstantPence = simulation.Pence(c)
+		a.VariablePence = simulation.Pence(v)
+	}
+
+	next := a.ApplyLevers(u)
+	if _, err = tx.ExecContext(ctx, `
+UPDATE abode_state SET surplus_rate_base_bp = ?, base_wage_pence = ?, accumulation_rate_bp = ?
+WHERE id = ?`,
+		next.SurplusRateBaseBP, next.BaseWagePence, next.AccumulationRateBP, abodeStateID); err != nil {
+		return simulation.AbodeState{}, err
+	}
+	if err = tx.Commit(); err != nil {
+		return simulation.AbodeState{}, err
+	}
+	return next, nil
+}

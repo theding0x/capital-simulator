@@ -224,7 +224,34 @@ type IndustrialCapitalStore interface {
 	AggregateSupplyDemand(ctx context.Context, period string) (circulation.AggregateSupplyDemandImbalance, error)
 	SetSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID, sf circulation.SinkingFund) (circulation.SinkingFund, error)
 	TickSinkingFund(ctx context.Context, id circulation.IndustrialCapitalID) (circulation.SinkingFund, error)
+	// FieldSnapshot returns every industrial capital projected to a FieldCapital
+	// for the Atlas Observatory: latest stage distribution + latest cost-price
+	// and surplus. Capitals with no recorded distribution default to all-money.
+	FieldSnapshot(ctx context.Context) ([]circulation.FieldCapital, error)
+	// AccumulateCapital capitalises deltaPence into the capital: total_pence grows
+	// and a new StageDistribution is appended, rescaled to the new total while
+	// preserving the latest M/P/C proportions (the spiral of accumulation). A
+	// non-positive delta is a no-op. ErrNotFound if the capital does not exist.
+	AccumulateCapital(ctx context.Context, id circulation.IndustrialCapitalID, deltaPence circulation.Pence) (circulation.IndustrialCapital, error)
 }
+
+// AbodeStateStore is the persistence contract for the Atlas hidden abode
+// (Slice 2). GetAbodeState returns the single evolving aggregate, defaulting to
+// simulation.NewAbodeState() when none is persisted. AdvanceAbode atomically
+// writes the next state and appends one GeneralLawPeriod. ListGeneralLawPeriods
+// returns the most recent periods in ascending period order (oldest first), for
+// the immiseration sparkline; a non-positive limit returns every row.
+type AbodeStateStore interface {
+	GetAbodeState(ctx context.Context) (simulation.AbodeState, error)
+	AdvanceAbode(ctx context.Context, next simulation.AbodeState, period simulation.GeneralLawPeriod) error
+	ListGeneralLawPeriods(ctx context.Context, limit int) ([]simulation.GeneralLawPeriod, error)
+	// SetAbodeLevers applies a partial lever update (Slice 3) to the live abode
+	// and persists it, returning the updated state. Unset fields are unchanged.
+	SetAbodeLevers(ctx context.Context, u simulation.LeverUpdate) (simulation.AbodeState, error)
+}
+
+var _ AbodeStateStore = (*Memory)(nil)
+var _ AbodeStateStore = (*MySQL)(nil)
 
 // TurnoverStore is the persistence contract for Vol. II Ch. 7 —
 // The Turnover Time and the Number of Turnovers.

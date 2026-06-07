@@ -1271,3 +1271,18 @@ All price/cost magnitudes in this chapter are integer **centi-units** (×100). A
 - **Store.** Interface gains three methods (`CreateHistoricalMerchantCapital`, `GetHistoricalMerchantCapital`, `ListHistoricalMerchantCapitals`). `memory.go` adds `historicalMerchantCapitals map`. `mysql.go` adds three methods + `scanHistoricalMerchantCapital` (all-scalar columns; `stage` TINYINT → `DevelopmentStage`, `wage_labour` TINYINT(1) → bool). Migrations `00039_v3_ch20_historical_merchant.sql` (table `historical_merchant_capitals`) and `00040_v3_ch20_seed.sql` (four seed records `5eed000000000000002001`–`5eed000000000000002004`: Venice carrying-trade & Genoa republic at StagePreCapitalist with rising SubordinationIndex 500/800, Dutch carrying-trade at StageTransition 3000, industrial subordination at StageSubordinated 7000 — monotonic by stage).
 - **HTTP endpoints (3).** `POST /v1/merchant/historical-forms` (400 bad JSON; 422 ErrInvalidDevelopmentStage/ErrSubordinationOutOfRange/ErrWageLabourInPreCapitalist; 201+Location), `GET /v1/merchant/historical-forms` (list, `items` never null), `GET /v1/merchant/historical-forms/{id}` (404 missing). Proxied through api-gateway (`/v1/merchant/historical-forms`, `/v1/merchant/historical-forms/{rest...}`).
 - **React panel.** `web/src/chapters/vol3/Ch20HistoricalMerchantCapital.tsx` (registered `v3-ch20`, status flipped pending→done): historical timeline of the named trading systems ordered by development stage with their rising subordination index, illustrating the inverse-development law; create-form (name, stage, profit source, wage-labour, subordination index). `web/src/types.ts` adds `DevelopmentStage`, `HistoricalMerchantCapitalResponse`, `HistoricalTradingSystemResponse`; `api.ts` adds `createHistoricalMerchantCapital`, `listHistoricalMerchantCapitals`, `getHistoricalMerchantCapital`. Wired into `ChapterShell.tsx`.
+
+### Atlas Observatory — ephemeral per-session runs
+
+The Atlas Observatory run (the orrery field, the aggregate vitals, the hidden
+abode, and the immiseration series) is **not persisted**. At boot the
+simulation-engine reads the seed once (`abode_state` + the seeded
+`industrial_capitals`) into an immutable template (`internal/observatory`). Each
+browser session sends an ephemeral `X-Atlas-Session` header; the server keeps a
+per-session in-memory `Run`, deep-copied from the template, advanced on poll via
+`GET /v1/observatory/snapshot?advance=N` (`N = running ? speed : 0`). Levers
+mutate the session's run only. A page reload mints a new session id ⇒ a clean run
+from seed. UI preferences (currency, speed, reduced-motion) persist in the
+browser's `localStorage`. The `general_law` and `accumulation` tickers were
+removed from the scheduler, so the Atlas run performs **zero MySQL writes** at
+runtime; idle sessions are evicted by TTL.

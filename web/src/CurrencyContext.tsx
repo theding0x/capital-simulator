@@ -8,15 +8,35 @@ interface CurrencyContextShape {
   toggle: () => void;
 }
 
+const STORE_KEY = "atlas.currency.modern";
+
+function loadModern(): boolean {
+  try {
+    return localStorage.getItem(STORE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 const CurrencyContext = createContext<CurrencyContextShape>({
   modern: false,
   toggle: () => {},
 });
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [modern, setModern] = useState(false);
+  const [modern, setModern] = useState(loadModern);
+  const toggle = () =>
+    setModern((m) => {
+      const next = !m;
+      try {
+        localStorage.setItem(STORE_KEY, String(next));
+      } catch {
+        /* storage unavailable — non-fatal */
+      }
+      return next;
+    });
   return (
-    <CurrencyContext.Provider value={{ modern, toggle: () => setModern((m) => !m) }}>
+    <CurrencyContext.Provider value={{ modern, toggle }}>
       {children}
     </CurrencyContext.Provider>
   );

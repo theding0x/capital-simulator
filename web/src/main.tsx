@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import Root from "./Root";
 import "./index.css";
 import "./chapters/ch-panel.css";
 
@@ -11,6 +11,6 @@ if (!rootEl) {
 
 createRoot(rootEl).render(
   <StrictMode>
-    <App />
+    <Root />
   </StrictMode>
 );

@@ -197,14 +197,18 @@ import type {
   Perishability,
   MarketSeparation,
   ActiveFractionResponse,
+  ObservatorySnapshot,
+  EngineStatus,
+  EngineTick,
 } from "./types";
+import { atlasSessionHeader } from "./atlas/session";
 
 const BASE = "/api";
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
     ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
   });
   if (res.status === 204) {
     return undefined as T;
@@ -224,6 +228,30 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // --- Atlas Observatory (simulation-engine) ---
+  getObservatorySnapshot: (advance = 1) =>
+    http<ObservatorySnapshot>(`/v1/observatory/snapshot?advance=${advance}`, {
+      headers: atlasSessionHeader,
+    }),
+
+  setObservatoryLevers: (u: import("./types").LeverUpdate) =>
+    http<import("./types").LeverState>("/v1/observatory/levers", {
+      method: "POST",
+      headers: atlasSessionHeader,
+      body: JSON.stringify(u),
+    }),
+
+  getEngineStatus: () => http<EngineStatus>("/v1/engine/status"),
+
+  startEngine: () =>
+    http<{ status: EngineStatus }>("/v1/engine/start", { method: "POST" }),
+
+  stopEngine: () =>
+    http<{ status: EngineStatus }>("/v1/engine/stop", { method: "POST" }),
+
+  listEngineTicks: (limit = 60) =>
+    http<EngineTick[]>(`/v1/engine/ticks?limit=${limit}`),
+
   listCommodities: () =>
     http<{ items: Commodity[] }>("/v1/commodities").then((r) => r.items),
 

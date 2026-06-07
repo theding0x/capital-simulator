@@ -4851,3 +4851,159 @@ export interface ClassIncomeSource { id: string; class_id: string; revenue_form:
 export interface ClassTendency { id: string; class_id: string; description: string; direction: string; created_at: string; }
 export interface ClassAmbiguity { id: string; intermediate_group: string; income_source: string; why_not_a_class: string; created_at: string; }
 export interface SocialClassDetail { class: SocialClass; income_sources: ClassIncomeSource[]; tendencies: ClassTendency[]; }
+
+// --- Atlas Observatory (simulation-engine: GET /v1/observatory/snapshot) ---
+
+export interface FieldCapital {
+  id: string;
+  total_pence: number;
+  money_pence: number;
+  production_pence: number;
+  commodity_pence: number;
+  cost_price_pence: number;
+  surplus_pence: number;
+  status: string;
+  turnover_number: number;
+}
+
+export interface AggregateVitals {
+  total_social_capital_pence: number;
+  cost_price_pence: number;
+  surplus_pence: number;
+  avg_rate_of_profit_bp: number;
+}
+
+export interface GeneralLawTrendPoint {
+  period: number;
+  wage_pence: number;
+  rate_of_exploitation_bp: number;
+  reserve_army_count: number;
+  organic_composition_bp: number;
+}
+
+export interface AbodeReadout {
+  total_variable_pence: number;
+  total_surplus_pence: number;
+  rate_of_exploitation_bp: number;
+  necessary_labour_minutes: number;
+  surplus_labour_minutes: number;
+  organic_composition_bp: number;
+  reserve_army_count: number;
+  reserve_army_pressure_bp: number;
+  employed_count: number;
+  wage_pence: number;
+  total_population: number;
+  surplus_rate_base_bp: number;
+  base_wage_pence: number;
+  accumulation_rate_bp: number;
+  law_series: GeneralLawTrendPoint[];
+}
+
+export interface LeverUpdate {
+  surplus_rate_base_bp?: number;
+  base_wage_pence?: number;
+  accumulation_rate_bp?: number;
+}
+
+export interface LeverState {
+  surplus_rate_base_bp: number;
+  base_wage_pence: number;
+  accumulation_rate_bp: number;
+}
+
+// --- Atlas Observatory — deeper strata (Vol II + Vol III) ---
+
+export interface DeptCVS {
+  c: number;
+  v: number;
+  s: number;
+}
+
+export interface CirculationSnapshot {
+  departments: { I: DeptCVS; II: DeptCVS };
+  keystone_exchange_pence: number;
+  dept_ii_constant_pence: number;
+  accumulation_rate_bp: number;
+  extended: boolean;
+}
+
+export interface DistSeriesPoint {
+  period: number;
+  pprime_bp: number;
+  profit_mass_pence: number;
+  composition_bp: number;
+  crisis: boolean;
+}
+
+export interface TrinityRevenues {
+  wages_pence: number;
+  profit_pence: number;
+  rent_pence: number;
+}
+
+// Vol. III Ch. 37–47 — the ground-rent terrain. One soil grade is one band; the
+// worst soil regulates the price (the waterline) and pays only absolute rent.
+// (Named RentSoilGrade to avoid clashing with the finance-service SoilGrade
+// union 1|2|3|4 used by the Ch.39 Differential-Rent-I tables.)
+export interface RentSoilGrade {
+  id: string;
+  name: string;
+  fertility_bp: number;
+  yield_units: number;
+  individual_price_pence: number;
+  differential_rent_pence: number;
+  absolute_rent_pence: number;
+  total_rent_pence: number;
+  land_price_pence: number;
+  regulating: boolean;
+}
+
+export interface RentSnapshot {
+  grades: RentSoilGrade[];
+  waterline_pence: number;
+  capital_per_grade_pence: number;
+  differential_pence: number;
+  absolute_pence: number;
+  total_rent_pence: number;
+  land_price_pence: number;
+  interest_rate_bp: number;
+}
+
+export interface DistributionSnapshot {
+  general_rate_bp: number;
+  interest_rate_bp: number;
+  loanable_pence: number;
+  fictitious_pence: number;
+  dist_series: DistSeriesPoint[];
+  rent: RentSnapshot;
+  trinity: TrinityRevenues;
+}
+
+export interface ObservatorySnapshot {
+  tick: number;
+  running: boolean;
+  interval_ms: number;
+  capitals: FieldCapital[];
+  aggregate: AggregateVitals;
+  abode: AbodeReadout;
+  circulation: CirculationSnapshot;
+  distribution: DistributionSnapshot;
+}
+
+export interface EngineStatus {
+  running: boolean;
+  tick: number;
+  last_tick_at?: string;
+  interval_ms: number;
+  tickers: string[];
+}
+
+export interface EngineTick {
+  id: string;
+  sequence: number;
+  occurred_at: string;
+  duration_ms: number;
+  tickers_run: number;
+  entities_advanced: number;
+  error_count: number;
+}

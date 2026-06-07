@@ -44,6 +44,7 @@ export default function App() {
       <div className="app-shell">
         <header className="topbar">
           <span className="topbar-logo">Capital Simulator</span>
+          <a href="#/" style={{ color: "var(--ink-muted)", textDecoration: "none", fontSize: 13, marginLeft: 12 }}>← Atlas</a>
           <span className="topbar-subtitle">— the self-expansion of value —</span>
           <CurrencyToggle />
         </header>

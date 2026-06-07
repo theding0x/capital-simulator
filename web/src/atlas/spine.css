@@ -1,0 +1,653 @@
+/* Atlas — SpineMatrix, ChapterDrawer, and overlay styles.
+   Colours come exclusively from :root tokens in index.css / atlas.css.
+   No new hex values, no shadows, no new fonts. */
+
+/* ─── Spine section wrapper ──────────────────────────────────────────────── */
+.spine-section {
+  padding: 18px 0 0;
+}
+
+/* ─── Spine frame (border + scroll) ─────────────────────────────────────── */
+.spine-frame {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 8px);
+  background: var(--surface);
+  padding: 18px 18px 14px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+/* ─── Column axis ────────────────────────────────────────────────────────── */
+.spine-axis-x {
+  display: flex;
+  gap: 5px;
+  padding-left: 90px;
+  margin-bottom: 7px;
+}
+.spine-ax {
+  flex: 1;
+  min-width: 58px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.spine-ax.cross {
+  color: var(--ink-muted);
+}
+
+/* ─── Volume row ─────────────────────────────────────────────────────────── */
+.spine-row {
+  display: flex;
+  gap: 5px;
+  align-items: stretch;
+  margin-bottom: 5px;
+}
+.spine-rowlbl {
+  width: 84px;
+  flex: 0 0 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 5px;
+}
+.spine-rowlbl .vn {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--gold-bright);
+  line-height: 1;
+}
+.spine-rowlbl .vd {
+  font-family: var(--font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-top: 3px;
+}
+
+/* ─── Individual cell ────────────────────────────────────────────────────── */
+.spine-cell {
+  flex: 1;
+  min-width: 58px;
+  min-height: 54px;
+  border: 1px solid var(--border-subtle, var(--border));
+  border-radius: var(--radius-sm, 4px);
+  background: var(--bg);
+  cursor: pointer;
+  position: relative;
+  padding: 6px 5px 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background 0.14s, border-color 0.14s;
+}
+.spine-cell:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.spine-cell:hover:not(.empty) {
+  background: var(--surface-raised);
+  border-color: var(--ink-dim);
+}
+.spine-cell.empty {
+  cursor: default;
+  opacity: 0.35;
+  pointer-events: none;
+}
+.spine-cell.sel {
+  border-color: var(--gold);
+  background: var(--gold-bg);
+}
+.spine-cell-n {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+.spine-cell.sel .spine-cell-n {
+  color: var(--gold-bright);
+}
+
+/* tier dots */
+.spine-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: auto;
+}
+.spine-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.dot-T1 { background: var(--gold-bright); }
+.dot-T2 { background: var(--lead-hover, #5a6a9e); }
+.dot-T3 { background: var(--ink-muted); }
+.dot-T4 { background: var(--red-hover, #c0392b); }
+
+/* ─── Readout panel ──────────────────────────────────────────────────────── */
+.spine-readout {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 6px);
+  background: var(--surface-raised);
+  padding: 16px 18px;
+  min-height: 90px;
+}
+.ro-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.ro-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 5px 0 3px;
+}
+.ro-empty {
+  color: var(--ink-dim);
+  font-style: italic;
+  font-size: 0.88rem;
+  margin-top: 8px;
+}
+.ro-chs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 9px;
+}
+.ro-ch {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+.ro-ch .cn {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--ink-dim);
+  min-width: 52px;
+  flex-shrink: 0;
+}
+.ro-ch .ct {
+  color: var(--ink);
+  flex: 1;
+  min-width: 0;
+}
+.ch-tiers {
+  display: inline-flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+/* ─── Tier pills ─────────────────────────────────────────────────────────── */
+.tier-pill {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+.tier-pill.T1 { color: var(--gold-bright); border-color: var(--gold-border); background: var(--gold-bg); }
+.tier-pill.T2 { color: var(--lead-hover, #5a6a9e); border-color: rgba(74,90,138,0.35); background: var(--lead-dim, rgba(74,90,138,0.08)); }
+.tier-pill.T3 { color: var(--ink); border-color: var(--border); background: var(--surface-raised); }
+.tier-pill.T4 { color: var(--red-hover, #c0392b); border-color: rgba(192,57,43,0.35); background: var(--red-dim, rgba(192,57,43,0.08)); }
+
+/* ─── Movement hints ─────────────────────────────────────────────────────── */
+.spine-moves {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.spine-move {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 280px;
+}
+.spine-move .ico {
+  font-family: var(--font-mono);
+  color: var(--gold-bright);
+  font-size: 1.05rem;
+  line-height: 1;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+.spine-move .mt {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.spine-move .md {
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+  line-height: 1.5;
+  margin-top: 3px;
+}
+
+/* ─── Overlay backdrop ───────────────────────────────────────────────────── */
+/* grain = 60, topbar = 40, rail = 35, console = 40; overlay below grain */
+.spine-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(7, 8, 10, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .spine-overlay {
+    animation: overlay-in 0.18s ease-out;
+  }
+}
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Chapter drawer ─────────────────────────────────────────────────────── */
+/* above overlay (50) but below grain (60) */
+.chapter-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(560px, 96vw);
+  z-index: 55;
+  background: var(--surface, #15171d);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chapter-drawer {
+    animation: drawer-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.drawer-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--rule, var(--border));
+}
+.drawer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.drawer-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.drawer-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0;
+}
+.drawer-part {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  margin-top: 2px;
+}
+.drawer-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.12s, color 0.12s;
+}
+.drawer-close:hover {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+.drawer-close:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 0;
+}
+
+/* fallback title when no panel is wired */
+.drawer-fallback {
+  padding: 28px 20px;
+}
+.drawer-fallback-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.drawer-fallback-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.drawer-fallback-part {
+  font-size: 0.86rem;
+  color: var(--ink-muted);
+  margin: 0 0 18px;
+}
+.drawer-fallback-link {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--gold);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+.drawer-fallback-link:hover {
+  color: var(--gold-bright);
+}
+
+/* The chapter panel content lives in .chapter-main; add drawer-specific overrides */
+.chapter-drawer .chapter-main {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  height: auto;
+  overflow: visible;
+}
+.chapter-drawer .chapter-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--rule, var(--border));
+}
+.chapter-drawer .chapter-body {
+  padding: 16px 20px 32px;
+}
+
+/* ─── Rail index button (SpineMatrix trigger) ────────────────────────────── */
+.spine-rail-btn {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 8px 10px;
+  text-align: left;
+  margin-top: 12px;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.spine-rail-btn:hover,
+.spine-rail-btn.active {
+  background: var(--gold-bg);
+  border-color: var(--gold-border);
+  color: var(--gold-bright);
+}
+.spine-rail-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ─── Reduced-motion overrides ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .spine-cell { transition: none; }
+  .chapter-drawer { animation: none; }
+  .spine-overlay { animation: none; }
+  .drawer-close { transition: none; }
+  .spine-rail-btn { transition: none; }
+  .gloss-reveal { transition: none; }
+  .gloss-icon { transition: none; }
+  .ft-icon { transition: none; }
+}
+
+/* ─── R2-2 · the T3 fetishism gloss thread ───────────────────────────────── */
+
+/* Standalone gloss marker — a gold ❡ that reveals a Marx quote + citation. */
+.ro-ch-wrap { display: flex; flex-direction: column; }
+.gloss { margin: 6px 0 2px; padding-left: 2px; }
+.gloss-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.gloss-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.gloss-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-border);
+  background: var(--gold-bg);
+  color: var(--gold-bright);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.gloss-btn[aria-expanded="true"] .gloss-icon { background: var(--gold); color: #1a1305; }
+.gloss-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.gloss-btn:hover .gloss-label,
+.gloss-btn[aria-expanded="true"] .gloss-label { color: var(--gold-bright); }
+.gloss-reveal {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.gloss-reveal.open { max-height: 240px; }
+.gloss-form {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  margin: 10px 0 4px;
+}
+.gloss-quote {
+  margin: 8px 0 12px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  max-width: 60ch;
+}
+.gloss-cit {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+/* An editorial representation note — plainly set, NOT a Marx quotation. */
+.gloss-note {
+  margin: 10px 0 12px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--ink-muted);
+  max-width: 64ch;
+}
+
+/* The fetishism thread — the 4-node connective strip. */
+/* Re-enable pointer events: the surface caption sets pointer-events:none so the
+ * orrery canvas stays draggable, but the gloss marker must be clickable. */
+.surface-gloss { margin-top: 14px; pointer-events: auto; }
+.fetish-thread {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--rule, var(--border));
+}
+.ft-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 18px;
+}
+.ft-nodes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  position: relative;
+}
+.ft-nodes::before {
+  content: "";
+  position: absolute;
+  top: 11px;
+  left: 12.5%;
+  right: 12.5%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-border), var(--gold), var(--gold-border));
+  pointer-events: none;
+}
+.ft-node {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 6px;
+  position: relative;
+}
+.ft-node:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.ft-icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-border);
+  background: var(--surface);
+  color: var(--gold-bright);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  z-index: 1;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.ft-node.active .ft-icon { background: var(--gold); color: #1a1305; }
+.ft-ref {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-top: 9px;
+}
+.ft-title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  line-height: 1.25;
+}
+.ft-node.active .ft-title { color: var(--gold-bright); }
+.ft-gloss-area {
+  margin-top: 18px;
+  border-top: 1px solid var(--rule, var(--border));
+  padding-top: 16px;
+  min-height: 64px;
+}
+.ft-form {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+}
+.ft-quote {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  max-width: 62ch;
+}
+.ft-cit {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.ft-cap {
+  margin: 16px 0 0;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: var(--ink-dim);
+  font-style: italic;
+  max-width: 70ch;
+}

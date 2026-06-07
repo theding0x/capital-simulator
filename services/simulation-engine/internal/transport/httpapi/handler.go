@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/engine"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/observatory"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
@@ -39,6 +40,7 @@ type Handler struct {
 	CommodityCircuits     store.CommodityCircuitStore
 	MoneyCircuits         store.MoneyCircuitStore
 	IndustrialCapitals    store.IndustrialCapitalStore
+	AbodeStates           store.AbodeStateStore
 	Turnovers             store.TurnoverStore
 	Composition           store.CompositionStore
 	AggregateTurnovers    store.AggregateTurnoverStore
@@ -52,6 +54,7 @@ type Handler struct {
 	SimpleReproduction    store.SimpleReproductionSchemeStore
 	ExtendedReproduction  store.ExtendedReproductionStore
 	Scheduler             *engine.Scheduler
+	Observatory           *observatory.Manager
 	EngineTicks           store.EngineTickStore
 }
 
@@ -81,6 +84,7 @@ type Deps struct {
 	CommodityCircuits     store.CommodityCircuitStore
 	MoneyCircuits         store.MoneyCircuitStore
 	IndustrialCapitals    store.IndustrialCapitalStore
+	AbodeStates           store.AbodeStateStore
 	Turnovers             store.TurnoverStore
 	Composition           store.CompositionStore
 	AggregateTurnovers    store.AggregateTurnoverStore
@@ -94,6 +98,7 @@ type Deps struct {
 	SimpleReproduction    store.SimpleReproductionSchemeStore
 	ExtendedReproduction  store.ExtendedReproductionStore
 	Scheduler             *engine.Scheduler
+	Observatory           *observatory.Manager
 	EngineTicks           store.EngineTickStore
 }
 
@@ -123,6 +128,7 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		CommodityCircuits:     d.CommodityCircuits,
 		MoneyCircuits:         d.MoneyCircuits,
 		IndustrialCapitals:    d.IndustrialCapitals,
+		AbodeStates:           d.AbodeStates,
 		Turnovers:             d.Turnovers,
 		Composition:           d.Composition,
 		AggregateTurnovers:    d.AggregateTurnovers,
@@ -136,6 +142,7 @@ func New(logger *slog.Logger, d Deps) *Handler {
 		SimpleReproduction:    d.SimpleReproduction,
 		ExtendedReproduction:  d.ExtendedReproduction,
 		Scheduler:             d.Scheduler,
+		Observatory:           d.Observatory,
 		EngineTicks:           d.EngineTicks,
 	}
 }
