@@ -9,6 +9,8 @@ import {
   type InventoryNode,
 } from "./inventory";
 import { ChapterDrawer } from "./ChapterDrawer";
+import { Gloss } from "./Gloss";
+import { GLOSS_MAP, type GlossContent } from "./glossContent";
 
 interface SpineMatrixProps {
   /** Optionally pre-select a chapter on mount (deep-link). */
@@ -33,6 +35,19 @@ function volRoman(v: 1 | 2 | 3): string {
 /** Returns the chapter id rule: v${volume}-ch${padded}. */
 function chapterId(entry: InventoryEntry): string {
   return `v${entry.volume}-ch${String(entry.ch).padStart(2, "0")}`;
+}
+
+/** Gloss content for a T3 chapter: a canonical Marx quote for the four
+ *  fetishism nodes (and other curated chapters), otherwise the chapter's own
+ *  qualitative note from the inventory. */
+function glossFor(entry: InventoryEntry): GlossContent {
+  const canon = GLOSS_MAP[chapterId(entry)];
+  if (canon) return canon;
+  return {
+    label: "the gloss",
+    quote: entry.note,
+    citation: `Capital ${volRoman(entry.volume)} · Ch. ${entry.ch}`,
+  };
 }
 
 export function SpineMatrix({ initialChapterId }: SpineMatrixProps) {
@@ -234,27 +249,40 @@ export function SpineMatrix({ initialChapterId }: SpineMatrixProps) {
                 {selEntries.length} chapter{selEntries.length > 1 ? "s" : ""} open here
               </div>
               <div className="ro-chs">
-                {selEntries.slice(0, 6).map((entry) => (
-                  <button
-                    key={`${entry.volume}.${entry.ch}`}
-                    className="ro-ch"
-                    style={{ all: "unset", cursor: "pointer", display: "flex", gap: 9, alignItems: "baseline", width: "100%" }}
-                    onClick={() => handleEntryClick(entry)}
-                    aria-label={`Open Vol ${volRoman(entry.volume)} Ch.${entry.ch} — ${entry.title}`}
-                  >
-                    <span className="cn">
-                      {volRoman(entry.volume)}&middot;{entry.ch}
-                    </span>
-                    <span className="ct">{entry.title}</span>
-                    <span className="ch-tiers">
-                      {entry.tiers.map((t) => (
-                        <span key={t} className={`tier-pill ${t}`} aria-label={t}>
-                          {t}
+                {selEntries.slice(0, 6).map((entry) => {
+                  const hasT3 = entry.tiers.includes("T3");
+                  const g = hasT3 ? glossFor(entry) : null;
+                  return (
+                    <div className="ro-ch-wrap" key={`${entry.volume}.${entry.ch}`}>
+                      <button
+                        className="ro-ch"
+                        style={{ all: "unset", cursor: "pointer", display: "flex", gap: 9, alignItems: "baseline", width: "100%" }}
+                        onClick={() => handleEntryClick(entry)}
+                        aria-label={`Open Vol ${volRoman(entry.volume)} Ch.${entry.ch} — ${entry.title}`}
+                      >
+                        <span className="cn">
+                          {volRoman(entry.volume)}&middot;{entry.ch}
                         </span>
-                      ))}
-                    </span>
-                  </button>
-                ))}
+                        <span className="ct">{entry.title}</span>
+                        <span className="ch-tiers">
+                          {entry.tiers.map((t) => (
+                            <span key={t} className={`tier-pill ${t}`} aria-label={t}>
+                              {t}
+                            </span>
+                          ))}
+                        </span>
+                      </button>
+                      {g && (
+                        <Gloss
+                          label={g.label}
+                          quote={g.quote}
+                          citation={g.citation}
+                          form={g.form}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
                 {selEntries.length > 6 && (
                   <div className="ro-ch">
                     <span className="cn" />

@@ -10,6 +10,8 @@ import { Transport } from "./TickHeartbeat";
 import { clamp, formatBP } from "./animation";
 import { loadPrefs, savePrefs } from "./prefs";
 import { SpineMatrix } from "./SpineMatrix";
+import { Gloss } from "./Gloss";
+import { GLOSS_MAP } from "./glossContent";
 
 const STRATA = [
   { key: "surface", label: "The surface · the circuit", short: "Surface" },
@@ -234,6 +236,14 @@ export default function Atlas({ initialChapterId }: AtlasProps = {}) {
                 <span className="r">P</span> production, <span className="l">C′</span> commodity —
                 value travelling its circumference. They spiral outward as they accumulate.
               </p>
+              <div className="surface-gloss">
+                <Gloss
+                  label={GLOSS_MAP["v1-ch01"].label}
+                  quote={GLOSS_MAP["v1-ch01"].quote}
+                  citation={GLOSS_MAP["v1-ch01"].citation}
+                  form={GLOSS_MAP["v1-ch01"].form}
+                />
+              </div>
             </div>
             <div
               className="gate"

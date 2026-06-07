@@ -1,6 +1,7 @@
 import type { DistributionSnapshot } from "../types";
 import { formatBP, formatPence } from "./animation";
 import { TRPFChart } from "./TRPFChart";
+import { FetishismThread } from "./FetishismThread";
 
 interface TotalityProps {
   distribution: DistributionSnapshot;
@@ -88,6 +89,8 @@ export function Totality({ distribution }: TotalityProps) {
           Note: rent ({formatPence(d.trinity.rent_pence)}) is not yet modelled in this simulation &mdash; ground-rent (Vol III Part VI) is represented as zero.
         </p>
       </section>
+
+      <FetishismThread />
     </div>
   );
 }

@@ -440,4 +440,203 @@
   .spine-overlay { animation: none; }
   .drawer-close { transition: none; }
   .spine-rail-btn { transition: none; }
+  .gloss-reveal { transition: none; }
+  .ft-icon { transition: none; }
+}
+
+/* ─── R2-2 · the T3 fetishism gloss thread ───────────────────────────────── */
+
+/* Standalone gloss marker — a gold ❡ that reveals a Marx quote + citation. */
+.ro-ch-wrap { display: flex; flex-direction: column; }
+.gloss { margin: 6px 0 2px; padding-left: 2px; }
+.gloss-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.gloss-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.gloss-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-border);
+  background: var(--gold-bg);
+  color: var(--gold-bright);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+.gloss-btn[aria-expanded="true"] .gloss-icon { background: var(--gold); color: #1a1305; }
+.gloss-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.gloss-btn:hover .gloss-label,
+.gloss-btn[aria-expanded="true"] .gloss-label { color: var(--gold-bright); }
+.gloss-reveal {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.gloss-reveal.open { max-height: 240px; }
+.gloss-form {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  margin: 10px 0 4px;
+}
+.gloss-quote {
+  margin: 8px 0 12px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  max-width: 60ch;
+}
+.gloss-cit {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* The fetishism thread — the 4-node connective strip. */
+/* Re-enable pointer events: the surface caption sets pointer-events:none so the
+ * orrery canvas stays draggable, but the gloss marker must be clickable. */
+.surface-gloss { margin-top: 14px; pointer-events: auto; }
+.fetish-thread {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--rule, var(--border));
+}
+.ft-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 18px;
+}
+.ft-nodes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  position: relative;
+}
+.ft-nodes::before {
+  content: "";
+  position: absolute;
+  top: 11px;
+  left: 12.5%;
+  right: 12.5%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold-border), var(--gold), var(--gold-border));
+  pointer-events: none;
+}
+.ft-node {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 6px;
+  position: relative;
+}
+.ft-node:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.ft-icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-border);
+  background: var(--surface);
+  color: var(--gold-bright);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  z-index: 1;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.ft-node.active .ft-icon { background: var(--gold); color: #1a1305; }
+.ft-ref {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-top: 9px;
+}
+.ft-title {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  line-height: 1.25;
+}
+.ft-node.active .ft-title { color: var(--gold-bright); }
+.ft-gloss-area {
+  margin-top: 18px;
+  border-top: 1px solid var(--rule, var(--border));
+  padding-top: 16px;
+  min-height: 64px;
+}
+.ft-form {
+  font-family: var(--font-mono);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+}
+.ft-quote {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  max-width: 62ch;
+}
+.ft-cit {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.ft-cap {
+  margin: 16px 0 0;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: var(--ink-dim);
+  font-style: italic;
+  max-width: 70ch;
 }
