@@ -179,6 +179,36 @@ func TestDeriveRent_AbsoluteOnEverySoil(t *testing.T) {
 	}
 }
 
+// TestDeriveRent_WaterlineIncludesAbsolute pins the contract RentTerrain.tsx
+// relies on: the waterline (the regulating market price) = the price of
+// production + absolute rent. The client recovers the price-of-production band
+// as waterline − absolute, which must therefore always be ≥ 0 — even at an
+// extreme rate of exploitation that makes absolute rent large.
+func TestDeriveRent_WaterlineIncludesAbsolute(t *testing.T) {
+	t.Parallel()
+	abode := seedAbode()
+	r := seedReadout(abode)
+
+	const generalRateBP = 1000
+	for _, sRate := range []int64{8000, 10000, 58100, 100000} { // incl. the 581% lever case
+		r.RateOfExploitationBP = sRate
+		rent := DeriveRent(r, 810000, generalRateBP, 500)
+
+		avgProfit := (rent.CapitalPerGradePence*generalRateBP + 5000) / 10000
+		priceProd := rent.CapitalPerGradePence + avgProfit
+		abs := rent.Grades[0].AbsoluteRentPence
+		if rent.WaterlinePence != priceProd+abs {
+			t.Errorf("s'=%d: waterline=%d, want priceProd(%d)+absolute(%d)=%d",
+				sRate, rent.WaterlinePence, priceProd, abs, priceProd+abs)
+		}
+		// The client's reconstructed price-of-production band must never go negative.
+		if rent.WaterlinePence-abs < 0 {
+			t.Errorf("s'=%d: waterline−absolute=%d is negative (broken band)",
+				sRate, rent.WaterlinePence-abs)
+		}
+	}
+}
+
 // TestDeriveRent_Conservation verifies the terrain totals sum their grades and
 // that land price is each grade's rent capitalised at the interest rate.
 func TestDeriveRent_Conservation(t *testing.T) {

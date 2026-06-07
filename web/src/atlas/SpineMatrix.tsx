@@ -37,16 +37,18 @@ function chapterId(entry: InventoryEntry): string {
   return `v${entry.volume}-ch${String(entry.ch).padStart(2, "0")}`;
 }
 
-/** Gloss content for a T3 chapter: a canonical Marx quote for the four
- *  fetishism nodes (and other curated chapters), otherwise the chapter's own
- *  qualitative note from the inventory. */
-function glossFor(entry: InventoryEntry): GlossContent {
+/** Gloss content for a T3 chapter: a canonical Marx quote for the curated
+ *  fetishism/concept nodes, otherwise the chapter's own qualitative note from
+ *  the inventory — flagged `note` so it renders as an editorial note, never
+ *  dressed as a verbatim Marx quotation with a fabricated citation. */
+function glossFor(entry: InventoryEntry): GlossContent & { note?: boolean } {
   const canon = GLOSS_MAP[chapterId(entry)];
   if (canon) return canon;
   return {
-    label: "the gloss",
+    label: "representation note",
     quote: entry.note,
-    citation: `Capital ${volRoman(entry.volume)} · Ch. ${entry.ch}`,
+    citation: "",
+    note: true,
   };
 }
 
@@ -278,6 +280,7 @@ export function SpineMatrix({ initialChapterId }: SpineMatrixProps) {
                           quote={g.quote}
                           citation={g.citation}
                           form={g.form}
+                          note={g.note}
                         />
                       )}
                     </div>

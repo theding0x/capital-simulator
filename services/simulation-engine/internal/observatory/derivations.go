@@ -257,9 +257,6 @@ func DeriveRent(r simulation.AbodeReadout, sumCost, generalRateBP, interestBP in
 	avgProfit := roundHalfUp64(k*generalRateBP, 10000)
 	priceProd := k + avgProfit // price of production per farm — equal across soils
 
-	const yWorst = int64(1)
-	waterline := priceProd / yWorst // the regulating worst-soil price per unit
-
 	// Absolute rent — agriculture's value above its price of production. Its lower
 	// composition leaves more variable capital, hence more surplus, than the
 	// average; landed property withholds that excess on every soil.
@@ -275,6 +272,13 @@ func DeriveRent(r simulation.AbodeReadout, sumCost, generalRateBP, interestBP in
 		absolute = 0
 	}
 
+	// The regulating market price — the waterline — is the worst soil's price of
+	// production plus the absolute rent it must yield to landed property: every
+	// soil sells here; the worst pays it all out as absolute rent, the more
+	// fertile keep the surplus above it as differential rent. (So the price-of-
+	// production band + the absolute-rent band reach exactly the waterline.)
+	waterline := priceProd + absolute
+
 	names := [nGrades]string{"worst soil", "poorer soil", "richer soil", "best soil"}
 	ids := [nGrades]string{"A", "B", "C", "D"}
 
@@ -282,7 +286,7 @@ func DeriveRent(r simulation.AbodeReadout, sumCost, generalRateBP, interestBP in
 	var sumDR, sumLand, sumTotal int64
 	for i := 0; i < nGrades; i++ {
 		yield := int64(i + 1) // 1, 2, 3, 4
-		differential := (yield - yWorst) * waterline
+		differential := int64(i) * waterline // (yield − worst yield) × the market price
 		total := differential + absolute
 		land := roundHalfUp64(total*10000, capRate)
 		grades[i] = SoilGrade{

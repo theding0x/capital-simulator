@@ -30,6 +30,8 @@ export function RentTerrain({ rent }: RentTerrainProps) {
 
     // Each soil's realized price = price of production + absolute rent (to the
     // waterline) + differential rent (above it). Tallest band sets the scale.
+    // The backend guarantees waterline_pence = price-of-production + absolute
+    // rent, so this recovers the (always non-negative) price of production.
     const priceProd = rent.waterline_pence - (grades[0]?.absolute_rent_pence ?? 0);
     const stackOf = (g: (typeof grades)[number]) =>
       priceProd + g.absolute_rent_pence + g.differential_rent_pence;

@@ -19,7 +19,10 @@ export function GenesisTimeline() {
     if (!el) return;
     const atStart = el.scrollLeft <= 2;
     const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
-    setEdges({ atStart, atEnd });
+    // Only re-render when an edge actually flips — onScroll fires continuously.
+    setEdges((prev) =>
+      prev.atStart === atStart && prev.atEnd === atEnd ? prev : { atStart, atEnd }
+    );
   }, []);
   useEffect(() => {
     syncEdges();
