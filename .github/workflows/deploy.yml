@@ -89,6 +89,11 @@ jobs:
               - 'pkg/**'
               - 'go.mod'
               - 'go.sum'
+            finance-service:
+              - 'services/finance-service/**'
+              - 'pkg/**'
+              - 'go.mod'
+              - 'go.sum'
             web:
               - 'web/**'
 
@@ -107,6 +112,7 @@ jobs:
             {"name":"agent-service",     "dockerfile":"services/agent-service/Dockerfile",     "context":".",     "port":8082},
             {"name":"market-service",    "dockerfile":"services/market-service/Dockerfile",    "context":".",     "port":8083},
             {"name":"simulation-engine", "dockerfile":"services/simulation-engine/Dockerfile", "context":".",     "port":8084},
+            {"name":"finance-service",   "dockerfile":"services/finance-service/Dockerfile",   "context":".",     "port":8085},
             {"name":"web",               "dockerfile":"web/Dockerfile",                        "context":"./web", "port":80}
           ]'
 
