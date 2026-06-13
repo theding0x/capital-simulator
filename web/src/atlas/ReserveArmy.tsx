@@ -14,9 +14,10 @@ export function ReserveArmy({ abode }: { abode: AbodeReadout }) {
       <div className="reserve-head">
         <div className="reserve-eyebrow">The industrial reserve army</div>
         <div className="reserve-meta">
-          <span className="num">{count}</span> at the gates · wage pressure{" "}
-          <span className="num">{formatBP(abode.reserve_army_pressure_bp)}</span> · paid wage{" "}
-          <span className="num gold">{formatPence(abode.wage_pence)}</span>
+          <span className="num">{count.toLocaleString()}</span> at the gates · of{" "}
+          <span className="num">{abode.total_population.toLocaleString()}</span> in society · wage
+          pressure <span className="num">{formatBP(abode.reserve_army_pressure_bp)}</span> · paid
+          wage <span className="num gold">{formatPence(abode.wage_pence)}</span>
         </div>
       </div>
       <div className="reservoir" aria-hidden="true">
