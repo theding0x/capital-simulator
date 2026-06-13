@@ -226,6 +226,19 @@ type IndustrialCapital struct {
 	UpdatedAt  time.Time    `json:"updated_at"`
 }
 
+// TransitionEconomy advances the economy mode and enforces the presupposition
+// that credit requires money (Vol. II Ch. 4 "Three Formulas"): a direct leap
+// from EconomyNatural (or no mode) to EconomyCredit returns
+// ErrCreditWithoutMoneyEconomy. Any other well-formed transition is accepted
+// and the updated IndustrialCapital is returned.
+func (ic IndustrialCapital) TransitionEconomy(to EconomyMode) (IndustrialCapital, error) {
+	if to == EconomyCredit && ic.EconomyMode != EconomyMoney {
+		return ic, ErrCreditWithoutMoneyEconomy
+	}
+	ic.EconomyMode = to
+	return ic, nil
+}
+
 // Validate checks required fields.
 func (ic IndustrialCapital) Validate() error {
 	if ic.TotalPence <= 0 {
@@ -425,6 +438,11 @@ type OrganicComposition struct {
 
 // Total returns ConstantPence + VariablePence.
 func (oc OrganicComposition) Total() Pence { return oc.ConstantPence + oc.VariablePence }
+
+// LabourDemandPence returns the demand for labour-power in pence: exactly v,
+// and "not one iota greater." Vol. II Ch. 4: the advance that buys labour
+// equals variable capital precisely.
+func (oc OrganicComposition) LabourDemandPence() Pence { return oc.VariablePence }
 
 // RatioBasisPoints returns 10000 * c / v. Returns 0 when VariablePence == 0.
 func (oc OrganicComposition) RatioBasisPoints() int64 {

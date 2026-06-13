@@ -57,6 +57,20 @@ func TestCreateIndustrialCapital_BadRequest(t *testing.T) {
 	}
 }
 
+func TestCreateIndustrialCapital_CreditWithoutMoneyRejected(t *testing.T) {
+	t.Parallel()
+	h := spinningMillHandler(t)
+	// Credit presupposes money (Vol. II Ch. 4): a fresh capital cannot be born
+	// into a credit economy. The create path must reject economy_mode "credit".
+	body := `{"total_pence":400000,"economy_mode":"credit","stagnation_tolerance_ticks":3}`
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/v1/industrial-capitals", bytes.NewBufferString(body))
+	h.CreateIndustrialCapital(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for initial credit economy, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestGetIndustrialCapital_NotFound(t *testing.T) {
 	t.Parallel()
 	h := spinningMillHandler(t)

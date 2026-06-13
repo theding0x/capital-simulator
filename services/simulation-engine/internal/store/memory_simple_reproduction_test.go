@@ -300,6 +300,71 @@ func TestMemoryCheckSchemeBalance(t *testing.T) {
 	}
 }
 
+// --- AdvanceReproductionTick: stock-constancy (FIX 1) -----------------------
+
+// TestMemoryAdvanceReproductionTickStockConstancy verifies the defining law of
+// simple reproduction: advancing a tick must NOT change departmental c, v, s
+// magnitudes. The scheme must be identical period-to-period (no accumulation).
+func TestMemoryAdvanceReproductionTickStockConstancy(t *testing.T) {
+	t.Parallel()
+	mem := newCh20Store(t)
+	ctx := context.Background()
+
+	s := buildMarxScheme(t, mem)
+
+	// Capture the pre-tick departmental magnitudes.
+	wantIC := s.DepartmentI.ConstantPence
+	wantIV := s.DepartmentI.VariablePence
+	wantIS := s.DepartmentI.SurplusPence
+	wantIIT := s.DepartmentI.TotalPence
+	wantIIC := s.DepartmentII.ConstantPence
+	wantIIV := s.DepartmentII.VariablePence
+	wantIIS := s.DepartmentII.SurplusPence
+	wantIIIT := s.DepartmentII.TotalPence
+
+	// Advance two ticks.
+	if _, err := mem.AdvanceReproductionTick(ctx, s.ID, 0, 0); err != nil {
+		t.Fatalf("advance tick 1: %v", err)
+	}
+	if _, err := mem.AdvanceReproductionTick(ctx, s.ID, 0, 0); err != nil {
+		t.Fatalf("advance tick 2: %v", err)
+	}
+
+	// Re-read the scheme and assert all magnitudes are unchanged.
+	got, err := mem.GetSimpleReproductionScheme(ctx, s.ID)
+	if err != nil {
+		t.Fatalf("GetSimpleReproductionScheme: %v", err)
+	}
+	if got.DepartmentI == nil || got.DepartmentII == nil {
+		t.Fatal("departments must still be present after ticking")
+	}
+
+	if got.DepartmentI.ConstantPence != wantIC {
+		t.Errorf("DeptI.ConstantPence: want %d, got %d (tick must not mutate c)", wantIC, got.DepartmentI.ConstantPence)
+	}
+	if got.DepartmentI.VariablePence != wantIV {
+		t.Errorf("DeptI.VariablePence: want %d, got %d (tick must not mutate v)", wantIV, got.DepartmentI.VariablePence)
+	}
+	if got.DepartmentI.SurplusPence != wantIS {
+		t.Errorf("DeptI.SurplusPence: want %d, got %d (tick must not mutate s)", wantIS, got.DepartmentI.SurplusPence)
+	}
+	if got.DepartmentI.TotalPence != wantIIT {
+		t.Errorf("DeptI.TotalPence: want %d, got %d", wantIIT, got.DepartmentI.TotalPence)
+	}
+	if got.DepartmentII.ConstantPence != wantIIC {
+		t.Errorf("DeptII.ConstantPence: want %d, got %d (tick must not mutate c)", wantIIC, got.DepartmentII.ConstantPence)
+	}
+	if got.DepartmentII.VariablePence != wantIIV {
+		t.Errorf("DeptII.VariablePence: want %d, got %d (tick must not mutate v)", wantIIV, got.DepartmentII.VariablePence)
+	}
+	if got.DepartmentII.SurplusPence != wantIIS {
+		t.Errorf("DeptII.SurplusPence: want %d, got %d (tick must not mutate s)", wantIIS, got.DepartmentII.SurplusPence)
+	}
+	if got.DepartmentII.TotalPence != wantIIIT {
+		t.Errorf("DeptII.TotalPence: want %d, got %d", wantIIIT, got.DepartmentII.TotalPence)
+	}
+}
+
 // --- RecordMoneyClosedLoop --------------------------------------------------
 
 func TestMemoryRecordMoneyClosedLoop(t *testing.T) {

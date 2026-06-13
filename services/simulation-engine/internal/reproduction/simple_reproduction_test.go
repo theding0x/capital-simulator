@@ -312,3 +312,110 @@ func TestNewDepartmentalCapitalID(t *testing.T) {
 		t.Fatal("expected distinct IDs")
 	}
 }
+
+// --- IntraDepartmentIReplacement (FIX 2) ------------------------------------
+
+// TestIntraDepartmentIReplacementInvariantHolds verifies that an
+// IntraDepartmentIReplacement constructed from Dept I carries Pence equal
+// to Dept I's ConstantPence (4 000 000 for the Marx fixture).
+func TestIntraDepartmentIReplacementInvariantHolds(t *testing.T) {
+	t.Parallel()
+	sid := repro.NewSimpleReproductionSchemeID()
+	dI := newMarxDeptI(sid)
+	r := repro.NewIntraDepartmentIReplacement(dI)
+	if r.Pence != marxDeptIConstant {
+		t.Fatalf("Pence: want %d (I.c), got %d", marxDeptIConstant, r.Pence)
+	}
+	if err := r.Validate(dI); err != nil {
+		t.Fatalf("Validate: unexpected error for matching pence: %v", err)
+	}
+}
+
+// TestIntraDepartmentIReplacementMismatchRejected verifies that a mismatched
+// Pence value is rejected with ErrIntraDeptIMismatch.
+func TestIntraDepartmentIReplacementMismatchRejected(t *testing.T) {
+	t.Parallel()
+	sid := repro.NewSimpleReproductionSchemeID()
+	dI := newMarxDeptI(sid)
+	r := repro.IntraDepartmentIReplacement{Pence: marxDeptIConstant + 1}
+	if err := r.Validate(dI); err == nil {
+		t.Fatal("expected ErrIntraDeptIMismatch for mismatched pence, got nil")
+	}
+}
+
+// --- ComputeMoneyClosedLoop (FIX 3) -----------------------------------------
+
+// TestComputeMoneyClosedLoopClosed verifies that three Marx inter-department
+// exchanges sum to zero net flow, yielding IsClosed=true.
+//
+// Marx's three flows (Ch. 20 §III):
+//  1. Intra-Dept-I:   I→I  4 000 000 (intra; conventionally treated as zero net cross-flow)
+//  2. I(v+s) → II:   I→II  2 000 000
+//  3. II(c) → I:     II→I  2 000 000
+//
+// The net inter-department balance is: +2 000 000 (I→II) - 2 000 000 (II→I) = 0.
+func TestComputeMoneyClosedLoopClosed(t *testing.T) {
+	t.Parallel()
+	sid := repro.NewSimpleReproductionSchemeID()
+	exchanges := []repro.InterDepartmentExchange{
+		{
+			ID:             repro.NewInterDepartmentExchangeID(),
+			SchemeID:       sid,
+			FromDepartment: repro.DepartmentI,
+			ToDepartment:   repro.DepartmentII,
+			Pence:          2_000_000,
+			Kind:           repro.ExchangeGoodsForMoney,
+			Description:    "I(v+s) → II",
+		},
+		{
+			ID:             repro.NewInterDepartmentExchangeID(),
+			SchemeID:       sid,
+			FromDepartment: repro.DepartmentII,
+			ToDepartment:   repro.DepartmentI,
+			Pence:          2_000_000,
+			Kind:           repro.ExchangeMoneyForGoods,
+			Description:    "II(c) → I",
+		},
+	}
+	loop := repro.ComputeMoneyClosedLoop(exchanges)
+	if loop.NetFlowPence != 0 {
+		t.Fatalf("NetFlowPence: want 0, got %d", loop.NetFlowPence)
+	}
+	if !loop.IsClosed {
+		t.Fatal("IsClosed: want true, got false")
+	}
+}
+
+// TestComputeMoneyClosedLoopNotClosed verifies that perturbing one exchange
+// yields a non-zero net flow and IsClosed=false.
+func TestComputeMoneyClosedLoopNotClosed(t *testing.T) {
+	t.Parallel()
+	sid := repro.NewSimpleReproductionSchemeID()
+	exchanges := []repro.InterDepartmentExchange{
+		{
+			ID:             repro.NewInterDepartmentExchangeID(),
+			SchemeID:       sid,
+			FromDepartment: repro.DepartmentI,
+			ToDepartment:   repro.DepartmentII,
+			Pence:          2_500_000, // perturbed: surplus leaks
+			Kind:           repro.ExchangeGoodsForMoney,
+			Description:    "I(v+s) → II (perturbed)",
+		},
+		{
+			ID:             repro.NewInterDepartmentExchangeID(),
+			SchemeID:       sid,
+			FromDepartment: repro.DepartmentII,
+			ToDepartment:   repro.DepartmentI,
+			Pence:          2_000_000,
+			Kind:           repro.ExchangeMoneyForGoods,
+			Description:    "II(c) → I",
+		},
+	}
+	loop := repro.ComputeMoneyClosedLoop(exchanges)
+	if loop.IsClosed {
+		t.Fatalf("expected IsClosed=false for perturbed exchanges, NetFlowPence=%d", loop.NetFlowPence)
+	}
+	if loop.NetFlowPence == 0 {
+		t.Fatal("expected non-zero NetFlowPence for perturbed exchanges")
+	}
+}

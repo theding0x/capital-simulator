@@ -229,6 +229,13 @@ func (h *Handler) CreateIndustrialCapital(w http.ResponseWriter, r *http.Request
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	// Credit presupposes money (Vol. II Ch. 4): a capital cannot be born into a
+	// credit economy — it reaches credit only by transitioning out of money. A
+	// fresh record asking to start in credit is rejected.
+	if circulation.EconomyMode(req.EconomyMode) == circulation.EconomyCredit {
+		writeError(w, http.StatusBadRequest, circulation.ErrCreditWithoutMoneyEconomy.Error())
+		return
+	}
 	ic := circulation.IndustrialCapital{
 		AgentID:                  req.AgentID,
 		MoneyCircuitID:           circulation.MoneyCircuitID(req.MoneyCircuitID),
