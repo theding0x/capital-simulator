@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { financeApi } from "../../api";
 import type {
   PriceOfProductionResponse,
-  SocialCapitalAggregateResponse,
+  GeneralRateAggregate,
 } from "../../types";
 import "./Ch09GeneralRateOfProfit.css";
 
@@ -38,7 +38,7 @@ type SphereRow = { name: string; c: number; v: number; s_rate: number };
 
 export function Ch09GeneralRateOfProfit() {
   const [rows, setRows] = useState<SphereRow[]>(DEFAULT_SPHERES);
-  const [result, setResult] = useState<SocialCapitalAggregateResponse | null>(null);
+  const [result, setResult] = useState<GeneralRateAggregate | null>(null);
   const [seeded, setSeeded] = useState<PriceOfProductionResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
 

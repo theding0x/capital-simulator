@@ -2166,7 +2166,7 @@ export const financeApi = {
   getPriceOfProduction: (id: string) =>
     http<import("./types").PriceOfProductionResponse>(`/v1/avgprofit/price-of-production/${id}`),
   computeSocialAggregate: (input: { spheres: { name: string; c: number; v: number; s_rate: number }[] }) =>
-    http<import("./types").SocialCapitalAggregateResponse>("/v1/avgprofit/social-aggregate", {
+    http<import("./types").GeneralRateAggregate>("/v1/avgprofit/social-aggregate", {
       method: "POST",
       body: JSON.stringify(input),
     }),

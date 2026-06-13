@@ -130,10 +130,10 @@ func ComputeAverageProfit(c TotalCapital, rate SphereProfitRate) AverageProfit {
 	}
 }
 
-// SocialCapitalAggregate is a compute-only (not persisted) aggregate over a
+// GeneralRateAggregate is a compute-only (not persisted) aggregate over a
 // set of production spheres. It derives the weighted general rate and each
 // sphere's price of production, and checks the conservation laws.
-type SocialCapitalAggregate struct {
+type GeneralRateAggregate struct {
 	Spheres                 []ProductionSphere  `json:"spheres"`
 	WeightedGeneralRate     SphereProfitRate    `json:"weighted_general_rate"`
 	SumSurplusValues        SurplusValue        `json:"sum_surplus_values"`
@@ -153,7 +153,7 @@ type SocialCapitalAggregate struct {
 // (Σprofit = Σsurplus-value).
 // For each sphere, k = C (= c+v), value = C + s,
 // price = ComputePriceOfProduction("", CostPrice(k), weightedRate, CommodityValue(value)).
-func ComputeSocialCapitalAggregate(spheres []ProductionSphere) SocialCapitalAggregate {
+func ComputeSocialCapitalAggregate(spheres []ProductionSphere) GeneralRateAggregate {
 	g := ComputeGeneralProfitRate(spheres)
 	rate := g.Rate
 
@@ -172,7 +172,7 @@ func ComputeSocialCapitalAggregate(spheres []ProductionSphere) SocialCapitalAggr
 		sumAvgProfits += pop.AverageProfit
 	}
 
-	return SocialCapitalAggregate{
+	return GeneralRateAggregate{
 		Spheres:                 spheres,
 		WeightedGeneralRate:     rate,
 		SumSurplusValues:        g.SumSurplusValues,

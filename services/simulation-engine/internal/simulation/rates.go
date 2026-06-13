@@ -32,6 +32,12 @@ type RateScenario struct {
 
 // RateResult holds the three equivalent expressions of the rate of
 // surplus-value computed by ComputeRates.
+//
+// Unit seam: all three fields are dimensionless float64 ratios (e.g. 1.0 =
+// 100% exploitation). They are NOT basis points. Finance-service endpoints
+// such as RateOfSurplusValue accept int64 basis points (10000 bp = 100%), so
+// a caller bridging the two services must multiply: basisPoints = int64(ratio * 10000).
+// The two endpoints are not directly chainable on the wire without this conversion.
 type RateResult struct {
 	FormulaI   float64 `json:"formula_i"`
 	FormulaII  float64 `json:"formula_ii"`
