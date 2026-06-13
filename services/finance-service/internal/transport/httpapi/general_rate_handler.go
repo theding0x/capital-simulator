@@ -71,7 +71,7 @@ func (h *Handler) GetGeneralProfitRate(w http.ResponseWriter, r *http.Request) {
 }
 
 // ComputeSocialAggregate handles POST /v1/avgprofit/social-aggregate — pure
-// compute only (no store). Returns 200 with SocialCapitalAggregate.
+// compute only (no store). Returns 200 with GeneralRateAggregate.
 func (h *Handler) ComputeSocialAggregate(w http.ResponseWriter, r *http.Request) {
 	var req generalRateRequest
 	if err := decodeJSON(r, &req); err != nil {

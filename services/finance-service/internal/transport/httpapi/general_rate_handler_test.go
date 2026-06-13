@@ -166,7 +166,7 @@ func TestComputeSocialAggregate_FiveSpheres(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Fatalf("status = %d, want 200", res.StatusCode)
 	}
-	var agg avgprofit.SocialCapitalAggregate
+	var agg avgprofit.GeneralRateAggregate
 	if err := json.NewDecoder(res.Body).Decode(&agg); err != nil {
 		t.Fatalf("decode: %v", err)
 	}

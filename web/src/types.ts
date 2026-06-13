@@ -3216,11 +3216,12 @@ export interface PriceFluctuationAnalysisResponse {
   created_at: string;
 }
 
+// StockCapitalRelease mirrors profit.StockCapitalRelease (Vol. III Ch. 6).
 // §II — the capital tied up in a stock of raw material. A price fall releases
 // capital previously advanced to hold the stock; a price rise ties up more. For a
 // given movement, released and tied-up are the same magnitude with opposite sign:
 // stock_months × stock_units × (price delta).
-export interface CapitalReleaseResponse {
+export interface StockCapitalRelease {
   stock_months: number;
   stock_units: number;
   original_price_per_unit: number;
@@ -3342,8 +3343,8 @@ export interface ValuePriceDeviationResponse {
   deviation: number;               // signed: price − value
 }
 
-// SocialCapitalAggregateResponse mirrors avgprofit.SocialCapitalAggregate.
-export interface SocialCapitalAggregateResponse {
+// GeneralRateAggregate mirrors avgprofit.GeneralRateAggregate.
+export interface GeneralRateAggregate {
   spheres: ProductionSphereResponse[];
   weighted_general_rate: number;
   sum_surplus_values: number;

@@ -153,10 +153,10 @@ func TestConstantCapitalPriceEffectValidate(t *testing.T) {
 // §II — a 3-month stock of 1,000 units a month. When the price falls from £10 to
 // £7, the capital advanced to hold the stock is released: 3 × 1,000 × (10 − 7) =
 // £9,000. When it rises from £7 to £10, the same magnitude must be tied up.
-func TestCapitalReleaseAndTieUp(t *testing.T) {
+func TestStockCapitalReleaseAndTieUp(t *testing.T) {
 	t.Parallel()
 
-	rel := CapitalRelease{StockMonths: 3, StockUnits: 1000, OriginalPricePerUnit: 10, NewPricePerUnit: 7}
+	rel := StockCapitalRelease{StockMonths: 3, StockUnits: 1000, OriginalPricePerUnit: 10, NewPricePerUnit: 7}
 	if got := rel.Released(); got != 9000 {
 		t.Errorf("released: got %d, want 9000", got)
 	}
@@ -168,7 +168,7 @@ func TestCapitalReleaseAndTieUp(t *testing.T) {
 
 	// Invariant [§II]: for one and the same price movement, release and tie-up
 	// are the same magnitude with opposite sign — they sum to zero.
-	mvRelease := CapitalRelease{StockMonths: 3, StockUnits: 1000, OriginalPricePerUnit: 10, NewPricePerUnit: 7}
+	mvRelease := StockCapitalRelease{StockMonths: 3, StockUnits: 1000, OriginalPricePerUnit: 10, NewPricePerUnit: 7}
 	mvTieUp := CapitalTieUp{StockMonths: 3, StockUnits: 1000, OriginalPricePerUnit: 10, NewPricePerUnit: 7}
 	if mvRelease.Released()+mvTieUp.TiedUp() != 0 {
 		t.Errorf("release %d + tie-up %d should be 0", mvRelease.Released(), mvTieUp.TiedUp())

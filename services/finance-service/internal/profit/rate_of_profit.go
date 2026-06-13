@@ -59,6 +59,12 @@ type TotalCapital LabourMinutes
 // RateOfSurplusValue is s' = s/v, expressed in basis points (100% = 10000 bp).
 // It is the Vol. I measure — the degree of exploitation of labour-power —
 // carried into Vol. III so it can be set beside the rate of profit.
+//
+// Unit seam: simulation-engine's RateResult fields (FormulaI/II/III) are
+// dimensionless float64 ratios, not basis points. To feed a simulation-engine
+// result here, multiply: RateOfSurplusValue(int64(ratio * 10000)). Passing a
+// raw float64 ratio without this conversion will produce a value ~10000× too
+// small and is a silent correctness bug.
 type RateOfSurplusValue int64
 
 // MystificationDegree quantifies how much the profit-form conceals the origin of

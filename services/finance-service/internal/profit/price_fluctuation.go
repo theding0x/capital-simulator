@@ -208,12 +208,12 @@ func ComputePriceFluctuationAnalysis(e ConstantCapitalPriceEffect) PriceFluctuat
 	}
 }
 
-// CapitalRelease models §II's release of capital: when the price of the raw
+// StockCapitalRelease models §II's release of capital: when the price of the raw
 // material falls, the capital that was advanced to hold a stock of it is set
 // free. StockUnits is the quantity consumed per month and StockMonths the number
 // of months' stock held, so the stock is StockMonths × StockUnits units; the
 // capital released is that quantity valued at the fall in price per unit.
-type CapitalRelease struct {
+type StockCapitalRelease struct {
 	StockMonths          int64         `json:"stock_months"`
 	StockUnits           int64         `json:"stock_units"`
 	OriginalPricePerUnit LabourMinutes `json:"original_price_per_unit"`
@@ -224,14 +224,14 @@ type CapitalRelease struct {
 // the difference between the old and the new price. It is positive when the price
 // falls (capital freed), negative when it rises (capital tied up), and zero when
 // the price holds.
-func (r CapitalRelease) Released() LabourMinutes {
+func (r StockCapitalRelease) Released() LabourMinutes {
 	stock := r.StockMonths * r.StockUnits
 	return LabourMinutes(stock) * (r.OriginalPricePerUnit - r.NewPricePerUnit)
 }
 
 // CapitalTieUp models the converse of §II: when the price of the raw material
 // rises, further capital must be advanced to hold the same stock. The fields
-// mean the same as CapitalRelease.
+// mean the same as StockCapitalRelease.
 type CapitalTieUp struct {
 	StockMonths          int64         `json:"stock_months"`
 	StockUnits           int64         `json:"stock_units"`
@@ -241,7 +241,7 @@ type CapitalTieUp struct {
 
 // TiedUp is the additional capital absorbed by the price rise: the whole stock
 // valued at the difference between the new and the old price. For a given price
-// movement it is the exact negative of CapitalRelease.Released — release and
+// movement it is the exact negative of StockCapitalRelease.Released — release and
 // tie-up are one magnitude with opposite sign.
 func (t CapitalTieUp) TiedUp() LabourMinutes {
 	stock := t.StockMonths * t.StockUnits
