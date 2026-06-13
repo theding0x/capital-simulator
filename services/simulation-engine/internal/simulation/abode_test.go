@@ -121,6 +121,51 @@ func TestAdvanceGeneralLawDoesNotCollapse(t *testing.T) {
 	}
 }
 
+func TestWorkerSupplyCappedAtSociety(t *testing.T) {
+	t.Parallel()
+	// The labouring population cannot exceed society as a whole (London 1850).
+	s := NewAbodeState()
+	// Start the supply just under the ceiling so a single period of growth would
+	// otherwise overshoot it.
+	s.WorkerSupply = LondonWorkingPopulation - 10
+	next, _ := AdvanceGeneralLaw(s)
+	if next.WorkerSupply > LondonWorkingPopulation {
+		t.Errorf("worker supply %d exceeded society of %d — more workers at the gate than exist",
+			next.WorkerSupply, LondonWorkingPopulation)
+	}
+	// Already at the ceiling: the supply holds, it does not keep climbing.
+	s.WorkerSupply = LondonWorkingPopulation
+	next, _ = AdvanceGeneralLaw(s)
+	if next.WorkerSupply != LondonWorkingPopulation {
+		t.Errorf("worker supply moved off the ceiling: %d, want %d", next.WorkerSupply, LondonWorkingPopulation)
+	}
+	// The reserve army at the gate is then bounded by the whole society too.
+	if r := next.Readout(); r.ReserveArmyCount > r.TotalPopulation {
+		t.Errorf("reserve army %d exceeds society %d", r.ReserveArmyCount, r.TotalPopulation)
+	}
+}
+
+func TestEmploymentNeverExceedsSociety(t *testing.T) {
+	t.Parallel()
+	// Capital's demand for labour can run away as it accumulates, but no more
+	// workers can be employed than exist in society, and employed + at-the-gate can
+	// never exceed the whole population. Drive the law hard past the point where
+	// demand outstrips the capped supply.
+	s := NewAbodeState()
+	for i := 0; i < 2000; i++ {
+		s, _ = AdvanceGeneralLaw(s)
+	}
+	r := s.Readout()
+	if r.EmployedCount > r.TotalPopulation {
+		t.Errorf("employed %d exceeds society of %d — more workers employed than exist",
+			r.EmployedCount, r.TotalPopulation)
+	}
+	if r.EmployedCount+r.ReserveArmyCount > r.TotalPopulation {
+		t.Errorf("employed %d + at the gate %d exceeds society of %d",
+			r.EmployedCount, r.ReserveArmyCount, r.TotalPopulation)
+	}
+}
+
 func TestApplyLevers(t *testing.T) {
 	t.Parallel()
 	s := NewAbodeState() // surplus_rate_base=10000, base_wage=2500, accum=5000
