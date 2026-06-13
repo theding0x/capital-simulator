@@ -41,6 +41,10 @@ var (
 	// I(v+s) != II(c) is violated and a balanced scheme is required.
 	ErrDepartmentalImbalance = errors.New("reproduction: I(v+s) != II(c) — scheme is not balanced")
 
+	// ErrIntraDeptIMismatch is returned when an IntraDepartmentIReplacement's
+	// Pence does not equal the constant capital of Department I.
+	ErrIntraDeptIMismatch = errors.New("reproduction: intra-dept-I replacement pence != dept_i constant_pence")
+
 	// ErrDepartmentTotalMismatch is returned when a DepartmentalCapital's
 	// TotalPence != ConstantPence + VariablePence + SurplusPence.
 	ErrDepartmentTotalMismatch = errors.New("reproduction: total_pence != c + v + s")
@@ -383,6 +387,39 @@ type MoneyClosedLoop struct {
 	NetFlowPence int64                      `json:"net_flow_pence"`
 }
 
+// --- IntraDepartmentIReplacement --------------------------------------------
+
+// IntraDepartmentIReplacement models Marx's §II observation that Dept I
+// producers sell means of production to one another — the MP they consume
+// is the MP they produce — so Dept I's own constant capital is replaced
+// INTERNALLY. No money crosses the departmental boundary for this flow.
+//
+// Invariant (enforced by Validate):
+//
+//	Pence == DepartmentI.ConstantPence
+//
+// This is a pure value-object: the invariant is structurally computable and
+// never needs independent persistence. No table or seed is required.
+type IntraDepartmentIReplacement struct {
+	// Pence is the value of the intra-department replacement, which must
+	// equal DepartmentI.ConstantPence (i.e. 4 000 000 for Marx's fixture).
+	Pence int64
+}
+
+// NewIntraDepartmentIReplacement constructs a replacement value-object from
+// Department I, setting Pence = deptI.ConstantPence.
+func NewIntraDepartmentIReplacement(deptI DepartmentalCapital) IntraDepartmentIReplacement {
+	return IntraDepartmentIReplacement{Pence: deptI.ConstantPence}
+}
+
+// Validate returns ErrIntraDeptIMismatch when Pence != deptI.ConstantPence.
+func (r IntraDepartmentIReplacement) Validate(deptI DepartmentalCapital) error {
+	if r.Pence != deptI.ConstantPence {
+		return ErrIntraDeptIMismatch
+	}
+	return nil
+}
+
 // --- Pure domain functions --------------------------------------------------
 
 // ComputeIsBalanced returns whether I(v+s) == II(c) for two departments.
@@ -396,6 +433,28 @@ func ComputeIsBalanced(deptI, deptII DepartmentalCapital) bool {
 // oversupplied (the scheme underproduces MP).
 func ComputeDeficit(deptI, deptII DepartmentalCapital) int64 {
 	return deptI.VplusSPence() - deptII.ConstantPence
+}
+
+// ComputeMoneyClosedLoop derives the net money flow from a set of recorded
+// inter-department exchanges and determines whether the loop is closed.
+//
+// Convention: flows from Dept I to Dept II (FromDepartment == DepartmentI)
+// are treated as positive outflows from I; flows from Dept II to Dept I are
+// negative (money returning to I). IsClosed is true when NetFlowPence == 0,
+// confirming money advanced by Dept II returns to its origin within the cycle.
+func ComputeMoneyClosedLoop(exchanges []InterDepartmentExchange) MoneyClosedLoop {
+	var net int64
+	for _, ex := range exchanges {
+		if ex.FromDepartment == DepartmentI {
+			net += ex.Pence
+		} else {
+			net -= ex.Pence
+		}
+	}
+	return MoneyClosedLoop{
+		NetFlowPence: net,
+		IsClosed:     net == 0,
+	}
 }
 
 // --- helpers ----------------------------------------------------------------

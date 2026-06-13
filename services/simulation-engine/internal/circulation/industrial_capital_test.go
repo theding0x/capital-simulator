@@ -1,6 +1,7 @@
 package circulation_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -271,5 +272,96 @@ func TestIndustrialCapital_Validate_InvalidEconomyMode(t *testing.T) {
 	}
 	if err := ic.Validate(); err == nil {
 		t.Fatal("expected error for invalid EconomyMode")
+	}
+}
+
+// --- TransitionEconomy tests (FIX 1: issue #422) ----------------------------
+
+// TestTransitionEconomy_NaturalToMoney checks the valid natural→money path.
+// §Ch.4: simple commodity circulation precedes the money economy.
+func TestTransitionEconomy_NaturalToMoney(t *testing.T) {
+	t.Parallel()
+	ic := circulation.IndustrialCapital{
+		TotalPence:  42200,
+		EconomyMode: circulation.EconomyNatural,
+	}
+	updated, err := ic.TransitionEconomy(circulation.EconomyMoney)
+	if err != nil {
+		t.Fatalf("unexpected error transitioning natural→money: %v", err)
+	}
+	if updated.EconomyMode != circulation.EconomyMoney {
+		t.Errorf("EconomyMode = %q, want %q", updated.EconomyMode, circulation.EconomyMoney)
+	}
+}
+
+// TestTransitionEconomy_MoneyToCredit checks the valid money→credit path.
+// §Ch.4: credit economy presupposes the money economy.
+func TestTransitionEconomy_MoneyToCredit(t *testing.T) {
+	t.Parallel()
+	// Spinning Mill 1871: £422 advance in money economy moves to credit economy.
+	ic := circulation.IndustrialCapital{
+		TotalPence:  42200,
+		EconomyMode: circulation.EconomyMoney,
+	}
+	updated, err := ic.TransitionEconomy(circulation.EconomyCredit)
+	if err != nil {
+		t.Fatalf("unexpected error transitioning money→credit: %v", err)
+	}
+	if updated.EconomyMode != circulation.EconomyCredit {
+		t.Errorf("EconomyMode = %q, want %q", updated.EconomyMode, circulation.EconomyCredit)
+	}
+}
+
+// TestTransitionEconomy_NaturalToCredit_Rejected enforces ErrCreditWithoutMoneyEconomy.
+// §Ch.4: "The credit economy, instead of abolishing these contradictions, only
+// develops a new instrument for their propagation." — presupposes money economy.
+func TestTransitionEconomy_NaturalToCredit_Rejected(t *testing.T) {
+	t.Parallel()
+	ic := circulation.IndustrialCapital{
+		TotalPence:  42200,
+		EconomyMode: circulation.EconomyNatural,
+	}
+	_, err := ic.TransitionEconomy(circulation.EconomyCredit)
+	if !errors.Is(err, circulation.ErrCreditWithoutMoneyEconomy) {
+		t.Fatalf("expected ErrCreditWithoutMoneyEconomy, got %v", err)
+	}
+}
+
+// TestTransitionEconomy_ZeroModeToCredit_Rejected checks that an
+// uninitialised IndustrialCapital (EconomyMode == "") also cannot jump to credit.
+func TestTransitionEconomy_ZeroModeToCredit_Rejected(t *testing.T) {
+	t.Parallel()
+	ic := circulation.IndustrialCapital{TotalPence: 42200}
+	_, err := ic.TransitionEconomy(circulation.EconomyCredit)
+	if !errors.Is(err, circulation.ErrCreditWithoutMoneyEconomy) {
+		t.Fatalf("expected ErrCreditWithoutMoneyEconomy for zero mode, got %v", err)
+	}
+}
+
+// --- OrganicComposition.LabourDemandPence tests (FIX 2: issue #423 item 3) --
+
+// TestOrganicComposition_LabourDemandPence_SpinningMill1871 checks the invariant
+// "demand for labour == v exactly, not one iota greater."
+// §Spinning Mill 1871: £372 MP (c) + £50 wages (v) = £422 advance;
+// variable capital = 5000 pence; labour demand must equal that exactly.
+func TestOrganicComposition_LabourDemandPence_SpinningMill1871(t *testing.T) {
+	t.Parallel()
+	oc := circulation.OrganicComposition{
+		ConstantPence: 37200, // £372 means of production
+		VariablePence: 5000,  // £50 wages
+	}
+	if got := oc.LabourDemandPence(); got != 5000 {
+		t.Errorf("LabourDemandPence() = %d, want 5000 (£50 wages)", got)
+	}
+}
+
+// TestOrganicComposition_LabourDemandPence_EqualToVariable checks that
+// LabourDemandPence() == VariablePence for an arbitrary composition.
+func TestOrganicComposition_LabourDemandPence_EqualToVariable(t *testing.T) {
+	t.Parallel()
+	// §Meeting of Demand and Supply: 80c + 20v
+	oc := circulation.OrganicComposition{ConstantPence: 8000, VariablePence: 2000}
+	if oc.LabourDemandPence() != oc.VariablePence {
+		t.Errorf("LabourDemandPence() %d != VariablePence %d", oc.LabourDemandPence(), oc.VariablePence)
 	}
 }

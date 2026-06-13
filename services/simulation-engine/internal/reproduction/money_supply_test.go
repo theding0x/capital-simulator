@@ -260,3 +260,60 @@ func TestInterDepartmentPurposeConstants(t *testing.T) {
 			"articles_of_consumption", string(reproduction.PurposeArticlesOfConsumption))
 	}
 }
+
+// --- WageRotationFund.TurnoverPerYearBasisPoints (FIX 4) --------------------
+
+// TestWageRotationFundTurnoverBasisPoints verifies that TurnoverPerYearBasisPoints
+// returns WageCycleFrequency × 10000: weekly (52→520000) and monthly (12→120000).
+// A faster cycle must yield a strictly higher basis-point value.
+func TestWageRotationFundTurnoverBasisPoints(t *testing.T) {
+	t.Parallel()
+
+	t.Run("weekly 52 cycles → 520000 bp", func(t *testing.T) {
+		t.Parallel()
+		wrf := reproduction.WageRotationFund{
+			ID:                 reproduction.NewWageRotationFundID(),
+			Period:             "1865",
+			FundPence:          fixtureWageReservePence,
+			WageCycleFrequency: 52,
+		}
+		want := int64(520_000)
+		if got := wrf.TurnoverPerYearBasisPoints(); got != want {
+			t.Fatalf("weekly TurnoverPerYearBasisPoints: want %d, got %d", want, got)
+		}
+	})
+
+	t.Run("monthly 12 cycles → 120000 bp", func(t *testing.T) {
+		t.Parallel()
+		wrf := reproduction.WageRotationFund{
+			ID:                 reproduction.NewWageRotationFundID(),
+			Period:             "1865",
+			FundPence:          fixtureWageReservePence,
+			WageCycleFrequency: 12,
+		}
+		want := int64(120_000)
+		if got := wrf.TurnoverPerYearBasisPoints(); got != want {
+			t.Fatalf("monthly TurnoverPerYearBasisPoints: want %d, got %d", want, got)
+		}
+	})
+
+	t.Run("faster cycle yields higher basis-point value", func(t *testing.T) {
+		t.Parallel()
+		weekly := reproduction.WageRotationFund{
+			ID:                 reproduction.NewWageRotationFundID(),
+			Period:             "1865",
+			FundPence:          fixtureWageReservePence,
+			WageCycleFrequency: 52,
+		}
+		monthly := reproduction.WageRotationFund{
+			ID:                 reproduction.NewWageRotationFundID(),
+			Period:             "1865",
+			FundPence:          fixtureWageReservePence,
+			WageCycleFrequency: 12,
+		}
+		if weekly.TurnoverPerYearBasisPoints() <= monthly.TurnoverPerYearBasisPoints() {
+			t.Fatalf("expected weekly (%d bp) > monthly (%d bp)",
+				weekly.TurnoverPerYearBasisPoints(), monthly.TurnoverPerYearBasisPoints())
+		}
+	})
+}

@@ -289,6 +289,14 @@ type WageRotationFund struct {
 	Period             string             `json:"period"`
 }
 
+// TurnoverPerYearBasisPoints converts WageCycleFrequency to basis points
+// (1 turnover/year = 10 000 bp), matching the basis-point convention used
+// throughout the reproduction package. Weekly (52) → 520 000; monthly (12)
+// → 120 000. A faster wage cycle produces a higher basis-point value.
+func (w WageRotationFund) TurnoverPerYearBasisPoints() int64 {
+	return w.WageCycleFrequency * 10000
+}
+
 // --- InterDepartmentSettlement ----------------------------------------------
 
 // InterDepartmentSettlement records one bilateral exchange flow between the
