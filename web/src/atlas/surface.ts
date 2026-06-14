@@ -338,7 +338,10 @@ export class AtlasSurface {
       // ring thickness swells with surplus share + loop pulse (dead labour towering)
       const surplusShare = clamp(c.surplus_pence / Math.max(1, c.total_pence), 0, 0.6);
       const sw = clamp(ringR * (0.16 + surplusShare * 0.5 + this._pulse * 0.12), 3, ringR * 0.7);
-      const dim = halted ? 0.32 : depthDim;
+      const isHovered = this.hoveredId === c.id;
+      const hoverDim =
+        this.hoveredId === null ? 1 : isHovered ? 1 : 0.3;
+      const dim = (halted ? 0.32 : depthDim) * hoverDim;
 
       // base track
       ctx.lineWidth = sw;
@@ -347,6 +350,16 @@ export class AtlasSurface {
       ctx.beginPath();
       ctx.arc(bx, by, ringR, 0, Math.PI * 2);
       ctx.stroke();
+
+      if (isHovered) {
+        ctx.globalCompositeOperation = "lighter";
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = rgba(GOLD_HI, 0.5 * depthDim);
+        ctx.beginPath();
+        ctx.arc(bx, by, ringR + sw * 0.5 + 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalCompositeOperation = "source-over";
+      }
 
       // three arcs (additive bloom = fat translucent + crisp)
       const arcs = [
