@@ -13,7 +13,7 @@
  * Typed port of the design prototype's surface.js.
  */
 import type { ObservatorySnapshot } from "../types";
-import { clamp, lerp, hash } from "./animation";
+import { clamp, lerp, hash, formatPence, formatBP } from "./animation";
 
 type FieldCapital = ObservatorySnapshot["capitals"][number];
 
@@ -28,6 +28,9 @@ interface Body {
   growth: number;
   dist: number;
   ringR: number;
+  sx: number; // last-rendered screen centre x (CSS px)
+  sy: number; // last-rendered screen centre y (CSS px)
+  sr: number; // last-rendered ring radius (CSS px)
 }
 
 interface Mote {
@@ -69,6 +72,29 @@ function pacedFrac(
   return aP + ((q - tm - tp) / (1 - tm - tp)) * (1 - aP);
 }
 
+/** Nearest body whose centre is within `sr + tol` of (mx,my); null if none.
+ *  Pure — exported for testing. Uses a circular hit-radius (ignores the
+ *  ecliptic squash; the tolerance band is generous). */
+export function pickBody(
+  bodies: { id: string; sx: number; sy: number; sr: number }[],
+  mx: number,
+  my: number,
+  tol = 6
+): string | null {
+  let best: string | null = null;
+  let bestD = Infinity;
+  for (const b of bodies) {
+    const dx = mx - b.sx;
+    const dy = my - b.sy;
+    const d = Math.hypot(dx, dy);
+    if (d <= b.sr + tol && d < bestD) {
+      bestD = d;
+      best = b.id;
+    }
+  }
+  return best;
+}
+
 export class AtlasSurface {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -90,11 +116,30 @@ export class AtlasSurface {
   private _w = 0;
   private _h = 0;
   private _ro: ResizeObserver | null = null;
+  private hoveredId: string | null = null;
+  private _onMove: ((e: PointerEvent) => void) | null = null;
+  private _onLeave: (() => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     this._resize(); // measure once up front; the observer keeps it current
+    this._onMove = (e: PointerEvent) => {
+      const mx = e.offsetX;
+      const my = e.offsetY;
+      const bodies: { id: string; sx: number; sy: number; sr: number }[] = [];
+      this.bodies.forEach((b) => {
+        if (b.cap) bodies.push({ id: b.id, sx: b.sx, sy: b.sy, sr: b.sr });
+      });
+      this.hoveredId = pickBody(bodies, mx, my);
+      this.canvas.style.cursor = this.hoveredId ? "pointer" : "default";
+    };
+    this._onLeave = () => {
+      this.hoveredId = null;
+      this.canvas.style.cursor = "default";
+    };
+    this.canvas.addEventListener("pointermove", this._onMove);
+    this.canvas.addEventListener("pointerleave", this._onLeave);
   }
 
   setReduced(v: boolean) {
@@ -133,6 +178,9 @@ export class AtlasSurface {
           growth: 1,
           dist: 0,
           ringR: 0,
+          sx: 0,
+          sy: 0,
+          sr: 0,
         };
         this.bodies.set(c.id, b);
       }
@@ -169,6 +217,10 @@ export class AtlasSurface {
     this._raf = 0;
     this._ro?.disconnect();
     this._ro = null;
+    if (this._onMove) this.canvas.removeEventListener("pointermove", this._onMove);
+    if (this._onLeave) this.canvas.removeEventListener("pointerleave", this._onLeave);
+    this._onMove = null;
+    this._onLeave = null;
   }
   setRunning(v: boolean) {
     this.running = v;
@@ -273,6 +325,9 @@ export class AtlasSurface {
         Math.min(W, H) * 0.17
       );
       b.ringR = ringR;
+      b.sx = bx;
+      b.sy = by;
+      b.sr = ringR;
 
       const halted = c.status === "halted";
       const sum = c.money_pence + c.production_pence + c.commodity_pence || 1;
@@ -283,7 +338,10 @@ export class AtlasSurface {
       // ring thickness swells with surplus share + loop pulse (dead labour towering)
       const surplusShare = clamp(c.surplus_pence / Math.max(1, c.total_pence), 0, 0.6);
       const sw = clamp(ringR * (0.16 + surplusShare * 0.5 + this._pulse * 0.12), 3, ringR * 0.7);
-      const dim = halted ? 0.32 : depthDim;
+      const isHovered = this.hoveredId === c.id;
+      const hoverDim =
+        this.hoveredId === null ? 1 : isHovered ? 1 : 0.3;
+      const dim = (halted ? 0.32 : depthDim) * hoverDim;
 
       // base track
       ctx.lineWidth = sw;
@@ -292,6 +350,16 @@ export class AtlasSurface {
       ctx.beginPath();
       ctx.arc(bx, by, ringR, 0, Math.PI * 2);
       ctx.stroke();
+
+      if (isHovered) {
+        ctx.globalCompositeOperation = "lighter";
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = rgba(GOLD_HI, 0.5 * depthDim);
+        ctx.beginPath();
+        ctx.arc(bx, by, ringR + sw * 0.5 + 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalCompositeOperation = "source-over";
+      }
 
       // three arcs (additive bloom = fat translucent + crisp)
       const arcs = [
@@ -386,6 +454,90 @@ export class AtlasSurface {
     vg.addColorStop(1, `rgba(5,5,7,${0.55 + this.depth * 0.3})`);
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
+
+    // ---- hover readout (drawn last, above the field) ----
+    if (this.hoveredId) {
+      const hb = this.bodies.get(this.hoveredId);
+      if (hb && hb.cap) this._drawCard(hb);
+    }
+  }
+
+  /** Canvas readout for the hovered capital, anchored beside its ring. */
+  private _drawCard(b: Body) {
+    const c = b.cap;
+    if (!c) return;
+    const ctx = this.ctx;
+    const W = this._w;
+
+    const pad = 12;
+    const cw = 196;
+    const lineH = 17;
+    const rows = 7; // C, p', M, P, C', Σs, n
+    const ch = pad * 2 + rows * lineH;
+
+    // anchor right of the ring, flip left near the edge, clamp vertically
+    let x = b.sx + b.sr + 14;
+    if (x + cw > W - 6) x = b.sx - b.sr - 14 - cw;
+    x = clamp(x, 6, Math.max(6, W - cw - 6));
+    let y = b.sy - ch / 2;
+    y = clamp(y, 6, Math.max(6, this._h - ch - 6));
+
+    // panel
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "rgba(12,12,16,0.9)";
+    ctx.strokeStyle = "rgba(200,162,64,0.35)";
+    ctx.lineWidth = 1;
+    this._roundRect(x, y, cw, ch, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    const lx = x + pad; // label column
+    const rx = x + cw - pad; // value column (right-aligned)
+    let ty = y + pad + 12;
+
+    const pprime = c.total_pence > 0 ? Math.round((c.surplus_pence / c.total_pence) * 10000) : 0;
+
+    const row = (label: string, value: string, col: [number, number, number]) => {
+      ctx.font = "10px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(168,162,148,0.9)";
+      ctx.fillText(label, lx, ty);
+      ctx.textAlign = "right";
+      ctx.fillStyle = rgba(col, 0.95);
+      ctx.fillText(value, rx, ty);
+      ty += lineH;
+    };
+
+    row("C  advanced", formatPence(c.total_pence), BONE);
+    row("p′ rate", formatBP(pprime), GOLD_HI);
+    // the three coexisting arcs of the circuit, each tinted to its ring colour,
+    // one per row so values never collide at large magnitudes
+    row("M  money", formatPence(c.money_pence), GOLD_HI);
+    row("P  production", formatPence(c.production_pence), RED);
+    row("C′ commodity", formatPence(c.commodity_pence), LEAD);
+    row("Σs surplus", formatPence(c.surplus_pence), GOLD);
+    row("n  turnover", c.turnover_number.toFixed(1), BONE);
+
+    // halted tag, top-right corner (only non-numeric element)
+    if (c.status === "halted") {
+      ctx.font = "9px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "right";
+      ctx.fillStyle = "rgba(138,133,120,0.8)";
+      ctx.fillText("halted", x + cw - 8, y + 12);
+    }
+    ctx.textAlign = "left"; // restore default so later text draws aren't right-aligned
+  }
+
+  /** Path a rounded rectangle (caller fills/strokes). */
+  private _roundRect(x: number, y: number, w: number, h: number, r: number) {
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
   }
 
   centre() {
