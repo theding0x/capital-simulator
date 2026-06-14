@@ -125,9 +125,8 @@ export class AtlasSurface {
     this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     this._resize(); // measure once up front; the observer keeps it current
     this._onMove = (e: PointerEvent) => {
-      const r = this.canvas.getBoundingClientRect();
-      const mx = e.clientX - r.left;
-      const my = e.clientY - r.top;
+      const mx = e.offsetX;
+      const my = e.offsetY;
       const bodies: { id: string; sx: number; sy: number; sr: number }[] = [];
       this.bodies.forEach((b) => {
         if (b.cap) bodies.push({ id: b.id, sx: b.sx, sy: b.sy, sr: b.sr });
