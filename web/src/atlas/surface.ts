@@ -13,7 +13,7 @@
  * Typed port of the design prototype's surface.js.
  */
 import type { ObservatorySnapshot } from "../types";
-import { clamp, lerp, hash } from "./animation";
+import { clamp, lerp, hash, formatPence, formatBP } from "./animation";
 
 type FieldCapital = ObservatorySnapshot["capitals"][number];
 
@@ -454,6 +454,97 @@ export class AtlasSurface {
     vg.addColorStop(1, `rgba(5,5,7,${0.55 + this.depth * 0.3})`);
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
+
+    // ---- hover readout (drawn last, above the field) ----
+    if (this.hoveredId) {
+      const hb = this.bodies.get(this.hoveredId);
+      if (hb && hb.cap) this._drawCard(hb);
+    }
+  }
+
+  /** Canvas readout for the hovered capital, anchored beside its ring. */
+  private _drawCard(b: Body) {
+    const c = b.cap;
+    if (!c) return;
+    const ctx = this.ctx;
+    const W = this._w;
+
+    const pad = 12;
+    const cw = 196;
+    const lineH = 17;
+    const rows = 5; // C, p', M/P/C, Σs, n
+    const ch = pad * 2 + rows * lineH;
+
+    // anchor right of the ring, flip left near the edge, clamp vertically
+    let x = b.sx + b.sr + 14;
+    if (x + cw > W - 6) x = b.sx - b.sr - 14 - cw;
+    x = clamp(x, 6, Math.max(6, W - cw - 6));
+    let y = b.sy - ch / 2;
+    y = clamp(y, 6, Math.max(6, this._h - ch - 6));
+
+    // panel
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = "rgba(12,12,16,0.9)";
+    ctx.strokeStyle = "rgba(200,162,64,0.35)";
+    ctx.lineWidth = 1;
+    this._roundRect(x, y, cw, ch, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    const lx = x + pad; // label column
+    const rx = x + cw - pad; // value column (right-aligned)
+    let ty = y + pad + 12;
+
+    const pprime = c.total_pence > 0 ? Math.round((c.surplus_pence / c.total_pence) * 10000) : 0;
+
+    const row = (label: string, value: string, col: [number, number, number]) => {
+      ctx.font = "10px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(168,162,148,0.9)";
+      ctx.fillText(label, lx, ty);
+      ctx.textAlign = "right";
+      ctx.fillStyle = rgba(col, 0.95);
+      ctx.fillText(value, rx, ty);
+      ty += lineH;
+    };
+
+    row("C  advanced", formatPence(c.total_pence), BONE);
+    row("p′ rate", formatBP(pprime), GOLD_HI);
+    // M · P · C′ tinted to their arcs, drawn as one row of three
+    ctx.font = "10px 'IBM Plex Mono', monospace";
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(168,162,148,0.9)";
+    ctx.fillText("M·P·C′", lx, ty);
+    ctx.textAlign = "right";
+    ctx.fillStyle = rgba(LEAD, 0.95);
+    ctx.fillText(formatPence(c.commodity_pence), rx, ty);
+    ctx.fillStyle = rgba(RED, 0.95);
+    ctx.fillText("·", rx - 44, ty);
+    ctx.fillStyle = rgba(GOLD_HI, 0.95);
+    ctx.fillText(formatPence(c.money_pence), rx - 56, ty);
+    ty += lineH;
+    row("Σs surplus", formatPence(c.surplus_pence), GOLD);
+    row("n turnover", c.turnover_number.toFixed(1), BONE);
+
+    // halted tag, top-right corner (only non-numeric element)
+    if (c.status === "halted") {
+      ctx.font = "9px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "right";
+      ctx.fillStyle = "rgba(138,133,120,0.8)";
+      ctx.fillText("halted", x + cw - 8, y + 12);
+    }
+  }
+
+  /** Path a rounded rectangle (caller fills/strokes). */
+  private _roundRect(x: number, y: number, w: number, h: number, r: number) {
+    const ctx = this.ctx;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
   }
 
   centre() {
