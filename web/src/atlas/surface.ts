@@ -116,11 +116,31 @@ export class AtlasSurface {
   private _w = 0;
   private _h = 0;
   private _ro: ResizeObserver | null = null;
+  private hoveredId: string | null = null;
+  private _onMove: ((e: PointerEvent) => void) | null = null;
+  private _onLeave: (() => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     this._resize(); // measure once up front; the observer keeps it current
+    this._onMove = (e: PointerEvent) => {
+      const r = this.canvas.getBoundingClientRect();
+      const mx = e.clientX - r.left;
+      const my = e.clientY - r.top;
+      const bodies: { id: string; sx: number; sy: number; sr: number }[] = [];
+      this.bodies.forEach((b) => {
+        if (b.cap) bodies.push({ id: b.id, sx: b.sx, sy: b.sy, sr: b.sr });
+      });
+      this.hoveredId = pickBody(bodies, mx, my);
+      this.canvas.style.cursor = this.hoveredId ? "pointer" : "default";
+    };
+    this._onLeave = () => {
+      this.hoveredId = null;
+      this.canvas.style.cursor = "default";
+    };
+    this.canvas.addEventListener("pointermove", this._onMove);
+    this.canvas.addEventListener("pointerleave", this._onLeave);
   }
 
   setReduced(v: boolean) {
@@ -198,6 +218,10 @@ export class AtlasSurface {
     this._raf = 0;
     this._ro?.disconnect();
     this._ro = null;
+    if (this._onMove) this.canvas.removeEventListener("pointermove", this._onMove);
+    if (this._onLeave) this.canvas.removeEventListener("pointerleave", this._onLeave);
+    this._onMove = null;
+    this._onLeave = null;
   }
   setRunning(v: boolean) {
     this.running = v;
