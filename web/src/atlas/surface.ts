@@ -472,7 +472,7 @@ export class AtlasSurface {
     const pad = 12;
     const cw = 196;
     const lineH = 17;
-    const rows = 5; // C, p', M/P/C, Σs, n
+    const rows = 7; // C, p', M, P, C', Σs, n
     const ch = pad * 2 + rows * lineH;
 
     // anchor right of the ring, flip left near the edge, clamp vertically
@@ -510,21 +510,13 @@ export class AtlasSurface {
 
     row("C  advanced", formatPence(c.total_pence), BONE);
     row("p′ rate", formatBP(pprime), GOLD_HI);
-    // M · P · C′ tinted to their arcs, drawn as one row of three
-    ctx.font = "10px 'IBM Plex Mono', monospace";
-    ctx.textAlign = "left";
-    ctx.fillStyle = "rgba(168,162,148,0.9)";
-    ctx.fillText("M·P·C′", lx, ty);
-    ctx.textAlign = "right";
-    ctx.fillStyle = rgba(LEAD, 0.95);
-    ctx.fillText(formatPence(c.commodity_pence), rx, ty);
-    ctx.fillStyle = rgba(RED, 0.95);
-    ctx.fillText("·", rx - 44, ty);
-    ctx.fillStyle = rgba(GOLD_HI, 0.95);
-    ctx.fillText(formatPence(c.money_pence), rx - 56, ty);
-    ty += lineH;
+    // the three coexisting arcs of the circuit, each tinted to its ring colour,
+    // one per row so values never collide at large magnitudes
+    row("M  money", formatPence(c.money_pence), GOLD_HI);
+    row("P  production", formatPence(c.production_pence), RED);
+    row("C′ commodity", formatPence(c.commodity_pence), LEAD);
     row("Σs surplus", formatPence(c.surplus_pence), GOLD);
-    row("n turnover", c.turnover_number.toFixed(1), BONE);
+    row("n  turnover", c.turnover_number.toFixed(1), BONE);
 
     // halted tag, top-right corner (only non-numeric element)
     if (c.status === "halted") {
@@ -533,6 +525,7 @@ export class AtlasSurface {
       ctx.fillStyle = "rgba(138,133,120,0.8)";
       ctx.fillText("halted", x + cw - 8, y + 12);
     }
+    ctx.textAlign = "left"; // restore default so later text draws aren't right-aligned
   }
 
   /** Path a rounded rectangle (caller fills/strokes). */
