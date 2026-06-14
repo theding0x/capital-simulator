@@ -28,6 +28,9 @@ interface Body {
   growth: number;
   dist: number;
   ringR: number;
+  sx: number; // last-rendered screen centre x (CSS px)
+  sy: number; // last-rendered screen centre y (CSS px)
+  sr: number; // last-rendered ring radius (CSS px)
 }
 
 interface Mote {
@@ -67,6 +70,29 @@ function pacedFrac(
   if (q < tm) return (q / tm) * aM;
   if (q < tm + tp) return aM + ((q - tm) / tp) * (aP - aM);
   return aP + ((q - tm - tp) / (1 - tm - tp)) * (1 - aP);
+}
+
+/** Nearest body whose centre is within `sr + tol` of (mx,my); null if none.
+ *  Pure — exported for testing. Uses a circular hit-radius (ignores the
+ *  ecliptic squash; the tolerance band is generous). */
+export function pickBody(
+  bodies: { id: string; sx: number; sy: number; sr: number }[],
+  mx: number,
+  my: number,
+  tol = 6
+): string | null {
+  let best: string | null = null;
+  let bestD = Infinity;
+  for (const b of bodies) {
+    const dx = mx - b.sx;
+    const dy = my - b.sy;
+    const d = Math.hypot(dx, dy);
+    if (d <= b.sr + tol && d < bestD) {
+      bestD = d;
+      best = b.id;
+    }
+  }
+  return best;
 }
 
 export class AtlasSurface {
@@ -133,6 +159,9 @@ export class AtlasSurface {
           growth: 1,
           dist: 0,
           ringR: 0,
+          sx: 0,
+          sy: 0,
+          sr: 0,
         };
         this.bodies.set(c.id, b);
       }
@@ -273,6 +302,9 @@ export class AtlasSurface {
         Math.min(W, H) * 0.17
       );
       b.ringR = ringR;
+      b.sx = bx;
+      b.sy = by;
+      b.sr = ringR;
 
       const halted = c.status === "halted";
       const sum = c.money_pence + c.production_pence + c.commodity_pence || 1;
