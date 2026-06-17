@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function refresh() {
     try {
       const res = await fetch("/api/v1/auth/me");
+      if (!res.ok) throw new Error(`/auth/me ${res.status}`);
       const body = (await res.json()) as MeResponse;
       setState({
         status: body.authenticated ? "authed" : "guest",
