@@ -1116,16 +1116,3 @@ td.reveal {
 .auth-bar-btn:hover {
   background: #374151;
 }
-.auth-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  text-align: center;
-  padding: 4px 12px;
-  font-size: 12px;
-  background: #422006;
-  color: #fcd34d;
-  border-bottom: 1px solid #b45309;
-}
