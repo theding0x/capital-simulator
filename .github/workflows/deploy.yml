@@ -96,6 +96,9 @@ jobs:
               - 'go.sum'
             web:
               - 'web/**'
+            landing:
+              - 'landing/**'
+              - 'LETTER.md'
 
       - id: matrix
         name: build deploy matrix
@@ -113,7 +116,8 @@ jobs:
             {"name":"market-service",    "dockerfile":"services/market-service/Dockerfile",    "context":".",     "port":8083},
             {"name":"simulation-engine", "dockerfile":"services/simulation-engine/Dockerfile", "context":".",     "port":8084},
             {"name":"finance-service",   "dockerfile":"services/finance-service/Dockerfile",   "context":".",     "port":8085},
-            {"name":"web",               "dockerfile":"web/Dockerfile",                        "context":"./web", "port":80}
+            {"name":"web",               "dockerfile":"web/Dockerfile",                        "context":"./web", "port":80},
+            {"name":"landing",           "dockerfile":"landing/Dockerfile",                    "context":".",     "port":80}
           ]'
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
