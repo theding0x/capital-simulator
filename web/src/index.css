@@ -1089,3 +1089,43 @@ td.reveal {
   display: flex;
   flex-direction: column;
 }
+
+/* --- Auth bar + read-only banner --- */
+.auth-bar {
+  position: fixed;
+  top: 8px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.auth-bar-user {
+  color: var(--ink-muted, #99aabb);
+}
+.auth-bar-btn {
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.auth-bar-btn:hover {
+  background: #374151;
+}
+.auth-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  text-align: center;
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #422006;
+  color: #fcd34d;
+  border-bottom: 1px solid #b45309;
+}
