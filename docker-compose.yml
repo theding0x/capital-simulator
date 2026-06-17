@@ -41,6 +41,9 @@ services:
       LOG_LEVEL: info
       SERVICE_ADDR: ":8080"
       COMMODITY_SERVICE_URL: http://commodity-service:8081
+      # Local dev: bypass owner-only write enforcement so the full stack keeps
+      # CRUD working with no GitHub OAuth secrets. Prod runs with this unset.
+      AUTH_DISABLED: "true"
     ports:
       - "8080:8080"
     depends_on:

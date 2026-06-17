@@ -205,7 +205,91 @@ import { atlasSessionHeader } from "./atlas/session";
 
 const BASE = "/api";
 
+// --- Owner-only write guard (mirrors services/api-gateway/internal/auth/allowlist.go) ---
+// Keep COMPUTE_PATHS + matcher in sync with that Go file.
+const COMPUTE_PATHS: string[] = [
+  "/v1/observatory/levers",
+  "/v1/surplus/mass",
+  "/v1/production/working-day",
+  "/v1/production/working-day/shorten",
+  "/v1/production/extra-surplus-value",
+  "/v1/production/relative-surplus",
+  "/v1/production/relative-surplus-from-productivity",
+  "/v1/surplus-value/absolute",
+  "/v1/surplus-value/relative",
+  "/v1/surplus-value/rates",
+  "/v1/labour-scenarios",
+  "/v1/cooperations/minimum-capital",
+  "/v1/cooperations/{id}/collective-working-day",
+  "/v1/cooperations/{id}/average-social-labour",
+  "/v1/manufactures/{id}/proportional-group-size",
+  "/v1/manufactures/{id}/scale",
+  "/v1/circuit-probes",
+  "/v1/exchange-simulations",
+  "/v1/piece-price",
+  "/v1/time-wages/hourly-price",
+  "/v1/time-wages/nominal-wage",
+  "/v1/reproductions/simple",
+  "/v1/reproductions/repayment-period",
+  "/v1/reproductions/extended",
+  "/v1/reproductions/split-surplus",
+  "/v1/accumulation/organic-composition",
+  "/v1/accumulation/labour-demand",
+  "/v1/accumulation/reserve-army",
+  "/v1/accumulation/centralisation",
+  "/v1/statutory-wages/compare",
+  "/v1/farm-tenures/real-rent",
+  "/v1/market-formation",
+  "/v1/colonial-markets/{id}/independence",
+  "/v1/profit/profit-form",
+  "/v1/profit/compare",
+  "/v1/avgprofit/social-aggregate",
+  "/v1/avgprofit/compensation-ground",
+  "/v1/merchant/turnover-effect",
+  "/v1/credit/interest-rate-analysis",
+];
+
+let canWriteFlag = false;
+
+/** Set by AuthContext whenever auth state changes. */
+export function setCanWrite(v: boolean): void {
+  canWriteFlag = v;
+}
+
+function segs(p: string): string[] {
+  const clean = p.split("?")[0].replace(/^\/+|\/+$/g, "");
+  return clean === "" ? [] : clean.split("/");
+}
+
+function matchSegs(entry: string[], path: string[]): boolean {
+  if (entry.length !== path.length) return false;
+  return entry.every((e, i) =>
+    e.startsWith("{") && e.endsWith("}") ? path[i] !== "" : e === path[i]
+  );
+}
+
+function isComputePath(path: string): boolean {
+  const p = segs(path);
+  return COMPUTE_PATHS.some((entry) => matchSegs(segs(entry), p));
+}
+
+function isWriteMethod(method?: string): boolean {
+  const m = (method ?? "GET").toUpperCase();
+  return m !== "GET" && m !== "HEAD" && m !== "OPTIONS";
+}
+
+/** Thrown (client-side) when a non-owner attempts a persisting write. */
+export class ReadOnlyError extends Error {
+  constructor() {
+    super("Sign in as the owner to make changes.");
+    this.name = "ReadOnlyError";
+  }
+}
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
+  if (isWriteMethod(init?.method) && !isComputePath(path) && !canWriteFlag) {
+    throw new ReadOnlyError();
+  }
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },

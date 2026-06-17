@@ -1,0 +1,154 @@
+package auth
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+)
+
+func testHandlers(cfg Config) *Handlers {
+	h := NewHandlers(cfg, NewOAuthClient())
+	h.now = func() time.Time { return time.Unix(1_000_000, 0) }
+	return h
+}
+
+func TestHandleMeGuest(t *testing.T) {
+	t.Parallel()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/me", nil)
+	testHandlers(Config{SigningKey: []byte("k")}).handleMe(rec, req)
+
+	var body map[string]any
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
+	if body["authenticated"] != false || body["is_owner"] != false {
+		t.Fatalf("guest /me = %v", body)
+	}
+}
+
+func TestHandleMeOwner(t *testing.T) {
+	t.Parallel()
+	cfg := Config{SigningKey: []byte("k"), OwnerUserID: 522224}
+	tok, _ := SignIdentity(Identity{UserID: 522224, Login: "theding0x", IsOwner: true, Exp: time.Now().Add(time.Hour).Unix()}, cfg.SigningKey)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/me", nil)
+	req.AddCookie(&http.Cookie{Name: SessionCookie, Value: tok})
+	testHandlers(cfg).handleMe(rec, req)
+
+	var body map[string]any
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
+	if body["is_owner"] != true || body["login"] != "theding0x" {
+		t.Fatalf("owner /me = %v", body)
+	}
+}
+
+func TestHandleLoginRedirectsWhenConfigured(t *testing.T) {
+	t.Parallel()
+	cfg := Config{ClientID: "cid", ClientSecret: "s", SigningKey: []byte("k"), OAuthConfigured: true, RedirectBaseURL: "https://app.daskap.io/api"}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/github/login", nil)
+	testHandlers(cfg).handleLogin(rec, req)
+	if rec.Code != http.StatusFound {
+		t.Fatalf("login status = %d, want 302", rec.Code)
+	}
+	if loc := rec.Header().Get("Location"); loc == "" {
+		t.Fatal("login: no Location header")
+	}
+}
+
+func TestHandleLoginUnavailableWhenUnconfigured(t *testing.T) {
+	t.Parallel()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/github/login", nil)
+	testHandlers(Config{}).handleLogin(rec, req)
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("login status = %d, want 503", rec.Code)
+	}
+}
+
+func TestHandleLogoutClearsCookie(t *testing.T) {
+	t.Parallel()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/v1/auth/logout", nil)
+	testHandlers(Config{}).handleLogout(rec, req)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("logout status = %d, want 204", rec.Code)
+	}
+	if sc := rec.Result().Cookies(); len(sc) == 0 || sc[0].MaxAge >= 0 {
+		t.Fatalf("logout did not expire cookie: %v", sc)
+	}
+}
+
+func TestHandleCallbackSuccess(t *testing.T) {
+	t.Parallel()
+
+	// Stub GitHub token endpoint: returns access token JSON.
+	tokenSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"access_token":"gho_x"}`)
+	}))
+	defer tokenSrv.Close()
+
+	// Stub GitHub user endpoint: returns owner user JSON.
+	userSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"id":522224,"login":"theding0x"}`)
+	}))
+	defer userSrv.Close()
+
+	cfg := Config{
+		OAuthConfigured: true,
+		ClientID:        "cid",
+		ClientSecret:    "s",
+		OwnerUserID:     522224,
+		SigningKey:       []byte("k"),
+		RedirectBaseURL: "https://app.daskap.io/api",
+	}
+	client := &OAuthClient{
+		HTTP:        http.DefaultClient,
+		AuthorizeEP: "https://github.com/login/oauth/authorize",
+		TokenEP:     tokenSrv.URL,
+		UserEP:      userSrv.URL,
+	}
+	h := &Handlers{cfg: cfg, client: client, now: func() time.Time { return time.Unix(1_000_000, 0) }}
+
+	const state = "teststate123"
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/github/callback?state="+state+"&code=xcode", nil)
+	req.AddCookie(&http.Cookie{Name: StateCookie, Value: state})
+	rec := httptest.NewRecorder()
+
+	h.handleCallback(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("callback status = %d, want 302; body: %s", rec.Code, rec.Body.String())
+	}
+	if loc := rec.Header().Get("Location"); loc != "/" {
+		t.Fatalf("callback Location = %q, want /", loc)
+	}
+
+	// Find the session cookie.
+	var sessionVal string
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == SessionCookie {
+			sessionVal = c.Value
+			break
+		}
+	}
+	if sessionVal == "" {
+		t.Fatal("callback: no cs_session cookie set")
+	}
+
+	// Verify the signed session contains the right identity.
+	id, err := VerifyIdentity(sessionVal, cfg.SigningKey, time.Unix(999_999, 0))
+	if err != nil {
+		t.Fatalf("VerifyIdentity: %v", err)
+	}
+	if !id.IsOwner {
+		t.Error("expected IsOwner = true")
+	}
+	if id.Login != "theding0x" {
+		t.Errorf("Login = %q, want theding0x", id.Login)
+	}
+}
