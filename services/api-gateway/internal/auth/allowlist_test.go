@@ -8,11 +8,30 @@ func TestIsComputePath(t *testing.T) {
 		path string
 		want bool
 	}{
+		// Basic exact match.
 		{"/v1/observatory/levers", true},
-		{"/v1/observatory/levers/extra", true},
+		// Extra segment — no such endpoint; exact-length rejects it.
+		{"/v1/observatory/levers/extra", false},
+		// Persisting CRUD roots — always blocked.
 		{"/v1/commodities", false},
 		{"/v1/owners", false},
-		{"/v1/observatory/snapshot", false}, // GET-only path, not a write allowlist entry
+		// GET-only path, not a write allowlist entry.
+		{"/v1/observatory/snapshot", false},
+		// Templated entries — positive: ID segment matches wildcard.
+		{"/v1/cooperations/abc123/collective-working-day", true},
+		{"/v1/cooperations/abc123/average-social-labour", true},
+		{"/v1/manufactures/xyz/scale", true},
+		{"/v1/manufactures/xyz/proportional-group-size", true},
+		{"/v1/colonial-markets/abc123/independence", true},
+		// Templated entries — negative: persisting siblings and roots must stay blocked.
+		{"/v1/cooperations", false},
+		{"/v1/cooperations/abc123", false},
+		{"/v1/manufactures", false},
+		{"/v1/manufactures/xyz", false},
+		{"/v1/colonial-markets", false},
+		{"/v1/colonial-markets/abc123", false},
+		// Wildcard must not match empty segment.
+		{"/v1/cooperations//collective-working-day", false},
 	}
 	for _, c := range cases {
 		if got := IsComputePath(c.path); got != c.want {
@@ -56,6 +75,12 @@ func TestComputeAllowlistAudited(t *testing.T) {
 		"/v1/piece-price",
 		"/v1/time-wages/hourly-price",
 		"/v1/time-wages/nominal-wage",
+		// agent-service — templated compute (read+compute, no mutation)
+		"/v1/cooperations/abc123/collective-working-day",
+		"/v1/cooperations/abc123/average-social-labour",
+		"/v1/manufactures/abc123/proportional-group-size",
+		"/v1/manufactures/abc123/scale",
+		"/v1/colonial-markets/abc123/independence",
 		// finance-service — stateless calculators
 		"/v1/profit/profit-form",
 		"/v1/profit/compare",
@@ -63,6 +88,8 @@ func TestComputeAllowlistAudited(t *testing.T) {
 		"/v1/avgprofit/compensation-ground",
 		"/v1/merchant/turnover-effect",
 		"/v1/credit/interest-rate-analysis",
+		// simulation-engine — observatory
+		"/v1/observatory/levers",
 	}
 	mustBlock := []string{
 		// persisting CRUD — must stay owner-only
@@ -79,6 +106,13 @@ func TestComputeAllowlistAudited(t *testing.T) {
 		"/v1/merchant/commercial-capital",
 		"/v1/engine/start",
 		"/v1/engine/stop",
+		// templated roots and bare ID paths must stay blocked
+		"/v1/cooperations",
+		"/v1/cooperations/abc123",
+		"/v1/manufactures",
+		"/v1/manufactures/abc123",
+		"/v1/colonial-markets",
+		"/v1/colonial-markets/abc123",
 	}
 	for _, p := range mustAllow {
 		if !IsComputePath(p) {

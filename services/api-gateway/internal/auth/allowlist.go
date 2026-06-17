@@ -105,11 +105,45 @@ var computePaths = []string{
 
 // IsComputePath reports whether path is a non-persisting compute endpoint that
 // non-owners may invoke with a write method.
+//
+// Matching is exact-length segment-by-segment: the entry and the request path
+// must have the same number of "/" segments. A segment of the form {anything}
+// is a wildcard that matches any single non-empty path segment. This lets
+// templated entries like /v1/cooperations/{id}/collective-working-day match
+// real runtime paths while keeping persisting siblings (e.g. /v1/cooperations)
+// blocked.
 func IsComputePath(path string) bool {
-	for _, p := range computePaths {
-		if path == p || strings.HasPrefix(path, p+"/") {
+	pathSegs := splitSegs(path)
+	for _, entry := range computePaths {
+		if matchSegs(splitSegs(entry), pathSegs) {
 			return true
 		}
 	}
 	return false
+}
+
+func splitSegs(p string) []string {
+	p = strings.Trim(p, "/")
+	if p == "" {
+		return nil
+	}
+	return strings.Split(p, "/")
+}
+
+func matchSegs(entry, path []string) bool {
+	if len(entry) != len(path) {
+		return false
+	}
+	for i, e := range entry {
+		if strings.HasPrefix(e, "{") && strings.HasSuffix(e, "}") {
+			if path[i] == "" {
+				return false
+			}
+			continue
+		}
+		if e != path[i] {
+			return false
+		}
+	}
+	return true
 }
