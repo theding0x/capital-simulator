@@ -30,4 +30,4 @@ Hosting an application like this also costs money. I would love to find a way to
 I would love to extend this project to the works of the thinkers who built upon this foundation, such as Rosa Luxemburg and Vladimir Lenin. That can only be done when I'm sure this foundation is sound, though, and I can't do that on my own.
 
 # Thank You
-Really, thank you for dropping by. This is a labor of love and learning. I hope it helps
+Really, thank you for dropping by. This is a labor of love and learning. I hope it helps.
