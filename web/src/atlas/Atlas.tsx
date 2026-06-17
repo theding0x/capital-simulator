@@ -10,6 +10,7 @@ import { Transport } from "./TickHeartbeat";
 import { clamp, formatBP } from "./animation";
 import { loadPrefs, savePrefs } from "./prefs";
 import { SpineMatrix } from "./SpineMatrix";
+import { AuthBar } from "../components/AuthBar";
 import { Gloss } from "./Gloss";
 import { GLOSS_MAP } from "./glossContent";
 import { GenesisTimeline } from "./GenesisTimeline";
@@ -187,6 +188,7 @@ export default function Atlas({ initialChapterId }: AtlasProps = {}) {
           </button>
           <a href="#/chapters">Chapters</a>
         </nav>
+        <AuthBar />
       </header>
 
       <aside className="rail">

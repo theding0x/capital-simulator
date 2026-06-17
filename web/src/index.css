@@ -1092,11 +1092,8 @@ td.reveal {
 
 /* --- Auth bar + read-only banner --- */
 .auth-bar {
-  position: fixed;
-  top: 8px;
-  right: 12px;
-  z-index: 1000;
-  display: flex;
+  margin-left: auto;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
