@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -68,7 +69,8 @@ func (h *Handlers) handleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	stateCookie, err := r.Cookie(StateCookie)
-	if err != nil || stateCookie.Value == "" || stateCookie.Value != r.URL.Query().Get("state") {
+	if err != nil || stateCookie.Value == "" ||
+		subtle.ConstantTimeCompare([]byte(stateCookie.Value), []byte(r.URL.Query().Get("state"))) != 1 {
 		http.Error(w, "invalid oauth state", http.StatusBadRequest)
 		return
 	}
@@ -90,7 +92,7 @@ func (h *Handlers) handleCallback(w http.ResponseWriter, r *http.Request) {
 	id := Identity{
 		UserID:  user.ID,
 		Login:   user.Login,
-		IsOwner: user.ID == h.cfg.OwnerUserID,
+		IsOwner: h.cfg.IsOwnerID(user.ID),
 		Exp:     h.now().Add(sessionTTL).Unix(),
 	}
 	signed, err := SignIdentity(id, h.cfg.SigningKey)

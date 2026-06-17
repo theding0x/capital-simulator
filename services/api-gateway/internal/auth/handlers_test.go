@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -77,5 +78,77 @@ func TestHandleLogoutClearsCookie(t *testing.T) {
 	}
 	if sc := rec.Result().Cookies(); len(sc) == 0 || sc[0].MaxAge >= 0 {
 		t.Fatalf("logout did not expire cookie: %v", sc)
+	}
+}
+
+func TestHandleCallbackSuccess(t *testing.T) {
+	t.Parallel()
+
+	// Stub GitHub token endpoint: returns access token JSON.
+	tokenSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"access_token":"gho_x"}`)
+	}))
+	defer tokenSrv.Close()
+
+	// Stub GitHub user endpoint: returns owner user JSON.
+	userSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"id":522224,"login":"theding0x"}`)
+	}))
+	defer userSrv.Close()
+
+	cfg := Config{
+		OAuthConfigured: true,
+		ClientID:        "cid",
+		ClientSecret:    "s",
+		OwnerUserID:     522224,
+		SigningKey:       []byte("k"),
+		RedirectBaseURL: "https://app.daskap.io/api",
+	}
+	client := &OAuthClient{
+		HTTP:        http.DefaultClient,
+		AuthorizeEP: "https://github.com/login/oauth/authorize",
+		TokenEP:     tokenSrv.URL,
+		UserEP:      userSrv.URL,
+	}
+	h := &Handlers{cfg: cfg, client: client, now: func() time.Time { return time.Unix(1_000_000, 0) }}
+
+	const state = "teststate123"
+	req := httptest.NewRequest(http.MethodGet, "/v1/auth/github/callback?state="+state+"&code=xcode", nil)
+	req.AddCookie(&http.Cookie{Name: StateCookie, Value: state})
+	rec := httptest.NewRecorder()
+
+	h.handleCallback(rec, req)
+
+	if rec.Code != http.StatusFound {
+		t.Fatalf("callback status = %d, want 302; body: %s", rec.Code, rec.Body.String())
+	}
+	if loc := rec.Header().Get("Location"); loc != "/" {
+		t.Fatalf("callback Location = %q, want /", loc)
+	}
+
+	// Find the session cookie.
+	var sessionVal string
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == SessionCookie {
+			sessionVal = c.Value
+			break
+		}
+	}
+	if sessionVal == "" {
+		t.Fatal("callback: no cs_session cookie set")
+	}
+
+	// Verify the signed session contains the right identity.
+	id, err := VerifyIdentity(sessionVal, cfg.SigningKey, time.Unix(999_999, 0))
+	if err != nil {
+		t.Fatalf("VerifyIdentity: %v", err)
+	}
+	if !id.IsOwner {
+		t.Error("expected IsOwner = true")
+	}
+	if id.Login != "theding0x" {
+		t.Errorf("Login = %q, want theding0x", id.Login)
 	}
 }

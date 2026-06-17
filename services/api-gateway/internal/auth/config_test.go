@@ -2,6 +2,20 @@ package auth
 
 import "testing"
 
+func TestIsOwnerID(t *testing.T) {
+	t.Parallel()
+	cfg := Config{OwnerUserID: 522224}
+	if !cfg.IsOwnerID(522224) {
+		t.Error("expected owner match for 522224")
+	}
+	if cfg.IsOwnerID(999) {
+		t.Error("did not expect match for 999")
+	}
+	if (Config{OwnerUserID: 0}).IsOwnerID(0) {
+		t.Error("zero owner id must never match (fail-closed)")
+	}
+}
+
 func TestConfigFromEnv(t *testing.T) {
 	// not parallel: mutates process env
 	t.Setenv("GITHUB_OAUTH_CLIENT_ID", "cid")

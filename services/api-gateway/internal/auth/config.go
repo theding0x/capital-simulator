@@ -16,6 +16,12 @@ type Config struct {
 	OAuthConfigured bool   // true when client id/secret/key are all set
 }
 
+// IsOwnerID reports whether the given GitHub numeric id is the configured
+// owner. Returns false when no owner id is configured (fail-closed).
+func (cfg Config) IsOwnerID(id int64) bool {
+	return cfg.OwnerUserID != 0 && id == cfg.OwnerUserID
+}
+
 // ConfigFromEnv builds Config from process environment variables.
 func ConfigFromEnv() Config {
 	cfg := Config{
