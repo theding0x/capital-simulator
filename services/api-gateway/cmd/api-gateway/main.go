@@ -11,6 +11,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/pkg/httpx"
 	applog "github.com/theding0x/capital-simulator/pkg/log"
+	"github.com/theding0x/capital-simulator/services/api-gateway/internal/auth"
 	"github.com/theding0x/capital-simulator/services/api-gateway/internal/proxy"
 )
 
@@ -25,6 +26,14 @@ func main() {
 
 	srv.HandleFunc("GET /v1/info", handleInfo)
 
+	// Auth: GitHub OAuth + owner-only write enforcement.
+	authCfg := auth.ConfigFromEnv()
+	authHandlers := auth.NewHandlers(authCfg, auth.NewOAuthClient())
+	authHandlers.Register(srv.HandleFunc)
+	if authCfg.Disabled {
+		logger.Warn("AUTH_DISABLED=true — all writes permitted (local dev only)")
+	}
+
 	// Reverse-proxy routes to commodity-service.
 	commodityURL := getenv("COMMODITY_SERVICE_URL", "http://commodity-service:8081")
 	commodityProxy, err := proxy.New(commodityURL, logger)
@@ -32,6 +41,7 @@ func main() {
 		logger.Error("failed to build commodity proxy", "err", err)
 		os.Exit(1)
 	}
+	commodityProxy = authCfg.RequireWrite(commodityProxy)
 	srv.Handle("/v1/commodities", commodityProxy)
 	srv.Handle("/v1/commodities/{rest...}", commodityProxy)
 	srv.Handle("/v1/exchange-ratio", commodityProxy)
@@ -50,6 +60,7 @@ func main() {
 		logger.Error("failed to build market proxy", "err", err)
 		os.Exit(1)
 	}
+	marketProxy = authCfg.RequireWrite(marketProxy)
 	srv.Handle("/v1/owners", marketProxy)
 	srv.Handle("/v1/owners/{rest...}", marketProxy)
 	srv.Handle("/v1/offers", marketProxy)
@@ -101,6 +112,7 @@ func main() {
 		logger.Error("failed to build agent proxy", "err", err)
 		os.Exit(1)
 	}
+	agentProxy = authCfg.RequireWrite(agentProxy)
 	srv.Handle("/v1/agents", agentProxy)
 	srv.Handle("/v1/agents/{rest...}", agentProxy)
 	srv.Handle("/v1/circuit-probes", agentProxy)
@@ -165,6 +177,7 @@ func main() {
 		logger.Error("failed to build simulation-engine proxy", "err", err)
 		os.Exit(1)
 	}
+	simProxy = authCfg.RequireWrite(simProxy)
 	srv.Handle("/v1/sim/status", simProxy)
 
 	// Issue #214 — automatic tick scheduler (operator control) → simulation-engine
@@ -334,6 +347,7 @@ func main() {
 		logger.Error("failed to build finance proxy", "err", err)
 		os.Exit(1)
 	}
+	financeProxy = authCfg.RequireWrite(financeProxy)
 	// Vol. III Ch. 1 — Cost-Price and Profit → finance-service
 	srv.Handle("/v1/profit/cost-price", financeProxy)
 	srv.Handle("/v1/profit/cost-price/{rest...}", financeProxy)
