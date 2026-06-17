@@ -12,8 +12,8 @@ const markdown = readFileSync(letterPath, 'utf8');
 const md = new MarkdownIt({ html: false, linkify: true, typographer: true });
 const letterHtml = md.render(markdown);
 
-if (!letterHtml.includes('Solidarity')) {
-  console.error('gen.mjs: rendered letter is missing "Solidarity" — aborting build.');
+if (!letterHtml.includes('Comrade')) {
+  console.error('gen.mjs: rendered letter is missing "Comrade" — aborting build.');
   process.exit(1);
 }
 
