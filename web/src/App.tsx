@@ -8,6 +8,7 @@ import { ChapterShell } from "./components/ChapterShell";
 import { CircuitSpine } from "./components/CircuitSpine";
 import { TurnoverPlayer } from "./components/TurnoverPlayer";
 import { CurrencyProvider, CurrencyToggle } from "./CurrencyContext";
+import { AuthBar } from "./components/AuthBar";
 
 const defaultChapterId =
   CHAPTERS.filter((c) => c.status === "done").at(-1)?.id ?? "v1-ch01";
@@ -47,6 +48,7 @@ export default function App() {
           <a href="#/" style={{ color: "var(--ink-muted)", textDecoration: "none", fontSize: 13, marginLeft: 12 }}>← Atlas</a>
           <span className="topbar-subtitle">— the self-expansion of value —</span>
           <CurrencyToggle />
+          <AuthBar />
         </header>
         <CircuitSpine selectedNode={selectedNode} onSelectNode={handleSelectNode}>
           <TurnoverPlayer setSelectedNode={setSelectedNode} />
