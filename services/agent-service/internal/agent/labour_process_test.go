@@ -49,6 +49,34 @@ func TestLabourProcess_Validate_MissingCapitalist(t *testing.T) {
 	}
 }
 
+// §2.b: a day shorter than the necessary labour would yield s < 0
+func TestLabourProcess_Validate_DurationBelowNecessaryLabour(t *testing.T) {
+	t.Parallel()
+	lp := agent.LabourProcess{
+		WorkerID:               agent.NewAgentID(),
+		CapitalistID:           agent.NewAgentID(),
+		Duration:               necessaryLabour - 1,
+		NecessaryLabourMinutes: necessaryLabour,
+	}
+	if err := lp.Validate(); err == nil {
+		t.Error("LabourProcess with duration < necessary labour should fail validation")
+	}
+}
+
+// §2.c: a day exactly equal to the necessary labour yields s = 0 and is valid
+func TestLabourProcess_Validate_DurationEqualsNecessaryLabour(t *testing.T) {
+	t.Parallel()
+	lp := agent.LabourProcess{
+		WorkerID:               agent.NewAgentID(),
+		CapitalistID:           agent.NewAgentID(),
+		Duration:               necessaryLabour,
+		NecessaryLabourMinutes: necessaryLabour,
+	}
+	if err := lp.Validate(); err != nil {
+		t.Errorf("duration == necessary labour should pass: %v", err)
+	}
+}
+
 // §1.c: valid process with all three elements passes validation
 func TestLabourProcess_Validate_Valid(t *testing.T) {
 	t.Parallel()

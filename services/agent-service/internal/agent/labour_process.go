@@ -57,7 +57,9 @@ type LabourProcess struct {
 	CreatedAt              time.Time         `json:"created_at"`
 }
 
-// Validate rejects zero-duration runs and nil required parties [§1.d].
+// Validate rejects zero-duration runs, nil required parties, and a working day
+// shorter than the necessary labour, which would yield negative surplus-value
+// (s >= 0) [§1.d, §2.b].
 func (lp LabourProcess) Validate() error {
 	if lp.WorkerID.IsZero() {
 		return errors.New("agent: worker_id is required")
@@ -67,6 +69,9 @@ func (lp LabourProcess) Validate() error {
 	}
 	if lp.Duration <= 0 {
 		return errors.New("agent: duration must be positive")
+	}
+	if lp.Duration < lp.NecessaryLabourMinutes {
+		return errors.New("agent: duration cannot be shorter than necessary labour")
 	}
 	for _, rm := range lp.Means.RawMaterials {
 		if rm.CommodityID == "" {
