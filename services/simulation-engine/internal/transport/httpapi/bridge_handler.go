@@ -29,6 +29,26 @@ func (s ProductivitySource) Valid() bool {
 	return false
 }
 
+// ProductivityScope says how far a productivity gain reaches. Marx, Ch. 12:
+// one capitalist's gain is only temporary extra surplus-value (individual vs
+// social value); the general rate of surplus-value is affected "only when the
+// increase in the productiveness of labour has seized upon those branches of
+// production that are connected with ... the necessary means of subsistence".
+type ProductivityScope string
+
+const (
+	// ScopeWorkplace is a single firm's gain (the default). It yields extra
+	// surplus-value and leaves the value of labour-power untouched.
+	ScopeWorkplace ProductivityScope = "workplace"
+	// ScopeWageGoodsBranch is a productivity change across the wage-goods
+	// branches; only this scope lowers the value of labour-power.
+	ScopeWageGoodsBranch ProductivityScope = "wage_goods_branch"
+)
+
+func (s ProductivityScope) Valid() bool {
+	return s == ScopeWorkplace || s == ScopeWageGoodsBranch
+}
+
 // ProductivityFetcher resolves a productivity factor for a domain record
 // in one of the three Part IV chapters. The default implementation makes
 // HTTP calls (gateway-mediated); tests inject a stub.
@@ -46,17 +66,26 @@ type relativeSurplusRequest struct {
 	WorkingDayTotal    int64   `json:"working_day_total"`
 	CurrentLPV         int64   `json:"current_lpv"`
 	ProductivityFactor float64 `json:"productivity_factor"`
+	// Scope defaults to ScopeWorkplace. SocialValue (per article, in labour
+	// minutes) and Quantity are required for ScopeWorkplace only.
+	Scope       ProductivityScope `json:"scope,omitempty"`
+	SocialValue int64             `json:"social_value,omitempty"`
+	Quantity    int64             `json:"quantity,omitempty"`
 }
 
 // relativeSurplusResponse is the bridge result: the Ch. 12 working-day
 // reshaped by the productivity gain, plus the relative-SV delta.
 type relativeSurplusResponse struct {
-	ProductivityFactor   float64                  `json:"productivity_factor"`
-	OldWorkingDay        workingDayDTO  `json:"old_working_day"`
-	NewWorkingDay        workingDayDTO  `json:"new_working_day"`
-	NewLabourPowerValue  int64                    `json:"new_labour_power_value"`
-	RelativeSurplusValue int64                    `json:"relative_surplus_value"`
-	Source               *productivitySourceDTO   `json:"source,omitempty"`
+	ProductivityFactor   float64           `json:"productivity_factor"`
+	OldWorkingDay        workingDayDTO     `json:"old_working_day"`
+	NewWorkingDay        workingDayDTO     `json:"new_working_day"`
+	NewLabourPowerValue  int64             `json:"new_labour_power_value"`
+	RelativeSurplusValue int64             `json:"relative_surplus_value"`
+	Scope                ProductivityScope `json:"scope"`
+	// ExtraSurplusValue is the temporary individual-vs-social gain; set for
+	// ScopeWorkplace only.
+	ExtraSurplusValue *int64                 `json:"extra_surplus_value,omitempty"`
+	Source            *productivitySourceDTO `json:"source,omitempty"`
 }
 
 type productivitySourceDTO struct {
@@ -87,6 +116,9 @@ type relativeSurplusFromProductivityRequest struct {
 	CurrentLPV      int64              `json:"current_lpv"`
 	Source          ProductivitySource `json:"source"`
 	SourceID        string             `json:"source_id"`
+	Scope           ProductivityScope  `json:"scope,omitempty"`
+	SocialValue     int64              `json:"social_value,omitempty"`
+	Quantity        int64              `json:"quantity,omitempty"`
 }
 
 // RelativeSurplusFromProductivity handles POST
@@ -126,6 +158,9 @@ func (h *Handler) RelativeSurplusFromProductivity(w http.ResponseWriter, r *http
 		WorkingDayTotal:    req.WorkingDayTotal,
 		CurrentLPV:         req.CurrentLPV,
 		ProductivityFactor: factor,
+		Scope:              req.Scope,
+		SocialValue:        req.SocialValue,
+		Quantity:           req.Quantity,
 	}
 	src := &productivitySourceDTO{Source: req.Source, ID: req.SourceID}
 	resp, err := computeRelativeSurplus(inner, src)
@@ -151,10 +186,20 @@ func computeRelativeSurplus(req relativeSurplusRequest, source *productivitySour
 	if req.ProductivityFactor <= 0 {
 		return relativeSurplusResponse{}, errors.New("productivity_factor must be positive")
 	}
+	scope := req.Scope
+	if scope == "" {
+		scope = ScopeWorkplace
+	}
+	if !scope.Valid() {
+		return relativeSurplusResponse{}, errors.New("scope must be 'workplace' or 'wage_goods_branch'")
+	}
 	old := production.WorkingDay{
 		Total:           labour.LabourMinutes(req.WorkingDayTotal),
 		NecessaryLabour: production.NecessaryLabour(req.CurrentLPV),
 		SurplusLabour:   production.SurplusLabour(req.WorkingDayTotal - req.CurrentLPV),
+	}
+	if scope == ScopeWorkplace {
+		return computeWorkplaceGain(req, old, source)
 	}
 	newLPV := production.ApplyProductivityToSNLT(
 		labour.LabourMinutes(req.CurrentLPV),
@@ -172,6 +217,39 @@ func computeRelativeSurplus(req relativeSurplusRequest, source *productivitySour
 		NewWorkingDay:        workingDayDTOFromDomain(newWD),
 		NewLabourPowerValue:  int64(newLPV),
 		RelativeSurplusValue: delta,
+		Scope:                ScopeWageGoodsBranch,
+		Source:               source,
+	}, nil
+}
+
+// computeWorkplaceGain handles a single firm's productivity gain: the value of
+// labour-power and the working-day split stay as they were, and the gain is the
+// temporary extra surplus-value between the firm's individual value and the
+// social value of its article [Ch. 12 §1].
+func computeWorkplaceGain(req relativeSurplusRequest, old production.WorkingDay, source *productivitySourceDTO) (relativeSurplusResponse, error) {
+	if req.SocialValue <= 0 {
+		return relativeSurplusResponse{}, errors.New("social_value must be positive for scope 'workplace'")
+	}
+	if req.Quantity <= 0 {
+		return relativeSurplusResponse{}, errors.New("quantity must be positive for scope 'workplace'")
+	}
+	iv := production.ApplyProductivityToSNLT(
+		labour.LabourMinutes(req.SocialValue),
+		labour.ProductivityFactor(req.ProductivityFactor),
+	)
+	extra := int64(production.ExtraSurplusValue(
+		production.IndividualValue(iv),
+		production.SocialValue(req.SocialValue),
+		production.Quantity(req.Quantity),
+	))
+	return relativeSurplusResponse{
+		ProductivityFactor:   req.ProductivityFactor,
+		OldWorkingDay:        workingDayDTOFromDomain(old),
+		NewWorkingDay:        workingDayDTOFromDomain(old),
+		NewLabourPowerValue:  req.CurrentLPV,
+		RelativeSurplusValue: 0,
+		Scope:                ScopeWorkplace,
+		ExtraSurplusValue:    &extra,
 		Source:               source,
 	}, nil
 }
