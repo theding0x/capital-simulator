@@ -143,6 +143,22 @@ func DailyWearAndTear(m Machine) LabourMinutes {
 	return LabourMinutes(int64(m.MachineValue) / int64(m.LifespanDays))
 }
 
+// NextWear returns the LabourMinutes the machine surrenders on its next
+// working day: DailyWearAndTear, capped so that AccumulatedWear never exceeds
+// MachineValue. Once the machine's value is fully transferred it yields zero
+// — it "never adds more value than it loses" (§2).
+func NextWear(m Machine) LabourMinutes {
+	remaining := m.MachineValue - MachineValue(m.AccumulatedWear.Value)
+	if remaining <= 0 {
+		return 0
+	}
+	dwt := DailyWearAndTear(m)
+	if dwt > LabourMinutes(remaining) {
+		return LabourMinutes(remaining)
+	}
+	return dwt
+}
+
 // ValueTransferredPerUnit returns the LabourMinutes per unit of product
 // contributed by machine wear. Doubling output halves per-unit value (§2).
 //

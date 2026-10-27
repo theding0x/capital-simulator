@@ -331,3 +331,47 @@ func TestMemory_RegulateColonialLabourMarket_NotFound(t *testing.T) {
 		t.Fatalf("err = %v, want ErrNotFound", err)
 	}
 }
+
+// Capital Vol. I, Ch. 15, §2: the machine "never adds more value than it
+// loses, on an average, by wear and tear" — over its life it transfers at most
+// its own value, however many ticks it is run.
+func TestMemory_AdvanceTick_WearCappedAtMachineValue(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	st := store.NewMemory()
+	mc, err := st.CreateMachine(ctx, machinery.Machine{
+		Name:            "needle-machine",
+		MachineValue:    machinery.MachineValue(1_000),
+		LifespanDays:    3, // 1000/3 = 333 per day; 3 days leaves 1 unreclaimed
+		ProductivePower: 145_000,
+	})
+	if err != nil {
+		t.Fatalf("CreateMachine: %v", err)
+	}
+	f, err := st.CreateFactory(ctx, machinery.Factory{
+		Name:       "Needle Works",
+		PrimeMover: machinery.PrimeMover{Kind: machinery.PrimeMoverSteam, Horsepower: 30},
+		Machines:   []machinery.Machine{mc},
+	})
+	if err != nil {
+		t.Fatalf("CreateFactory: %v", err)
+	}
+	var transferred int64
+	for i := 0; i < 6; i++ { // two ticks past the 3-day lifespan and beyond
+		_, tick, err := st.AdvanceTick(ctx, f.ID)
+		if err != nil {
+			t.Fatalf("AdvanceTick %d: %v", i+1, err)
+		}
+		transferred += tick.ValueTransferred
+	}
+	if transferred != 1_000 {
+		t.Fatalf("total ValueTransferred = %d, want 1000 (MachineValue)", transferred)
+	}
+	got, err := st.GetMachine(ctx, mc.ID)
+	if err != nil {
+		t.Fatalf("GetMachine: %v", err)
+	}
+	if got.AccumulatedWear.Value != machinery.LabourMinutes(1_000) {
+		t.Fatalf("AccumulatedWear = %d, want 1000", got.AccumulatedWear.Value)
+	}
+}

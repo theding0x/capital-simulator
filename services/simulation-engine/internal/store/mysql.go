@@ -294,7 +294,7 @@ func (m *MySQL) AdvanceTick(ctx context.Context, id machinery.FactoryID) (machin
 	result := f.RunTick()
 	// Accumulate per-machine wear, persist.
 	for i, mc := range f.Machines {
-		dwt := machinery.DailyWearAndTear(mc)
+		dwt := machinery.NextWear(mc)
 		mc.AccumulatedWear.Value += dwt
 		f.Machines[i] = mc
 		if _, err := tx.ExecContext(ctx,

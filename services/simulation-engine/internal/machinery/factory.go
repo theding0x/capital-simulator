@@ -70,11 +70,12 @@ func (f Factory) TotalProductivePower() ProductivePower {
 }
 
 // DailyValueTransfer is the aggregate LabourMinutes transferred to product
-// per working day across every machine in the factory.
+// per working day across every machine in the factory, each capped at its
+// remaining MachineValue (see NextWear).
 func (f Factory) DailyValueTransfer() LabourMinutes {
 	var total LabourMinutes
 	for _, m := range f.Machines {
-		total += DailyWearAndTear(m)
+		total += NextWear(m)
 	}
 	return total
 }
