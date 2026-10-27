@@ -59,6 +59,22 @@ func TestWorkingDay_Validate_ZeroNecessary(t *testing.T) {
 	}
 }
 
+func TestWorkingDay_Validate_NegativeSurplus(t *testing.T) {
+	t.Parallel()
+	wd := agent.WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: -60}
+	if err := wd.Validate(); err != agent.ErrSurplusLabourNegative {
+		t.Fatalf("expected ErrSurplusLabourNegative, got %v", err)
+	}
+}
+
+func TestWorkingDay_Validate_ZeroSurplus(t *testing.T) {
+	t.Parallel()
+	wd := agent.WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 0}
+	if err := wd.Validate(); err != nil {
+		t.Fatalf("zero surplus is the limiting case and must be admissible, got %v", err)
+	}
+}
+
 func TestValidateConstraint(t *testing.T) {
 	t.Parallel()
 	c := agent.WorkingDayConstraint{Label: "Factory Act 1850", StatutoryLimitMinutes: 630}
