@@ -42,7 +42,7 @@ func newBridgeTestServer(t *testing.T, fetcher ProductivityFetcher) *httptest.Se
 func TestRelativeSurplus_Para1_HalveLPV(t *testing.T) {
 	t.Parallel()
 	ts := newBridgeTestServer(t, nil)
-	body := `{"working_day_total":720,"current_lpv":600,"productivity_factor":2.0}`
+	body := `{"working_day_total":720,"current_lpv":600,"productivity_factor":2.0,"scope":"wage_goods_branch"}`
 	res, err := http.Post(ts.URL+"/v1/production/relative-surplus", "application/json", bytes.NewReader([]byte(body)))
 	if err != nil {
 		t.Fatalf("POST: %v", err)
@@ -90,7 +90,7 @@ func TestRelativeSurplusFromProductivity_CooperationDrivesCh12(t *testing.T) {
 		SourceCooperation: 1.2,
 	}}
 	ts := newBridgeTestServer(t, fetcher)
-	body := `{"working_day_total":720,"current_lpv":600,"source":"cooperation","source_id":"abc"}`
+	body := `{"working_day_total":720,"current_lpv":600,"source":"cooperation","source_id":"abc","scope":"wage_goods_branch"}`
 	res, err := http.Post(ts.URL+"/v1/production/relative-surplus-from-productivity", "application/json", bytes.NewReader([]byte(body)))
 	if err != nil {
 		t.Fatalf("POST: %v", err)
@@ -128,6 +128,94 @@ func TestRelativeSurplusFromProductivity_RejectsUnknownSource(t *testing.T) {
 		t.Fatalf("POST: %v", err)
 	}
 	defer res.Body.Close()
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", res.StatusCode)
+	}
+}
+
+func postRelativeSurplus(t *testing.T, ts *httptest.Server, body string) (*http.Response, relativeSurplusResponse) {
+	t.Helper()
+	res, err := http.Post(ts.URL+"/v1/production/relative-surplus", "application/json", bytes.NewReader([]byte(body)))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	t.Cleanup(func() { res.Body.Close() })
+	var got relativeSurplusResponse
+	if res.StatusCode == http.StatusOK {
+		if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+			t.Fatalf("decode: %v", err)
+		}
+	}
+	return res, got
+}
+
+// Ch. 12: one capitalist's gain is only temporary extra surplus-value. Social
+// value 60 min/article, productivity factor 2.0 → individual value 30; selling
+// 24 articles at the social value gains (60-30)*24 = 720. The value of
+// labour-power and the working-day split do not move.
+func TestRelativeSurplus_WorkplaceGainIsExtraSurplusValueOnly(t *testing.T) {
+	t.Parallel()
+	ts := newBridgeTestServer(t, nil)
+	body := `{"working_day_total":720,"current_lpv":600,"productivity_factor":2.0,"social_value":60,"quantity":24}`
+	res, got := postRelativeSurplus(t, ts, body)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", res.StatusCode)
+	}
+	if got.Scope != ScopeWorkplace {
+		t.Fatalf("Scope = %q, want workplace (default)", got.Scope)
+	}
+	if got.ExtraSurplusValue == nil || *got.ExtraSurplusValue != 720 {
+		t.Fatalf("ExtraSurplusValue = %v, want 720", got.ExtraSurplusValue)
+	}
+	if got.NewLabourPowerValue != 600 {
+		t.Fatalf("NewLabourPowerValue = %d, want unchanged 600", got.NewLabourPowerValue)
+	}
+	if got.RelativeSurplusValue != 0 {
+		t.Fatalf("RelativeSurplusValue = %d, want 0 for a single workplace", got.RelativeSurplusValue)
+	}
+	if got.NewWorkingDay != got.OldWorkingDay {
+		t.Fatalf("working day moved: %+v -> %+v", got.OldWorkingDay, got.NewWorkingDay)
+	}
+}
+
+func TestRelativeSurplus_WageGoodsBranchMovesLPVWithoutExtraSurplusValue(t *testing.T) {
+	t.Parallel()
+	ts := newBridgeTestServer(t, nil)
+	body := `{"working_day_total":720,"current_lpv":600,"productivity_factor":2.0,"scope":"wage_goods_branch"}`
+	res, got := postRelativeSurplus(t, ts, body)
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want 200", res.StatusCode)
+	}
+	if got.Scope != ScopeWageGoodsBranch {
+		t.Fatalf("Scope = %q, want wage_goods_branch", got.Scope)
+	}
+	if got.ExtraSurplusValue != nil {
+		t.Fatalf("ExtraSurplusValue = %d, want omitted", *got.ExtraSurplusValue)
+	}
+	if got.NewLabourPowerValue != 300 || got.RelativeSurplusValue != 300 {
+		t.Fatalf("LPV=%d RSV=%d, want 300/300", got.NewLabourPowerValue, got.RelativeSurplusValue)
+	}
+}
+
+func TestRelativeSurplus_WorkplaceRequiresSocialValueAndQuantity(t *testing.T) {
+	t.Parallel()
+	ts := newBridgeTestServer(t, nil)
+	for name, body := range map[string]string{
+		"no social value": `{"working_day_total":720,"current_lpv":600,"productivity_factor":2.0,"quantity":24}`,
+		"no quantity":     `{"working_day_total":720,"current_lpv":600,"productivity_factor":2.0,"social_value":60}`,
+	} {
+		res, _ := postRelativeSurplus(t, ts, body)
+		if res.StatusCode != http.StatusBadRequest {
+			t.Errorf("%s: status = %d, want 400", name, res.StatusCode)
+		}
+	}
+}
+
+func TestRelativeSurplus_RejectsUnknownScope(t *testing.T) {
+	t.Parallel()
+	ts := newBridgeTestServer(t, nil)
+	body := `{"working_day_total":720,"current_lpv":600,"productivity_factor":2.0,"scope":"national"}`
+	res, _ := postRelativeSurplus(t, ts, body)
 	if res.StatusCode != http.StatusBadRequest {
 		t.Fatalf("status = %d, want 400", res.StatusCode)
 	}

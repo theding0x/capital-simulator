@@ -942,10 +942,17 @@ export interface RatesOfSurplusValueResult {
 // Part IV bridge — Ch.13/14/15 productivity → Ch.12 relative surplus-value.
 export type ProductivitySource = "cooperation" | "manufacture" | "factory";
 
+// How far a productivity gain reaches (Ch. 12): one firm's gain is temporary
+// extra surplus-value; only a wage-goods-branch change lowers LPV.
+export type ProductivityScope = "workplace" | "wage_goods_branch";
+
 export interface RelativeSurplusInput {
   working_day_total: number;
   current_lpv: number;
   productivity_factor: number;
+  scope?: ProductivityScope; // default "workplace"
+  social_value?: number; // required for "workplace"
+  quantity?: number; // required for "workplace"
 }
 
 export interface RelativeSurplusFromSourceInput {
@@ -953,6 +960,9 @@ export interface RelativeSurplusFromSourceInput {
   current_lpv: number;
   source: ProductivitySource;
   source_id: string;
+  scope?: ProductivityScope; // default "workplace"
+  social_value?: number; // required for "workplace"
+  quantity?: number; // required for "workplace"
 }
 
 export interface ProductionWorkingDayShape {
@@ -967,6 +977,8 @@ export interface RelativeSurplusResult {
   new_working_day: ProductionWorkingDayShape;
   new_labour_power_value: number;
   relative_surplus_value: number;
+  scope: ProductivityScope;
+  extra_surplus_value?: number; // "workplace" only
   source?: { source: ProductivitySource; id: string };
 }
 

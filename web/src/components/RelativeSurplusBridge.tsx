@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../api";
 import { fmtMinutes } from "../format";
-import type { ProductivitySource, RelativeSurplusResult } from "../types";
+import type { ProductivityScope, ProductivitySource, RelativeSurplusResult } from "../types";
 
 interface Props {
   source: ProductivitySource;
@@ -20,6 +20,9 @@ interface Props {
 export function RelativeSurplusBridge({ source, sourceId, factor, sourceLabel }: Props) {
   const [workingDayTotal, setWorkingDayTotal] = useState(720);
   const [currentLpv, setCurrentLpv] = useState(600);
+  const [scope, setScope] = useState<ProductivityScope>("workplace");
+  const [socialValue, setSocialValue] = useState(60);
+  const [quantity, setQuantity] = useState(24);
   const [result, setResult] = useState<RelativeSurplusResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,6 +37,8 @@ export function RelativeSurplusBridge({ source, sourceId, factor, sourceLabel }:
         current_lpv: currentLpv,
         source,
         source_id: sourceId,
+        scope,
+        ...(scope === "workplace" ? { social_value: socialValue, quantity } : {}),
       });
       setResult(r);
     } catch (e) {
@@ -48,7 +53,9 @@ export function RelativeSurplusBridge({ source, sourceId, factor, sourceLabel }:
       <p className="small" style={{ marginTop: 0 }}>
         <strong>Feed productivity into Ch. 12.</strong> {sourceLabel} produces a factor of{" "}
         <code>{factor.toFixed(3)}</code>. Apply it to a working day to see the
-        relative-SV gain Marx claims is possible (§1).
+        gain Marx describes (§1): a single workplace earns only temporary extra
+        surplus-value; relative surplus-value arises when the wage-goods branches are
+        affected.
       </p>
       <form onSubmit={submit} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "end" }}>
         <label className="small">
@@ -71,12 +78,52 @@ export function RelativeSurplusBridge({ source, sourceId, factor, sourceLabel }:
             style={{ width: "6rem" }}
           />
         </label>
+        <label className="small">
+          <span style={{ display: "block" }}>Reach of the gain</span>
+          <select value={scope} onChange={(e) => setScope(e.target.value as ProductivityScope)}>
+            <option value="workplace">One workplace</option>
+            <option value="wage_goods_branch">Wage-goods branches</option>
+          </select>
+        </label>
+        {scope === "workplace" && (
+          <>
+            <label className="small">
+              <span style={{ display: "block" }}>Social value / article (min)</span>
+              <input
+                type="number"
+                min={1}
+                value={socialValue}
+                onChange={(e) => setSocialValue(Number(e.target.value))}
+                style={{ width: "6rem" }}
+              />
+            </label>
+            <label className="small">
+              <span style={{ display: "block" }}>Articles sold</span>
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+                style={{ width: "6rem" }}
+              />
+            </label>
+          </>
+        )}
         <button type="submit" className="primary" disabled={busy}>
           {busy ? "…" : "Apply"}
         </button>
         {err && <span className="error">{err}</span>}
       </form>
-      {result && (
+      {result && result.scope === "workplace" && (
+        <div className="small" style={{ marginTop: "0.5rem" }}>
+          <div>
+            Extra surplus-value: <strong>{fmtMinutes(result.extra_surplus_value ?? 0)}</strong>
+            {" "}(temporary — it vanishes once the method becomes general)
+          </div>
+          <div>LPV unchanged at {fmtMinutes(result.new_labour_power_value)}; the general rate of surplus-value does not move.</div>
+        </div>
+      )}
+      {result && result.scope === "wage_goods_branch" && (
         <div className="small" style={{ marginTop: "0.5rem" }}>
           <div>
             New LPV: <strong>{fmtMinutes(result.new_labour_power_value)}</strong>
