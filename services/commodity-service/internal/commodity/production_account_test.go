@@ -83,16 +83,34 @@ func TestProductionAccount_ExpandedCapital(t *testing.T) {
 
 func TestSurplusProduceRatio(t *testing.T) {
 	t.Parallel()
+	// Marx Ch.9 §4: 2 lbs surplus-produce : 2 lbs necessary-produce = 100%.
 	got := commodity.SurplusProduceRatio(360, 360)
-	if math.Abs(got-0.5) > 1e-9 {
-		t.Errorf("SurplusProduceRatio(360,360): want 0.5, got %v", got)
+	if math.Abs(got-1.0) > 1e-9 {
+		t.Errorf("SurplusProduceRatio(360,360): want 1.0, got %v", got)
 	}
 }
 
-func TestSurplusProduceRatio_ZeroInputs(t *testing.T) {
+func TestSurplusProduceRatio_EqualsRate(t *testing.T) {
+	t.Parallel()
+	// 1871 Spinning Mill: v=90, s=90 -> s'=100%; ratio must match Rate().
+	a := commodity.ProductionAccount{Constant: 410, Variable: 90, Surplus: 90}
+	rate, err := a.Rate()
+	if err != nil {
+		t.Fatalf("Rate: %v", err)
+	}
+	got := commodity.SurplusProduceRatio(commodity.LabourMinutes(a.Surplus), a.Variable)
+	if math.Abs(got-float64(rate)) > 1e-9 {
+		t.Errorf("SurplusProduceRatio = %v, want Rate() = %v", got, float64(rate))
+	}
+}
+
+func TestSurplusProduceRatio_ZeroNecessary(t *testing.T) {
 	t.Parallel()
 	if got := commodity.SurplusProduceRatio(0, 0); got != 0 {
 		t.Errorf("SurplusProduceRatio(0,0): want 0, got %v", got)
+	}
+	if got := commodity.SurplusProduceRatio(10, 0); got != 0 {
+		t.Errorf("SurplusProduceRatio(10,0): want 0, got %v", got)
 	}
 }
 

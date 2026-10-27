@@ -244,7 +244,7 @@ The React UI adds a "Ch. 06 — The Sale and Purchase of Labour-Power" panel wit
 - **VariableCapital.** `VariableCapital` struct (WageValue, WorkingDay) with `Validate()` and `SurplusLabourFrom()`.
 - **ProductValue.** `ProductValue` (c/v/s decomposition) with `Total()`; `DecomposeProductValue` accumulates constant-capital transfers across a list of inputs plus one variable-capital input.
 - **CapitalComposition.** `CapitalComposition` with `Ratio()` (c/v).
-- **ProductionAccount.** `ProductionAccount` records the scalar c/v/s for a completed production run. Methods: `ValueProduct()` (v+s), `ExpandedCapital()` (c+v+s), `Rate()` (s/v). `ComputeRate` returns `ErrDivisionByZero` when v=0. `SurplusProduceRatio` = s/(v+s).
+- **ProductionAccount.** `ProductionAccount` records the scalar c/v/s for a completed production run. Methods: `ValueProduct()` (v+s), `ExpandedCapital()` (c+v+s), `Rate()` (s/v). `ComputeRate` returns `ErrDivisionByZero` when v=0. `SurplusProduceRatio` = s/v (surplus-produce : necessary-produce, equal to s′).
 - **MySQL migration.** `00002_ch08_production_accounts.sql` adds the `production_accounts` table.
 - **Endpoints (stateless, Ch.8).** `POST /v1/capital/decompose` — decomposes product value given constant and variable capital inputs. `GET /v1/capital/composition?constant_value=&variable_value=` — returns c/v ratio.
 - **Endpoints (persistent, Ch.9).** `POST /v1/production-accounts` — records a production account; rejects zero variable capital. `GET /v1/production-accounts` — lists all accounts. `GET /v1/production-accounts/{id}` — fetches one. `POST /v1/rate-of-surplus-value` — stateless s/v probe.

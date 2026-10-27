@@ -486,7 +486,7 @@ export interface ProductionAccountResult extends ProductionAccount {
   rate_of_surplus_value: number;    // s/v as float
   value_product: number;            // v + s (LabourMinutes)
   expanded_capital: number;         // c + v + s (LabourMinutes)
-  surplus_produce_fraction: number; // s/(v+s) as float
+  surplus_produce_fraction: number; // s/v as float
 }
 
 export interface CreateProductionAccountInput {

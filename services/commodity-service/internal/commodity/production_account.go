@@ -94,12 +94,13 @@ func ComputeValueProduct(v LabourMinutes, s SurplusValue) ValueProduct {
 	return ValueProduct(v + LabourMinutes(s))
 }
 
-// SurplusProduceRatio returns surplus-labour / (necessary-labour + surplus-labour) [§4].
-// Returns 0 if surplusLabour + necessaryLabour == 0.
+// SurplusProduceRatio returns surplus-labour / necessary-labour [§4] — the
+// ratio of surplus-produce to the part of the product in which necessary
+// labour is incorporated, not to the total product. It equals s' by
+// construction. Returns 0 if necessaryLabour == 0.
 func SurplusProduceRatio(surplusLabour, necessaryLabour LabourMinutes) float64 {
-	total := surplusLabour + necessaryLabour
-	if total == 0 {
+	if necessaryLabour == 0 {
 		return 0
 	}
-	return float64(surplusLabour) / float64(total)
+	return float64(surplusLabour) / float64(necessaryLabour)
 }
