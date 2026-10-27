@@ -13,6 +13,7 @@ const PhysicalMaxMinutes int64 = 1440
 
 var (
 	ErrNecessaryLabourRequired         = errors.New("agent: necessary_labour_minutes must be positive")
+	ErrSurplusLabourNegative           = errors.New("agent: surplus_labour_minutes must not be negative")
 	ErrWorkingDayExceedsPhysicalMax    = errors.New("agent: working day exceeds physical maximum of 24 hours")
 	ErrWorkingDayExceedsStatutoryLimit = errors.New("agent: working day exceeds statutory limit")
 )
@@ -53,11 +54,15 @@ func (wd WorkingDay) RateOfSurplusValue() float64 {
 	return float64(wd.SurplusLabourMinutes) / float64(wd.NecessaryLabourMinutes)
 }
 
-// Validate checks that necessary labour is positive and the total does not exceed
-// the physical maximum of 24 hours.
+// Validate checks that necessary labour is positive, surplus labour is not negative
+// (BC is an extension beyond AB, never a deduction from it; zero is the limiting case),
+// and the total does not exceed the physical maximum of 24 hours.
 func (wd WorkingDay) Validate() error {
 	if wd.NecessaryLabourMinutes <= 0 {
 		return ErrNecessaryLabourRequired
+	}
+	if wd.SurplusLabourMinutes < 0 {
+		return ErrSurplusLabourNegative
 	}
 	if wd.TotalMinutes() > PhysicalMaxMinutes {
 		return ErrWorkingDayExceedsPhysicalMax
