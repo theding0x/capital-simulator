@@ -2,10 +2,20 @@
 // Capital Vol. I, Ch. 11. All functions are pure; no persistence is needed.
 package surplus
 
-import "github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+import (
+	"errors"
+
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+)
 
 // AbsoluteWorkdayLimit is the physical ceiling of any working day: 24 h × 60 min.
 const AbsoluteWorkdayLimit labour.LabourMinutes = 24 * 60
+
+// ErrExceedsWorkdayLimit is returned when necessary + surplus labour reaches or
+// exceeds AbsoluteWorkdayLimit. Marx, Ch. 11 second law: the absolute limit of
+// the working day "sets an absolute limit to the compensation of a reduction of
+// variable capital by a higher rate of surplus-value".
+var ErrExceedsWorkdayLimit = errors.New("surplus: necessary + surplus labour must be less than the 24-hour absolute workday limit")
 
 // SurplusValueMass is the total surplus-value extracted from all simultaneously
 // employed workers. Expressed in the same abstract unit as VariableCapital (§1).
@@ -16,6 +26,14 @@ type SurplusValueMass int64
 type SurplusValueRate struct {
 	SurplusLabour   int64 `json:"surplus_labour"`
 	NecessaryLabour int64 `json:"necessary_labour"`
+}
+
+// Validate enforces necessary + surplus < AbsoluteWorkdayLimit [§1, second law].
+func (r SurplusValueRate) Validate() error {
+	if labour.LabourMinutes(r.NecessaryLabour+r.SurplusLabour) >= AbsoluteWorkdayLimit {
+		return ErrExceedsWorkdayLimit
+	}
+	return nil
 }
 
 // Rate returns the dimensionless ratio s/v as a float64.

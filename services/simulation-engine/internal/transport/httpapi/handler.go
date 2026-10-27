@@ -183,6 +183,10 @@ func (h *Handler) ComputeMass(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "surplus_labour cannot be negative")
 		return
 	}
+	if err := (surplus.SurplusValueRate{SurplusLabour: req.SurplusLabour, NecessaryLabour: req.NecessaryLabour}).Validate(); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if req.VariableCapital != nil && *req.VariableCapital <= 0 {
 		writeError(w, http.StatusBadRequest, "variable_capital must be positive")
 		return

@@ -1,9 +1,9 @@
 package surplus_test
 
 import (
+	"errors"
 	"testing"
 
-	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
 
@@ -116,13 +116,57 @@ func TestInvariant_IndividualScaled(t *testing.T) {
 	}
 }
 
-// Invariant: working day (necessary + surplus) < AbsoluteWorkdayLimit [§1]
-func TestInvariant_WorkingDayBelowAbsoluteLimit(t *testing.T) {
+// Invariant: necessary + surplus < AbsoluteWorkdayLimit [§1, second law].
+func TestRateValidate_WorkdayLimit(t *testing.T) {
 	t.Parallel()
-	rate := surplus.SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 6}
-	total := labour.LabourMinutes(rate.NecessaryLabour + rate.SurplusLabour)
-	if total >= surplus.AbsoluteWorkdayLimit {
-		t.Fatalf("working day %d must be < %d", total, surplus.AbsoluteWorkdayLimit)
+	tests := []struct {
+		name    string
+		rate    surplus.SurplusValueRate
+		wantErr bool
+	}{
+		{"six and six", surplus.SurplusValueRate{SurplusLabour: 360, NecessaryLabour: 360}, false},
+		{"one minute short of 24h", surplus.SurplusValueRate{SurplusLabour: 1079, NecessaryLabour: 360}, false},
+		{"exactly 24h", surplus.SurplusValueRate{SurplusLabour: 1080, NecessaryLabour: 360}, true},
+		{"beyond 24h", surplus.SurplusValueRate{SurplusLabour: 2000, NecessaryLabour: 360}, true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := tc.rate.Validate()
+			if tc.wantErr && !errors.Is(err, surplus.ErrExceedsWorkdayLimit) {
+				t.Fatalf("expected ErrExceedsWorkdayLimit, got %v", err)
+			}
+			if !tc.wantErr && err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+// §1 second law: 100 labourers at v=3s (6h necessary) "can never reach the sum
+// of 1,200s. or 24 × 100 working-hours". The longest admissible day yields a
+// total product (V+S) strictly below 1,200s; the 24-hour day that would reach it
+// is rejected.
+func TestInvariant_CompensationNeverReaches1200s(t *testing.T) {
+	t.Parallel()
+	v := surplus.LabourPowerValue(3)
+	n := surplus.WorkerCount(100)
+	V := int64(surplus.MinimumCapital(v, n)) // 300
+
+	longest := surplus.SurplusValueRate{SurplusLabour: 1079, NecessaryLabour: 360}
+	if err := longest.Validate(); err != nil {
+		t.Fatalf("longest admissible day rejected: %v", err)
+	}
+	if total := V + int64(surplus.MassByWorkers(v, longest, n)); total >= 1200 {
+		t.Fatalf("V+S = %d, must stay below 1200", total)
+	}
+
+	full := surplus.SurplusValueRate{SurplusLabour: 1080, NecessaryLabour: 360}
+	if err := full.Validate(); !errors.Is(err, surplus.ErrExceedsWorkdayLimit) {
+		t.Fatalf("24-hour day must be rejected, got %v", err)
+	}
+	if total := V + int64(surplus.MassByWorkers(v, full, n)); total != 1200 {
+		t.Fatalf("fixture sanity: 24h day should give V+S = 1200, got %d", total)
 	}
 }
 
