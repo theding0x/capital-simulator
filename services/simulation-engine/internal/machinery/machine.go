@@ -225,6 +225,33 @@ func LabourDisplaced(handLabourPerUnit LabourMinutes, unitsProduced int64) Labou
 	return handLabourPerUnit * LabourMinutes(unitsProduced)
 }
 
+// WithinSocialLimit reports whether employing the machine saves labour for
+// society: the labour it surrenders to product (embodied) must be less than
+// the hand labour it displaces (§2: "there is always a difference of labour
+// saved in favour of the machine"). The comparison is strict; a machine whose
+// embodied labour merely equals the labour displaced saves nothing.
+func WithinSocialLimit(embodied, displaced LabourMinutes) bool {
+	return embodied < displaced
+}
+
+// CapitalistGain returns the margin that decides whether a capitalist will
+// employ the machine: the value of the labour-power replaced minus the value
+// the machine transfers to product over the same period. §2: "Instead of
+// paying for the labour, he only pays the value of the labour-power employed;
+// therefore, the limit to his using a machine is fixed by the difference
+// between the value of the machine and the value of the labour-power replaced
+// by it." A non-positive gain means the machine will not be introduced, even
+// when it is socially labour-saving: the capitalist's limit is narrower than
+// the social one (it compares against paid labour, not total labour).
+func CapitalistGain(machineValueTransferred, labourPowerReplaced LabourMinutes) LabourMinutes {
+	return labourPowerReplaced - machineValueTransferred
+}
+
+// WithinCapitalistLimit reports whether CapitalistGain is strictly positive.
+func WithinCapitalistLimit(machineValueTransferred, labourPowerReplaced LabourMinutes) bool {
+	return CapitalistGain(machineValueTransferred, labourPowerReplaced) > 0
+}
+
 // ComputeMoralDepreciation returns the value an existing machine loses when
 // a rival with the same ProductivePower is produced more cheaply (§3B). The
 // result is clamped at zero: competition from cheaper successors never

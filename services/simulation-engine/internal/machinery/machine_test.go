@@ -88,11 +88,47 @@ func TestLabourDisplaced_Para2_SteamPlough(t *testing.T) {
 	if displaced != machinery.LabourMinutes(3960) {
 		t.Fatalf("LabourDisplaced = %d, want 3960", displaced)
 	}
-	const machineCostPencePerHour = 3
-	const displacedWagePence = 15 * 12 // 15 shillings = 180 pence
-	if !(displacedWagePence > machineCostPencePerHour) {
-		t.Fatalf("displaced wage bill (%d) must exceed machine cost (%d)",
-			displacedWagePence, machineCostPencePerHour)
+}
+
+// Capital Vol. I, Ch. 15, §2: the capitalist's limit.
+// "the limit to his using a machine is fixed by the difference between the
+//  value of the machine and the value of the labour-power replaced by it."
+//
+// Steam-plough: 3d an hour against 15s (180d) for 66 men. Both sides are
+// expressed on one scale (pence, carried as LabourMinutes magnitudes), so
+// only the difference matters: 180 - 3 = 177.
+func TestCapitalistGain_Para2_SteamPlough(t *testing.T) {
+	t.Parallel()
+	const machineCost = machinery.LabourMinutes(3)
+	const labourPowerReplaced = machinery.LabourMinutes(15 * 12)
+	if got := machinery.CapitalistGain(machineCost, labourPowerReplaced); got != 177 {
+		t.Fatalf("CapitalistGain = %d, want 177", got)
+	}
+	if !machinery.WithinCapitalistLimit(machineCost, labourPowerReplaced) {
+		t.Fatalf("steam-plough must lie within the capitalist's limit")
+	}
+}
+
+// The capitalist's limit is narrower than the social one: a machine can save
+// society labour (66 men's 3,960 minutes displaced) and still be refused
+// because it costs more than the labour-power it replaces.
+func TestCapitalistLimit_NarrowerThanSocialLimit(t *testing.T) {
+	t.Parallel()
+	const displaced = machinery.LabourMinutes(3960)
+	const embodied = machinery.LabourMinutes(200)
+	const labourPowerReplaced = machinery.LabourMinutes(180)
+	if !machinery.WithinSocialLimit(embodied, displaced) {
+		t.Fatalf("machine should be socially labour-saving")
+	}
+	if machinery.WithinCapitalistLimit(embodied, labourPowerReplaced) {
+		t.Fatalf("machine dearer than the labour-power it replaces must be refused")
+	}
+	// Boundary: break-even is not within either limit.
+	if machinery.WithinCapitalistLimit(180, 180) {
+		t.Fatalf("break-even must not satisfy the capitalist's limit")
+	}
+	if machinery.WithinSocialLimit(3960, 3960) {
+		t.Fatalf("break-even must not satisfy the social limit")
 	}
 }
 
@@ -181,9 +217,14 @@ func TestLabourDisplaced_ExceedsEmbodiedLabour(t *testing.T) {
 	const handLabourPerMachineDay = machinery.LabourMinutes(3960)
 	const machineUnitsPerDay = 1
 	displaced := machinery.LabourDisplaced(handLabourPerMachineDay, machineUnitsPerDay)
-	if !(displaced > embodiedPerDay) {
+	if !machinery.WithinSocialLimit(embodiedPerDay, displaced) {
 		t.Fatalf("LabourDisplaced (%d) must exceed embodied labour per day (%d)",
 			displaced, embodiedPerDay)
+	}
+	// A machine costing more labour than it saves is rejected.
+	dear := machinery.Machine{MachineValue: machinery.MachineValue(6_000_000), LifespanDays: 1000}
+	if machinery.WithinSocialLimit(machinery.DailyWearAndTear(dear), displaced) {
+		t.Fatalf("machine embodying more labour than it displaces must fail the social limit")
 	}
 }
 
