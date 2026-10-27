@@ -213,3 +213,24 @@ func TestMachineID_NewIsUniqueAndHex(t *testing.T) {
 		t.Fatalf("MachineID length = %d, want 24", len(a))
 	}
 }
+
+// Capital Vol. I, Ch. 15, §2: a machine never transfers more than its own
+// value. NextWear is the daily wear, truncated to what remains of MachineValue.
+func TestNextWear_Para2_CappedAtRemainingValue(t *testing.T) {
+	t.Parallel()
+	m := machinery.Machine{
+		MachineValue: machinery.MachineValue(600_000),
+		LifespanDays: 1000,
+	}
+	if got := machinery.NextWear(m); got != 600 {
+		t.Fatalf("fresh machine NextWear = %d, want 600", got)
+	}
+	m.AccumulatedWear.Value = 599_800
+	if got := machinery.NextWear(m); got != 200 {
+		t.Fatalf("near-exhausted NextWear = %d, want 200", got)
+	}
+	m.AccumulatedWear.Value = 600_000
+	if got := machinery.NextWear(m); got != 0 {
+		t.Fatalf("exhausted NextWear = %d, want 0", got)
+	}
+}

@@ -319,7 +319,7 @@ func (m *Memory) AdvanceTick(_ context.Context, id machinery.FactoryID) (machine
 	result := f.RunTick()
 	// Accumulate wear per machine.
 	for i, mc := range f.Machines {
-		dwt := machinery.DailyWearAndTear(mc)
+		dwt := machinery.NextWear(mc)
 		mc.AccumulatedWear.Value += dwt
 		f.Machines[i] = mc
 		m.machines[mc.ID] = mc
