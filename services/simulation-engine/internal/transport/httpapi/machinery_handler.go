@@ -169,6 +169,14 @@ type factoryDTO struct {
 	IntensityFactor      float64      `json:"intensity_factor"`
 	TotalProductivePower int64        `json:"total_productive_power"`
 	DailyValueTransfer   int64        `json:"daily_value_transfer"`
+
+	Attendants                  int64 `json:"attendants"`
+	LivingLabourPerAttendant    int64 `json:"living_labour_per_attendant"`
+	NecessaryLabourPerAttendant int64 `json:"necessary_labour_per_attendant"`
+	LivingLabour                int64 `json:"living_labour"`
+	VariableCapital             int64 `json:"variable_capital"`
+	SurplusValue                int64 `json:"surplus_value"`
+
 	ProductivityFactor   float64      `json:"productivity_factor"`
 	CreatedAt            string       `json:"created_at,omitempty"`
 }
@@ -188,6 +196,14 @@ func dtoFromFactory(f machinery.Factory) factoryDTO {
 		IntensityFactor:      float64(f.IntensityFactor),
 		TotalProductivePower: int64(f.TotalProductivePower()),
 		DailyValueTransfer:   int64(f.DailyValueTransfer()),
+
+		Attendants:                  f.Attendants,
+		LivingLabourPerAttendant:    int64(f.LivingLabourPerAttendant),
+		NecessaryLabourPerAttendant: int64(f.NecessaryLabourPerAttendant),
+		LivingLabour:                int64(f.LivingLabour()),
+		VariableCapital:             int64(f.VariableCapital()),
+		SurplusValue:                int64(f.SurplusValue()),
+
 		ProductivityFactor:   machinery.FactoryProductivityFactor(f),
 	}
 	for _, m := range f.Machines {
@@ -207,6 +223,10 @@ type createFactoryRequest struct {
 	PrimeMover      primeMoverDTO        `json:"prime_mover"`
 	Machines        []createMachineEntry `json:"machines"`
 	IntensityFactor float64              `json:"intensity_factor,omitempty"`
+
+	Attendants                  int64 `json:"attendants,omitempty"`
+	LivingLabourPerAttendant    int64 `json:"living_labour_per_attendant,omitempty"`
+	NecessaryLabourPerAttendant int64 `json:"necessary_labour_per_attendant,omitempty"`
 }
 
 type createMachineEntry struct {
@@ -266,6 +286,10 @@ func (h *Handler) CreateFactory(w http.ResponseWriter, r *http.Request) {
 		},
 		Machines:        machines,
 		IntensityFactor: intensity,
+
+		Attendants:                  req.Attendants,
+		LivingLabourPerAttendant:    machinery.LabourMinutes(req.LivingLabourPerAttendant),
+		NecessaryLabourPerAttendant: machinery.LabourMinutes(req.NecessaryLabourPerAttendant),
 	})
 	if err != nil {
 		h.writeMachineryError(w, err)

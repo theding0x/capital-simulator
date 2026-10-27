@@ -830,6 +830,12 @@ export interface Factory {
   intensity_factor: number;
   total_productive_power: number;
   daily_value_transfer: number;
+  attendants: number;
+  living_labour_per_attendant: number;
+  necessary_labour_per_attendant: number;
+  living_labour: number;
+  variable_capital: number;
+  surplus_value: number;
   productivity_factor: number;
   created_at?: string;
 }
