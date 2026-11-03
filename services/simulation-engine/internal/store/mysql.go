@@ -183,11 +183,12 @@ func (m *MySQL) CreateFactory(ctx context.Context, f machinery.Factory) (machine
 	}
 
 	const insertF = `INSERT INTO factories
-		(id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`
+		(id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, attendants, living_labour_per_attendant, necessary_labour_per_attendant, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	if _, err := tx.ExecContext(ctx, insertF,
 		string(f.ID), f.Name, string(f.PrimeMover.Kind), f.PrimeMover.Horsepower,
-		f.TickCount, float64(f.IntensityFactor), f.CreatedAt,
+		f.TickCount, float64(f.IntensityFactor),
+		f.Attendants, int64(f.LivingLabourPerAttendant), int64(f.NecessaryLabourPerAttendant), f.CreatedAt,
 	); err != nil {
 		return machinery.Factory{}, err
 	}
@@ -206,7 +207,7 @@ func (m *MySQL) CreateFactory(ctx context.Context, f machinery.Factory) (machine
 }
 
 func (m *MySQL) GetFactory(ctx context.Context, id machinery.FactoryID) (machinery.Factory, error) {
-	const q = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, created_at
+	const q = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, attendants, living_labour_per_attendant, necessary_labour_per_attendant, created_at
 		FROM factories WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	f, err := scanFactory(row.Scan)
@@ -222,7 +223,7 @@ func (m *MySQL) GetFactory(ctx context.Context, id machinery.FactoryID) (machine
 }
 
 func (m *MySQL) ListFactories(ctx context.Context) ([]machinery.Factory, error) {
-	const q = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, created_at
+	const q = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, attendants, living_labour_per_attendant, necessary_labour_per_attendant, created_at
 		FROM factories ORDER BY name ASC`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
@@ -258,7 +259,7 @@ func (m *MySQL) AdvanceTick(ctx context.Context, id machinery.FactoryID) (machin
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	const fq = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, created_at
+	const fq = `SELECT id, name, prime_mover_kind, prime_mover_horsepower, tick_count, intensity_factor, attendants, living_labour_per_attendant, necessary_labour_per_attendant, created_at
 		FROM factories WHERE id = ? FOR UPDATE`
 	row := tx.QueryRowContext(ctx, fq, string(id))
 	f, err := scanFactory(row.Scan)
@@ -591,9 +592,9 @@ func scanMachine(scan scanFn) (machinery.Machine, error) {
 func scanFactory(scan scanFn) (machinery.Factory, error) {
 	var f machinery.Factory
 	var id, kind string
-	var hp, tickCount int64
+	var hp, tickCount, attendants, living, necessary int64
 	var intensity float64
-	err := scan(&id, &f.Name, &kind, &hp, &tickCount, &intensity, &f.CreatedAt)
+	err := scan(&id, &f.Name, &kind, &hp, &tickCount, &intensity, &attendants, &living, &necessary, &f.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return machinery.Factory{}, ErrNotFound
 	}
@@ -604,6 +605,9 @@ func scanFactory(scan scanFn) (machinery.Factory, error) {
 	f.PrimeMover = machinery.PrimeMover{Kind: machinery.PrimeMoverKind(kind), Horsepower: hp}
 	f.TickCount = tickCount
 	f.IntensityFactor = machinery.IntensityFactor(intensity)
+	f.Attendants = attendants
+	f.LivingLabourPerAttendant = machinery.LabourMinutes(living)
+	f.NecessaryLabourPerAttendant = machinery.LabourMinutes(necessary)
 	return f, nil
 }
 

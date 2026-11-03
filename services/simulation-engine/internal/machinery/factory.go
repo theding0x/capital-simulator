@@ -28,6 +28,13 @@ func NewFactoryID() FactoryID {
 // shortened under machinery, the remaining hours fill more densely. The
 // factor is bounded below at 1.0 by NewIntensityFactor; default zero
 // means "unset" and is treated as 1.0 by the tick path.
+//
+// Attendants are the factory's living labour (§2: a machine's productivity
+// is measured by the labour it costs — the value it transfers plus the
+// living labour of those who tend it). Only living labour creates new value
+// (W = c + v + s). Each attendant works LivingLabourPerAttendant per tick, of
+// which NecessaryLabourPerAttendant reproduces their labour-power (v) and the
+// remainder is surplus-labour (s). §3C intensity densifies that living labour.
 type Factory struct {
 	ID              FactoryID       `json:"id"`
 	Name            string          `json:"name"`
@@ -35,12 +42,18 @@ type Factory struct {
 	Machines        []Machine       `json:"machines"`
 	TickCount       int64           `json:"tick_count"`
 	IntensityFactor IntensityFactor `json:"intensity_factor"`
-	CreatedAt       time.Time       `json:"created_at"`
+
+	Attendants                  int64         `json:"attendants"`
+	LivingLabourPerAttendant    LabourMinutes `json:"living_labour_per_attendant"`
+	NecessaryLabourPerAttendant LabourMinutes `json:"necessary_labour_per_attendant"`
+
+	CreatedAt time.Time `json:"created_at"`
 }
 
 var (
 	ErrFactoryNoMachines = errors.New("factory: at least one machine is required")
 	ErrFactoryNoMover    = errors.New("factory: prime_mover kind is required")
+	ErrFactoryLabour     = errors.New("factory: attendant labour must be non-negative and necessary labour cannot exceed living labour")
 )
 
 func (f Factory) Validate() error {
@@ -49,6 +62,10 @@ func (f Factory) Validate() error {
 	}
 	if len(f.Machines) == 0 {
 		return ErrFactoryNoMachines
+	}
+	if f.Attendants < 0 || f.LivingLabourPerAttendant < 0 || f.NecessaryLabourPerAttendant < 0 ||
+		f.NecessaryLabourPerAttendant > f.LivingLabourPerAttendant {
+		return ErrFactoryLabour
 	}
 	for _, m := range f.Machines {
 		if err := m.Validate(); err != nil {
@@ -80,36 +97,63 @@ func (f Factory) DailyValueTransfer() LabourMinutes {
 	return total
 }
 
+// LivingLabour is the new value the attendants create per tick: their nominal
+// labour densified by the §3C intensity factor (an unset factor counts as
+// 1.0). Machines transfer value but create none; this is the only source of
+// v + s.
+func (f Factory) LivingLabour() LabourMinutes {
+	if f.Attendants <= 0 || f.LivingLabourPerAttendant <= 0 {
+		return 0
+	}
+	return EffectiveLabour(LabourMinutes(f.Attendants)*f.LivingLabourPerAttendant, f.IntensityFactor)
+}
+
+// VariableCapital is the value of the attendants' labour-power per tick (v),
+// bounded above by the living labour they actually perform.
+func (f Factory) VariableCapital() LabourMinutes {
+	if f.Attendants <= 0 || f.NecessaryLabourPerAttendant <= 0 {
+		return 0
+	}
+	v := LabourMinutes(f.Attendants) * f.NecessaryLabourPerAttendant
+	return min(v, f.LivingLabour())
+}
+
+// SurplusValue is the unpaid part of the living labour per tick (s).
+func (f Factory) SurplusValue() LabourMinutes {
+	return f.LivingLabour() - f.VariableCapital()
+}
+
 // TickResult is one period's worth of value transfer and output for a Factory.
+// ValueTransferred (c) + VariableCapital (v) + SurplusValue (s) is the value
+// of the period's product; LivingLabour = VariableCapital + SurplusValue.
 type TickResult struct {
 	ValueTransferred LabourMinutes `json:"value_transferred"`
 	UnitsProduced    int64         `json:"units_produced"`
 	HandLabourSaved  LabourMinutes `json:"hand_labour_saved"`
+	LivingLabour     LabourMinutes `json:"living_labour"`
+	VariableCapital  LabourMinutes `json:"variable_capital"`
+	SurplusValue     LabourMinutes `json:"surplus_value"`
 }
 
 // RunTick computes one period's contribution without mutating the receiver.
-// The store layer is responsible for persisting the accumulation. The
-// factory's IntensityFactor (§3C) scales the saved hand-labour: a more
-// densely-packed working day exposes more hand-labour displacement per
-// calendar hour, even though MachineValue transfer remains tied to wear.
+// The store layer is responsible for persisting the accumulation.
+// HandLabourSaved is the hand labour the machines displace (§2). Machines
+// transfer value by wear (c); only the attendants' living labour, densified
+// by the factory's IntensityFactor (§3C), creates new value (v + s).
 func (f Factory) RunTick() TickResult {
 	var saved LabourMinutes
 	var units int64
-	intensity := f.IntensityFactor
-	if intensity < 1.0 {
-		intensity = 1.0
-	}
 	for _, m := range f.Machines {
 		units += int64(m.ProductivePower)
-		if m.HandLabourPerUnit > 0 {
-			displaced := LabourDisplaced(m.HandLabourPerUnit, int64(m.ProductivePower))
-			saved += EffectiveLabour(displaced, intensity)
-		}
+		saved += LabourDisplaced(m.HandLabourPerUnit, int64(m.ProductivePower))
 	}
 	return TickResult{
 		ValueTransferred: f.DailyValueTransfer(),
 		UnitsProduced:    units,
 		HandLabourSaved:  saved,
+		LivingLabour:     f.LivingLabour(),
+		VariableCapital:  f.VariableCapital(),
+		SurplusValue:     f.SurplusValue(),
 	}
 }
 
@@ -117,19 +161,19 @@ func (f Factory) RunTick() TickResult {
 // factory's labour-time productivity exceeds an equivalent hand-labour
 // process. It is the §2 ratio:
 //
-//	(hand labour required for the day's output) / (machine labour required)
+//	(hand labour displaced) / (labour the machinery costs)
 //
-// where the "machine labour required" approximates the value the machines
-// transfer to product (DailyValueTransfer). When the factory carries no
-// hand-labour baseline the factor falls back to 1.0. This number is the
-// Ch. 15 contribution to the same productivity-factor vocabulary used by
+// where the labour the machinery costs is the value it transfers to product
+// (DailyValueTransfer) plus the living labour of its attendants. When the
+// factory displaces no hand labour, or the machinery costs as much as it
+// replaces (outside the §2 social limit), the factor is 1.0. This number is
+// the Ch. 15 contribution to the same productivity-factor vocabulary used by
 // Ch. 13 and Ch. 14 — Marx's three forms of relative-SV mechanism.
 func FactoryProductivityFactor(f Factory) float64 {
 	tr := f.RunTick()
-	if tr.HandLabourSaved <= 0 || tr.ValueTransferred <= 0 {
+	cost := tr.ValueTransferred + tr.LivingLabour
+	if tr.HandLabourSaved <= 0 || cost <= 0 {
 		return 1.0
 	}
-	hand := float64(tr.HandLabourSaved) + float64(tr.ValueTransferred)
-	machine := float64(tr.ValueTransferred)
-	return hand / machine
+	return max(1.0, float64(tr.HandLabourSaved)/float64(cost))
 }
