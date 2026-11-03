@@ -12,8 +12,8 @@ import (
 
 func TestMultiplier_Discrete(t *testing.T) {
 	t.Parallel()
-	// SpinningMill1871: 7-day discrete period; each day yields a sellable unit.
-	// Multiplier must be 1 regardless of WorkingDayCount.
+	// SpinningMill1871: 7-day discrete period; the spinner recovers a week's
+	// outlay weekly, so a week's outlay is tied up.
 	wp := workperiod.WorkingPeriod{
 		ID:                      workperiod.NewWorkingPeriodID(),
 		IndustrialCapitalID:     "mill-1871",
@@ -22,8 +22,19 @@ func TestMultiplier_Discrete(t *testing.T) {
 		Mode:                    workperiod.ModeDiscrete,
 		WorkingDayLengthMinutes: 600,
 	}
-	if got := wp.Multiplier(); got != 1 {
-		t.Fatalf("discrete Multiplier = %d, want 1", got)
+	if got := wp.Multiplier(); got != 7 {
+		t.Fatalf("discrete Multiplier = %d, want 7", got)
+	}
+}
+
+// Marx Ch. 12: the locomotive maker (12 weeks) must have twelve times as much
+// circulating capital at his disposal as the spinner (1 week).
+func TestMultiplier_LocomotiveToSpinnerRatioIsTwelve(t *testing.T) {
+	t.Parallel()
+	spinner := workperiod.WorkingPeriod{WorkingDayCount: 7, Mode: workperiod.ModeDiscrete}
+	loco := workperiod.WorkingPeriod{WorkingDayCount: 84, Mode: workperiod.ModeConnected}
+	if got := loco.Multiplier() / spinner.Multiplier(); got != 12 {
+		t.Fatalf("advance ratio = %d, want 12", got)
 	}
 }
 
@@ -44,9 +55,9 @@ func TestMultiplier_Connected(t *testing.T) {
 	}
 }
 
-func TestMultiplier_DiscreteIgnoresCount(t *testing.T) {
+func TestMultiplier_DiscreteEqualsCount(t *testing.T) {
 	t.Parallel()
-	// Discrete processes with varying WorkingDayCount always return 1.
+	// A discrete process ties up one working period's outlay, however long.
 	for _, n := range []int64{1, 7, 30, 365} {
 		wp := workperiod.WorkingPeriod{
 			IndustrialCapitalID:     "mill",
@@ -55,8 +66,8 @@ func TestMultiplier_DiscreteIgnoresCount(t *testing.T) {
 			Mode:                    workperiod.ModeDiscrete,
 			WorkingDayLengthMinutes: 600,
 		}
-		if got := wp.Multiplier(); got != 1 {
-			t.Fatalf("discrete Multiplier(count=%d) = %d, want 1", n, got)
+		if got := wp.Multiplier(); got != n {
+			t.Fatalf("discrete Multiplier(count=%d) = %d, want %d", n, got, n)
 		}
 	}
 }
