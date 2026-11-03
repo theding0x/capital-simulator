@@ -938,8 +938,8 @@ func (m *Memory) Capitalise(_ context.Context, id circulation.ProductiveCircuitI
 	if !ok {
 		return circulation.CapitalisationStep{}, ErrNotFound
 	}
-	if amount > 0 && amount < pc.MinCapitalisationIncrement {
-		return circulation.CapitalisationStep{}, circulation.ErrIndivisibleProductionElement
+	if err := pc.ValidateCapitalisation(amount, dc, dv); err != nil {
+		return circulation.CapitalisationStep{}, err
 	}
 	step := circulation.CapitalisationStep{
 		ProductiveCircuitID: id,

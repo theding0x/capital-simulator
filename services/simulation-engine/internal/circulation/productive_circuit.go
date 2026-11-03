@@ -13,6 +13,9 @@ type Pence int64
 // Errors returned by domain operations.
 var (
 	ErrIndivisibleProductionElement = errors.New("circulation: amount below minimum capitalisation increment")
+	ErrCapitalisationNotConserved   = errors.New("circulation: delta constant + delta variable must equal amount capitalised")
+	ErrSimpleReproductionNoGrowth   = errors.New("circulation: simple reproduction consumes all surplus-value; it cannot be capitalised")
+	ErrCapitalisationExceedsHoard   = errors.New("circulation: amount exceeds the latent money-capital hoard")
 	ErrInsufficientReserve          = errors.New("circulation: reserve draw exceeds balance")
 	ErrPartialRealisation           = errors.New("circulation: commodity capital not fully realised")
 	ErrValueRelationShift           = errors.New("circulation: value-relation shift detected mid-circuit")
@@ -84,6 +87,38 @@ func (p ProductiveCircuit) Validate() error {
 	}
 	if p.MinCapitalisationIncrement <= 0 {
 		return errors.New("circulation: min_capitalisation_increment_pence must be positive")
+	}
+	return nil
+}
+
+// ValidateCapitalisation checks a proposed injection of amount, split into
+// additional constant (dc) and variable (dv) capital, against the circuit's
+// current state. Expanded reproduction grows P only by capitalised
+// surplus-value (Vol. II Ch. 2 §II/§III), so the injection must:
+//   - not occur under simple reproduction, where all surplus-value is
+//     consumed as revenue;
+//   - be conserved: dc + dv == amount;
+//   - respect the minimum capitalisation increment (indivisible elements);
+//   - not exceed the accumulated latent hoard, the only source of m.
+func (p ProductiveCircuit) ValidateCapitalisation(amount, dc, dv Pence) error {
+	return ValidateCapitalisation(p.Mode, p.LatentMoneyCapital.Accumulated, p.MinCapitalisationIncrement, amount, dc, dv)
+}
+
+// ValidateCapitalisation is the state-free form of
+// ProductiveCircuit.ValidateCapitalisation, for stores that hold the circuit's
+// fields as columns rather than as a ProductiveCircuit value.
+func ValidateCapitalisation(mode ReproductionMode, hoard, minIncrement, amount, dc, dv Pence) error {
+	if mode == ReproductionSimple {
+		return ErrSimpleReproductionNoGrowth
+	}
+	if dc+dv != amount {
+		return ErrCapitalisationNotConserved
+	}
+	if amount > 0 && amount < minIncrement {
+		return ErrIndivisibleProductionElement
+	}
+	if amount > hoard {
+		return ErrCapitalisationExceedsHoard
 	}
 	return nil
 }

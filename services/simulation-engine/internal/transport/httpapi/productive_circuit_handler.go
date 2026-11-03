@@ -297,7 +297,13 @@ func (h *Handler) CapitaliseCircuit(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusNotFound, "productive circuit not found")
 			return
 		}
-		if errors.Is(err, circulation.ErrIndivisibleProductionElement) {
+		if errors.Is(err, circulation.ErrCapitalisationNotConserved) {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if errors.Is(err, circulation.ErrIndivisibleProductionElement) ||
+			errors.Is(err, circulation.ErrSimpleReproductionNoGrowth) ||
+			errors.Is(err, circulation.ErrCapitalisationExceedsHoard) {
 			writeError(w, http.StatusUnprocessableEntity, err.Error())
 			return
 		}
