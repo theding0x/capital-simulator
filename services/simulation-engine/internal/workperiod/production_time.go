@@ -10,6 +10,16 @@ import (
 	"time"
 )
 
+const (
+	nanosPerMinute = int64(60_000_000_000)
+	nanosPerDay    = int64(86_400_000_000_000)
+)
+
+// ErrGapLabourMismatch is returned when a gap's labour-time is not the owning
+// working period's connected working-days (Ch. 13: the working period is the
+// labour-time; the production time is the longer span that contains it).
+var ErrGapLabourMismatch = errors.New("production_labour_gap: labour_time_nanos must equal the owning working period's working_day_count × working_day_length_minutes")
+
 // --- NaturalProcessKind -------------------------------------------------
 
 // NaturalProcessKind names the kind of natural-process production span.
@@ -85,6 +95,25 @@ func (g ProductionLabourGap) Validate() error {
 	}
 	if g.GapNanos != g.ProductionTimeNanos-g.LabourTimeNanos {
 		return errors.New("production_labour_gap: gap_nanos must equal production_time_nanos - labour_time_nanos")
+	}
+	return nil
+}
+
+// ValidateAgainst reports whether the gap is consistent with its owning
+// working period p. The labour-time must equal the period's connected
+// working-days (WorkingDayCount × WorkingDayLengthMinutes), so the gap
+// can only ever add latent, value-free time on top of the labour-time.
+// If minProductionDays > 0 it is the Ch. 12 natural floor for the commodity,
+// and the production span (in calendar days) must reach it.
+func (g ProductionLabourGap) ValidateAgainst(p WorkingPeriod, minProductionDays int64) error {
+	if g.WorkingPeriodID != p.ID {
+		return errors.New("production_labour_gap: working_period_id does not match the owning working period")
+	}
+	if g.LabourTimeNanos != p.WorkingDayCount*p.WorkingDayLengthMinutes*nanosPerMinute {
+		return ErrGapLabourMismatch
+	}
+	if minProductionDays > 0 && g.ProductionTimeNanos < minProductionDays*nanosPerDay {
+		return ErrPrematureDelivery
 	}
 	return nil
 }
