@@ -124,3 +124,36 @@ func TestNewProductionAccountID(t *testing.T) {
 		t.Errorf("ProductionAccountID: want 24 chars, got %d", len(string(id)))
 	}
 }
+
+func TestComputeRateBasisPoints_RoundsHalfUp(t *testing.T) {
+	t.Parallel()
+
+	// Spinning mill: s/v of 1/3 is 3333.33 bp, rounded to 3333; 2/3 is 6666.67, rounded to 6667.
+	cases := []struct {
+		s    commodity.SurplusValue
+		v    commodity.LabourMinutes
+		want int64
+	}{
+		{360, 360, 10000},
+		{1080, 360, 30000},
+		{1, 3, 3333},
+		{2, 3, 6667},
+	}
+	for _, tc := range cases {
+		got, err := commodity.ComputeRateBasisPoints(tc.s, tc.v)
+		if err != nil {
+			t.Fatalf("ComputeRateBasisPoints(%d,%d): %v", tc.s, tc.v, err)
+		}
+		if got != tc.want {
+			t.Errorf("ComputeRateBasisPoints(%d,%d) = %d, want %d", tc.s, tc.v, got, tc.want)
+		}
+	}
+}
+
+func TestComputeRateBasisPoints_ZeroVariable(t *testing.T) {
+	t.Parallel()
+
+	if _, err := commodity.ComputeRateBasisPoints(10, 0); !errors.Is(err, commodity.ErrDivisionByZero) {
+		t.Errorf("err = %v, want commodity.ErrDivisionByZero", err)
+	}
+}

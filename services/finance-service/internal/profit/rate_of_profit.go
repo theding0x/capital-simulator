@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 )
 
 // This file carries Ch. 2's argument: the same surplus-value, measured against
@@ -101,10 +103,8 @@ func ComputeRateOfProfit(s SurplusValue, c ConstantCapital, v VariableCapital) R
 // capital yields a zero rate: surplus-value originates in variable capital, so
 // without it there is no rate of exploitation to measure.
 func ComputeRateOfSurplusValue(s SurplusValue, v VariableCapital) RateOfSurplusValue {
-	if v <= 0 {
-		return 0
-	}
-	return RateOfSurplusValue(roundHalfUp(int64(s)*basisPoints, int64(v)))
+	bp, _ := surplusrate.BasisPoints(int64(s), int64(v))
+	return RateOfSurplusValue(bp)
 }
 
 // ProfitRateAnalysis records a single capital decomposition c + v + s alongside

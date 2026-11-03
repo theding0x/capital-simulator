@@ -5,6 +5,7 @@ package production
 import (
 	"math"
 
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 )
 
@@ -49,10 +50,8 @@ func ShortenNecessaryLabour(wd WorkingDay, newLPV LabourPowerValue) WorkingDay {
 
 // RateOfSurplusValue returns s/v as a float64. Returns 0 when nl == 0 [§1].
 func RateOfSurplusValue(sl SurplusLabour, nl NecessaryLabour) float64 {
-	if nl == 0 {
-		return 0
-	}
-	return float64(sl) / float64(nl)
+	r, _ := surplusrate.Ratio(int64(sl), int64(nl))
+	return r
 }
 
 // ExtraSurplusValue is the total extra gain captured by a capitalist whose

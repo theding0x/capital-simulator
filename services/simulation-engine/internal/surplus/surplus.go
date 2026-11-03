@@ -5,6 +5,7 @@ package surplus
 import (
 	"errors"
 
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 )
 
@@ -38,10 +39,8 @@ func (r SurplusValueRate) Validate() error {
 
 // Rate returns the dimensionless ratio s/v as a float64.
 func (r SurplusValueRate) Rate() float64 {
-	if r.NecessaryLabour == 0 {
-		return 0
-	}
-	return float64(r.SurplusLabour) / float64(r.NecessaryLabour)
+	v, _ := surplusrate.Ratio(r.SurplusLabour, r.NecessaryLabour)
+	return v
 }
 
 // VariableCapital is the total money-value advanced for labour-power across all
