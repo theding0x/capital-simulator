@@ -2,6 +2,7 @@ package agent
 
 import (
 	"errors"
+	"math"
 	"testing"
 )
 
@@ -113,6 +114,47 @@ func TestLawInverseRelation_ProductivityRise(t *testing.T) {
 	after := ScenarioOutcome{LabourPowerValueMinutes: 360, SurplusLabourMinutes: 360}
 	if !LawInverseRelation(before, after) {
 		t.Fatal("LP value falls and surplus rises must satisfy LawInverseRelation")
+	}
+}
+
+// Marx Ch. 17 §1 Case I, derived from the domain: a 12-hour day (720 min)
+// with necessary labour 480 / surplus 240 (LPV 4s, s 2s) and productivity
+// 4/3 yields necessary 360 / surplus 360 (LPV 3s, s 3s). The proportional
+// change is asymmetric — LPV falls 25%, surplus-value rises 50% — which is
+// Marx's correction of Ricardo.
+func TestComputeOutcome_ProductivityRise_MarxCaseI(t *testing.T) {
+	t.Parallel()
+	day := WorkingDay{NecessaryLabourMinutes: 480, SurplusLabourMinutes: 240}
+	before := ComputeOutcome(LabourScenario{WorkingDay: day, Intensity: NormalLabourIntensity, Productivity: NormalLabourProductivity})
+	after := ComputeOutcome(LabourScenario{WorkingDay: day, Intensity: NormalLabourIntensity, Productivity: LabourProductivity{Factor: 4.0 / 3.0}})
+
+	if after.NecessaryLabourMinutes != 360 || after.SurplusLabourMinutes != 360 {
+		t.Fatalf("partition: got %d/%d, want 360/360", after.NecessaryLabourMinutes, after.SurplusLabourMinutes)
+	}
+	if after.LabourPowerValueMinutes != 360 {
+		t.Fatalf("LPV: got %d, want 360", after.LabourPowerValueMinutes)
+	}
+	if after.DailyValueMinutes != before.DailyValueMinutes {
+		t.Fatalf("daily value must stay constant: %d vs %d", after.DailyValueMinutes, before.DailyValueMinutes)
+	}
+	if !LawInverseRelation(before, after) {
+		t.Fatal("derived outcomes must satisfy LawInverseRelation")
+	}
+	lpvFall := float64(before.LabourPowerValueMinutes-after.LabourPowerValueMinutes) / float64(before.LabourPowerValueMinutes)
+	svRise := float64(after.SurplusLabourMinutes-before.SurplusLabourMinutes) / float64(before.SurplusLabourMinutes)
+	if math.Abs(lpvFall-0.25) > 1e-9 || math.Abs(svRise-0.50) > 1e-9 {
+		t.Fatalf("asymmetry: LPV fall %.4f (want 0.25), surplus rise %.4f (want 0.50)", lpvFall, svRise)
+	}
+}
+
+// A productivity fall is the mirror case: necessary labour lengthens and
+// surplus labour shrinks within the same day.
+func TestComputeOutcome_ProductivityFall(t *testing.T) {
+	t.Parallel()
+	day := WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360}
+	out := ComputeOutcome(LabourScenario{WorkingDay: day, Intensity: NormalLabourIntensity, Productivity: LabourProductivity{Factor: 0.75}})
+	if out.NecessaryLabourMinutes != 480 || out.SurplusLabourMinutes != 240 {
+		t.Fatalf("partition: got %d/%d, want 480/240", out.NecessaryLabourMinutes, out.SurplusLabourMinutes)
 	}
 }
 

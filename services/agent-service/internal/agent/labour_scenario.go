@@ -79,13 +79,13 @@ func DailyValueCreated(wd WorkingDay, li LabourIntensity) LabourMinutes {
 
 // ComputeOutcome partitions a LabourScenario into its outcome
 // components. It is stateless and pure: the working day's
-// necessary/surplus partition is taken as given, intensity scales the
-// daily value, and productivity feeds the laws (not the partition
-// directly — productivity changes have already been baked into the
-// caller's choice of NecessaryLabourMinutes).
+// necessary/surplus partition is the baseline at normal productivity,
+// productivity then divides the necessary labour-time (Ch. 17 §1 Case I:
+// the day is constant, so what necessary labour sheds becomes surplus
+// labour), and intensity scales the daily value.
 func ComputeOutcome(s LabourScenario) ScenarioOutcome {
 	dayMinutes := s.WorkingDay.TotalMinutes()
-	necessary := LabourMinutes(s.WorkingDay.NecessaryLabourMinutes)
+	necessary := s.Productivity.ApplyToNecessaryLabour(LabourMinutes(s.WorkingDay.NecessaryLabourMinutes))
 	surplus := LabourMinutes(dayMinutes) - necessary
 
 	intensity := s.Intensity
@@ -121,15 +121,17 @@ func ComputeOutcome(s LabourScenario) ScenarioOutcome {
 // the partition between necessary and surplus labour without altering
 // the total value created.)
 //
-// The productivityFactor argument is taken explicitly so the call site
-// reads as a property check; it is used only to document the law's
-// scope, since DailyValueCreated does not depend on productivity.
+// The check is derived from the domain: the scenario is evaluated at the
+// given productivity and at normal productivity, and the daily values
+// must agree and equal the working-day length.
 func LawConstantDailyValue(day WorkingDay, intensity LabourIntensity, productivityFactor float64) bool {
 	if !intensity.IsNormal() {
 		return false
 	}
-	_ = productivityFactor
-	return DailyValueCreated(day, intensity) == LabourMinutes(day.TotalMinutes())
+	changed := ComputeOutcome(LabourScenario{WorkingDay: day, Intensity: intensity, Productivity: LabourProductivity{Factor: productivityFactor}})
+	baseline := ComputeOutcome(LabourScenario{WorkingDay: day, Intensity: intensity, Productivity: NormalLabourProductivity})
+	return changed.DailyValueMinutes == baseline.DailyValueMinutes &&
+		changed.DailyValueMinutes == LabourMinutes(day.TotalMinutes())
 }
 
 // LawInverseRelation encodes Ch. 17 §1 Law 2: when productivity changes
