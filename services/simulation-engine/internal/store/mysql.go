@@ -1529,19 +1529,21 @@ func (m *MySQL) Capitalise(ctx context.Context, id circulation.ProductiveCircuit
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	const sel = `SELECT constant_pence, variable_pence, latent_accumulated, min_capitalisation_increment_pence
+	const sel = `SELECT constant_pence, variable_pence, mode, latent_accumulated, min_capitalisation_increment_pence
 		FROM productive_circuits WHERE id = ? FOR UPDATE`
 	var (
 		constant, variable, latentAcc, minIncrement int64
+		mode                                        string
 	)
-	if err := tx.QueryRowContext(ctx, sel, string(id)).Scan(&constant, &variable, &latentAcc, &minIncrement); err != nil {
+	if err := tx.QueryRowContext(ctx, sel, string(id)).Scan(&constant, &variable, &mode, &latentAcc, &minIncrement); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return circulation.CapitalisationStep{}, ErrNotFound
 		}
 		return circulation.CapitalisationStep{}, err
 	}
-	if int64(amount) > 0 && int64(amount) < minIncrement {
-		return circulation.CapitalisationStep{}, circulation.ErrIndivisibleProductionElement
+	if err := circulation.ValidateCapitalisation(circulation.ReproductionMode(mode),
+		circulation.Pence(latentAcc), circulation.Pence(minIncrement), amount, dc, dv); err != nil {
+		return circulation.CapitalisationStep{}, err
 	}
 	now := m.now().UTC()
 	const ins = `INSERT INTO capitalisation_steps
