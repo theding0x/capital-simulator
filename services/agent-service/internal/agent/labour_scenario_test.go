@@ -218,3 +218,42 @@ func TestLabourScenario_Validate(t *testing.T) {
 		t.Errorf("over-long day: got %v, want ErrWorkingDayExceedsPhysicalMax", err)
 	}
 }
+
+// Ch. 17 §2 Case II: a 12-hour day yielding 6s at normal intensity yields 8s
+// at 4/3 intensity, and the two parts rise together from 3s to 4s.
+func TestComputeOutcome_IntensityScalesBothPartsOfDailyValue(t *testing.T) {
+	t.Parallel()
+	out := ComputeOutcome(LabourScenario{
+		WorkingDay:   WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360},
+		Intensity:    LabourIntensity{Factor: 4.0 / 3.0},
+		Productivity: NormalLabourProductivity,
+	})
+	if out.DailyValueMinutes != 960 {
+		t.Errorf("daily value: got %d, want 960 (8s)", out.DailyValueMinutes)
+	}
+	if out.LabourPowerValueMinutes != 480 || out.SurplusLabourMinutes != 480 {
+		t.Errorf("parts: got %d/%d, want 480/480 (4s/4s)", out.LabourPowerValueMinutes, out.SurplusLabourMinutes)
+	}
+}
+
+func TestComputeOutcome_PartitionHoldsAtEveryIntensity(t *testing.T) {
+	t.Parallel()
+	for _, f := range []float64{0.5, 1.0, 1.1, 4.0 / 3.0, 1.37, 2.0} {
+		out := ComputeOutcome(LabourScenario{
+			WorkingDay:   WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360},
+			Intensity:    LabourIntensity{Factor: f},
+			Productivity: NormalLabourProductivity,
+		})
+		if out.SurplusLabourMinutes+out.LabourPowerValueMinutes != out.DailyValueMinutes {
+			t.Errorf("factor %v: %d + %d != %d", f, out.SurplusLabourMinutes, out.LabourPowerValueMinutes, out.DailyValueMinutes)
+		}
+	}
+}
+
+func TestDailyValueCreated_RoundsHalfUp(t *testing.T) {
+	t.Parallel()
+	day := WorkingDay{NecessaryLabourMinutes: 1, SurplusLabourMinutes: 2} // 3 min × 1.5 = 4.5
+	if got := DailyValueCreated(day, LabourIntensity{Factor: 1.5}); got != 5 {
+		t.Errorf("got %d, want 5", got)
+	}
+}

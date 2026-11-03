@@ -1,6 +1,9 @@
 package agent
 
-import "errors"
+import (
+	"errors"
+	"math"
+)
 
 // LabourScenario groups the three variable factors Marx isolates in
 // Capital Vol. I, Ch. 17: the length of the working day, the intensity
@@ -74,7 +77,7 @@ func (s LabourScenario) Validate() error {
 // This is Marx's §2 generalisation: the "magnitude of value created"
 // depends jointly on the *duration* and the *intensity* of labour.
 func DailyValueCreated(wd WorkingDay, li LabourIntensity) LabourMinutes {
-	return LabourMinutes(float64(wd.TotalMinutes()) * li.Factor)
+	return LabourMinutes(math.Round(float64(wd.TotalMinutes()) * li.Factor))
 }
 
 // ComputeOutcome partitions a LabourScenario into its outcome
@@ -84,9 +87,7 @@ func DailyValueCreated(wd WorkingDay, li LabourIntensity) LabourMinutes {
 // the day is constant, so what necessary labour sheds becomes surplus
 // labour), and intensity scales the daily value.
 func ComputeOutcome(s LabourScenario) ScenarioOutcome {
-	dayMinutes := s.WorkingDay.TotalMinutes()
 	necessary := s.Productivity.ApplyToNecessaryLabour(LabourMinutes(s.WorkingDay.NecessaryLabourMinutes))
-	surplus := LabourMinutes(dayMinutes) - necessary
 
 	intensity := s.Intensity
 	if intensity.Factor <= 0 {
@@ -94,15 +95,24 @@ func ComputeOutcome(s LabourScenario) ScenarioOutcome {
 	}
 	dailyValue := DailyValueCreated(s.WorkingDay, intensity)
 
+	// Ch. 17 §2 Case II: intensified labour creates more value per clock
+	// minute, and that value divides between the value of labour-power and
+	// surplus-value, both of which may rise together (3s → 4s in Marx's
+	// 6s → 8s example). Both parts are therefore in value-minutes; surplus is
+	// the remainder so that surplus + labour-power == daily value exactly.
+	// NecessaryLabourMinutes stays in clock time.
+	labourPowerValue := LabourMinutes(math.Round(float64(necessary) * intensity.Factor))
+	surplusValue := dailyValue - labourPowerValue
+
 	rate := 0.0
-	if necessary > 0 {
-		rate = float64(surplus) / float64(necessary)
+	if labourPowerValue > 0 {
+		rate = float64(surplusValue) / float64(labourPowerValue)
 	}
 	outcome := ScenarioOutcome{
 		DailyValueMinutes:       dailyValue,
 		NecessaryLabourMinutes:  necessary,
-		SurplusLabourMinutes:    surplus,
-		LabourPowerValueMinutes: necessary,
+		SurplusLabourMinutes:    surplusValue,
+		LabourPowerValueMinutes: labourPowerValue,
 		RateOfSurplusValue:      rate,
 	}
 	// Ch. 25 → Ch. 17: an active reserve army bids the price of labour down
@@ -110,7 +120,7 @@ func ComputeOutcome(s LabourScenario) ScenarioOutcome {
 	// is untouched — only the wage actually paid is compressed.
 	if s.Pressure != nil && s.Pressure.IsActive() {
 		outcome.ReserveArmyPressureBP = s.Pressure.PressureBP()
-		outcome.CompressedWageMinutes = s.Pressure.CompressMinutes(necessary)
+		outcome.CompressedWageMinutes = s.Pressure.CompressMinutes(labourPowerValue)
 	}
 	return outcome
 }
