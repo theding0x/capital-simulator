@@ -285,6 +285,8 @@ def report(go_structs: list[GoStruct], ts_ifaces: list[TSInterface]) -> int:
 
 
 def main() -> int:
+    # Windows consoles default to cp1252; Go/TS source contains non-ASCII.
+    sys.stdout.reconfigure(encoding="utf-8")
     here = Path(__file__).resolve()
     root = find_repo_root(here)
     if root is None:
