@@ -2471,8 +2471,8 @@ export interface WorkingPeriod {
   mode: WorkingPeriodMode;
   working_day_length_minutes: number;
   created_at: string;
-  interruptions: WorkingPeriodInterruption[];
-  shortenings: WorkingPeriodShortening[];
+  interruptions?: WorkingPeriodInterruption[];
+  shortenings?: WorkingPeriodShortening[];
   credit_financing?: WorkingPeriodCreditFinancing;
 }
 
