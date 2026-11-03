@@ -44,7 +44,8 @@ type createIndustryBenchmarkRequest struct {
 // --- handlers ---------------------------------------------------------------
 
 // RecordProductionLabourGap handles POST /v1/working-periods/{id}/production-labour-gap.
-// Returns 201 on success; 400 on validation error; 409 on duplicate.
+// Returns 201 on success; 400 on validation error or a gap that does not match
+// the owning working period; 404 if the period does not exist; 409 on duplicate.
 func (h *Handler) RecordProductionLabourGap(w http.ResponseWriter, r *http.Request) {
 	id := wp.WorkingPeriodID(r.PathValue("id"))
 
@@ -68,6 +69,14 @@ func (h *Handler) RecordProductionLabourGap(w http.ResponseWriter, r *http.Reque
 
 	created, err := h.ProductionTime.RecordProductionLabourGap(r.Context(), gap)
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "working period not found")
+			return
+		}
+		if errors.Is(err, wp.ErrGapLabourMismatch) || errors.Is(err, wp.ErrPrematureDelivery) {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		if errors.Is(err, store.ErrAlreadyExists) {
 			writeError(w, http.StatusConflict, err.Error())
 			return

@@ -2,6 +2,7 @@ package httpapi_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/store"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/transport/httpapi"
+	wp "github.com/theding0x/capital-simulator/services/simulation-engine/internal/workperiod"
 )
 
 func newProductionTimeHandler(t *testing.T) (*httpapi.Handler, *store.Memory) {
@@ -21,12 +23,19 @@ func newProductionTimeHandler(t *testing.T) (*httpapi.Handler, *store.Memory) {
 
 func TestRecordProductionLabourGap_Created(t *testing.T) {
 	t.Parallel()
-	h, _ := newProductionTimeHandler(t)
+	h, mem := newProductionTimeHandler(t)
+	// Corn: 10 ten-hour working-days of labour inside a 365-day production span.
+	if _, err := mem.CreateWorkingPeriod(context.Background(), wp.WorkingPeriod{
+		ID: "wp-corn", IndustrialCapitalID: "corn-farm-1871-ic", CommodityID: "corn",
+		WorkingDayCount: 10, Mode: wp.ModeConnected, WorkingDayLengthMinutes: 600,
+	}); err != nil {
+		t.Fatal(err)
+	}
 
 	body := map[string]any{
-		"production_time_nanos": 24192000000000000,
-		"labour_time_nanos":     864000000000000,
-		"gap_nanos":             23328000000000000,
+		"production_time_nanos": 31536000000000000,
+		"labour_time_nanos":     360000000000000,
+		"gap_nanos":             31176000000000000,
 	}
 	b, _ := json.Marshal(body)
 	req := httptest.NewRequest(http.MethodPost, "/v1/working-periods/wp-corn/production-labour-gap", bytes.NewReader(b))
@@ -36,6 +45,47 @@ func TestRecordProductionLabourGap_Created(t *testing.T) {
 
 	if w.Code != http.StatusCreated {
 		t.Errorf("expected 201, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestRecordProductionLabourGap_UnknownPeriod(t *testing.T) {
+	t.Parallel()
+	h, _ := newProductionTimeHandler(t)
+	b, _ := json.Marshal(map[string]any{
+		"production_time_nanos": 31536000000000000,
+		"labour_time_nanos":     360000000000000,
+		"gap_nanos":             31176000000000000,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/v1/working-periods/nope/production-labour-gap", bytes.NewReader(b))
+	req.SetPathValue("id", "nope")
+	w := httptest.NewRecorder()
+	h.RecordProductionLabourGap(w, req)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestRecordProductionLabourGap_LabourMismatch(t *testing.T) {
+	t.Parallel()
+	h, mem := newProductionTimeHandler(t)
+	if _, err := mem.CreateWorkingPeriod(context.Background(), wp.WorkingPeriod{
+		ID: "wp-corn", IndustrialCapitalID: "corn-farm-1871-ic", CommodityID: "corn",
+		WorkingDayCount: 10, Mode: wp.ModeConnected, WorkingDayLengthMinutes: 600,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	// Labour-time claims the whole 365-day span: the pre-fix seed's error.
+	b, _ := json.Marshal(map[string]any{
+		"production_time_nanos": 31536000000000000,
+		"labour_time_nanos":     31536000000000000,
+		"gap_nanos":             0,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/v1/working-periods/wp-corn/production-labour-gap", bytes.NewReader(b))
+	req.SetPathValue("id", "wp-corn")
+	w := httptest.NewRecorder()
+	h.RecordProductionLabourGap(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400, got %d: %s", w.Code, w.Body.String())
 	}
 }
 

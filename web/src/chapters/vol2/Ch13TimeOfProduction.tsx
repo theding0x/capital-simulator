@@ -15,9 +15,9 @@ import "./Ch13TimeOfProduction.css";
 // chemical transformation, seasonal rest — and no new value is being added.
 //
 // Marx's six fixtures (seed migration 00047_v2_ch13_seed.sql):
-//   Corn farm 1871      — 280-day production, 10 labour-days (3.6%)
+//   Corn farm 1871      — 365-day production, 10 labour-days (2.7%)
 //   Winery 1871         — 365-day production, 10 labour-days (2.7%)
-//   Cattle farm 1871    — 730-day production,  5 labour-days (0.7%)
+//   Cattle farm 1871    — 1 095-day production, 5 labour-days (0.5%)
 //   Timber 1871         — 18 250-day production, 30 labour-days (0.16%)
 //   Porcelain kiln 1871 — 30-day production,   3 labour-days (10%)
 //   Fallow land 1871    — 180-day production,   5 labour-days (2.8%)

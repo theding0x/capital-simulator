@@ -1,6 +1,7 @@
 package workperiod_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -349,5 +350,42 @@ func TestNaturalProcessIndustry_MissingName(t *testing.T) {
 	}
 	if err := i.Validate(); err == nil {
 		t.Error("expected error for missing industry_name, got nil")
+	}
+}
+
+// TestProductionLabourGap_ValidateAgainst ties the gap's labour-time to the
+// owning period (Ch. 13: the working period is the labour-time) and the
+// production span to the Ch. 12 floor. Cattle: 5 labour-days in 1095 days.
+func TestProductionLabourGap_ValidateAgainst(t *testing.T) {
+	t.Parallel()
+	const day = int64(86_400_000_000_000)
+	const workingDay = int64(600) * 60_000_000_000
+	period := workperiod.WorkingPeriod{
+		ID: "wp-cattle", WorkingDayCount: 5, WorkingDayLengthMinutes: 600, Mode: workperiod.ModeConnected,
+	}
+	gap := func(labour, production int64) workperiod.ProductionLabourGap {
+		return workperiod.ProductionLabourGap{
+			WorkingPeriodID: "wp-cattle", ProductionTimeNanos: production,
+			LabourTimeNanos: labour, GapNanos: production - labour,
+		}
+	}
+	cases := []struct {
+		name string
+		g    workperiod.ProductionLabourGap
+		want error
+	}{
+		{"matches period and floor", gap(5*workingDay, 1095*day), nil},
+		{"labour is whole span", gap(1095*day, 1095*day), workperiod.ErrGapLabourMismatch},
+		{"span below floor", gap(5*workingDay, 730*day), workperiod.ErrPrematureDelivery},
+	}
+	for _, tc := range cases {
+		if err := tc.g.ValidateAgainst(period, 1095); !errors.Is(err, tc.want) {
+			t.Errorf("%s: got %v, want %v", tc.name, err, tc.want)
+		}
+	}
+	other := gap(5*workingDay, 1095*day)
+	other.WorkingPeriodID = "someone-else"
+	if err := other.ValidateAgainst(period, 0); err == nil {
+		t.Error("mismatched working_period_id: expected error")
 	}
 }
