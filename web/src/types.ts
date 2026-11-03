@@ -502,6 +502,7 @@ export interface RateOfSurplusValueInput {
 
 export interface RateOfSurplusValueResult {
   rate: number;
+  rate_basis_points: number;       // s/v rounded half-up; 10000 = 100%
   surplus: number;
   variable: number;
   value_product: number;

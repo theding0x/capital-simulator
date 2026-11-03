@@ -3,6 +3,7 @@ package surplus
 import (
 	"math"
 
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 )
 
@@ -113,10 +114,8 @@ func ReduceNecessaryLabour(wd WorkingDay, factor ProductivityFactor) (WorkingDay
 // RateSurplusValue is Marx's "rate of exploitation": surplus-labour divided
 // by necessary-labour. Returns 0 when necessary is 0 (undefined wage relation).
 func RateSurplusValue(surplusLabour, necessaryLabour labour.LabourMinutes) float64 {
-	if necessaryLabour == 0 {
-		return 0
-	}
-	return float64(surplusLabour) / float64(necessaryLabour)
+	r, _ := surplusrate.Ratio(int64(surplusLabour), int64(necessaryLabour))
+	return r
 }
 
 // RateOfProfit is surplus-value divided by the *total* capital advanced

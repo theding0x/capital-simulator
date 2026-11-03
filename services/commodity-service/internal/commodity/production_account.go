@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 )
 
 // ProductionAccountID is a 96-bit hex ID for ProductionAccount records.
@@ -81,12 +83,25 @@ func (a ProductionAccount) Validate() error {
 }
 
 // ComputeRate returns s/v = surplus-value / variable-capital [§1].
-// Returns ErrDivisionByZero if v == 0.
+// Returns ErrDivisionByZero if v <= 0.
 func ComputeRate(s SurplusValue, v LabourMinutes) (RateOfSurplusValue, error) {
-	if v == 0 {
+	r, err := surplusrate.Ratio(int64(s), int64(v))
+	if err != nil {
 		return 0, ErrDivisionByZero
 	}
-	return RateOfSurplusValue(float64(s) / float64(v)), nil
+	return RateOfSurplusValue(r), nil
+}
+
+// ComputeRateBasisPoints returns s/v in basis points rounded half-up (10000 =
+// 100%), the same scaled-integer form Vol. III's profit.ComputeRateOfSurplusValue
+// uses, so Vol. I's s feeds Vol. III's p' without a unit seam [§1].
+// Returns ErrDivisionByZero if v <= 0.
+func ComputeRateBasisPoints(s SurplusValue, v LabourMinutes) (int64, error) {
+	bp, err := surplusrate.BasisPoints(int64(s), int64(v))
+	if err != nil {
+		return 0, ErrDivisionByZero
+	}
+	return bp, nil
 }
 
 // ComputeValueProduct returns v + s — the new value created [§1].
