@@ -30,16 +30,16 @@ func (h *Handler) CreateAnnualValueComposition(w http.ResponseWriter, r *http.Re
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if req.ConstantCapitalLabourMinutes < 0 || req.VariableCapitalLabourMinutes < 0 || req.SurplusValueLabourMinutes < 0 {
-		writeError(w, http.StatusUnprocessableEntity, "c, v, and s must be >= 0")
-		return
-	}
 	comp := revenue.AnnualValueComposition{
 		ConstantCapitalLabourMinutes: req.ConstantCapitalLabourMinutes,
 		VariableCapitalLabourMinutes: req.VariableCapitalLabourMinutes,
 		SurplusValueLabourMinutes:    req.SurplusValueLabourMinutes,
 		TotalValueLabourMinutes:      revenue.ComputeTotalValue(req.ConstantCapitalLabourMinutes, req.VariableCapitalLabourMinutes, req.SurplusValueLabourMinutes),
 		NewValueLabourMinutes:        revenue.ComputeNewValue(req.VariableCapitalLabourMinutes, req.SurplusValueLabourMinutes),
+	}
+	if err := comp.Validate(); err != nil {
+		writeError(w, http.StatusUnprocessableEntity, err.Error())
+		return
 	}
 	savedComp, err := h.Store.CreateAnnualValueComposition(r.Context(), comp)
 	if err != nil {
@@ -62,6 +62,11 @@ func (h *Handler) GetAnnualValueComposition(w http.ResponseWriter, r *http.Reque
 	comp, err := h.Store.GetAnnualValueComposition(r.Context(), id)
 	if err != nil {
 		writeStoreError(w, err)
+		return
+	}
+	if err := comp.Validate(); err != nil {
+		// A stored row that breaks L-P2 is a data-integrity fault, not a client error.
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	limit, lerr := h.Store.GetRevenueLimitByComposition(r.Context(), string(comp.ID))
@@ -105,6 +110,10 @@ func (h *Handler) CreateSurplusValuePartition(w http.ResponseWriter, r *http.Req
 	comp, err := h.Store.GetAnnualValueComposition(r.Context(), revenue.AnnualValueCompositionID(req.CompositionID))
 	if err != nil {
 		writeStoreError(w, err)
+		return
+	}
+	if err := comp.Validate(); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	partition := revenue.SurplusValuePartition{

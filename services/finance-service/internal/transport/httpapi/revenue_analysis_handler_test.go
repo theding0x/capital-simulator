@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -142,5 +143,30 @@ func TestCreateSurplusValuePartitionCompositionNotFound(t *testing.T) {
 	h.CreateSurplusValuePartition(rec, httptest.NewRequest(http.MethodPost, "/v1/revenue/surplus-partitions", strings.NewReader(body)))
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want 404", rec.Code)
+	}
+}
+
+// A stored composition that has drifted from W = c+v+s must not be served (L-P2).
+func TestGetAnnualValueCompositionRejectsNonConserving(t *testing.T) {
+	t.Parallel()
+	mem := store.NewMemory()
+	h := New(mem, nil)
+	bad, err := mem.CreateAnnualValueComposition(context.Background(), revenue.AnnualValueComposition{
+		ConstantCapitalLabourMinutes: 6000,
+		VariableCapitalLabourMinutes: 1500,
+		SurplusValueLabourMinutes:    1500,
+		TotalValueLabourMinutes:      3000, // omits c
+		NewValueLabourMinutes:        3000,
+	})
+	if err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	id := string(bad.ID)
+	req := httptest.NewRequest(http.MethodGet, "/v1/revenue/annual-compositions/"+id, nil)
+	req.SetPathValue("id", id)
+	rec := httptest.NewRecorder()
+	h.GetAnnualValueComposition(rec, req)
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want 500; body=%s", rec.Code, rec.Body.String())
 	}
 }
