@@ -55,31 +55,23 @@ type LabourPowerValue int64
 type WorkerCount int
 
 // IndividualSurplus returns the surplus-value produced by a single worker
-// given the rate and the value of their labour-power [§1].
+// given the rate and the value of their labour-power [§1], rounded half-up.
 // s_individual = v × (a′/a) = v × SurplusLabour / NecessaryLabour
 func IndividualSurplus(rate SurplusValueRate, v LabourPowerValue) SurplusValueMass {
-	if rate.NecessaryLabour == 0 {
-		return 0
-	}
-	return SurplusValueMass(int64(v) * rate.SurplusLabour / rate.NecessaryLabour)
+	return SurplusValueMass(surplusrate.RoundHalfUpDiv(int64(v)*rate.SurplusLabour, rate.NecessaryLabour))
 }
 
 // MassByRate computes S = (s/v) × V — total surplus-value from total variable
-// capital and the rate of surplus-value [§1, formula I].
+// capital and the rate of surplus-value [§1, formula I], rounded half-up.
 func MassByRate(rate SurplusValueRate, totalVariableCapital VariableCapital) SurplusValueMass {
-	if rate.NecessaryLabour == 0 {
-		return 0
-	}
-	return SurplusValueMass(rate.SurplusLabour * int64(totalVariableCapital) / rate.NecessaryLabour)
+	return SurplusValueMass(surplusrate.RoundHalfUpDiv(rate.SurplusLabour*int64(totalVariableCapital), rate.NecessaryLabour))
 }
 
 // MassByWorkers computes S = P × (a′/a) × n — total surplus-value from per-worker
-// labour-power value, the rate, and the number of workers [§1, formula II].
+// labour-power value, the rate, and the number of workers [§1, formula II],
+// rounded half-up once over the whole mass (not per worker).
 func MassByWorkers(v LabourPowerValue, rate SurplusValueRate, n WorkerCount) SurplusValueMass {
-	if rate.NecessaryLabour == 0 {
-		return 0
-	}
-	return SurplusValueMass(int64(v) * rate.SurplusLabour * int64(n) / rate.NecessaryLabour)
+	return SurplusValueMass(surplusrate.RoundHalfUpDiv(int64(v)*rate.SurplusLabour*int64(n), rate.NecessaryLabour))
 }
 
 // MinimumCapital returns the minimum variable capital required to employ n workers

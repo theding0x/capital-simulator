@@ -24,6 +24,21 @@ func Ratio(s, v int64) (float64, error) {
 	return float64(s) / float64(v), nil
 }
 
+// RoundHalfUpDiv returns num/den rounded half-up, the convention for every
+// scaled-integer magnitude derived from a ratio (never truncate). It requires
+// num >= 0 and den > 0, which holds for every labour-time magnitude; it returns
+// 0 when den <= 0, matching Ratio's refusal of a non-positive v.
+func RoundHalfUpDiv(num, den int64) int64 {
+	if den <= 0 {
+		return 0
+	}
+	q, r := num/den, num%den
+	if 2*r >= den {
+		q++
+	}
+	return q
+}
+
 // BasisPoints returns s/v scaled by BasisPointsPerUnit and rounded half-up, so
 // the 300% English agricultural labourer is 30000. It returns ErrZeroVariable
 // when v <= 0.
