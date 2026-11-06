@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/value"
 )
 
 // AnnualValueCompositionID identifies an annual-value-composition record.
@@ -44,10 +46,17 @@ func (c AnnualValueComposition) Validate() error {
 	if c.ConstantCapitalLabourMinutes < 0 || c.VariableCapitalLabourMinutes < 0 || c.SurplusValueLabourMinutes < 0 {
 		return fmt.Errorf("%w: c, v, and s must be >= 0", ErrCompositionNotConserved)
 	}
-	if want := ComputeTotalValue(c.ConstantCapitalLabourMinutes, c.VariableCapitalLabourMinutes, c.SurplusValueLabourMinutes); c.TotalValueLabourMinutes != want {
+	if want := int64(ComputeTotalValue(
+		value.ConstantCapital(c.ConstantCapitalLabourMinutes),
+		value.VariableCapital(c.VariableCapitalLabourMinutes),
+		value.SurplusValue(c.SurplusValueLabourMinutes),
+	)); c.TotalValueLabourMinutes != want {
 		return fmt.Errorf("%w: total value %d, want c+v+s = %d", ErrCompositionNotConserved, c.TotalValueLabourMinutes, want)
 	}
-	if want := ComputeNewValue(c.VariableCapitalLabourMinutes, c.SurplusValueLabourMinutes); c.NewValueLabourMinutes != want {
+	if want := int64(ComputeNewValue(
+		value.VariableCapital(c.VariableCapitalLabourMinutes),
+		value.SurplusValue(c.SurplusValueLabourMinutes),
+	)); c.NewValueLabourMinutes != want {
 		return fmt.Errorf("%w: new value %d, want v+s = %d", ErrCompositionNotConserved, c.NewValueLabourMinutes, want)
 	}
 	return nil
@@ -94,14 +103,15 @@ type SurplusValuePartition struct {
 	CreatedAt           time.Time               `json:"created_at"`
 }
 
-// ComputeTotalValue returns the value of the annual product: c + v + s.
-func ComputeTotalValue(constant, variable, surplus int64) int64 {
-	return constant + variable + surplus
+// ComputeTotalValue returns the value of the annual product: c + v + s. The
+// parameters are the shared Vol. I types, so a Vol. I s cannot be swapped for v.
+func ComputeTotalValue(constant value.ConstantCapital, variable value.VariableCapital, surplus value.SurplusValue) value.LabourMinutes {
+	return value.LabourMinutes(constant) + value.LabourMinutes(variable) + value.LabourMinutes(surplus)
 }
 
 // ComputeNewValue returns the value newly added by living labour: v + s.
-func ComputeNewValue(variable, surplus int64) int64 {
-	return variable + surplus
+func ComputeNewValue(variable value.VariableCapital, surplus value.SurplusValue) value.LabourMinutes {
+	return value.LabourMinutes(variable) + value.LabourMinutes(surplus)
 }
 
 // DeriveRevenueLimit builds the revenue limit implied by a composition: the

@@ -20,27 +20,28 @@ import (
 	"time"
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/money"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/value"
 )
 
 // basisPoints is the fixed-point scale: 1% = 100 bp, so s′ of 100% = 10000 bp.
 // Integer basis points keep rate computations exact across Marx's worked examples.
 const basisPoints = 10000
 
-// LabourMinutes is the canonical value-magnitude unit for this package.
-type LabourMinutes int64
+// Value-magnitude types are declared once in the value package.
+type LabourMinutes = value.LabourMinutes
 
 // TotalCapital is C = c + v: the whole advance; denominator of the rate of profit.
 type TotalCapital LabourMinutes
 
 // ConstantCapital is c: the value of means of production consumed.
-type ConstantCapital LabourMinutes
+type ConstantCapital = value.ConstantCapital
 
 // VariableCapital is v: the value of labour-power purchased; the sole index of
 // living labour and therefore the sole source of surplus-value.
-type VariableCapital LabourMinutes
+type VariableCapital = value.VariableCapital
 
 // SurplusValue is s: the unpaid labour objectified in the product.
-type SurplusValue LabourMinutes
+type SurplusValue = value.SurplusValue
 
 // RateOfSurplusValue is s′ = s/v in basis points (10000 = 100%).
 type RateOfSurplusValue int64
