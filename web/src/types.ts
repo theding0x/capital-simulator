@@ -984,6 +984,7 @@ export interface RelativeSurplusResult {
   new_working_day: ProductionWorkingDayShape;
   new_labour_power_value: number;
   relative_surplus_value: number;
+  surplus_value?: SurplusValueShape; // "wage_goods_branch" only; origin "relative"
   scope: ProductivityScope;
   extra_surplus_value?: number; // "workplace" only
   source?: { source: ProductivitySource; id: string };
