@@ -1,9 +1,8 @@
 package surplus
 
 import (
-	"math"
-
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/production"
 )
 
 // Capital Vol. I, Ch. 16 — Absolute and Relative Surplus-Value.
@@ -92,21 +91,30 @@ func ReduceNecessaryLabour(wd WorkingDay, factor ProductivityFactor) (WorkingDay
 	if factor <= 0 {
 		return wd, RelativeSurplusValue{SurplusValue: SurplusValue{Origin: OriginRelative}}
 	}
-	scaled := labour.LabourMinutes(math.Round(float64(wd.NecessaryLabour) / float64(factor)))
+	// One inverse law (value ∝ 1/productivity) and one working-day partition,
+	// shared with the Ch. 12 bridge so both paths yield the same minutes.
+	scaled := production.ApplyProductivityToSNLT(wd.NecessaryLabour, factor)
 	if scaled < 1 {
 		scaled = 1
 	}
 	if scaled >= wd.NecessaryLabour {
 		return wd, RelativeSurplusValue{SurplusValue: SurplusValue{Origin: OriginRelative}}
 	}
-	diff := wd.NecessaryLabour - scaled
+	shortened := production.ShortenNecessaryLabour(
+		production.WorkingDay{
+			Total:           wd.Total,
+			NecessaryLabour: production.NecessaryLabour(wd.NecessaryLabour),
+			SurplusLabour:   production.SurplusLabour(wd.SurplusLabour),
+		},
+		production.LabourPowerValue(scaled),
+	)
 	newWD := WorkingDay{
-		Total:           wd.Total,
-		NecessaryLabour: scaled,
-		SurplusLabour:   wd.SurplusLabour + diff,
+		Total:           shortened.Total,
+		NecessaryLabour: labour.LabourMinutes(shortened.NecessaryLabour),
+		SurplusLabour:   labour.LabourMinutes(shortened.SurplusLabour),
 	}
 	return newWD, RelativeSurplusValue{
-		SurplusValue: SurplusValue{LabourMinutes: diff, Origin: OriginRelative},
+		SurplusValue: SurplusValue{LabourMinutes: newWD.SurplusLabour - wd.SurplusLabour, Origin: OriginRelative},
 	}
 }
 
