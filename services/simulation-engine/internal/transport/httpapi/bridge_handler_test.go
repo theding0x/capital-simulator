@@ -64,6 +64,10 @@ func TestRelativeSurplus_Para1_HalveLPV(t *testing.T) {
 	if got.RelativeSurplusValue != 300 {
 		t.Fatalf("RelativeSurplusValue = %d, want 300", got.RelativeSurplusValue)
 	}
+	// The same delta must arrive Origin-tagged, as on /v1/surplus-value/relative.
+	if got.SurplusValue == nil || got.SurplusValue.Origin != "relative" || got.SurplusValue.LabourMinutes != 300 {
+		t.Fatalf("SurplusValue = %+v, want {300 relative}", got.SurplusValue)
+	}
 }
 
 func TestRelativeSurplus_RejectsInvalidFactor(t *testing.T) {

@@ -3,6 +3,7 @@ package surplus_test
 import (
 	"testing"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/production"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
 
@@ -173,3 +174,41 @@ func TestReduceNecessaryLabour_GuardsAgainstZero(t *testing.T) {
 	}
 }
 
+
+// The Ch. 12 bridge (production.*) and the Ch. 16 synthesis (surplus.*) must
+// yield the same relative surplus-value for the same day and productivity
+// factor. Fixture: the 720/600/120 day with the factor doubled (600 -> 300),
+// plus a non-exact factor to exercise the shared rounding.
+func TestReduceNecessaryLabour_AgreesWithCh12Bridge(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name   string
+		factor surplus.ProductivityFactor
+		want   int64
+	}{
+		{"factor 2.0 halves necessary labour", 2.0, 300},
+		{"factor 1.5 rounds half away", 1.5, 200},
+		{"factor 7 rounds 85.71 to 86", 7, 514},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			wd := surplus.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
+			_, rsv := surplus.ReduceNecessaryLabour(wd, tc.factor)
+
+			old := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
+			newLPV := production.ApplyProductivityToSNLT(600, tc.factor)
+			ch12 := production.ShortenNecessaryLabour(old, production.LabourPowerValue(newLPV))
+			bridgeDelta := int64(ch12.SurplusLabour - old.SurplusLabour)
+
+			if int64(rsv.LabourMinutes) != bridgeDelta {
+				t.Fatalf("Ch. 16 relative SV = %d, Ch. 12 bridge = %d; paths diverge", rsv.LabourMinutes, bridgeDelta)
+			}
+			if int64(rsv.LabourMinutes) != tc.want {
+				t.Errorf("relative SV = %d, want %d", rsv.LabourMinutes, tc.want)
+			}
+			if rsv.Origin != surplus.OriginRelative {
+				t.Errorf("origin = %q, want relative", rsv.Origin)
+			}
+		})
+	}
+}

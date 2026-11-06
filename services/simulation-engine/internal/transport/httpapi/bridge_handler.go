@@ -7,6 +7,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/production"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
 
 // ProductivitySource enumerates where a productivity factor can be sourced
@@ -81,7 +82,11 @@ type relativeSurplusResponse struct {
 	NewWorkingDay        workingDayDTO     `json:"new_working_day"`
 	NewLabourPowerValue  int64             `json:"new_labour_power_value"`
 	RelativeSurplusValue int64             `json:"relative_surplus_value"`
-	Scope                ProductivityScope `json:"scope"`
+	// SurplusValue is the same delta carrying its Ch. 16 Origin tag
+	// ("relative"); set for ScopeWageGoodsBranch only, where a relative gain
+	// exists. Additive: relative_surplus_value is unchanged.
+	SurplusValue *surplusValueDTO  `json:"surplus_value,omitempty"`
+	Scope        ProductivityScope `json:"scope"`
 	// ExtraSurplusValue is the temporary individual-vs-social gain; set for
 	// ScopeWorkplace only.
 	ExtraSurplusValue *int64                 `json:"extra_surplus_value,omitempty"`
@@ -217,7 +222,11 @@ func computeRelativeSurplus(req relativeSurplusRequest, source *productivitySour
 		NewWorkingDay:        workingDayDTOFromDomain(newWD),
 		NewLabourPowerValue:  int64(newLPV),
 		RelativeSurplusValue: delta,
-		Scope:                ScopeWageGoodsBranch,
+		SurplusValue: &surplusValueDTO{
+			LabourMinutes: delta,
+			Origin:        string(surplus.OriginRelative),
+		},
+		Scope: ScopeWageGoodsBranch,
 		Source:               source,
 	}, nil
 }
