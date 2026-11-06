@@ -7,6 +7,7 @@
 package revenue
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
@@ -30,6 +31,26 @@ type AnnualValueComposition struct {
 	TotalValueLabourMinutes      int64                    `json:"total_value_labour_minutes"`
 	NewValueLabourMinutes        int64                    `json:"new_value_labour_minutes"`
 	CreatedAt                    time.Time                `json:"created_at"`
+}
+
+// ErrCompositionNotConserved is returned when a composition violates L-P2:
+// its components are negative, or W != c+v+s, or New != v+s.
+var ErrCompositionNotConserved = errors.New("revenue: annual value composition does not conserve value (want W = c+v+s and New = v+s, all parts >= 0)")
+
+// Validate asserts the Ch. 49 identities W = c + v + s and New = v + s, with
+// c, v, s >= 0. It guards both construction and read, so a stored row that has
+// drifted from the identities is rejected rather than served.
+func (c AnnualValueComposition) Validate() error {
+	if c.ConstantCapitalLabourMinutes < 0 || c.VariableCapitalLabourMinutes < 0 || c.SurplusValueLabourMinutes < 0 {
+		return fmt.Errorf("%w: c, v, and s must be >= 0", ErrCompositionNotConserved)
+	}
+	if want := ComputeTotalValue(c.ConstantCapitalLabourMinutes, c.VariableCapitalLabourMinutes, c.SurplusValueLabourMinutes); c.TotalValueLabourMinutes != want {
+		return fmt.Errorf("%w: total value %d, want c+v+s = %d", ErrCompositionNotConserved, c.TotalValueLabourMinutes, want)
+	}
+	if want := ComputeNewValue(c.VariableCapitalLabourMinutes, c.SurplusValueLabourMinutes); c.NewValueLabourMinutes != want {
+		return fmt.Errorf("%w: new value %d, want v+s = %d", ErrCompositionNotConserved, c.NewValueLabourMinutes, want)
+	}
+	return nil
 }
 
 // RevenueLimitID identifies a revenue-limit record.

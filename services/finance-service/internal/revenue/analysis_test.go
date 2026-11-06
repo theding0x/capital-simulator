@@ -1,6 +1,9 @@
 package revenue
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // Ch. 49 fixture: aggregate annual social capital c=6000, v=1500, s=1500.
 // Total value 9000; new value 3000. Surplus-value partition: profit of
@@ -103,5 +106,42 @@ func TestCh49IDsUniqueAndHex(t *testing.T) {
 			}
 			seen[id] = true
 		}
+	}
+}
+
+func TestAnnualValueCompositionValidate(t *testing.T) {
+	t.Parallel()
+	good := ch49Composition()
+
+	badTotal := good
+	badTotal.TotalValueLabourMinutes = 3000 // Smith's error: v+s taken as the whole product
+
+	badNew := good
+	badNew.NewValueLabourMinutes = 9000 // c smuggled into new value
+
+	negative := AnnualValueComposition{ConstantCapitalLabourMinutes: -1}
+
+	tests := []struct {
+		name    string
+		comp    AnnualValueComposition
+		wantErr bool
+	}{
+		{"Ch. 49 fixture 6000+1500+1500", good, false},
+		{"zero composition", AnnualValueComposition{}, false},
+		{"total != c+v+s", badTotal, true},
+		{"new != v+s", badNew, true},
+		{"negative component", negative, true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := tc.comp.Validate()
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("Validate() err = %v, wantErr %v", err, tc.wantErr)
+			}
+			if tc.wantErr && !errors.Is(err, ErrCompositionNotConserved) {
+				t.Errorf("err = %v, want ErrCompositionNotConserved", err)
+			}
+		})
 	}
 }
