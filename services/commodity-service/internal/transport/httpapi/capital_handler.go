@@ -196,6 +196,7 @@ type rateOfSurplusValueRequest struct {
 
 type rateOfSurplusValueResponse struct {
 	Rate               float64                 `json:"rate"`
+	RateBasisPoints    int64                   `json:"rate_basis_points"`
 	Surplus            commodity.SurplusValue  `json:"surplus"`
 	Variable           commodity.LabourMinutes `json:"variable"`
 	ValueProduct       commodity.ValueProduct  `json:"value_product"`
@@ -214,8 +215,14 @@ func (h *Handler) RateOfSurplusValue(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	bp, err := commodity.ComputeRateBasisPoints(req.Surplus, req.Variable)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	writeJSON(w, http.StatusOK, rateOfSurplusValueResponse{
 		Rate:               float64(rate),
+		RateBasisPoints:    bp,
 		Surplus:            req.Surplus,
 		Variable:           req.Variable,
 		ValueProduct:       commodity.ComputeValueProduct(req.Variable, req.Surplus),

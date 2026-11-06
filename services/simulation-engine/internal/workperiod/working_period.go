@@ -2,9 +2,11 @@
 // A working period is the span of connected working-days required to produce
 // one finished commodity. Discrete processes (e.g. yarn) yield a finished unit
 // each day; connected processes (e.g. a locomotive) yield nothing until the
-// full period is complete. The key result: circulating-capital advance scales
-// linearly with the working-period length for connected processes; natural
-// constraints (annual crops, multi-year timber) set inviolable floors.
+// full period is complete. The key result: the circulating capital that must
+// be advanced scales linearly with the length of the working period, so the
+// locomotive maker (12 weeks) needs twelve times the circulating capital of
+// the spinner (1 week); natural constraints (annual crops, multi-year timber)
+// set inviolable floors.
 package workperiod
 
 import (
@@ -74,11 +76,12 @@ type WorkingPeriodMode string
 
 const (
 	// ModeDiscrete: each working-day yields one finished unit (e.g. yarn,
-	// coal). The effective capital-advance multiplier is always 1.
+	// coal), so interruptions carry no deterioration. The outlay tied up is
+	// still one working period's worth: the spinner recovers his weekly
+	// outlay weekly.
 	ModeDiscrete WorkingPeriodMode = "discrete"
 	// ModeConnected: many working-days must be completed before any product
-	// exists (e.g. locomotive, ship, road). The capital-advance multiplier
-	// equals WorkingDayCount.
+	// exists (e.g. locomotive, ship, road).
 	ModeConnected WorkingPeriodMode = "connected"
 )
 
@@ -86,7 +89,7 @@ const (
 
 // WorkingPeriod is the span of connected working-days required to produce one
 // finished commodity. Multiplier() expresses how many days' worth of
-// circulating capital must be advanced simultaneously.
+// circulating capital must be advanced before the first return.
 type WorkingPeriod struct {
 	ID                      WorkingPeriodID               `json:"id"`
 	IndustrialCapitalID     string                        `json:"industrial_capital_id"`
@@ -100,14 +103,15 @@ type WorkingPeriod struct {
 	CreditFinancing         *WorkingPeriodCreditFinancing `json:"credit_financing,omitempty"`
 }
 
-// Multiplier returns the capital-advance multiplier for circulating capital.
-// In ModeConnected, daily outlays accumulate for WorkingDayCount days before
-// any product exists; in ModeDiscrete, only a single day's outlay is tied up.
+// Multiplier returns the capital-advance multiplier for circulating capital:
+// the number of working days' outlay tied up before the outlay is recovered.
+// Marx (Ch. 12): the locomotive maker's expenditure "is the weekly
+// expenditure multiplied by twelve", so he needs twelve times the circulating
+// capital of the spinner, who recovers his outlay weekly. Both modes therefore
+// tie up one working period's outlay; the mode governs deterioration on
+// interruption, not the size of the advance.
 func (wp WorkingPeriod) Multiplier() int64 {
-	if wp.Mode == ModeConnected {
-		return wp.WorkingDayCount
-	}
-	return 1
+	return wp.WorkingDayCount
 }
 
 // Validate reports whether the WorkingPeriod is internally consistent.

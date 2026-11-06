@@ -502,6 +502,7 @@ export interface RateOfSurplusValueInput {
 
 export interface RateOfSurplusValueResult {
   rate: number;
+  rate_basis_points: number;       // s/v rounded half-up; 10000 = 100%
   surplus: number;
   variable: number;
   value_product: number;
@@ -2472,8 +2473,8 @@ export interface WorkingPeriod {
   mode: WorkingPeriodMode;
   working_day_length_minutes: number;
   created_at: string;
-  interruptions: WorkingPeriodInterruption[];
-  shortenings: WorkingPeriodShortening[];
+  interruptions?: WorkingPeriodInterruption[];
+  shortenings?: WorkingPeriodShortening[];
   credit_financing?: WorkingPeriodCreditFinancing;
 }
 

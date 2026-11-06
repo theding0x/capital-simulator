@@ -27,8 +27,18 @@ func newMemoryProductionTime() *memoryProductionTime {
 }
 
 // RecordProductionLabourGap persists a gap record (one per working period).
-func (m *Memory) RecordProductionLabourGap(_ context.Context, gap wp.ProductionLabourGap) (wp.ProductionLabourGap, error) {
+func (m *Memory) RecordProductionLabourGap(ctx context.Context, gap wp.ProductionLabourGap) (wp.ProductionLabourGap, error) {
 	if err := gap.Validate(); err != nil {
+		return wp.ProductionLabourGap{}, err
+	}
+	period, err := m.GetWorkingPeriod(ctx, gap.WorkingPeriodID)
+	if err != nil {
+		return wp.ProductionLabourGap{}, err
+	}
+	m.workingPeriod.mu.RLock()
+	nc := m.workingPeriod.constraints[period.CommodityID]
+	m.workingPeriod.mu.RUnlock()
+	if err := gap.ValidateAgainst(period, nc.MinWorkingDays); err != nil {
 		return wp.ProductionLabourGap{}, err
 	}
 	m.productionTime.mu.Lock()

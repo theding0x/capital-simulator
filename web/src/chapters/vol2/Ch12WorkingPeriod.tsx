@@ -12,7 +12,9 @@ import "./Ch12WorkingPeriod.css";
 // working-days), every day's circulating-capital outlay is tied up until the
 // final day. The effective capital-advance multiplier = WorkingDayCount, so
 // a capitalist must advance 84x a single day's outlay before any return.
-// In a *discrete* process (e.g. yarn spun daily), the multiplier = 1.
+// A *discrete* process (e.g. yarn) ties up one working period's outlay too:
+// the spinner recovers his weekly outlay weekly (multiplier = 7), so the
+// locomotive maker needs twelve times the spinner's circulating capital.
 //
 // Natural constraints (annual crops, multi-year timber, livestock gestation)
 // set inviolable floors — ErrPrematureDelivery blocks any period below them.
@@ -22,11 +24,11 @@ import "./Ch12WorkingPeriod.css";
 // Vol. III Part Five.
 
 // Seed fixtures visible on fresh DB (migration 00045_v2_ch12_seed.sql):
-//   SpinningMill1871 — discrete, 1 day, multiplier = 1
+//   SpinningMill1871 — discrete, 7 days, multiplier = 7
 //   LocomotiveWorks   — connected, 84 days, multiplier = 84
 
 function multiplier(wp: WorkingPeriod): number {
-  return wp.mode === "connected" ? wp.working_day_count : 1;
+  return wp.working_day_count;
 }
 
 function WorkingPeriodCard({ wp }: { wp: WorkingPeriod }) {
@@ -215,12 +217,13 @@ function CapitalLockingInsight() {
         A working period of <em>n</em> weeks ties up <em>n</em> times more
         capital than a single-week period at the same scale of production —
         because no value can be realised until the working period closes.
-        Marx's locomotive-works fixture runs 84 weeks: the same daily output
-        of labour-power, but <strong>84×</strong> the capital locked at any
-        instant. The discrete vs connected modes below show the same
-        mechanism on two seed fixtures.
+        Marx's locomotive-works fixture runs 84 working-days (twelve weeks)
+        against the spinner's one: the same daily outlay, but{" "}
+        <strong>12×</strong> the circulating capital at his disposal. The
+        discrete vs connected modes below show the same mechanism on two seed
+        fixtures.
       </p>
-      <span className="v2-ch12-insight-kpi">×84 — locomotive vs spinning</span>
+      <span className="v2-ch12-insight-kpi">×12 — locomotive vs spinning</span>
     </section>
   );
 }

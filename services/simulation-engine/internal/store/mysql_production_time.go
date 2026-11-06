@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	wp "github.com/theding0x/capital-simulator/services/simulation-engine/internal/workperiod"
@@ -14,13 +15,26 @@ func (m *MySQL) RecordProductionLabourGap(ctx context.Context, gap wp.Production
 	if err := gap.Validate(); err != nil {
 		return wp.ProductionLabourGap{}, err
 	}
+	period, err := m.GetWorkingPeriod(ctx, gap.WorkingPeriodID)
+	if err != nil {
+		return wp.ProductionLabourGap{}, err
+	}
+	var minDays int64
+	if err := m.db.QueryRowContext(ctx,
+		`SELECT min_working_days FROM natural_working_period_constraints WHERE commodity_id = ?`,
+		period.CommodityID).Scan(&minDays); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return wp.ProductionLabourGap{}, err
+	}
+	if err := gap.ValidateAgainst(period, minDays); err != nil {
+		return wp.ProductionLabourGap{}, err
+	}
 	if gap.ID == "" {
 		gap.ID = wp.NewProductionLabourGapID()
 	}
 	if gap.CreatedAt.IsZero() {
 		gap.CreatedAt = m.now().UTC()
 	}
-	_, err := m.db.ExecContext(ctx,
+	_, err = m.db.ExecContext(ctx,
 		`INSERT INTO production_labour_gaps
 		   (id, working_period_id, production_time_nanos, labour_time_nanos, gap_nanos, created_at)
 		 VALUES (?, ?, ?, ?, ?, ?)`,

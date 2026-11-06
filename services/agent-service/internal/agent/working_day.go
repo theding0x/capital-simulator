@@ -6,6 +6,8 @@ import (
 	"errors"
 	"io"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 )
 
 // PhysicalMaxMinutes is the hard ceiling for any working day: 24 h × 60 min.
@@ -49,9 +51,12 @@ func (wd WorkingDay) TotalMinutes() int64 {
 	return int64(wd.NecessaryLabourMinutes) + int64(wd.SurplusLabourMinutes)
 }
 
-// RateOfSurplusValue returns s/v — the degree of exploitation.
+// RateOfSurplusValue returns s/v — the degree of exploitation. Validate
+// guarantees necessary labour is positive; on an unvalidated day the rate is
+// undefined and reads as 0.
 func (wd WorkingDay) RateOfSurplusValue() float64 {
-	return float64(wd.SurplusLabourMinutes) / float64(wd.NecessaryLabourMinutes)
+	r, _ := surplusrate.Ratio(int64(wd.SurplusLabourMinutes), int64(wd.NecessaryLabourMinutes))
+	return r
 }
 
 // Validate checks that necessary labour is positive, surplus labour is not negative

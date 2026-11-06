@@ -3,7 +3,10 @@
 // no persistence is required.
 package simulation
 
-import "github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+import (
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+)
 
 // NecessaryLabour is the paid portion of the working day — the time the
 // labourer needs to reproduce the value of their labour-power.
@@ -48,10 +51,8 @@ type RateResult struct {
 // Unbounded above 1.0 — a 300% rate of exploitation is possible
 // (English agricultural labourer, §).
 func FormulaI(s SurplusLabour, v NecessaryLabour) float64 {
-	if v.Minutes == 0 {
-		return 0
-	}
-	return float64(s.Minutes) / float64(v.Minutes)
+	r, _ := surplusrate.Ratio(int64(s.Minutes), int64(v.Minutes))
+	return r
 }
 
 // FormulaII returns surplus-labour divided by the total working day:
@@ -68,10 +69,8 @@ func FormulaII(s SurplusLabour, wd WorkingDay) float64 {
 // Formula I's ratio (unpaid = surplus, paid = necessary) but the
 // arithmetic is identical.
 func FormulaIII(unpaid, paid labour.LabourMinutes) float64 {
-	if paid == 0 {
-		return 0
-	}
-	return float64(unpaid) / float64(paid)
+	r, _ := surplusrate.Ratio(int64(unpaid), int64(paid))
+	return r
 }
 
 // ComputeRates applies all three formulae to scenario and returns the
