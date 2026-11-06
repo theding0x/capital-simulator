@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/production"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
 
@@ -60,8 +61,8 @@ func (h *Handler) ComputeAbsoluteSurplusValue(w http.ResponseWriter, r *http.Req
 	}
 	old := surplus.WorkingDay{
 		Total:           labour.LabourMinutes(req.WorkingDayMinutes),
-		NecessaryLabour: labour.LabourMinutes(req.NecessaryLabourMinutes),
-		SurplusLabour:   labour.LabourMinutes(req.WorkingDayMinutes - req.NecessaryLabourMinutes),
+		NecessaryLabour: production.NecessaryLabour(req.NecessaryLabourMinutes),
+		SurplusLabour:   production.SurplusLabour(req.WorkingDayMinutes - req.NecessaryLabourMinutes),
 	}
 	newWD, asv := surplus.ProlongWorkingDay(old, labour.LabourMinutes(req.ExtensionMinutes))
 	writeJSON(w, http.StatusOK, absoluteSurplusValueResponse{
@@ -110,8 +111,8 @@ func (h *Handler) ComputeRelativeSurplusValue(w http.ResponseWriter, r *http.Req
 	}
 	old := surplus.WorkingDay{
 		Total:           labour.LabourMinutes(req.WorkingDayMinutes),
-		NecessaryLabour: labour.LabourMinutes(req.NecessaryLabourMinutes),
-		SurplusLabour:   labour.LabourMinutes(req.WorkingDayMinutes - req.NecessaryLabourMinutes),
+		NecessaryLabour: production.NecessaryLabour(req.NecessaryLabourMinutes),
+		SurplusLabour:   production.SurplusLabour(req.WorkingDayMinutes - req.NecessaryLabourMinutes),
 	}
 	newWD, rsv := surplus.ReduceNecessaryLabour(old, surplus.ProductivityFactor(req.ProductivityFactor))
 	writeJSON(w, http.StatusOK, relativeSurplusValueResponse{
