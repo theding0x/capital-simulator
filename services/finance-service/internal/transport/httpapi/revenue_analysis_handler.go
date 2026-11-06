@@ -6,6 +6,7 @@ import (
 
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/revenue"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/store"
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/value"
 )
 
 // createAnnualCompositionRequest is the body for POST /v1/revenue/annual-compositions.
@@ -38,8 +39,15 @@ func (h *Handler) CreateAnnualValueComposition(w http.ResponseWriter, r *http.Re
 		ConstantCapitalLabourMinutes: req.ConstantCapitalLabourMinutes,
 		VariableCapitalLabourMinutes: req.VariableCapitalLabourMinutes,
 		SurplusValueLabourMinutes:    req.SurplusValueLabourMinutes,
-		TotalValueLabourMinutes:      revenue.ComputeTotalValue(req.ConstantCapitalLabourMinutes, req.VariableCapitalLabourMinutes, req.SurplusValueLabourMinutes),
-		NewValueLabourMinutes:        revenue.ComputeNewValue(req.VariableCapitalLabourMinutes, req.SurplusValueLabourMinutes),
+		TotalValueLabourMinutes: int64(revenue.ComputeTotalValue(
+			value.ConstantCapital(req.ConstantCapitalLabourMinutes),
+			value.VariableCapital(req.VariableCapitalLabourMinutes),
+			value.SurplusValue(req.SurplusValueLabourMinutes),
+		)),
+		NewValueLabourMinutes: int64(revenue.ComputeNewValue(
+			value.VariableCapital(req.VariableCapitalLabourMinutes),
+			value.SurplusValue(req.SurplusValueLabourMinutes),
+		)),
 	}
 	savedComp, err := h.Store.CreateAnnualValueComposition(r.Context(), comp)
 	if err != nil {

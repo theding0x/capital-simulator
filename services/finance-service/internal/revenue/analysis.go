@@ -9,6 +9,8 @@ package revenue
 import (
 	"fmt"
 	"time"
+
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/value"
 )
 
 // AnnualValueCompositionID identifies an annual-value-composition record.
@@ -73,14 +75,15 @@ type SurplusValuePartition struct {
 	CreatedAt           time.Time               `json:"created_at"`
 }
 
-// ComputeTotalValue returns the value of the annual product: c + v + s.
-func ComputeTotalValue(constant, variable, surplus int64) int64 {
-	return constant + variable + surplus
+// ComputeTotalValue returns the value of the annual product: c + v + s. The
+// parameters are the shared Vol. I types, so a Vol. I s cannot be swapped for v.
+func ComputeTotalValue(constant value.ConstantCapital, variable value.VariableCapital, surplus value.SurplusValue) value.LabourMinutes {
+	return value.LabourMinutes(constant) + value.LabourMinutes(variable) + value.LabourMinutes(surplus)
 }
 
 // ComputeNewValue returns the value newly added by living labour: v + s.
-func ComputeNewValue(variable, surplus int64) int64 {
-	return variable + surplus
+func ComputeNewValue(variable value.VariableCapital, surplus value.SurplusValue) value.LabourMinutes {
+	return value.LabourMinutes(variable) + value.LabourMinutes(surplus)
 }
 
 // DeriveRevenueLimit builds the revenue limit implied by a composition: the

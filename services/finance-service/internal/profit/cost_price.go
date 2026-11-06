@@ -20,30 +20,18 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/theding0x/capital-simulator/services/finance-service/internal/value"
 )
 
-// LabourMinutes is the canonical value-magnitude unit across the simulator:
-// the socially necessary labour-time congealed in a value. Marx's worked
-// examples in this chapter are denominated in money (£, shillings), but he
-// fixes the correspondence — "the value produced by one labourer during an
-// average social working-day is represented by a money sum of 6s." — so the
-// £-figures and the labour-time figures are the same magnitude under two
-// names. We keep the labour-time unit throughout.
-type LabourMinutes int64
-
-// ConstantCapital (c) is the value transferred from the consumed means of
-// production to the product. It reappears in the product's value but creates
-// no new value of its own.
-type ConstantCapital LabourMinutes
-
-// VariableCapital (v) is the value advanced for labour-power. In the labour
-// process, living labour-power replaces it with a greater new value, so v is
-// the sole source of surplus-value.
-type VariableCapital LabourMinutes
-
-// SurplusValue (s) is the unpaid labour appropriated by the capitalist — the
-// excess of the new value created over the variable capital advanced.
-type SurplusValue LabourMinutes
+// Value-magnitude types (LabourMinutes, c, v, s) are declared once in the value
+// package and aliased here, so profit and avgprofit share one vocabulary.
+type (
+	LabourMinutes   = value.LabourMinutes
+	ConstantCapital = value.ConstantCapital
+	VariableCapital = value.VariableCapital
+	SurplusValue    = value.SurplusValue
+)
 
 // Sentinel validation errors for a CapitalOutlay (and, for Ch. 4, a
 // TurnoverAnalysis; for Ch. 5, a ConstantCapitalEconomy).

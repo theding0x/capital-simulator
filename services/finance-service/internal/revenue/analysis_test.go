@@ -10,8 +10,8 @@ func ch49Composition() AnnualValueComposition {
 		ConstantCapitalLabourMinutes: 6000,
 		VariableCapitalLabourMinutes: 1500,
 		SurplusValueLabourMinutes:    1500,
-		TotalValueLabourMinutes:      ComputeTotalValue(6000, 1500, 1500),
-		NewValueLabourMinutes:        ComputeNewValue(1500, 1500),
+		TotalValueLabourMinutes:      int64(ComputeTotalValue(6000, 1500, 1500)),
+		NewValueLabourMinutes:        int64(ComputeNewValue(1500, 1500)),
 	}
 }
 
