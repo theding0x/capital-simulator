@@ -40,6 +40,13 @@ type WorkingDay struct {
 	SurplusLabour   SurplusLabour   `json:"surplus_labour"`
 }
 
+// Partitioned reports whether the day satisfies the L-P1 invariant
+// NecessaryLabour + SurplusLabour == Total. It is the one definition of that
+// check; the surplus package and the HTTP layers use this type too.
+func (wd WorkingDay) Partitioned() bool {
+	return LabourMinutes(wd.NecessaryLabour)+LabourMinutes(wd.SurplusLabour) == wd.Total
+}
+
 // ShortenNecessaryLabour recomputes the working-day split after a productivity
 // rise reduces the value of labour-power to newLPV. Total day is unchanged [§1].
 func ShortenNecessaryLabour(wd WorkingDay, newLPV LabourPowerValue) WorkingDay {
