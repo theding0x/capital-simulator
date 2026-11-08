@@ -169,7 +169,13 @@ func TestSurplusValue_OriginTagDistinguishes(t *testing.T) {
 func TestReduceNecessaryLabour_GuardsAgainstZero(t *testing.T) {
 	t.Parallel()
 	wd := surplus.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
-	_, rsv := surplus.ReduceNecessaryLabour(wd, surplus.ProductivityFactor(1e9))
+	newWD, rsv := surplus.ReduceNecessaryLabour(wd, surplus.ProductivityFactor(1e9))
+	if newWD.NecessaryLabour <= 0 {
+		t.Fatalf("NecessaryLabour must stay > 0 under extreme productivity; got %d", newWD.NecessaryLabour)
+	}
+	if newWD.Total != wd.Total || int64(newWD.NecessaryLabour)+int64(newWD.SurplusLabour) != int64(newWD.Total) {
+		t.Fatalf("working-day partition broken: %+v from %+v", newWD, wd)
+	}
 	if rsv.LabourMinutes <= 0 {
 		t.Fatalf("RelativeSurplusValue must be positive on positive productivity gain; got %d", rsv.LabourMinutes)
 	}

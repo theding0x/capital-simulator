@@ -389,3 +389,46 @@ func TestProductionLabourGap_ValidateAgainst(t *testing.T) {
 		t.Error("mismatched working_period_id: expected error")
 	}
 }
+
+// TestProductionLabourGap_GapCreatesNoValue (Ch. 13): only labour-time creates
+// value, and the working period fixes the labour-time at WorkingDayCount
+// working days. However long the production span stretches (no gap, Marx's
+// cattle 1095 days, an absurd decade), the labour-time that ValidateAgainst
+// accepts is unchanged, and any attempt to book the gap as labour, even by one
+// working day, is rejected.
+func TestProductionLabourGap_GapCreatesNoValue(t *testing.T) {
+	t.Parallel()
+	const day = int64(86_400_000_000_000)
+	const workingDay = int64(600) * 60_000_000_000
+	period := workperiod.WorkingPeriod{
+		ID: "wp-cattle", WorkingDayCount: 5, WorkingDayLengthMinutes: 600, Mode: workperiod.ModeConnected,
+	}
+	labour := period.WorkingDayCount * workingDay
+
+	for _, spanDays := range []int64{1, 5, 365, 1095, 3650} {
+		production := spanDays * day
+		if production < labour {
+			production = labour
+		}
+		accepted := workperiod.ProductionLabourGap{
+			WorkingPeriodID: period.ID, ProductionTimeNanos: production,
+			LabourTimeNanos: labour, GapNanos: production - labour,
+		}
+		if err := accepted.ValidateAgainst(period, 0); err != nil {
+			t.Errorf("span %dd: labour fixed at the period's %d days should be accepted: %v", spanDays, period.WorkingDayCount, err)
+		}
+		if accepted.LabourTimeNanos+accepted.GapNanos != accepted.ProductionTimeNanos {
+			t.Errorf("span %dd: labour + gap != production time", spanDays)
+		}
+
+		inflated := accepted
+		inflated.LabourTimeNanos += workingDay
+		inflated.GapNanos -= workingDay
+		if inflated.GapNanos < 0 {
+			continue
+		}
+		if err := inflated.ValidateAgainst(period, 0); !errors.Is(err, workperiod.ErrGapLabourMismatch) {
+			t.Errorf("span %dd: booking one gap day as labour: got %v, want ErrGapLabourMismatch", spanDays, err)
+		}
+	}
+}
