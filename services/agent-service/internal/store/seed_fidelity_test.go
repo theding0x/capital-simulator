@@ -48,3 +48,30 @@ func TestMigration00033_Ch10TenHoursSeed(t *testing.T) {
 		t.Error("Down must restore 300 + 300 minutes")
 	}
 }
+
+// 00034 renames the Ch.13 twelve-man seed to Marx's twelve masons (issue #450)
+// and must roll back to 00011's Arkwright spinning floor.
+func TestMigration00034_Ch13TwelveMasonsSeed(t *testing.T) {
+	t.Parallel()
+	raw, err := migrationsFS.ReadFile("migrations/00034_v1_ch13_seed_fidelity.sql")
+	if err != nil {
+		t.Fatalf("read migration: %v", err)
+	}
+	up, down, ok := strings.Cut(string(raw), "-- +goose Down")
+	if !ok {
+		t.Fatal("migration has no Down section")
+	}
+	for _, want := range []string{"name = 'Twelve Masons'", "name = 'Mason 01'", "name = 'Mason 10'"} {
+		if !strings.Contains(up, want) {
+			t.Errorf("Up missing %q", want)
+		}
+	}
+	for _, want := range []string{"name = 'Arkwright Spinning Floor'", "name = 'Spinner 01'", "name = 'Richard Arkwright'"} {
+		if !strings.Contains(down, want) {
+			t.Errorf("Down missing %q", want)
+		}
+	}
+	if strings.Count(up, "UPDATE") != strings.Count(down, "UPDATE") {
+		t.Errorf("Up has %d UPDATEs but Down has %d", strings.Count(up, "UPDATE"), strings.Count(down, "UPDATE"))
+	}
+}
