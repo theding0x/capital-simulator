@@ -752,6 +752,8 @@ export interface CreateManufactureInput {
   origin: ManufactureOrigin;
   individual_working_day_minutes: number;
   roles: DetailRole[];
+  /** Observed gain (>= 1); omit for none recorded. */
+  productive_power_factor?: number;
 }
 
 export interface ProportionalGroupSizeResult {

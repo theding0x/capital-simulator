@@ -45,8 +45,8 @@ func TestCreateManufacture_TypeFoundryProportionality(t *testing.T) {
 	if got.TotalWorkers != 7 {
 		t.Fatalf("TotalWorkers = %d, want 7", got.TotalWorkers)
 	}
-	if got.ProductivityFactor <= 1.0 {
-		t.Fatalf("ProductivityFactor = %v, want > 1.0", got.ProductivityFactor)
+	if got.ProductivityFactor != 1.0 {
+		t.Fatalf("ProductivityFactor = %v, want exactly 1.0 (no gain recorded, none invented)", got.ProductivityFactor)
 	}
 	if got.ProductivePowerFactor != got.ProductivityFactor {
 		t.Fatalf("ProductivePowerFactor (%v) and ProductivityFactor (%v) should match",
@@ -286,5 +286,45 @@ func TestGetManufactureMinimumCapital_ExceedsCooperationBaseline(t *testing.T) {
 	}
 	if got.MinimumCapitalPence <= agent.Pence(0) {
 		t.Fatal("MinimumCapitalPence must be positive")
+	}
+}
+
+// A recorded productive-power factor is stored and surfaces as both the
+// productive-power and the productivity factor (the Part IV bridge input); one
+// below 1 is rejected with 400.
+func TestCreateManufacture_RecordedProductivePower(t *testing.T) {
+	t.Parallel()
+	ts, st := newAgentTestServer(t)
+	cap := seedCapitalist(t, st, "Henry Caslon")
+	post := func(factor string) *http.Response {
+		body := `{"name":"Caslon Type-Foundry","capitalist_id":"` + string(cap) + `",` +
+			`"form":"serial","origin":"splitting","individual_working_day_minutes":720,` +
+			`"productive_power_factor":` + factor + `,` +
+			`"roles":[{"name":"founder","skill_level":"skilled","output_rate_per_hour":2000,"head_count":4,"tool_name":"mould"}]}`
+		res, err := http.Post(ts.URL+"/v1/manufactures", "application/json", strings.NewReader(body))
+		if err != nil {
+			t.Fatalf("POST: %v", err)
+		}
+		return res
+	}
+	res := post("1.3")
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("status = %d, want 201", res.StatusCode)
+	}
+	var got manufactureResponse
+	if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.ProductivePowerFactor != 1.3 || got.ProductivityFactor != 1.3 {
+		t.Fatalf("factors = %v / %v, want 1.3", got.ProductivePowerFactor, got.ProductivityFactor)
+	}
+	if want := agent.LabourMinutes(4 * 720 * 13 / 10); got.ProductivePowerMinutes != want {
+		t.Fatalf("ProductivePowerMinutes = %d, want %d", got.ProductivePowerMinutes, want)
+	}
+	bad := post("0.5")
+	defer bad.Body.Close()
+	if bad.StatusCode != http.StatusBadRequest {
+		t.Fatalf("factor 0.5: status = %d, want 400", bad.StatusCode)
 	}
 }

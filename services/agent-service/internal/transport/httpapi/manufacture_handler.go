@@ -23,6 +23,8 @@ type createManufactureRequest struct {
 	Origin                      string            `json:"origin"`
 	IndividualWorkingDayMinutes int64             `json:"individual_working_day_minutes"`
 	Roles                       []detailRoleInput `json:"roles"`
+	// ProductivePowerFactor is the observed gain (>= 1); omit for none.
+	ProductivePowerFactor float64 `json:"productive_power_factor"`
 }
 
 type manufactureResponse struct {
@@ -92,6 +94,7 @@ func parseManufactureInput(req createManufactureRequest) (agent.Manufacture, err
 		Origin:                      agent.ManufactureOrigin(req.Origin),
 		IndividualWorkingDayMinutes: agent.LabourMinutes(req.IndividualWorkingDayMinutes),
 		Roles:                       roles,
+		ProductivePower:             req.ProductivePowerFactor,
 	}
 	if err := m.Validate(); err != nil {
 		return agent.Manufacture{}, err
