@@ -181,3 +181,27 @@ func TestApplyProductivityToSNLT_ZeroFactor(t *testing.T) {
 		t.Fatalf("expected original 60 for zero factor, got %d", got)
 	}
 }
+
+// Partitioned is the single L-P1 check. Marx's 12-hour day: 10 h necessary +
+// 2 h surplus = 720 min. A day that loses or invents a minute fails it.
+func TestWorkingDayPartitioned(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		wd   production.WorkingDay
+		want bool
+	}{
+		{"12h day, 10h + 2h", production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}, true},
+		{"all necessary, no surplus", production.WorkingDay{Total: 360, NecessaryLabour: 360, SurplusLabour: 0}, true},
+		{"minute lost", production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 119}, false},
+		{"minute invented", production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 121}, false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := tc.wd.Partitioned(); got != tc.want {
+				t.Errorf("Partitioned() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

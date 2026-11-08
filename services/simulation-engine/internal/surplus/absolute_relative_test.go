@@ -3,6 +3,7 @@ package surplus_test
 import (
 	"testing"
 
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/production"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/surplus"
 )
@@ -73,10 +74,10 @@ func TestReduceNecessaryLabour_Para1_RelativeFromProductivity(t *testing.T) {
 func TestRateSurplusValue_Para1_EasternBreadCutter(t *testing.T) {
 	t.Parallel()
 	wd := surplus.WorkingDay{Total: 4320, NecessaryLabour: 720, SurplusLabour: 3600}
-	if wd.NecessaryLabour+wd.SurplusLabour != wd.Total {
+	if !wd.Partitioned() {
 		t.Fatalf("partition invariant violated")
 	}
-	rate := surplus.RateSurplusValue(wd.SurplusLabour, wd.NecessaryLabour)
+	rate := surplus.RateSurplusValue(labour.LabourMinutes(wd.SurplusLabour), labour.LabourMinutes(wd.NecessaryLabour))
 	if rate != 5.0 {
 		t.Fatalf("RateSurplusValue = %v, want 5.0", rate)
 	}
@@ -105,11 +106,11 @@ func TestInvariant_PartitionHolds(t *testing.T) {
 	t.Parallel()
 	wd := surplus.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
 	a, _ := surplus.ProlongWorkingDay(wd, 60)
-	if a.NecessaryLabour+a.SurplusLabour != a.Total {
+	if !a.Partitioned() {
 		t.Fatalf("absolute path violates partition: %+v", a)
 	}
 	r, _ := surplus.ReduceNecessaryLabour(wd, surplus.ProductivityFactor(2.0))
-	if r.NecessaryLabour+r.SurplusLabour != r.Total {
+	if !r.Partitioned() {
 		t.Fatalf("relative path violates partition: %+v", r)
 	}
 }
@@ -120,7 +121,7 @@ func TestInvariant_AbsoluteEqualsSurplusLabour(t *testing.T) {
 	t.Parallel()
 	wd := surplus.WorkingDay{Total: 600, NecessaryLabour: 600, SurplusLabour: 0}
 	newWD, asv := surplus.ProlongWorkingDay(wd, 120)
-	if asv.LabourMinutes != newWD.SurplusLabour {
+	if asv.LabourMinutes != labour.LabourMinutes(newWD.SurplusLabour) {
 		t.Fatalf("AbsoluteSurplusValue.LabourMinutes = %d, want SurplusLabour = %d",
 			asv.LabourMinutes, newWD.SurplusLabour)
 	}
@@ -131,7 +132,7 @@ func TestInvariant_RelativeEqualsNecessaryReduction(t *testing.T) {
 	t.Parallel()
 	wd := surplus.WorkingDay{Total: 720, NecessaryLabour: 480, SurplusLabour: 240}
 	newWD, rsv := surplus.ReduceNecessaryLabour(wd, surplus.ProductivityFactor(1.5))
-	if rsv.LabourMinutes != wd.NecessaryLabour-newWD.NecessaryLabour {
+	if rsv.LabourMinutes != labour.LabourMinutes(wd.NecessaryLabour-newWD.NecessaryLabour) {
 		t.Fatalf("RelativeSurplusValue.LabourMinutes = %d, want %d (oldN − newN)",
 			rsv.LabourMinutes, wd.NecessaryLabour-newWD.NecessaryLabour)
 	}

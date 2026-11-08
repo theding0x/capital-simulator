@@ -49,16 +49,13 @@ type RelativeSurplusValue struct {
 // WorkingDay is the §1 partition: total time the labourer is at the
 // capitalist's disposal, split into the necessary-labour share (which
 // reproduces labour-power) and the surplus-labour share (appropriated by
-// capital). All fields are LabourMinutes; the invariant
+// capital). The invariant
 //
 //	NecessaryLabour + SurplusLabour == Total
 //
-// must hold after every transition.
-type WorkingDay struct {
-	Total           labour.LabourMinutes `json:"total"`
-	NecessaryLabour labour.LabourMinutes `json:"necessary_labour"`
-	SurplusLabour   labour.LabourMinutes `json:"surplus_labour"`
-}
+// must hold after every transition. This is the Ch. 12 production.WorkingDay,
+// not a second declaration: Chs. 12 and 16 describe the same day.
+type WorkingDay = production.WorkingDay
 
 // ProductivityFactor is a multiplicative scalar on output per unit time.
 // >1 reduces the SNLT of subsistence goods and therefore necessary labour.
@@ -76,7 +73,7 @@ func ProlongWorkingDay(wd WorkingDay, extraMinutes labour.LabourMinutes) (Workin
 	newWD := WorkingDay{
 		Total:           wd.Total + extraMinutes,
 		NecessaryLabour: wd.NecessaryLabour,
-		SurplusLabour:   wd.SurplusLabour + extraMinutes,
+		SurplusLabour:   wd.SurplusLabour + production.SurplusLabour(extraMinutes),
 	}
 	return newWD, AbsoluteSurplusValue{
 		SurplusValue: SurplusValue{LabourMinutes: extraMinutes, Origin: OriginAbsolute},
@@ -94,28 +91,16 @@ func ReduceNecessaryLabour(wd WorkingDay, factor ProductivityFactor) (WorkingDay
 	}
 	// One inverse law (value ∝ 1/productivity) and one working-day partition,
 	// shared with the Ch. 12 bridge so both paths yield the same minutes.
-	scaled := production.ApplyProductivityToSNLT(wd.NecessaryLabour, factor)
+	scaled := production.ApplyProductivityToSNLT(labour.LabourMinutes(wd.NecessaryLabour), factor)
 	if scaled < 1 {
 		scaled = 1
 	}
-	if scaled >= wd.NecessaryLabour {
+	if production.NecessaryLabour(scaled) >= wd.NecessaryLabour {
 		return wd, RelativeSurplusValue{SurplusValue: SurplusValue{Origin: OriginRelative}}
 	}
-	shortened := production.ShortenNecessaryLabour(
-		production.WorkingDay{
-			Total:           wd.Total,
-			NecessaryLabour: production.NecessaryLabour(wd.NecessaryLabour),
-			SurplusLabour:   production.SurplusLabour(wd.SurplusLabour),
-		},
-		production.LabourPowerValue(scaled),
-	)
-	newWD := WorkingDay{
-		Total:           shortened.Total,
-		NecessaryLabour: labour.LabourMinutes(shortened.NecessaryLabour),
-		SurplusLabour:   labour.LabourMinutes(shortened.SurplusLabour),
-	}
+	newWD := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(scaled))
 	return newWD, RelativeSurplusValue{
-		SurplusValue: SurplusValue{LabourMinutes: newWD.SurplusLabour - wd.SurplusLabour, Origin: OriginRelative},
+		SurplusValue: SurplusValue{LabourMinutes: labour.LabourMinutes(newWD.SurplusLabour - wd.SurplusLabour), Origin: OriginRelative},
 	}
 }
 
