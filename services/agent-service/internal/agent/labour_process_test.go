@@ -258,3 +258,36 @@ func TestNewLabourProcessID(t *testing.T) {
 		t.Errorf("LabourProcessID: want 24 chars, got %d", len(string(id)))
 	}
 }
+
+// §2.d: the 12-hour day. 20 lbs cotton (20s) + spindle (4s) = 24s of means;
+// 6s added; 20 lbs yarn = 30s. Advanced 24s + 3s = 27s; surplus 3s.
+func TestValorizationProcess_TwelveHourDay27To30Shillings(t *testing.T) {
+	t.Parallel()
+	const shilling = agent.LabourMinutes(120)
+	mp := agent.MeansOfProduction{
+		RawMaterials: []agent.RawMaterial{{CommodityID: "cotton", Quantity: 20, SNLTPerUnit: shilling}},
+		Instruments:  []agent.Instrument{{CommodityID: "spindle", WearPerRun: 4 * shilling}},
+	}
+	vp := agent.ValorizationProcess{
+		Process: agent.LabourProcess{
+			WorkerID:     agent.NewAgentID(),
+			CapitalistID: agent.NewAgentID(),
+			Means:        mp,
+			Duration:     workingDay,
+		},
+		NecessaryLabourMinutes: necessaryLabour,
+	}
+	if got, want := agent.TransferredValue(mp), 24*shilling; got != want {
+		t.Errorf("means = %d, want %d (24s)", got, want)
+	}
+	advanced := agent.TransferredValue(mp) + necessaryLabour
+	if want := 27 * shilling; advanced != want {
+		t.Errorf("advanced = %d, want %d (27s)", advanced, want)
+	}
+	if got, want := vp.ProductValue(), 30*shilling; got != want {
+		t.Errorf("product = %d, want %d (30s)", got, want)
+	}
+	if got, want := vp.SurplusValue(), 3*shilling; got != want {
+		t.Errorf("surplus = %d, want %d (3s)", got, want)
+	}
+}
