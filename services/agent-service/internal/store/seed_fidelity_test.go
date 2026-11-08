@@ -28,3 +28,23 @@ func TestMigration00032_Ch7SeedFidelity(t *testing.T) {
 		}
 	}
 }
+
+// 00033 corrects the 1847 Ten Hours' seed to 6h necessary + 4h surplus
+// (issue #450): a 600-minute day, matching the Factory Act's limit.
+func TestMigration00033_Ch10TenHoursSeed(t *testing.T) {
+	t.Parallel()
+	raw, err := migrationsFS.ReadFile("migrations/00033_v1_ch10_seed_fidelity.sql")
+	if err != nil {
+		t.Fatalf("read migration: %v", err)
+	}
+	up, down, ok := strings.Cut(string(raw), "-- +goose Down")
+	if !ok {
+		t.Fatal("migration has no Down section")
+	}
+	if !strings.Contains(up, "necessary_labour_minutes = 360, surplus_labour_minutes = 240") {
+		t.Error("Up must set the 1847 day to 360 + 240 minutes")
+	}
+	if !strings.Contains(down, "necessary_labour_minutes = 300, surplus_labour_minutes = 300") {
+		t.Error("Down must restore 300 + 300 minutes")
+	}
+}
