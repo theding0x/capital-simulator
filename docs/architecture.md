@@ -250,6 +250,29 @@ The React UI adds a "Ch. 06 — The Sale and Purchase of Labour-Power" panel wit
 - **Endpoints (persistent, Ch.9).** `POST /v1/production-accounts` — records a production account; rejects zero variable capital. `GET /v1/production-accounts` — lists all accounts. `GET /v1/production-accounts/{id}` — fetches one. `POST /v1/rate-of-surplus-value` — stateless s/v probe.
 - **React UI.** Ch. 08 panel: Decompose Capital form (dynamic constant-capital list with kind/value/service-life, variable capital block) and Capital Composition form. Ch. 09 panel: Rate of Surplus-Value probe with fixture buttons (1871 Spinning Mill, Jacob's Wheat 1815, Cotton Spinner), Record Production Account form, and list of recorded accounts.
 
+### Ch. 10 — what was built
+
+`agent-service` models Capital Vol. I, Ch. 10 — the working-day as two segments, necessary labour (A—B) and surplus labour (B—C), bounded by a physical maximum and, historically, by statute:
+
+- **WorkingDay.** `WorkingDay{ID, NecessaryLabourMinutes, SurplusLabourMinutes, CreatedAt}` with named segment types, `WorkingDayID` / `NewWorkingDayID()`, `TotalMinutes()` and `RateOfSurplusValue()` (s/v). `Validate()` rejects non-positive necessary labour, negative surplus labour (B—C extends A—B and is never a deduction from it; zero is the limiting case), and a total above `PhysicalMaxMinutes` (1440).
+- **Statutory limits.** `WorkingDayConstraint{Label, StatutoryLimitMinutes}`, `ValidateConstraint`, and `NormalWorkingDay` (a `WorkingDay` plus its constraint). `Overwork{MinutesPerDay}.AnnualMinutes(days)` totals the minutes taken above the limit.
+- **Factory Acts.** `FactoryAct{Year, ChildLimitMinutes, YoungPersonLimitMinutes, AdultLimitMinutes}` records the historical limits. It is a pure domain type: it is neither persisted nor exposed over HTTP.
+- **Relay system.** `RelaySchedule` holds two alternating `RelaySet`s (`ShiftKind` day/night, a `WorkingDay`, worker IDs; `TimerClass` full/half). `Validate()` checks each set's day and that the combined total stays within 24 hours.
+- **Errors.** `ErrNecessaryLabourRequired`, `ErrSurplusLabourNegative`, `ErrWorkingDayExceedsPhysicalMax`, `ErrWorkingDayExceedsStatutoryLimit`.
+- **Store.** Migration `00008_v1_ch10_working_day.sql` adds `working_days` and `relay_schedules`; `00009_v1_ch10_seed.sql` seeds five working-day regimes from §1, §3 and §6 (`5eed00000000000000100001`–`…100005`) and one §4 relay schedule.
+- **HTTP.** `POST /v1/working-days`, `GET /v1/working-days/{id}`, `POST /v1/working-days/validate` (stateless check), `POST /v1/relay-schedules`, `GET /v1/relay-schedules/{id}`. Proxied through api-gateway.
+- **React UI.** Ch. 10 panel (`web/src/chapters/vol1/Ch10WorkingDay.tsx`): A—B—C diagram with a rate-versus-day-length series, Working-Day Validator, Create Working-Day Record, and Relay Schedule form.
+
+### Ch. 11 — what was built
+
+`simulation-engine` models Capital Vol. I, Ch. 11 — the rate and the mass of surplus-value. The `surplus` package is pure: no persistence, no migration.
+
+- **Rate.** `SurplusValueRate{SurplusLabour, NecessaryLabour}` (both `LabourMinutes`) with `Rate()` (s/v, `0` when necessary labour is zero). `Validate()` enforces Marx's second law: necessary plus surplus labour must stay strictly below `AbsoluteWorkdayLimit` (24 h), otherwise `ErrExceedsWorkdayLimit`.
+- **Mass.** `SurplusValueMass` and the named inputs `VariableCapital`, `LabourPowerValue`, `WorkerCount`. `IndividualSurplus` (one worker), `MassByRate` (S = (s/v) × V, formula I) and `MassByWorkers` (S = v × (s/v) × n, formula II) use integer arithmetic and return `0` when necessary labour is zero. `MinimumCapital(v, n)` gives the least variable capital that employs n workers.
+- **Compensation law.** A fall in variable capital can be offset by a higher rate only up to the 24-hour ceiling; a test asserts that compensation never reaches it.
+- **HTTP.** `POST /v1/surplus/mass` takes a rate plus either `variable_capital` or both `labour_power_value` and `worker_count`, and returns `mass`, `mass_by_rate` and, when workers are supplied, `mass_by_workers`. It answers `400` for a non-positive necessary labour, a negative surplus labour, an over-limit day, or missing capital inputs. `GET /v1/surplus/limits` returns the absolute workday limit and, given `labour_power_value` and `worker_count`, the minimum capital. Both are proxied through api-gateway.
+- **React UI.** Ch. 11 panel (`web/src/chapters/vol1/Ch11RateAndMassOfSurplusValue.tsx`): Compensation Law, Mass of Surplus-Value and Surplus-Value Limits cards.
+
 ### Ch. 13 — what was built
 
 `agent-service` models simple co-operation from Capital Vol. I, Ch. 13:
@@ -320,6 +343,18 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **HTTP endpoints (stateless).** `POST /v1/surplus-value/absolute` (compute ASV by prolongation), `POST /v1/surplus-value/relative` (compute RSV by productivity), `GET /v1/surplus-value/rate?surplus_labour=…&necessary_labour=…&total_capital=…[&surplus_value=…]` (returns both rates plus a `mill_critique_holds` boolean).
 - **api-gateway.** Reverse-proxies `/v1/surplus-value/absolute`, `/v1/surplus-value/relative`, and `/v1/surplus-value/rate` to simulation-engine.
 - **React UI.** "Ch. 16 — Absolute and Relative Surplus-Value" panel with: a working-day configurator (Total + NecessaryLabour numeric inputs) driving a side-by-side calculator that runs both the absolute (extension) and relative (productivity) paths simultaneously; a Mill-critique sub-panel that lets the user enter `(s, v, c+v)` and surfaces the two rates plus a "Mill critique holds?" indicator.
+
+### Ch. 17 — what was built
+
+`agent-service` models Capital Vol. I, Ch. 17 — changes of magnitude in the price of labour-power and in surplus-value, driven by three variables: length of the working day, intensity of labour and productiveness of labour. The computation is stateless; there is no migration or seed.
+
+- **Inputs.** `LabourScenario{WorkingDay, Intensity, Productivity, Pressure}`. `LabourIntensity{Factor}` and `LabourProductivity{Factor}` are positive multipliers with a normal value of 1.0 (`NormalLabourIntensity`, `NormalLabourProductivity`). `Pressure` is an optional `ReserveArmyPressure` overlay from Ch. 25.
+- **Outcome.** `ScenarioOutcome{DailyValueMinutes, NecessaryLabourMinutes, SurplusLabourMinutes, LabourPowerValueMinutes, RateOfSurplusValue}`, plus `ReserveArmyPressureBP` and `CompressedWageMinutes` when the overlay is active.
+- **Pure functions.** `DailyValueCreated(wd, intensity)` scales the day's value by intensity, rounded half-up. `ComputeOutcome` divides necessary labour by productivity (§1: the day is constant, so what necessary labour sheds becomes surplus labour), scales both the value of labour-power and the daily value by intensity (§2), and takes surplus as the remainder so that labour-power value plus surplus equals daily value exactly. An active reserve army compresses the wage actually paid below the value of labour-power without touching the partition.
+- **Laws.** `LawConstantDailyValue` (§1 law 1) and `LawInverseRelation` (§1 law 2: labour-power value and surplus-value move in opposite directions).
+- **Errors.** `ErrScenarioNecessaryExceedsDay`, `ErrIntensityFactorNonPositive`, `ErrProductivityFactorNonPositive`, plus the Ch. 10 working-day errors.
+- **HTTP.** `POST /v1/labour-scenarios` evaluates a scenario and returns the `ScenarioOutcome`. Proxied through api-gateway.
+- **React UI.** Ch. 17 panel (`web/src/chapters/vol1/Ch17MagnitudeChanges.tsx`): magnitude calculator over day length, intensity and productivity (§§1–4).
 
 ### Ch. 18 — what was built
 
@@ -536,6 +571,16 @@ Marx's Part VII ("The Accumulation of Capital") covers Ch. 23–25 as a single c
 - **HTTP endpoints.** `POST /v1/colonial-markets` (201 + Location, 409 on duplicate colony, 400 on validation failure), `GET /v1/colonial-markets` (200 — list, `[]` not `null`), `GET /v1/colonial-markets/{id}` (200/404), `POST /v1/colonial-markets/{id}/regulate` (200 — applies sufficient price, persists the regulated state), `POST /v1/colonial-markets/{id}/independence` (200 — per-worker projection with optional `years_limit`). api-gateway proxies `/v1/colonial-markets` and `/v1/colonial-markets/{rest...}` to simulation-engine.
 - **React UI.** "Ch. 33 — The Modern Theory of Colonisation" panel: a four-card grid with the seeded colony list (free / wage-dependent pill), Wakefield's remedy controls (price per acre + desired acres → before/after comparison), a colony registration form, and a per-worker independence projection (years to ransom at the colonial wage).
 - **Vol. I closure.** This is the final chapter of Volume I. The simulation now spans every stage of the dialectic from §1 (the commodity) through §33 (the negation of the negation read through Wakefield's confession).
+
+### Vol. II Ch. 2 — what was built
+
+`simulation-engine` adds the second form of the industrial circuit, P…C′—M′—C…P, which opens and closes in production. Circulation is only the link between two functionings of productive capital, and surplus-value either leaves as revenue or returns as additional capital.
+
+- **Domain types.** `ProductiveCircuit{ID, AgentID, ConstantPence, VariablePence, Mode, MinCapitalisationIncrement, LatentMoneyCapital, ReserveFund, RevenueCircuits, CapitalisationSteps, ReserveDraws, CreatedAt}` with `TotalAdvance() = c + v`. `ReproductionMode` is `simple`, `extended` or `mixed`. `RevenueCircuit` is the c—m—c exit that falls outside the capital circuit. `LatentMoneyCapital{Accumulated, Threshold}` is the hoard (`IsArmed()` once it reaches the threshold). `CapitalisationStep{AmountInjected, DeltaConstantPence, DeltaVariablePence}` records an injection. `ReserveFund` and `ReserveDraw` (`delayed_realisation`, `price_rise_in_mp`) absorb circulation disturbances.
+- **Capitalisation rule.** `ValidateCapitalisation(mode, hoard, minIncrement, amount, dc, dv)` (also a method on `ProductiveCircuit`) allows an injection only if the mode is not `simple` (`ErrSimpleReproductionNoGrowth`), `dc + dv == amount` (`ErrCapitalisationNotConserved`), the amount meets the minimum increment (`ErrIndivisibleProductionElement`), and it does not exceed the latent hoard (`ErrCapitalisationExceedsHoard`) — the hoard is the only source of additional capital. Reserve draws are bounded by the balance (`ErrInsufficientReserve`).
+- **Store.** Productive-circuit persistence in the simulation-engine `Memory` and `MySQL` stores. Migration `00027_v2_ch02_productive_circuits.sql` adds `productive_circuits`, `revenue_circuits`, `capitalisation_steps` and `reserve_draws`; `00028_v2_ch02_seed.sql` seeds the Spinning Mill 1871 in simple reproduction (£422 advanced, £78 spent as revenue) and in extended reproduction (a £78 capitalisation step).
+- **HTTP.** `POST /v1/productive-circuits`, `GET /v1/productive-circuits`, `GET /v1/productive-circuits/{id}`, `POST …/{id}/revenue`, `POST …/{id}/accumulate` (add to the latent hoard), `POST …/{id}/capitalise`, `POST …/{id}/reserve/deposit`, `POST …/{id}/reserve/draw`. Proxied through api-gateway.
+- **React UI.** Ch. 02 panel (`web/src/chapters/vol2/Ch02CircuitProductiveCapital.tsx`): the P…C′—M′—C…P circuit, productive-circuit list, balance sheets for circuit n and n+1 (after capitalisation), latent money-capital, and reserve fund with draw history.
 
 ### Vol. II Ch. 3 — what was built
 
