@@ -1,6 +1,7 @@
 package agent_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/agent"
@@ -146,14 +147,38 @@ func TestRelaySchedule_Validate_ExceedsPhysical(t *testing.T) {
 	}
 }
 
-func TestFactoryActs(t *testing.T) {
+// A FactoryAct's limit must bind a working day through ValidateConstraint:
+// the 1833 Act's 8-hour child limit and the 1847 Ten Hours' Act's 10-hour
+// limit reject a longer day and admit one exactly at the limit.
+func TestFactoryActs_LimitsBindWorkingDay(t *testing.T) {
 	t.Parallel()
 	fa1833 := agent.FactoryAct{Year: 1833, ChildLimitMinutes: 480, YoungPersonLimitMinutes: 720}
-	if fa1833.Year != 1833 || fa1833.ChildLimitMinutes != 480 {
-		t.Errorf("FactoryAct 1833 wrong: %+v", fa1833)
-	}
 	fa1847 := agent.FactoryAct{Year: 1847, YoungPersonLimitMinutes: 600}
-	if fa1847.YoungPersonLimitMinutes != 600 {
-		t.Errorf("FactoryAct 1847 wrong: %+v", fa1847)
+
+	for _, tc := range []struct {
+		name    string
+		label   string
+		limit   int64
+		day     agent.WorkingDay
+		wantErr error
+	}{
+		{"1833 child, 8h day at limit", "1833 child", fa1833.ChildLimitMinutes,
+			agent.WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 120}, nil},
+		{"1833 child, 9h day over limit", "1833 child", fa1833.ChildLimitMinutes,
+			agent.WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 180}, agent.ErrWorkingDayExceedsStatutoryLimit},
+		{"1833 young person, 12h day at limit", "1833 young", fa1833.YoungPersonLimitMinutes,
+			agent.WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360}, nil},
+		{"1847 young person, 10h day at limit", "1847 young", fa1847.YoungPersonLimitMinutes,
+			agent.WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 240}, nil},
+		{"1847 young person, 12h day over limit", "1847 young", fa1847.YoungPersonLimitMinutes,
+			agent.WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360}, agent.ErrWorkingDayExceedsStatutoryLimit},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			c := agent.WorkingDayConstraint{Label: tc.label, StatutoryLimitMinutes: agent.StatutoryLimitMinutes(tc.limit)}
+			if err := agent.ValidateConstraint(tc.day, c); !errors.Is(err, tc.wantErr) {
+				t.Fatalf("ValidateConstraint(%d min vs limit %d) = %v, want %v", tc.day.TotalMinutes(), tc.limit, err, tc.wantErr)
+			}
+		})
 	}
 }

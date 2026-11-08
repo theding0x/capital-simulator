@@ -243,22 +243,44 @@ func TestInvariant_ProportionalRateHeadcount(t *testing.T) {
 	}
 }
 
-// Invariant: ScaleManufacture(m, k) for integer k >= 1 produces a
-// manufacture whose productive power is at least k times the original.
-func TestInvariant_ScaleManufactureLinear(t *testing.T) {
+// Invariant (Ch. 14 §3): scaling extends every detail group by the same
+// multiple, so role proportions are preserved. Productive power is exactly
+// the original at k = 1, strictly more than k times the original for k > 1
+// (the cooperation bonus grows with headcount), strictly increasing in k, and
+// never above the factor ceiling (cooperation asymptote 1.25 + division-of-
+// labour increment cap 0.75) applied to the k-fold baseline.
+func TestInvariant_ScaleManufactureSuperlinearAndBounded(t *testing.T) {
 	t.Parallel()
 	m := carriageManufacture()
-	orig := agent.ManufactureProductivePower(m, 720)
+	const period = int64(720)
+	orig := agent.ManufactureProductivePower(m, period)
+	prev := agent.LabourMinutes(0)
 	for _, k := range []int{1, 2, 3, 5} {
 		scaled, err := agent.ScaleManufacture(m, k)
 		if err != nil {
 			t.Fatalf("ScaleManufacture(m, %d) = %v", k, err)
 		}
-		got := agent.ManufactureProductivePower(scaled, 720)
-		want := agent.LabourMinutes(int64(k)) * orig
-		if got < want {
-			t.Fatalf("ScaleManufacture(m, %d) productive power = %d, want >= %d", k, got, want)
+		for i, r := range scaled.Roles {
+			if r.HeadCount != m.Roles[i].HeadCount*k {
+				t.Fatalf("k=%d role %q headcount = %d, want %d", k, r.Name, r.HeadCount, m.Roles[i].HeadCount*k)
+			}
 		}
+		got := agent.ManufactureProductivePower(scaled, period)
+		linear := agent.LabourMinutes(int64(k)) * orig
+		switch {
+		case k == 1 && got != orig:
+			t.Fatalf("k=1 productive power = %d, want exactly the original %d", got, orig)
+		case k > 1 && got <= linear:
+			t.Fatalf("k=%d productive power = %d, want strictly > %d (cooperation bonus grows with n)", k, got, linear)
+		}
+		ceiling := agent.LabourMinutes(float64(int64(scaled.TotalWorkers())*period) * 2.0)
+		if got >= ceiling {
+			t.Fatalf("k=%d productive power = %d, want < factor-ceiling %d", k, got, ceiling)
+		}
+		if got <= prev {
+			t.Fatalf("k=%d productive power = %d, want > previous %d", k, got, prev)
+		}
+		prev = got
 	}
 }
 

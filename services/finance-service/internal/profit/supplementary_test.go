@@ -202,3 +202,61 @@ func TestComputePartISummary(t *testing.T) {
 		t.Error("analyses should be a non-nil slice, not nil")
 	}
 }
+
+// Rodbertus's error, tested non-circularly. NewRate() returns OldRate() for the
+// nominal kinds, so asserting equality only restates the code. Here the
+// re-valuation is done independently: capital and profit are each scaled by the
+// gold factor and the rate recomputed from the scaled magnitudes. Marx's
+// enterprise A (c = £9,000, v = £1,000, s = £1,000) has C = 10,000 and p =
+// 1,000, a 10% rate. Gold falling by half doubles the figures (factor 200);
+// gold rising halves them (factor 50, the gold-rises case). Either way the
+// nominal rate must equal the rate on the re-valued magnitudes, which is
+// 1000 bp; only an organic change, which scales the capital alone, moves it.
+func TestCapitalMagnitudeChange_GoldRevaluationLeavesRate(t *testing.T) {
+	t.Parallel()
+	const capital, profit = TotalCapital(10000), SurplusValue(1000)
+	const wantBP = int64(1000)
+
+	for _, tc := range []struct {
+		name   string
+		kind   MagnitudeChangeKind
+		factor int64
+	}{
+		{"gold falls by half: figures double", KindMoneyValueChange, 200},
+		{"gold rises: figures halve", KindMoneyValueChange, 50},
+		{"proportional growth at constant composition", KindProportionalChange, 250},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			m := CapitalMagnitudeChange{Kind: tc.kind, OriginalCapital: capital, OriginalProfit: profit, Factor: tc.factor}
+			revaluedC := int64(capital) * tc.factor / magnitudeFactorBase
+			revaluedP := int64(profit) * tc.factor / magnitudeFactorBase
+			if revaluedC == int64(capital) {
+				t.Fatalf("fixture must actually re-value the capital (factor %d)", tc.factor)
+			}
+			independent := magnitudeRateBP(revaluedP, revaluedC)
+			if independent != wantBP {
+				t.Fatalf("independent rate on re-valued magnitudes = %d bp, want %d", independent, wantBP)
+			}
+			if got := m.NewRate(); got != independent {
+				t.Errorf("NewRate = %d bp, want %d (rate on re-valued C=%d, p=%d)", got, independent, revaluedC, revaluedP)
+			}
+			if !m.RateUnchanged() {
+				t.Errorf("RateUnchanged = false, want true for a %s", tc.kind)
+			}
+		})
+	}
+
+	// Contrast: the same factors applied to capital alone (organic change) do move the rate.
+	for _, factor := range []int64{200, 50} {
+		m := CapitalMagnitudeChange{Kind: KindOrganicChange, OriginalCapital: capital, OriginalProfit: profit, Factor: factor}
+		if m.RateUnchanged() {
+			t.Errorf("organic change at factor %d left the rate at %d bp; it must move", factor, m.NewRate())
+		}
+	}
+	rise := CapitalMagnitudeChange{Kind: KindOrganicChange, OriginalCapital: capital, OriginalProfit: profit, Factor: 50}
+	fall := CapitalMagnitudeChange{Kind: KindOrganicChange, OriginalCapital: capital, OriginalProfit: profit, Factor: 200}
+	if rise.NewRate() != 2000 || fall.NewRate() != 500 {
+		t.Errorf("organic rates: capital halved = %d bp (want 2000), doubled = %d bp (want 500)", rise.NewRate(), fall.NewRate())
+	}
+}

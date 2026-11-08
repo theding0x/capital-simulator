@@ -157,3 +157,40 @@ func TestComputeRateBasisPoints_ZeroVariable(t *testing.T) {
 		t.Errorf("err = %v, want commodity.ErrDivisionByZero", err)
 	}
 }
+
+// Ch. 8 (and spec 08 invariant): the value newly created by living labour is
+// v + s and is independent of the constant capital c, which only re-appears
+// in the product. Marx's Ch. 9 account is 410c + 90v + 90s; holding v and s
+// fixed while c varies (including c = 0 and the 1/10th figure) must leave the
+// value product and the rate untouched and move only the expanded capital.
+func TestProductionAccount_NewValueIndependentOfConstantCapital(t *testing.T) {
+	t.Parallel()
+	base := commodity.ProductionAccount{Constant: 410, Variable: 90, Surplus: 90}
+	wantProduct := commodity.ValueProduct(180)
+	wantRate, err := base.Rate()
+	if err != nil {
+		t.Fatalf("Rate: %v", err)
+	}
+
+	for _, c := range []commodity.LabourMinutes{0, 41, 410, 4100} {
+		a := base
+		a.Constant = c
+
+		if got := a.ValueProduct(); got != wantProduct {
+			t.Errorf("c=%d: ValueProduct = %d, want %d (v+s, independent of c)", c, got, wantProduct)
+		}
+		if got := commodity.ComputeValueProduct(a.Variable, a.Surplus); got != wantProduct {
+			t.Errorf("c=%d: ComputeValueProduct = %d, want %d", c, got, wantProduct)
+		}
+		if got, err := a.Rate(); err != nil || got != wantRate {
+			t.Errorf("c=%d: Rate = %v, %v; want %v (s/v ignores c)", c, got, err, wantRate)
+		}
+		if got, want := a.ExpandedCapital(), c+90+90; got != want {
+			t.Errorf("c=%d: ExpandedCapital = %d, want c+v+s = %d", c, got, want)
+		}
+		// c enters the product but contributes no new value.
+		if got := commodity.LabourMinutes(a.ExpandedCapital()) - commodity.LabourMinutes(a.ValueProduct()); got != c {
+			t.Errorf("c=%d: product minus new value = %d, want c", c, got)
+		}
+	}
+}
