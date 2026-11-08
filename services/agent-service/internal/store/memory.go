@@ -459,11 +459,12 @@ func (m *Memory) CreateCooperation(_ context.Context, c agent.Cooperation) (agen
 	}
 	c.CreatedAt = m.now()
 	stored := agent.Cooperation{
-		ID:           c.ID,
-		Name:         c.Name,
-		CapitalistID: c.CapitalistID,
-		Members:      append([]agent.CooperationMember(nil), c.Members...),
-		CreatedAt:    c.CreatedAt,
+		ID:              c.ID,
+		Name:            c.Name,
+		CapitalistID:    c.CapitalistID,
+		Members:         append([]agent.CooperationMember(nil), c.Members...),
+		ProductivePower: c.ProductivePower,
+		CreatedAt:       c.CreatedAt,
 	}
 	m.cooperations[c.ID] = stored
 	return stored, nil

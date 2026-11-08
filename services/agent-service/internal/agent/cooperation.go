@@ -29,11 +29,12 @@ type CooperationSize int
 const CooperationMinSize CooperationSize = 5
 
 var (
-	ErrCooperationSizeTooSmall  = errors.New("cooperation: size must be at least 1")
-	ErrCooperationCapitalistID  = errors.New("cooperation: capitalist_id is required")
-	ErrCooperationWorkingDay    = errors.New("cooperation: working_day_minutes must be positive")
-	ErrCooperationNoMembers     = errors.New("cooperation: at least one member is required")
-	ErrCooperationMemberInvalid = errors.New("cooperation: member worker_id is required")
+	ErrCooperationSizeTooSmall    = errors.New("cooperation: size must be at least 1")
+	ErrCooperationCapitalistID    = errors.New("cooperation: capitalist_id is required")
+	ErrCooperationWorkingDay      = errors.New("cooperation: working_day_minutes must be positive")
+	ErrCooperationNoMembers       = errors.New("cooperation: at least one member is required")
+	ErrCooperationMemberInvalid   = errors.New("cooperation: member worker_id is required")
+	ErrCooperationProductivePower = errors.New("cooperation: productive_power_factor must be 0 (unrecorded) or at least 1")
 )
 
 // Supervisor is a Worker-class member of a Cooperation with directing authority.
@@ -59,7 +60,22 @@ type Cooperation struct {
 	Name         string              `json:"name"`
 	CapitalistID AgentID             `json:"capitalist_id"`
 	Members      []CooperationMember `json:"members"`
-	CreatedAt    time.Time           `json:"created_at"`
+	// ProductivePower is the observed use-value output factor of this
+	// co-operation relative to the same workers isolated (Ch. 13, §1: "far more
+	// than twelve isolated men"). Marx gives no formula for it, so it is
+	// recorded, never derived from the headcount. Zero means no gain recorded;
+	// PowerFactor then reports exactly 1.0.
+	ProductivePower float64   `json:"productive_power_factor"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+// PowerFactor returns the recorded productive-power factor, or 1.0 (no gain
+// asserted) when none was recorded.
+func (c Cooperation) PowerFactor() float64 {
+	if c.ProductivePower == 0 {
+		return 1.0
+	}
+	return c.ProductivePower
 }
 
 // Size returns the count of workers in the cooperation.
@@ -102,6 +118,9 @@ func (c Cooperation) Validate() error {
 	if len(c.Members) == 0 {
 		return ErrCooperationNoMembers
 	}
+	if c.ProductivePower != 0 && c.ProductivePower < 1 {
+		return ErrCooperationProductivePower
+	}
 	for _, m := range c.Members {
 		if m.WorkerID.IsZero() {
 			return ErrCooperationMemberInvalid
@@ -133,29 +152,6 @@ func AverageSocialLabour(collective LabourMinutes, n CooperationSize) LabourMinu
 	return LabourMinutes(int64(collective) / int64(n))
 }
 
-// CollectiveProductivePower returns the use-value output factor of cooperative
-// labour relative to the isolated arithmetic sum (Ch. 13, §5). It is ≥ 1.0;
-// the surplus over 1.0 is the qualitative cooperation bonus — the "new power
-// that arises from the fusion of many forces into one single force." For the
-// degenerate case (n == 1) the bonus is zero and the factor is exactly 1.0.
-//
-// We model the bonus as a small monotonically-increasing function bounded
-// above by an asymptote at ~1.25 — this is illustrative, not normative; Marx
-// gives no closed form. Use-value output for the cooperation is
-//
-//	output = factor * n * d
-//
-// while the value produced (from §2) remains n * d. The gap is appropriated as
-// extra use-values without altering the value-creation law.
-func CollectiveProductivePower(n CooperationSize, d LabourMinutes) float64 {
-	if n <= 1 || d <= 0 {
-		return 1.0
-	}
-	// Diminishing-returns curve: 1 + 0.25 * (n-1) / (n-1+10).
-	delta := float64(int64(n) - 1)
-	return 1.0 + 0.25*delta/(delta+10.0)
-}
-
 // MinimumCapital returns the least Pence a capitalist must command to pay n
 // workers simultaneously at the given daily wage (Ch. 13, §8). The cooperation
 // constraint is, before anything else, a capital-minimum constraint: "the law
@@ -177,12 +173,12 @@ func CooperativeOrigin() string {
 	return "capital"
 }
 
-// CooperationProductivityFactor returns the productivity gain of a
-// cooperation as a multiplicative factor on SNLT. It is the bridge that
-// lets a Ch. 13 record drive a Ch. 12 relative-surplus-value calculation:
-// each cooperation produces a factor ≥ 1.0 by which the social value of
-// commodities is reduced. The float64 return type matches the wire
-// format expected by simulation-engine's production.ProductivityFactor.
+// CooperationProductivityFactor returns the recorded productivity gain of a
+// cooperation as a multiplicative factor on SNLT. It is the bridge that lets a
+// Ch. 13 record drive a Ch. 12 relative-surplus-value calculation: the factor
+// is whatever was observed and recorded on the cooperation (1.0 when none), not
+// a function of its size. The float64 return type matches the wire format
+// expected by simulation-engine's production.ProductivityFactor.
 func CooperationProductivityFactor(c Cooperation) float64 {
-	return CollectiveProductivePower(c.Size(), c.AverageIndividualWorkingDay())
+	return c.PowerFactor()
 }

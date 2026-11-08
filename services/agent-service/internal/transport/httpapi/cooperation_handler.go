@@ -17,6 +17,8 @@ type createCooperationRequest struct {
 	Name         string                   `json:"name"`
 	CapitalistID string                   `json:"capitalist_id"`
 	Members      []cooperationMemberInput `json:"members"`
+	// ProductivePowerFactor is the observed gain (>= 1); omit for none.
+	ProductivePowerFactor float64 `json:"productive_power_factor"`
 }
 
 type cooperationResponse struct {
@@ -37,7 +39,7 @@ func buildCooperationResponse(c agent.Cooperation) cooperationResponse {
 	if c.Members == nil {
 		c.Members = []agent.CooperationMember{}
 	}
-	factor := agent.CollectiveProductivePower(n, d)
+	factor := c.PowerFactor()
 	return cooperationResponse{
 		Cooperation:           c,
 		Size:                  n,
@@ -68,6 +70,8 @@ func (h *Handler) CreateCooperation(w http.ResponseWriter, r *http.Request) {
 		Name:         strings.TrimSpace(req.Name),
 		CapitalistID: agent.AgentID(req.CapitalistID),
 		Members:      members,
+
+		ProductivePower: req.ProductivePowerFactor,
 	}
 	if err := c.Validate(); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -134,7 +138,7 @@ func (h *Handler) ComputeCollectiveWorkingDay(w http.ResponseWriter, r *http.Req
 	n := c.Size()
 	d := c.AverageIndividualWorkingDay()
 	collective := agent.CollectiveWorkingDay(n, d)
-	factor := agent.CollectiveProductivePower(n, d)
+	factor := c.PowerFactor()
 	writeJSON(w, http.StatusOK, collectiveWorkingDayResponse{
 		CooperationID:                 c.ID,
 		Size:                          n,
@@ -147,11 +151,11 @@ func (h *Handler) ComputeCollectiveWorkingDay(w http.ResponseWriter, r *http.Req
 }
 
 type averageSocialLabourResponse struct {
-	CooperationID                 agent.CooperationID   `json:"cooperation_id"`
-	Size                          agent.CooperationSize `json:"size"`
-	CollectiveWorkingDayMinutes   agent.LabourMinutes   `json:"collective_working_day_minutes"`
-	AverageSocialLabourMinutes    agent.LabourMinutes   `json:"average_social_labour_minutes"`
-	MeetsBurkeMinimumPlatoon      bool                  `json:"meets_burke_minimum_platoon"`
+	CooperationID               agent.CooperationID   `json:"cooperation_id"`
+	Size                        agent.CooperationSize `json:"size"`
+	CollectiveWorkingDayMinutes agent.LabourMinutes   `json:"collective_working_day_minutes"`
+	AverageSocialLabourMinutes  agent.LabourMinutes   `json:"average_social_labour_minutes"`
+	MeetsBurkeMinimumPlatoon    bool                  `json:"meets_burke_minimum_platoon"`
 }
 
 func (h *Handler) ComputeAverageSocialLabour(w http.ResponseWriter, r *http.Request) {
@@ -165,11 +169,11 @@ func (h *Handler) ComputeAverageSocialLabour(w http.ResponseWriter, r *http.Requ
 	d := c.AverageIndividualWorkingDay()
 	collective := agent.CollectiveWorkingDay(n, d)
 	writeJSON(w, http.StatusOK, averageSocialLabourResponse{
-		CooperationID:                c.ID,
-		Size:                         n,
-		CollectiveWorkingDayMinutes:  collective,
-		AverageSocialLabourMinutes:   agent.AverageSocialLabour(collective, n),
-		MeetsBurkeMinimumPlatoon:     n >= agent.CooperationMinSize,
+		CooperationID:               c.ID,
+		Size:                        n,
+		CollectiveWorkingDayMinutes: collective,
+		AverageSocialLabourMinutes:  agent.AverageSocialLabour(collective, n),
+		MeetsBurkeMinimumPlatoon:    n >= agent.CooperationMinSize,
 	})
 }
 
