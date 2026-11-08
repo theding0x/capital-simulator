@@ -80,3 +80,15 @@ func MassByWorkers(v LabourPowerValue, rate SurplusValueRate, n WorkerCount) Sur
 func MinimumCapital(v LabourPowerValue, n WorkerCount) VariableCapital {
 	return VariableCapital(int64(v) * int64(n))
 }
+
+// WorkersToLiveOnSurplus returns how many workers a capitalist must employ so
+// that the daily surplus labour they yield equals the necessary labour he needs
+// to live as well as a labourer: ceil(necessary / surplus) [§1]. Marx: a
+// labourer needing 8 h works 12 h, so 4 h of surplus each; he must employ two.
+// It returns 0 when surplusLabour is not positive.
+func WorkersToLiveOnSurplus(necessaryLabour, surplusLabour labour.LabourMinutes) WorkerCount {
+	if surplusLabour <= 0 {
+		return 0
+	}
+	return WorkerCount((int64(necessaryLabour) + int64(surplusLabour) - 1) / int64(surplusLabour))
+}

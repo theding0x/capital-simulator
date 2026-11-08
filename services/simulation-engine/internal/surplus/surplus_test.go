@@ -47,15 +47,28 @@ func TestMassByWorkers_100workers(t *testing.T) {
 	}
 }
 
-// §1 compensation law: rate doubles (100%→200%), V halves (300s→150s), workers halve (100→50).
-// S stays constant at 300 (not 150 — the spec fixture has a typo; the formula is correct).
+// §1 compensation law, Marx's own example: V = 300s (100 labourers) at a rate
+// of 50% (6h necessary, 9h day) yields S = 150s = 100 x 3 working-hours. If the
+// rate doubles to 100% (day 6 -> 12h) and V is halved to 150s (50 labourers),
+// S = 150s = 50 x 6 working-hours: the mass is unchanged. Magnitudes in minutes.
 func TestMassByRate_CompensationLaw(t *testing.T) {
 	t.Parallel()
-	rate := surplus.SurplusValueRate{SurplusLabour: 12, NecessaryLabour: 6}
-	got := surplus.MassByRate(rate, surplus.VariableCapital(150))
-	// S = (12/6) × 150 = 2 × 150 = 300
-	if got != surplus.SurplusValueMass(300) {
-		t.Fatalf("expected 300, got %d", got)
+	const necessary = 360 // 6 h of necessary labour, in minutes
+	before := surplus.SurplusValueRate{SurplusLabour: 180, NecessaryLabour: necessary} // 9h day: 50%
+	after := surplus.SurplusValueRate{SurplusLabour: 360, NecessaryLabour: necessary}  // 12h day: 100%
+	if got := before.Rate(); got != 0.5 {
+		t.Fatalf("before rate = %v, want 0.5", got)
+	}
+	if got := after.Rate(); got != 1.0 {
+		t.Fatalf("after rate = %v, want 1.0 (doubled)", got)
+	}
+	gotBefore := surplus.MassByRate(before, surplus.VariableCapital(300))
+	gotAfter := surplus.MassByRate(after, surplus.VariableCapital(150))
+	if gotBefore != surplus.SurplusValueMass(150) {
+		t.Fatalf("S before = %d, want 150", gotBefore)
+	}
+	if gotAfter != gotBefore {
+		t.Fatalf("S after = %d, want %d (compensation: mass unchanged)", gotAfter, gotBefore)
 	}
 }
 
@@ -199,5 +212,26 @@ func TestIndividualSurplus_ZeroNecessaryLabour(t *testing.T) {
 	rate := surplus.SurplusValueRate{SurplusLabour: 6, NecessaryLabour: 0}
 	if got := surplus.IndividualSurplus(rate, surplus.LabourPowerValue(3)); got != 0 {
 		t.Fatalf("expected 0 for zero necessary_labour, got %d", got)
+	}
+}
+
+// §1 minimum capital: a labourer needing 8h/day to live works 12h for the
+// capitalist, giving 4h surplus. Living only as well as a labourer takes 8h of
+// surplus, so he must employ two.
+func TestWorkersToLiveOnSurplus_EightHoursFourSurplus(t *testing.T) {
+	t.Parallel()
+	got := surplus.WorkersToLiveOnSurplus(8*60, 4*60)
+	if got != surplus.WorkerCount(2) {
+		t.Fatalf("expected 2 workers, got %d", got)
+	}
+}
+
+func TestWorkersToLiveOnSurplus_RoundsUpAndGuardsZero(t *testing.T) {
+	t.Parallel()
+	if got := surplus.WorkersToLiveOnSurplus(480, 300); got != 2 {
+		t.Errorf("480/300 should round up to 2, got %d", got)
+	}
+	if got := surplus.WorkersToLiveOnSurplus(480, 0); got != 0 {
+		t.Errorf("no surplus labour: want 0, got %d", got)
 	}
 }
