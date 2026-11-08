@@ -190,3 +190,25 @@ func TestMemory_ListCircuits(t *testing.T) {
 		t.Errorf("want 3 circuits, got %d", len(cs))
 	}
 }
+
+// A cooperation's recorded productive-power factor must survive a round trip.
+func TestMemory_CooperationKeepsProductivePower(t *testing.T) {
+	t.Parallel()
+	m := store.NewMemory()
+	ctx := context.Background()
+	created, err := m.CreateCooperation(ctx, agent.Cooperation{
+		CapitalistID:    agent.NewAgentID(),
+		Members:         []agent.CooperationMember{{WorkerID: agent.NewAgentID(), WorkingDayMinutes: 720}},
+		ProductivePower: 1.25,
+	})
+	if err != nil {
+		t.Fatalf("CreateCooperation: %v", err)
+	}
+	got, err := m.GetCooperation(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("GetCooperation: %v", err)
+	}
+	if got.ProductivePower != 1.25 {
+		t.Fatalf("ProductivePower = %v, want 1.25", got.ProductivePower)
+	}
+}

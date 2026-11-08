@@ -88,8 +88,7 @@ func TestRelativeSurplus_RejectsInvalidFactor(t *testing.T) {
 // This is the acceptance-criterion test for the Part IV bridge.
 func TestRelativeSurplusFromProductivity_CooperationDrivesCh12(t *testing.T) {
 	t.Parallel()
-	// A cooperation with a productivity factor of 1.2 (typical
-	// CollectiveProductivePower for n=12).
+	// A cooperation with a recorded productivity factor of 1.2.
 	fetcher := stubFetcher{factors: map[ProductivitySource]float64{
 		SourceCooperation: 1.2,
 	}}

@@ -1,6 +1,7 @@
 package agent_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/agent-service/internal/agent"
@@ -8,7 +9,8 @@ import (
 
 // Capital Vol. I, Ch. 13, § (para 2):
 // "If a working-day of 12 hours be embodied in six shillings,
-//  1,200 such days will be embodied in 1,200 times 6 shillings."
+//
+//	1,200 such days will be embodied in 1,200 times 6 shillings."
 //
 // 1,200 workers × 720 min/day = 864,000 minutes — value scales linearly with
 // worker count when no qualitative cooperation bonus is applied.
@@ -22,9 +24,10 @@ func TestCollectiveWorkingDay_Para2_1200Workers(t *testing.T) {
 
 // Capital Vol. I, Ch. 13, § (para 3):
 // "the collective working-day of 12 men simultaneously employed,
-//  consists of 144 hours; and although the labour of each may deviate
-//  more or less from average social labour ... it possesses the qualities
-//  of an average social working-day."
+//
+//	consists of 144 hours; and although the labour of each may deviate
+//	more or less from average social labour ... it possesses the qualities
+//	of an average social working-day."
 //
 // 12 men × 12 h = 144 h = 8640 min. Reducing back via AverageSocialLabour
 // returns the per-worker average of 720 min (12 h).
@@ -38,7 +41,8 @@ func TestAverageSocialLabour_Para3_12Men144Hours(t *testing.T) {
 
 // Capital Vol. I, Ch. 13, § (para 3, Burke fn. 1):
 // "any given five men will, in their total, afford a proportion of labour
-//  equal to any other five."
+//
+//	equal to any other five."
 //
 // Minimum platoon size for deviation cancellation is 5.
 func TestAverageSocialLabour_BurkeFootnote_FiveMen(t *testing.T) {
@@ -52,20 +56,51 @@ func TestAverageSocialLabour_BurkeFootnote_FiveMen(t *testing.T) {
 	}
 }
 
-// Capital Vol. I, Ch. 13, § (para 5):
-// "a dozen persons working together will, in their collective working-day of
-//  144 hours, produce far more than twelve isolated men each working 12 hours."
-//
-// Cooperative output-factor > 1.0 for n > 1; isolated output-factor is exactly 1.0.
-func TestCollectiveProductivePower_Para5_CoopBonus(t *testing.T) {
+// Capital Vol. I, Ch. 13, para 5: a dozen working together "produce far more
+// than twelve isolated men". Marx gives no formula, so the gain is recorded on
+// the cooperation, never derived from its size: 12 masons with nothing recorded
+// assert no gain, and a recorded observation is reported as given.
+func TestCooperation_PowerFactorIsRecordedNotDerived(t *testing.T) {
 	t.Parallel()
-	coop := agent.CollectiveProductivePower(12, agent.LabourMinutes(720))
-	if !(coop > 1.0) {
-		t.Fatalf("CollectiveProductivePower(12, 720) = %v, want > 1.0", coop)
+	members := make([]agent.CooperationMember, 12)
+	for i := range members {
+		members[i] = agent.CooperationMember{WorkerID: agent.NewAgentID(), WorkingDayMinutes: 720}
 	}
-	isolated := agent.CollectiveProductivePower(1, agent.LabourMinutes(720))
-	if isolated != 1.0 {
-		t.Fatalf("CollectiveProductivePower(1, 720) = %v, want 1.0", isolated)
+	unrecorded := agent.Cooperation{CapitalistID: agent.NewAgentID(), Members: members}
+	if got := unrecorded.PowerFactor(); got != 1.0 {
+		t.Fatalf("12 masons, nothing recorded: PowerFactor = %v, want exactly 1.0", got)
+	}
+	observed := unrecorded
+	observed.ProductivePower = 1.2
+	if got := observed.PowerFactor(); got != 1.2 {
+		t.Fatalf("recorded 1.2: PowerFactor = %v, want 1.2", got)
+	}
+	if got := agent.CooperationProductivityFactor(observed); got != 1.2 {
+		t.Fatalf("CooperationProductivityFactor = %v, want 1.2", got)
+	}
+}
+
+// Co-operation never shrinks productive power: a recorded factor below 1 is
+// rejected; 0 (unrecorded) and 1 or more are valid.
+func TestCooperation_Validate_ProductivePower(t *testing.T) {
+	t.Parallel()
+	base := agent.Cooperation{
+		CapitalistID: agent.NewAgentID(),
+		Members:      []agent.CooperationMember{{WorkerID: agent.NewAgentID(), WorkingDayMinutes: 720}},
+	}
+	for _, tc := range []struct {
+		factor float64
+		want   error
+	}{
+		{0, nil}, {1, nil}, {1.2, nil},
+		{0.5, agent.ErrCooperationProductivePower},
+		{-1, agent.ErrCooperationProductivePower},
+	} {
+		c := base
+		c.ProductivePower = tc.factor
+		if err := c.Validate(); !errors.Is(err, tc.want) {
+			t.Errorf("factor %v: Validate() = %v, want %v", tc.factor, err, tc.want)
+		}
 	}
 }
 
@@ -84,8 +119,9 @@ func TestCollectiveWorkingDay_Para7_100Men(t *testing.T) {
 
 // Capital Vol. I, Ch. 13, § (para 8):
 // "The payment of 300 workmen at once, even if only for a single day, requires
-//  a greater outlay of capital than does the payment of a smaller number of
-//  men, week by week."
+//
+//	a greater outlay of capital than does the payment of a smaller number of
+//	men, week by week."
 //
 // MinimumCapital(300) / MinimumCapital(10) = 30, matching Marx's ratio.
 func TestMinimumCapital_Para8_300vs10Ratio(t *testing.T) {
@@ -137,21 +173,6 @@ func TestInvariant_AverageSocialLabourReversesCollective(t *testing.T) {
 		if got != d {
 			t.Fatalf("AverageSocialLabour(CollectiveWorkingDay(%d, %d), %d) = %d, want %d",
 				n, d, n, got, d)
-		}
-	}
-}
-
-// Invariant: CollectiveProductivePower(n, d) * n * d >= n * d (i.e. factor >= 1).
-// Para 5: cooperative output of use-values is always >= the sum of isolated outputs.
-func TestInvariant_CollectiveProductivePowerNonShrinking(t *testing.T) {
-	t.Parallel()
-	for _, n := range []agent.CooperationSize{1, 2, 5, 12, 100} {
-		f := agent.CollectiveProductivePower(n, agent.LabourMinutes(720))
-		if f < 1.0 {
-			t.Fatalf("CollectiveProductivePower(%d, 720) = %v, want >= 1.0", n, f)
-		}
-		if n == 1 && f != 1.0 {
-			t.Fatalf("CollectiveProductivePower(1, 720) = %v, want exactly 1.0", f)
 		}
 	}
 }

@@ -311,16 +311,17 @@ func ProportionalGroupSize(roles []DetailRole, targetOutputRate int64) (map[stri
 
 // ManufactureProductivePowerFactor returns the multiplicative factor by
 // which the manufacture's collective output of use-values exceeds the
-// arithmetic sum of n isolated workers. It compounds the Ch. 13 cooperation
-// bonus with a division-of-labour increment that grows with the number of
-// detail roles. Bounded by construction; not normative.
+// arithmetic sum of n isolated workers. Simple co-operation contributes no
+// invented bonus (Ch. 13 gives Marx no formula), so the baseline is 1.0 and the
+// factor is a division-of-labour increment that grows with the number of detail
+// roles. Bounded by construction; not normative.
 func ManufactureProductivePowerFactor(m Manufacture) float64 {
 	n := m.TotalWorkers()
 	roleCount := len(m.Roles)
 	if n <= 0 {
 		return 1.0
 	}
-	coop := CollectiveProductivePower(CooperationSize(n), m.IndividualWorkingDayMinutes)
+	const coop = 1.0
 	if roleCount <= 1 {
 		return coop
 	}

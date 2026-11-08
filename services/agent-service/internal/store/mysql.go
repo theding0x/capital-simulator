@@ -785,11 +785,11 @@ func (m *MySQL) CreateCooperation(ctx context.Context, c agent.Cooperation) (age
 		return agent.Cooperation{}, err
 	}
 	const q = `INSERT INTO cooperations
-		(id, name, capitalist_id, members_json, created_at)
-		VALUES (?, ?, ?, ?, ?)`
+		(id, name, capitalist_id, members_json, productive_power_factor, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
 	if _, err := m.db.ExecContext(ctx, q,
 		string(c.ID), c.Name, string(c.CapitalistID),
-		string(membersJSON), c.CreatedAt,
+		string(membersJSON), c.PowerFactor(), c.CreatedAt,
 	); err != nil {
 		return agent.Cooperation{}, err
 	}
@@ -797,14 +797,14 @@ func (m *MySQL) CreateCooperation(ctx context.Context, c agent.Cooperation) (age
 }
 
 func (m *MySQL) GetCooperation(ctx context.Context, id agent.CooperationID) (agent.Cooperation, error) {
-	const q = `SELECT id, name, capitalist_id, members_json, created_at
+	const q = `SELECT id, name, capitalist_id, members_json, productive_power_factor, created_at
 		FROM cooperations WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	return scanCooperation(row)
 }
 
 func (m *MySQL) ListCooperations(ctx context.Context) ([]agent.Cooperation, error) {
-	const q = `SELECT id, name, capitalist_id, members_json, created_at
+	const q = `SELECT id, name, capitalist_id, members_json, productive_power_factor, created_at
 		FROM cooperations ORDER BY created_at ASC`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
@@ -815,7 +815,7 @@ func (m *MySQL) ListCooperations(ctx context.Context) ([]agent.Cooperation, erro
 }
 
 func (m *MySQL) ListCooperationsByCapitalist(ctx context.Context, capitalistID agent.AgentID) ([]agent.Cooperation, error) {
-	const q = `SELECT id, name, capitalist_id, members_json, created_at
+	const q = `SELECT id, name, capitalist_id, members_json, productive_power_factor, created_at
 		FROM cooperations WHERE capitalist_id = ? ORDER BY created_at ASC`
 	rows, err := m.db.QueryContext(ctx, q, string(capitalistID))
 	if err != nil {
@@ -828,7 +828,7 @@ func (m *MySQL) ListCooperationsByCapitalist(ctx context.Context, capitalistID a
 func scanCooperation(row *sql.Row) (agent.Cooperation, error) {
 	var c agent.Cooperation
 	var id, capID, membersRaw string
-	err := row.Scan(&id, &c.Name, &capID, &membersRaw, &c.CreatedAt)
+	err := row.Scan(&id, &c.Name, &capID, &membersRaw, &c.ProductivePower, &c.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.Cooperation{}, ErrNotFound
 	}
@@ -848,7 +848,7 @@ func scanCooperations(rows *sql.Rows) ([]agent.Cooperation, error) {
 	for rows.Next() {
 		var c agent.Cooperation
 		var id, capID, membersRaw string
-		if err := rows.Scan(&id, &c.Name, &capID, &membersRaw, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&id, &c.Name, &capID, &membersRaw, &c.ProductivePower, &c.CreatedAt); err != nil {
 			return nil, err
 		}
 		c.ID = agent.CooperationID(id)

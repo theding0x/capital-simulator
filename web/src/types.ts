@@ -660,6 +660,7 @@ export interface Cooperation {
   name: string;
   capitalist_id: string;
   members: CooperationMember[];
+  productive_power_factor: number;
   created_at: string;
   size: number;
   collective_working_day_minutes: number;

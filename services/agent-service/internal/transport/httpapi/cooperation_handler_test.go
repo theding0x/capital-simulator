@@ -96,8 +96,8 @@ func TestCreateCooperation_BurkePlatoon(t *testing.T) {
 	if got.AverageSocialLabour != 720 {
 		t.Fatalf("AverageSocialLabour = %d, want 720", got.AverageSocialLabour)
 	}
-	if got.ProductivityFactor <= 1.0 {
-		t.Fatalf("ProductivityFactor = %v, want > 1.0 (5-worker cooperation bonus)", got.ProductivityFactor)
+	if got.ProductivityFactor != 1.0 {
+		t.Fatalf("ProductivityFactor = %v, want exactly 1.0 (no gain recorded, none invented)", got.ProductivityFactor)
 	}
 	if len(got.Supervisors) != 1 {
 		t.Fatalf("Supervisors = %d, want 1", len(got.Supervisors))
@@ -269,5 +269,40 @@ func TestListAndAverageSocialLabour_RoundTrip(t *testing.T) {
 	}
 	if !avg.MeetsBurkeMinimumPlatoon {
 		t.Fatal("5 members must meet the Burke minimum platoon")
+	}
+}
+
+// A recorded productive-power factor is stored and surfaces as the factor that
+// drives the Part IV bridge; one below 1 is rejected with 400.
+func TestCreateCooperation_RecordedProductivePower(t *testing.T) {
+	t.Parallel()
+	ts, st := newAgentTestServer(t)
+	cap := seedCapitalist(t, st, "Master Builder")
+	post := func(factor string) *http.Response {
+		body := `{"name":"twelve masons","capitalist_id":"` + string(cap) + `",` +
+			`"productive_power_factor":` + factor + `,` +
+			`"members":[{"worker_id":"w1","working_day_minutes":720}]}`
+		res, err := http.Post(ts.URL+"/v1/cooperations", "application/json", strings.NewReader(body))
+		if err != nil {
+			t.Fatalf("POST: %v", err)
+		}
+		return res
+	}
+	res := post("1.25")
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("status = %d, want 201", res.StatusCode)
+	}
+	var got cooperationResponse
+	if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.ProductivityFactor != 1.25 || got.CollectivePowerFactor != 1.25 {
+		t.Fatalf("factors = %v / %v, want 1.25", got.ProductivityFactor, got.CollectivePowerFactor)
+	}
+	bad := post("0.5")
+	defer bad.Body.Close()
+	if bad.StatusCode != http.StatusBadRequest {
+		t.Fatalf("factor 0.5: status = %d, want 400", bad.StatusCode)
 	}
 }
