@@ -1,6 +1,7 @@
 package production_test
 
 import (
+	"math"
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/production"
@@ -203,5 +204,50 @@ func TestWorkingDayPartitioned(t *testing.T) {
 				t.Errorf("Partitioned() = %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+// §1 Marx's worked case, in minutes (1s = 120 min, 1d = 10 min). Social day:
+// 12h = 720 min, necessary 10h = 600 (LPV 5s), surplus 2h = 120 (s = 1s), so
+// s' = 5:1. A capitalist doubles productivity: 24 articles at an individual
+// value of 9d (90 min) instead of 12 at 12d, sold at 10d (100 min), not at the
+// social value. Extra surplus-value = 24 x (100 - 90) = 240 min = 2s, so
+// s rises from 1s to 3s.
+func TestWorkedCase_SoldAtTenpence(t *testing.T) {
+	t.Parallel()
+	const (
+		sold     = production.SocialValue(100) // 10d, the price he actually gets
+		indiv    = production.IndividualValue(90)
+		articles = production.Quantity(24)
+	)
+	extra := production.ExtraSurplusValue(indiv, sold, articles)
+	if extra != 240 {
+		t.Fatalf("extra surplus-value = %d min, want 240 (2s)", extra)
+	}
+	const s0 = 120 // 1s: surplus on the average social conditions
+	if got := s0 + int64(extra); got != 360 {
+		t.Fatalf("surplus-value = %d min, want 360 (3s)", got)
+	}
+}
+
+// §1 Same case: the necessary labour shortens from 10h to 7.5h, so the ratio of
+// necessary to surplus labour moves from 5:1 to 5:3 (12h = 450 + 270 min).
+func TestWorkedCase_NecessaryLabourShortensToSevenAndAHalfHours(t *testing.T) {
+	t.Parallel()
+	before := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
+	if got := production.RateOfSurplusValue(before.SurplusLabour, before.NecessaryLabour); math.Abs(got-0.2) > 1e-9 {
+		t.Fatalf("s' before = %v, want 1/5", got)
+	}
+	// New value of 8s (960 min) per day vs LPV 5s (600): individual
+	// necessary labour = 720 x 600 / 960 = 450 min = 7.5h.
+	after := production.ShortenNecessaryLabour(before, 450)
+	if after.NecessaryLabour != 450 || after.SurplusLabour != 270 {
+		t.Fatalf("day = %d + %d, want 450 + 270 (7.5h + 4.5h)", after.NecessaryLabour, after.SurplusLabour)
+	}
+	if !after.Partitioned() {
+		t.Fatal("day must partition: necessary + surplus == total")
+	}
+	if got := production.RateOfSurplusValue(after.SurplusLabour, after.NecessaryLabour); math.Abs(got-0.6) > 1e-9 {
+		t.Fatalf("s' after = %v, want 3/5", got)
 	}
 }
