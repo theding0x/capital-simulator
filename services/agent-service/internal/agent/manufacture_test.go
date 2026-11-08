@@ -204,20 +204,74 @@ func TestManufactureMinimumCapital_Para5_ExceedsCooperation(t *testing.T) {
 	}
 }
 
-// §5 labour-power value falls for unskilled roles by the apprenticeship
-// gap.
+// §5 labour-power value falls for unskilled roles by the amortised
+// apprenticeship: the 96,000-min cost is spread over the working life, not
+// added to a single day's value. The 9,600-day working life is a test input
+// (Marx gives none), chosen so the share is a clean 10 min/day.
 func TestRoleLabourPowerValue_Para5_UnskilledIsLower(t *testing.T) {
 	t.Parallel()
 	skilled := agent.DetailRole{Name: "engraver", SkillLevel: agent.SkilledLevel, OutputRatePerHour: 10, HeadCount: 1}
 	unskilled := agent.DetailRole{Name: "stamp-presser", SkillLevel: agent.UnskilledLevel, OutputRatePerHour: 10, HeadCount: 1}
 	apprenticeship := agent.LabourMinutes(60 * 8 * 200)
-	skilledV := agent.RoleLabourPowerValue(skilled, apprenticeship)
-	unskilledV := agent.RoleLabourPowerValue(unskilled, apprenticeship)
-	if unskilledV >= skilledV {
-		t.Fatalf("unskilledV = %d, want < skilledV %d", unskilledV, skilledV)
+	const workingLifeDays = 9600
+	skilledV, err := agent.RoleLabourPowerValue(skilled, apprenticeship, workingLifeDays)
+	if err != nil {
+		t.Fatalf("skilled: %v", err)
 	}
-	if skilledV-unskilledV != apprenticeship {
-		t.Fatalf("gap = %d, want apprenticeship %d", skilledV-unskilledV, apprenticeship)
+	unskilledV, err := agent.RoleLabourPowerValue(unskilled, apprenticeship, workingLifeDays)
+	if err != nil {
+		t.Fatalf("unskilled: %v", err)
+	}
+	if unskilledV != 360 {
+		t.Fatalf("unskilledV = %d, want 360 (the 6h / 3s baseline)", unskilledV)
+	}
+	if skilledV != 370 {
+		t.Fatalf("skilledV = %d, want 370 (360 + 96000/9600)", skilledV)
+	}
+}
+
+// The skilled premium is a daily share, never the whole apprenticeship: a day's
+// labour-power must stay far below the 96,000-min training cost.
+func TestRoleLabourPowerValue_AmortisedNotLumpSum(t *testing.T) {
+	t.Parallel()
+	skilled := agent.DetailRole{Name: "engraver", SkillLevel: agent.SkilledLevel, OutputRatePerHour: 10, HeadCount: 1}
+	apprenticeship := agent.DefaultApprenticeshipMinutes
+	v, err := agent.RoleLabourPowerValue(skilled, apprenticeship, 9600)
+	if err != nil {
+		t.Fatalf("RoleLabourPowerValue: %v", err)
+	}
+	if v >= apprenticeship {
+		t.Fatalf("daily value %d must be far below the %d-min apprenticeship", v, apprenticeship)
+	}
+	// Rounds half-up: 5 min over 2 days is 2.5, so 3.
+	got, _ := agent.RoleLabourPowerValue(skilled, 5, 2)
+	if got != 363 {
+		t.Fatalf("360 + round(5/2) = %d, want 363", got)
+	}
+}
+
+// A skilled role cannot be amortised over a non-positive working life; an
+// unskilled role never needs one.
+func TestRoleLabourPowerValue_RequiresWorkingLifeForSkilled(t *testing.T) {
+	t.Parallel()
+	skilled := agent.DetailRole{Name: "engraver", SkillLevel: agent.SkilledLevel}
+	unskilled := agent.DetailRole{Name: "stamp-presser", SkillLevel: agent.UnskilledLevel}
+	if _, err := agent.RoleLabourPowerValue(skilled, 96000, 0); !errors.Is(err, agent.ErrManufactureWorkingLife) {
+		t.Fatalf("skilled, 0 days: err = %v, want ErrManufactureWorkingLife", err)
+	}
+	if v, err := agent.RoleLabourPowerValue(unskilled, 96000, 0); err != nil || v != 360 {
+		t.Fatalf("unskilled, 0 days: (%d, %v), want (360, nil)", v, err)
+	}
+}
+
+// Marx's labour-power value is 3 s. = 36 pence a day, not the 6 s. = 72 pence a
+// 12-hour day produces; both skill levels default to it (Ch. 14 gives no wage).
+func TestDailyWageForSkill_IsValueOfLabourPower(t *testing.T) {
+	t.Parallel()
+	for _, s := range []agent.SkillLevel{agent.SkilledLevel, agent.UnskilledLevel} {
+		if got := agent.DailyWageForSkill(s); got != 36 {
+			t.Errorf("DailyWageForSkill(%s) = %d, want 36 (3s)", s, got)
+		}
 	}
 }
 

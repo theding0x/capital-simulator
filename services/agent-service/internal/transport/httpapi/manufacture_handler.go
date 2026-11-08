@@ -267,7 +267,7 @@ func (h *Handler) GetManufactureMinimumCapital(w http.ResponseWriter, r *http.Re
 	}
 	coopBaseline := agent.MinimumCapital(
 		agent.CooperationSize(m.TotalWorkers()),
-		agent.SkilledDailyWagePence,
+		agent.LabourPowerDailyPence,
 	)
 	writeJSON(w, http.StatusOK, minimumCapitalManufactureResponse{
 		ManufactureID:         m.ID,

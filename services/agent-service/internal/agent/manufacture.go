@@ -6,6 +6,8 @@ import (
 	"errors"
 	"io"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 )
 
 // ManufactureID is a 96-bit hex identifier for stored Manufacture records.
@@ -82,19 +84,19 @@ func (s SkillLevel) Valid() bool {
 // and must never be conflated in domain logic.
 const SocialDivisionOfLabour = "social"
 
-// Default daily wages used by the minimum-capital probe. Marx's standard
-// reference value is 6 s. = 72 pence; unskilled labour-power is reproduced
-// without the apprenticeship cost and so commands a lower wage.
-const (
-	SkilledDailyWagePence   Pence = 72
-	UnskilledDailyWagePence Pence = 48
-)
+// LabourPowerDailyPence is the default daily wage used by the minimum-capital
+// probe: the value of a day's labour-power, 3 s. = 36 pence (Ch. 6 / Ch. 7).
+// It is not the 6 s. = 72 pence a 12-hour day produces; that is the new value
+// the labourer adds, of which half replaces his own labour-power. Ch. 14 gives
+// no skilled wage: the skilled premium is the amortised apprenticeship, which
+// RoleLabourPowerValue computes from caller-supplied inputs.
+const LabourPowerDailyPence Pence = 36
 
 // DefaultApprenticeshipMinutes is the SNLT embedded in skilled labour-power
 // by Marx's "training, education, apprenticeship". Used as the default
 // gap between skilled and unskilled `RoleLabourPowerValue` when callers do
 // not supply one explicitly.
-const DefaultApprenticeshipMinutes LabourMinutes = 60 * 8 * 200 // 200 working days at 8h
+const DefaultApprenticeshipMinutes LabourMinutes = 60 * 8 * 200 // 200 working days at 8h (total cost, amortised over the working life)
 
 // PartialProduct is the fractional output of one DetailRole per period.
 // It is deliberately a value-magnitude alias and carries no exchange-value:
@@ -146,7 +148,7 @@ type SpecialisedTool struct {
 // the wage gradient directly.
 type LabourHierarchy []DetailRole
 
-func (h LabourHierarchy) Len() int           { return len(h) }
+func (h LabourHierarchy) Len() int            { return len(h) }
 func (h LabourHierarchy) At(i int) DetailRole { return h[i] }
 
 // Unskilled returns the unskilled tail of the hierarchy — the class
@@ -282,6 +284,7 @@ var (
 	ErrManufactureHeadCount    = errors.New("manufacture: role head_count must be positive")
 	ErrBottleneck              = errors.New("manufacture: no integer proportional headcount satisfies the target output rate")
 	ErrInvalidMultiplier       = errors.New("manufacture: multiplier must be >= 1")
+	ErrManufactureWorkingLife  = errors.New("manufacture: working_life_days must be positive to amortise an apprenticeship")
 )
 
 // Pure functions ------------------------------------------------------------
@@ -351,29 +354,35 @@ func ManufactureProductivePower(m Manufacture, periodMinutes int64) LabourMinute
 	return LabourMinutes(out)
 }
 
-// DailyWageForSkill returns the default daily wage for a skill level. The
-// gap between skilled and unskilled is Marx's apprenticeship-cost wedge
-// (Ch. 14 §5) expressed in pence.
-func DailyWageForSkill(s SkillLevel) Pence {
-	if s == UnskilledLevel {
-		return UnskilledDailyWagePence
-	}
-	return SkilledDailyWagePence
+// DailyWageForSkill returns the default daily wage for a skill level: the
+// value of labour-power, 3 s. = 36 pence, for both. Ch. 14 §5 says the cost of
+// apprenticeship "vanishes" for the unskilled and only "diminishes" for the
+// skilled, but gives no wage figure; the amortised premium is available from
+// RoleLabourPowerValue once the caller supplies the working life.
+func DailyWageForSkill(SkillLevel) Pence {
+	return LabourPowerDailyPence
 }
 
-// RoleLabourPowerValue returns the SNLT in LabourMinutes required to
-// reproduce a worker assigned to the given DetailRole. Skilled roles carry
-// the additional apprenticeship cost; unskilled roles do not. (Ch. 14 §5:
-// "the cost of apprenticeship vanishes for the unskilled labourers.")
-func RoleLabourPowerValue(role DetailRole, apprenticeshipMinutes LabourMinutes) LabourMinutes {
+// RoleLabourPowerValue returns the daily value of labour-power, in
+// LabourMinutes, of a worker assigned to the given DetailRole. Unskilled roles
+// carry only the 6-hour subsistence baseline (Ch. 14 §5: "the cost of
+// apprenticeship vanishes for the unskilled labourers"). Skilled roles add
+// their apprenticeship cost amortised over the working life, rounded half-up:
+// the cost is spread over every day worked, not charged to a single day. Marx
+// gives no working-life length, so the caller supplies workingLifeDays;
+// a skilled role with workingLifeDays <= 0 returns ErrManufactureWorkingLife.
+func RoleLabourPowerValue(role DetailRole, apprenticeshipMinutes LabourMinutes, workingLifeDays int64) (LabourMinutes, error) {
 	const subsistence LabourMinutes = 60 * 6 // 6 hours subsistence baseline
 	if apprenticeshipMinutes < 0 {
 		apprenticeshipMinutes = 0
 	}
 	if role.SkillLevel == UnskilledLevel {
-		return subsistence
+		return subsistence, nil
 	}
-	return subsistence + apprenticeshipMinutes
+	if workingLifeDays <= 0 {
+		return 0, ErrManufactureWorkingLife
+	}
+	return subsistence + LabourMinutes(surplusrate.RoundHalfUpDiv(int64(apprenticeshipMinutes), workingLifeDays)), nil
 }
 
 // ManufactureMinimumCapital returns the minimum Pence the capitalist must
