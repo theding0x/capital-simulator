@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
+	"math"
 	"time"
 
 	"github.com/theding0x/capital-simulator/pkg/surplusrate"
@@ -218,7 +219,22 @@ type Manufacture struct {
 	Origin                      ManufactureOrigin `json:"origin"`
 	IndividualWorkingDayMinutes LabourMinutes     `json:"individual_working_day_minutes"`
 	Roles                       []DetailRole      `json:"roles"`
-	CreatedAt                   time.Time         `json:"created_at"`
+	// ProductivePower is the observed use-value output factor of the
+	// collective labourer relative to the same workers isolated (Ch. 14 §2,
+	// §3: it "produces far more than the sum of his isolated parts"). Marx
+	// gives no formula, so it is recorded, never derived from role count or
+	// headcount. Zero means no gain recorded; PowerFactor then reports 1.0.
+	ProductivePower float64   `json:"productive_power_factor"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+// PowerFactor returns the recorded productive-power factor, or 1.0 (no gain
+// asserted) when none was recorded.
+func (m Manufacture) PowerFactor() float64 {
+	if m.ProductivePower == 0 {
+		return 1.0
+	}
+	return m.ProductivePower
 }
 
 func (m Manufacture) Validate() error {
@@ -236,6 +252,9 @@ func (m Manufacture) Validate() error {
 	}
 	if len(m.Roles) == 0 {
 		return ErrManufactureNoRoles
+	}
+	if m.ProductivePower != 0 && m.ProductivePower < 1 {
+		return ErrManufactureProductivePower
 	}
 	for _, r := range m.Roles {
 		if err := r.Validate(); err != nil {
@@ -273,18 +292,19 @@ func (m Manufacture) Hierarchy() LabourHierarchy {
 // Errors --------------------------------------------------------------------
 
 var (
-	ErrManufactureCapitalistID = errors.New("manufacture: capitalist_id is required")
-	ErrManufactureForm         = errors.New("manufacture: form must be 'heterogeneous' or 'serial'")
-	ErrManufactureOrigin       = errors.New("manufacture: origin must be 'combination' or 'splitting'")
-	ErrManufactureWorkingDay   = errors.New("manufacture: individual_working_day_minutes must be positive")
-	ErrManufactureNoRoles      = errors.New("manufacture: at least one detail role is required")
-	ErrManufactureRoleName     = errors.New("manufacture: role name is required")
-	ErrManufactureSkillLevel   = errors.New("manufacture: role skill_level must be 'skilled' or 'unskilled'")
-	ErrManufactureOutputRate   = errors.New("manufacture: role output_rate_per_hour must be positive")
-	ErrManufactureHeadCount    = errors.New("manufacture: role head_count must be positive")
-	ErrBottleneck              = errors.New("manufacture: no integer proportional headcount satisfies the target output rate")
-	ErrInvalidMultiplier       = errors.New("manufacture: multiplier must be >= 1")
-	ErrManufactureWorkingLife  = errors.New("manufacture: working_life_days must be positive to amortise an apprenticeship")
+	ErrManufactureCapitalistID    = errors.New("manufacture: capitalist_id is required")
+	ErrManufactureForm            = errors.New("manufacture: form must be 'heterogeneous' or 'serial'")
+	ErrManufactureOrigin          = errors.New("manufacture: origin must be 'combination' or 'splitting'")
+	ErrManufactureWorkingDay      = errors.New("manufacture: individual_working_day_minutes must be positive")
+	ErrManufactureNoRoles         = errors.New("manufacture: at least one detail role is required")
+	ErrManufactureRoleName        = errors.New("manufacture: role name is required")
+	ErrManufactureSkillLevel      = errors.New("manufacture: role skill_level must be 'skilled' or 'unskilled'")
+	ErrManufactureOutputRate      = errors.New("manufacture: role output_rate_per_hour must be positive")
+	ErrManufactureHeadCount       = errors.New("manufacture: role head_count must be positive")
+	ErrBottleneck                 = errors.New("manufacture: no integer proportional headcount satisfies the target output rate")
+	ErrInvalidMultiplier          = errors.New("manufacture: multiplier must be >= 1")
+	ErrManufactureWorkingLife     = errors.New("manufacture: working_life_days must be positive to amortise an apprenticeship")
+	ErrManufactureProductivePower = errors.New("manufacture: productive_power_factor must be 0 (unrecorded) or at least 1")
 )
 
 // Pure functions ------------------------------------------------------------
@@ -314,44 +334,27 @@ func ProportionalGroupSize(roles []DetailRole, targetOutputRate int64) (map[stri
 
 // ManufactureProductivePowerFactor returns the multiplicative factor by
 // which the manufacture's collective output of use-values exceeds the
-// arithmetic sum of n isolated workers. Simple co-operation contributes no
-// invented bonus (Ch. 13 gives Marx no formula), so the baseline is 1.0 and the
-// factor is a division-of-labour increment that grows with the number of detail
-// roles. Bounded by construction; not normative.
+// arithmetic sum of n isolated workers: the factor recorded on the Manufacture,
+// or exactly 1.0 when none was. Marx gives no formula for the gain (Ch. 14 §2,
+// §3), so it is neither derived from the number of detail roles nor from the
+// headcount. The proportional-group bottleneck (the type-foundry 4:2:1) bounds
+// output separately, in CollectiveLabourer.OutputPerPeriod.
 func ManufactureProductivePowerFactor(m Manufacture) float64 {
-	n := m.TotalWorkers()
-	roleCount := len(m.Roles)
-	if n <= 0 {
-		return 1.0
-	}
-	const coop = 1.0
-	if roleCount <= 1 {
-		return coop
-	}
-	extra := 0.05 * float64(roleCount-1)
-	if extra > 0.75 {
-		extra = 0.75
-	}
-	return coop + extra
+	return m.PowerFactor()
 }
 
 // ManufactureProductivePower returns the collective output of a Manufacture
-// in LabourMinutes-of-use-value over periodMinutes. For len(Roles) > 1 it
-// is strictly greater than the simple-cooperation baseline of n × period.
-// (Ch. 14 §2, §3: "the collective labourer ... produces far more than the
-// sum of his isolated parts".)
+// in LabourMinutes-of-use-value over periodMinutes: the n x period baseline
+// times the recorded factor, rounded to the nearest minute. With no factor
+// recorded it equals the baseline exactly; no gain is asserted from the number
+// of roles alone.
 func ManufactureProductivePower(m Manufacture, periodMinutes int64) LabourMinutes {
 	n := m.TotalWorkers()
 	if n <= 0 || periodMinutes <= 0 {
 		return 0
 	}
 	baseline := int64(n) * periodMinutes
-	factor := ManufactureProductivePowerFactor(m)
-	out := int64(float64(baseline) * factor)
-	if len(m.Roles) > 1 && out <= baseline {
-		out = baseline + 1
-	}
-	return LabourMinutes(out)
+	return LabourMinutes(math.Round(float64(baseline) * ManufactureProductivePowerFactor(m)))
 }
 
 // DailyWageForSkill returns the default daily wage for a skill level: the
@@ -414,8 +417,7 @@ func ManufactureMinimumCapital(m Manufacture, rawMaterialCostFactor float64) Pen
 // ManufactureProductivityFactor returns the manufacture's productivity gain
 // as a multiplicative factor on SNLT — the same lingua franca as
 // CooperationProductivityFactor and (in simulation-engine) the machinery
-// factory factor. By construction it strictly dominates the simple-
-// cooperation baseline for any manufacture with more than one DetailRole.
+// factory factor. It is the recorded factor, 1.0 when none was recorded.
 func ManufactureProductivityFactor(m Manufacture) float64 {
 	return ManufactureProductivePowerFactor(m)
 }
