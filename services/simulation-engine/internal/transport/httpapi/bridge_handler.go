@@ -214,7 +214,10 @@ func computeRelativeSurplus(req relativeSurplusRequest, source *productivitySour
 	if int64(newLPV) >= req.WorkingDayTotal {
 		return relativeSurplusResponse{}, errors.New("productivity gain is too small to reduce labour-power value below the working day")
 	}
-	newWD := production.ShortenNecessaryLabour(old, production.LabourPowerValue(newLPV))
+	newWD, err := production.ShortenNecessaryLabour(old, production.LabourPowerValue(newLPV))
+	if err != nil {
+		return relativeSurplusResponse{}, err
+	}
 	delta := int64(newWD.SurplusLabour) - int64(old.SurplusLabour)
 	return relativeSurplusResponse{
 		ProductivityFactor:   req.ProductivityFactor,

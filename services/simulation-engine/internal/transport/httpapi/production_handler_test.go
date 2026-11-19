@@ -214,3 +214,20 @@ func TestComputeExtraSurplusValue_ZeroWhenEqual(t *testing.T) {
 		t.Fatalf("expected 0 when iv==sv, got %d", got.ExtraSurplusValue)
 	}
 }
+
+// A new labour-power value at or above the current necessary labour is not a
+// shortening: the domain guard rejects it and the handler maps it to 400.
+func TestShortenWorkingDay_NonShorteningRejected(t *testing.T) {
+	t.Parallel()
+	ts := newProductionTestServer(t)
+
+	body := `{"total":720,"necessary_labour":600,"surplus_labour":120,"new_labour_power_value":650}`
+	res, err := http.Post(ts.URL+"/v1/production/working-day/shorten", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST: %v", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", res.StatusCode)
+	}
+}

@@ -1,6 +1,7 @@
 package production_test
 
 import (
+	"errors"
 	"math"
 	"testing"
 
@@ -26,7 +27,10 @@ func TestWorkingDayInvariant(t *testing.T) {
 func TestShortenNecessaryLabour_Fixture(t *testing.T) {
 	t.Parallel()
 	wd := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
-	got := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(540))
+	got, err := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(540))
+	if err != nil {
+		t.Fatalf("ShortenNecessaryLabour: %v", err)
+	}
 	if got.Total != 720 {
 		t.Fatalf("expected Total=720, got %d", got.Total)
 	}
@@ -42,7 +46,10 @@ func TestShortenNecessaryLabour_Fixture(t *testing.T) {
 func TestShortenNecessaryLabour_SurplusIncreases(t *testing.T) {
 	t.Parallel()
 	wd := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
-	got := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(360))
+	got, err := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(360))
+	if err != nil {
+		t.Fatalf("ShortenNecessaryLabour: %v", err)
+	}
 	if got.SurplusLabour <= wd.SurplusLabour {
 		t.Fatalf("surplus must increase: before=%d, after=%d", wd.SurplusLabour, got.SurplusLabour)
 	}
@@ -52,7 +59,10 @@ func TestShortenNecessaryLabour_SurplusIncreases(t *testing.T) {
 func TestShortenNecessaryLabour_Invariant(t *testing.T) {
 	t.Parallel()
 	wd := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
-	got := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(360))
+	got, err := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(360))
+	if err != nil {
+		t.Fatalf("ShortenNecessaryLabour: %v", err)
+	}
 	if production.LabourMinutes(got.NecessaryLabour)+production.LabourMinutes(got.SurplusLabour) != got.Total {
 		t.Fatalf("invariant broken after shorten: %d + %d ≠ %d",
 			got.NecessaryLabour, got.SurplusLabour, got.Total)
@@ -65,7 +75,10 @@ func TestShortenNecessaryLabour_LPVReduction(t *testing.T) {
 	t.Parallel()
 	wd := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
 	// new LabourPowerValue = 360 min (representing the reduced subsistence value in LabourMinutes)
-	got := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(360))
+	got, err := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(360))
+	if err != nil {
+		t.Fatalf("ShortenNecessaryLabour: %v", err)
+	}
 	if got.NecessaryLabour != 360 {
 		t.Fatalf("expected NecessaryLabour=360, got %d", got.NecessaryLabour)
 	}
@@ -88,7 +101,10 @@ func TestRateOfSurplusValue_IncreasesWithProductivity(t *testing.T) {
 	t.Parallel()
 	wd := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
 	rateOld := production.RateOfSurplusValue(wd.SurplusLabour, wd.NecessaryLabour)
-	wdNew := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(360))
+	wdNew, err := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(360))
+	if err != nil {
+		t.Fatalf("ShortenNecessaryLabour: %v", err)
+	}
 	rateNew := production.RateOfSurplusValue(wdNew.SurplusLabour, wdNew.NecessaryLabour)
 	if rateNew <= rateOld {
 		t.Fatalf("rate must increase with productivity rise: old=%f, new=%f", rateOld, rateNew)
@@ -240,7 +256,10 @@ func TestWorkedCase_NecessaryLabourShortensToSevenAndAHalfHours(t *testing.T) {
 	}
 	// New value of 8s (960 min) per day vs LPV 5s (600): individual
 	// necessary labour = 720 x 600 / 960 = 450 min = 7.5h.
-	after := production.ShortenNecessaryLabour(before, 450)
+	after, err := production.ShortenNecessaryLabour(before, 450)
+	if err != nil {
+		t.Fatalf("ShortenNecessaryLabour: %v", err)
+	}
 	if after.NecessaryLabour != 450 || after.SurplusLabour != 270 {
 		t.Fatalf("day = %d + %d, want 450 + 270 (7.5h + 4.5h)", after.NecessaryLabour, after.SurplusLabour)
 	}
@@ -249,5 +268,42 @@ func TestWorkedCase_NecessaryLabourShortensToSevenAndAHalfHours(t *testing.T) {
 	}
 	if got := production.RateOfSurplusValue(after.SurplusLabour, after.NecessaryLabour); math.Abs(got-0.6) > 1e-9 {
 		t.Fatalf("s' after = %v, want 3/5", got)
+	}
+}
+
+// Guards (L-P1): relative surplus-value needs a genuine shortening of a
+// partitioned day. Marx's day: 720 min, 600 necessary + 120 surplus.
+func TestShortenNecessaryLabour_Guards(t *testing.T) {
+	t.Parallel()
+	wd := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
+	tests := []struct {
+		name    string
+		wd      production.WorkingDay
+		newLPV  production.LabourPowerValue
+		wantErr error
+	}{
+		{"valid shortening", wd, 540, nil},
+		{"down to one minute", wd, 1, nil},
+		{"zero", wd, 0, production.ErrLPVNotPositive},
+		{"negative", wd, -5, production.ErrLPVNotPositive},
+		{"beyond the day", wd, 721, production.ErrLPVExceedsWorkingDay},
+		{"equal to necessary (no change)", wd, 600, production.ErrNotShortening},
+		{"above necessary but within day (lengthening)", wd, 650, production.ErrNotShortening},
+		{"unpartitioned day", production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 100}, 540, production.ErrWorkingDayNotPartitioned},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := production.ShortenNecessaryLabour(tt.wd, tt.newLPV)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("err = %v, want %v", err, tt.wantErr)
+			}
+			if err != nil {
+				return
+			}
+			if !got.Partitioned() || got.SurplusLabour < 0 {
+				t.Errorf("result violates partition: %+v", got)
+			}
+		})
 	}
 }
