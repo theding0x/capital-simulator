@@ -282,3 +282,37 @@ func TestComputeVariableCapitalReproduction_AtFullRate(t *testing.T) {
 		)
 	}
 }
+
+// Vol. II Ch. 2 → Ch. 16: latent money-capital is hoarded surplus-value that
+// is not yet functioning capital, so it never enters the annual rate. The
+// Spinning Mill 1871 circuit (v=£50, s=£78, so s/v = 156%) at n=1 has the same
+// annual rate whatever hoard sits beside it; only capitalisation into
+// variable capital changes the denominator and so the rate.
+func TestAnnualSurplusRate_LatentHoardExcluded_OnlyCapitalisedVariableMoves(t *testing.T) {
+	t.Parallel()
+	const (
+		variable valorisation.Pence = 5000 // £50
+		surplus  valorisation.Pence = 7800 // £78
+		hoard    valorisation.Pence = 7800 // the whole £78 held latent
+		n        int64              = 10000
+	)
+	annual := func(v valorisation.Pence) int64 {
+		per, err := valorisation.ComputePerCircuitRate("a", surplus, v)
+		if err != nil {
+			t.Fatalf("ComputePerCircuitRate: %v", err)
+		}
+		return valorisation.ComputeAnnualSurplusRate("a", n, per.BasisPoints, "1871").AnnualBasisPoints
+	}
+
+	base := annual(variable)
+	if base != 15600 {
+		t.Fatalf("base annual rate = %d bp, want 15600 (156%%)", base)
+	}
+	// A latent hoard is not an input to the rate at all (v and s are the only
+	// inputs), so it cannot move it; capitalising it into constant capital
+	// leaves v unchanged for the same reason.
+	// Capitalising the hoard into variable capital raises v and lowers s/v.
+	if got := annual(variable + hoard); got >= base {
+		t.Errorf("rate after capitalising hoard into v = %d bp, want < %d", got, base)
+	}
+}
