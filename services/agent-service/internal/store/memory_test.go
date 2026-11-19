@@ -212,3 +212,28 @@ func TestMemory_CooperationKeepsProductivePower(t *testing.T) {
 		t.Fatalf("ProductivePower = %v, want 1.25", got.ProductivePower)
 	}
 }
+
+// A manufacture's recorded productive-power factor must survive a round trip.
+func TestMemory_ManufactureKeepsProductivePower(t *testing.T) {
+	t.Parallel()
+	m := store.NewMemory()
+	ctx := context.Background()
+	created, err := m.CreateManufacture(ctx, agent.Manufacture{
+		CapitalistID:                agent.NewAgentID(),
+		Form:                        agent.SerialManufacture,
+		Origin:                      agent.OriginSplitting,
+		IndividualWorkingDayMinutes: 720,
+		Roles:                       []agent.DetailRole{{Name: "founder", SkillLevel: agent.SkilledLevel, OutputRatePerHour: 2000, HeadCount: 4}},
+		ProductivePower:             1.3,
+	})
+	if err != nil {
+		t.Fatalf("CreateManufacture: %v", err)
+	}
+	got, err := m.GetManufacture(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("GetManufacture: %v", err)
+	}
+	if got.ProductivePower != 1.3 {
+		t.Fatalf("ProductivePower = %v, want 1.3", got.ProductivePower)
+	}
+}

@@ -111,8 +111,10 @@ func TestProportionalGroupSize_Bottleneck(t *testing.T) {
 	}
 }
 
-// §2 serial manufacture — needle wire: 72 detail workmen, productive power
-// strictly exceeds 72 isolated workers performing 72 ops each.
+// §2 serial manufacture — needle wire: 72 detail workmen. Marx gives no
+// formula for the gain, so nothing is asserted from the 72 roles alone: with no
+// factor recorded the output is exactly the 72 x 720 baseline. A recorded
+// observation of 1.3 scales it.
 func TestManufactureProductivePower_Para2_72Workmen(t *testing.T) {
 	t.Parallel()
 	roles := make([]agent.DetailRole, 72)
@@ -134,10 +136,37 @@ func TestManufactureProductivePower_Para2_72Workmen(t *testing.T) {
 	if len(m.Roles) != 72 {
 		t.Fatalf("len(Roles) = %d, want 72", len(m.Roles))
 	}
-	power := agent.ManufactureProductivePower(m, 720)
 	baseline := agent.CollectiveWorkingDay(agent.CooperationSize(m.TotalWorkers()), m.IndividualWorkingDayMinutes)
-	if power <= baseline {
-		t.Fatalf("ManufactureProductivePower = %d, want > baseline %d", power, baseline)
+	if got := agent.ManufactureProductivePower(m, 720); got != baseline {
+		t.Fatalf("no factor recorded: power = %d, want exactly the baseline %d", got, baseline)
+	}
+	if got := agent.ManufactureProductivePowerFactor(m); got != 1.0 {
+		t.Fatalf("no factor recorded: factor = %v, want 1.0", got)
+	}
+	m.ProductivePower = 1.3
+	want := agent.LabourMinutes(51840 * 13 / 10) // 72 x 720 x 1.3
+	if got := agent.ManufactureProductivePower(m, 720); got != want {
+		t.Fatalf("recorded 1.3: power = %d, want %d", got, want)
+	}
+}
+
+// A recorded factor below 1 is rejected: the collective labourer never produces
+// less than the same workers isolated. 0 (unrecorded) and 1 or more are valid.
+func TestManufacture_Validate_ProductivePower(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		factor float64
+		want   error
+	}{
+		{0, nil}, {1, nil}, {1.4, nil},
+		{0.9, agent.ErrManufactureProductivePower},
+		{-2, agent.ErrManufactureProductivePower},
+	} {
+		m := carriageManufacture()
+		m.ProductivePower = tc.factor
+		if err := m.Validate(); !errors.Is(err, tc.want) {
+			t.Errorf("factor %v: Validate() = %v, want %v", tc.factor, err, tc.want)
+		}
 	}
 }
 
@@ -298,43 +327,30 @@ func TestInvariant_ProportionalRateHeadcount(t *testing.T) {
 }
 
 // Invariant (Ch. 14 §3): scaling extends every detail group by the same
-// multiple, so role proportions are preserved. Productive power is exactly
-// the original at k = 1, strictly more than k times the original for k > 1
-// (the cooperation bonus grows with headcount), strictly increasing in k, and
-// never above the factor ceiling (cooperation asymptote 1.25 + division-of-
-// labour increment cap 0.75) applied to the k-fold baseline.
-func TestInvariant_ScaleManufactureSuperlinearAndBounded(t *testing.T) {
+// multiple, so role proportions are preserved. With the factor held fixed,
+// productive power is exactly k times the original: scaling invents no gain of
+// its own, with or without a recorded factor.
+func TestInvariant_ScaleManufactureIsExactlyLinear(t *testing.T) {
 	t.Parallel()
-	m := carriageManufacture()
-	const period = int64(720)
-	orig := agent.ManufactureProductivePower(m, period)
-	prev := agent.LabourMinutes(0)
-	for _, k := range []int{1, 2, 3, 5} {
-		scaled, err := agent.ScaleManufacture(m, k)
-		if err != nil {
-			t.Fatalf("ScaleManufacture(m, %d) = %v", k, err)
-		}
-		for i, r := range scaled.Roles {
-			if r.HeadCount != m.Roles[i].HeadCount*k {
-				t.Fatalf("k=%d role %q headcount = %d, want %d", k, r.Name, r.HeadCount, m.Roles[i].HeadCount*k)
+	for _, factor := range []float64{0, 1.25} {
+		m := carriageManufacture()
+		m.ProductivePower = factor
+		const period = int64(720)
+		orig := agent.ManufactureProductivePower(m, period)
+		for _, k := range []int{1, 2, 3, 5} {
+			scaled, err := agent.ScaleManufacture(m, k)
+			if err != nil {
+				t.Fatalf("ScaleManufacture(m, %d) = %v", k, err)
+			}
+			for i, r := range scaled.Roles {
+				if r.HeadCount != m.Roles[i].HeadCount*k {
+					t.Fatalf("k=%d role %q headcount = %d, want %d", k, r.Name, r.HeadCount, m.Roles[i].HeadCount*k)
+				}
+			}
+			if got, want := agent.ManufactureProductivePower(scaled, period), agent.LabourMinutes(int64(k))*orig; got != want {
+				t.Fatalf("factor %v, k=%d: power = %d, want exactly %d", factor, k, got, want)
 			}
 		}
-		got := agent.ManufactureProductivePower(scaled, period)
-		linear := agent.LabourMinutes(int64(k)) * orig
-		switch {
-		case k == 1 && got != orig:
-			t.Fatalf("k=1 productive power = %d, want exactly the original %d", got, orig)
-		case k > 1 && got <= linear:
-			t.Fatalf("k=%d productive power = %d, want strictly > %d (cooperation bonus grows with n)", k, got, linear)
-		}
-		ceiling := agent.LabourMinutes(float64(int64(scaled.TotalWorkers())*period) * 2.0)
-		if got >= ceiling {
-			t.Fatalf("k=%d productive power = %d, want < factor-ceiling %d", k, got, ceiling)
-		}
-		if got <= prev {
-			t.Fatalf("k=%d productive power = %d, want > previous %d", k, got, prev)
-		}
-		prev = got
 	}
 }
 
@@ -348,15 +364,18 @@ func TestInvariant_PartialProductNotACommodity(t *testing.T) {
 	}
 }
 
-// Invariant: ManufactureProductivePower > simple cooperation baseline for
-// any manufacture with len(Roles) > 1.
-func TestInvariant_ManufactureExceedsCooperation(t *testing.T) {
+// Invariant: with no factor recorded a manufacture equals the simple
+// co-operation baseline; it exceeds it only by a recorded observation >= 1.
+func TestInvariant_ManufactureExceedsCooperationOnlyWhenRecorded(t *testing.T) {
 	t.Parallel()
 	m := carriageManufacture()
-	power := agent.ManufactureProductivePower(m, 720)
 	baseline := agent.CollectiveWorkingDay(agent.CooperationSize(m.TotalWorkers()), m.IndividualWorkingDayMinutes)
-	if power <= baseline {
-		t.Fatalf("ManufactureProductivePower = %d, want > baseline %d", power, baseline)
+	if got := agent.ManufactureProductivePower(m, 720); got != baseline {
+		t.Fatalf("unrecorded: power = %d, want baseline %d", got, baseline)
+	}
+	m.ProductivePower = 1.2
+	if got := agent.ManufactureProductivePower(m, 720); got <= baseline {
+		t.Fatalf("recorded 1.2: power = %d, want > baseline %d", got, baseline)
 	}
 }
 

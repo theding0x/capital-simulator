@@ -877,12 +877,13 @@ func (m *MySQL) CreateManufacture(ctx context.Context, mf agent.Manufacture) (ag
 	defer func() { _ = tx.Rollback() }()
 
 	const insertManufacture = `INSERT INTO manufactures
-		(id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`
+		(id, name, capitalist_id, form, origin, individual_working_day_minutes, productive_power_factor, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 	if _, err := tx.ExecContext(ctx, insertManufacture,
 		string(mf.ID), mf.Name, string(mf.CapitalistID),
 		string(mf.Form), string(mf.Origin),
 		int64(mf.IndividualWorkingDayMinutes),
+		mf.PowerFactor(),
 		mf.CreatedAt,
 	); err != nil {
 		return agent.Manufacture{}, err
@@ -906,7 +907,7 @@ func (m *MySQL) CreateManufacture(ctx context.Context, mf agent.Manufacture) (ag
 }
 
 func (m *MySQL) GetManufacture(ctx context.Context, id agent.ManufactureID) (agent.Manufacture, error) {
-	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at
+	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, productive_power_factor, created_at
 		FROM manufactures WHERE id = ?`
 	row := m.db.QueryRowContext(ctx, q, string(id))
 	mf, err := scanManufactureRow(row)
@@ -922,7 +923,7 @@ func (m *MySQL) GetManufacture(ctx context.Context, id agent.ManufactureID) (age
 }
 
 func (m *MySQL) ListManufactures(ctx context.Context) ([]agent.Manufacture, error) {
-	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at
+	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, productive_power_factor, created_at
 		FROM manufactures ORDER BY created_at ASC`
 	rows, err := m.db.QueryContext(ctx, q)
 	if err != nil {
@@ -933,7 +934,7 @@ func (m *MySQL) ListManufactures(ctx context.Context) ([]agent.Manufacture, erro
 }
 
 func (m *MySQL) ListManufacturesByCapitalist(ctx context.Context, capitalistID agent.AgentID) ([]agent.Manufacture, error) {
-	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at
+	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, productive_power_factor, created_at
 		FROM manufactures WHERE capitalist_id = ? ORDER BY created_at ASC`
 	rows, err := m.db.QueryContext(ctx, q, string(capitalistID))
 	if err != nil {
@@ -944,7 +945,7 @@ func (m *MySQL) ListManufacturesByCapitalist(ctx context.Context, capitalistID a
 }
 
 func (m *MySQL) ListManufacturesByForm(ctx context.Context, form agent.ManufactureForm) ([]agent.Manufacture, error) {
-	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, created_at
+	const q = `SELECT id, name, capitalist_id, form, origin, individual_working_day_minutes, productive_power_factor, created_at
 		FROM manufactures WHERE form = ? ORDER BY created_at ASC`
 	rows, err := m.db.QueryContext(ctx, q, string(form))
 	if err != nil {
@@ -981,7 +982,7 @@ func (m *MySQL) scanManufactures(ctx context.Context, rows *sql.Rows) ([]agent.M
 		var mf agent.Manufacture
 		var id, capID, form, origin string
 		var wd int64
-		if err := rows.Scan(&id, &mf.Name, &capID, &form, &origin, &wd, &mf.CreatedAt); err != nil {
+		if err := rows.Scan(&id, &mf.Name, &capID, &form, &origin, &wd, &mf.ProductivePower, &mf.CreatedAt); err != nil {
 			return nil, err
 		}
 		mf.ID = agent.ManufactureID(id)
@@ -1008,7 +1009,7 @@ func scanManufactureRow(row *sql.Row) (agent.Manufacture, error) {
 	var mf agent.Manufacture
 	var id, capID, form, origin string
 	var wd int64
-	err := row.Scan(&id, &mf.Name, &capID, &form, &origin, &wd, &mf.CreatedAt)
+	err := row.Scan(&id, &mf.Name, &capID, &form, &origin, &wd, &mf.ProductivePower, &mf.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return agent.Manufacture{}, ErrNotFound
 	}
