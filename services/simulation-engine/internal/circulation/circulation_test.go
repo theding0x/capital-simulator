@@ -245,23 +245,31 @@ func TestVol2Ch02_ProductiveCircuit_SpinningMillExtendedReproduction(t *testing.
 		Mode:                       ReproductionExtended,
 		MinCapitalisationIncrement: 100,
 	}
+	hoard := Pence(7800)
+	initial.LatentMoneyCapital = LatentMoneyCapital{Accumulated: hoard, Threshold: 100}
 	injected := Pence(7800)
 	dc := injected
 	dv := Pence(0)
+
+	// The domain decides whether the £78 may be capitalised.
+	if err := initial.ValidateCapitalisation(injected, dc, dv); err != nil {
+		t.Fatalf("ValidateCapitalisation(£78 from £78 hoard) = %v, want nil", err)
+	}
+	// ... and refuses anything beyond the hoard, or a breach of conservation.
+	if err := initial.ValidateCapitalisation(injected+1, dc+1, dv); !errors.Is(err, ErrCapitalisationExceedsHoard) {
+		t.Errorf("injecting beyond hoard = %v, want ErrCapitalisationExceedsHoard", err)
+	}
+	if err := initial.ValidateCapitalisation(injected, dc, dv+1); !errors.Is(err, ErrCapitalisationNotConserved) {
+		t.Errorf("Δc+Δv != amount = %v, want ErrCapitalisationNotConserved", err)
+	}
 
 	step := CapitalisationStep{
 		AmountInjected:     injected,
 		DeltaConstantPence: dc,
 		DeltaVariablePence: dv,
 	}
-	// Capitalisation conservation: Δc + Δv == injected.
-	if step.DeltaConstantPence+step.DeltaVariablePence != step.AmountInjected {
-		t.Errorf("conservation failed: Δc(%d) + Δv(%d) != injected(%d)",
-			step.DeltaConstantPence, step.DeltaVariablePence, step.AmountInjected)
-	}
-
-	newConstant := initial.ConstantPence + dc
-	newVariable := initial.VariablePence + dv
+	newConstant := initial.ConstantPence + step.DeltaConstantPence
+	newVariable := initial.VariablePence + step.DeltaVariablePence
 	wantTotal := initial.TotalAdvance() + injected
 	if newConstant+newVariable != wantTotal {
 		t.Errorf("extended reproduction magnitude: got %d, want %d", newConstant+newVariable, wantTotal)

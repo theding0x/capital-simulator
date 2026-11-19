@@ -257,3 +257,79 @@ func TestDailyValueCreated_RoundsHalfUp(t *testing.T) {
 		t.Errorf("got %d, want 5", got)
 	}
 }
+
+// Marx Ch. 17 §3: lengthening the day from 12h to 14h with necessary labour
+// fixed at 6h raises surplus-value "both absolutely and relatively". The
+// relative rise is the rate s/v: 360/360 = 1.0 before, 480/360 = 4/3 after.
+func TestComputeOutcome_S3_LengtheningRaisesRateOfSurplusValue(t *testing.T) {
+	t.Parallel()
+	twelve := ComputeOutcome(LabourScenario{
+		WorkingDay:   WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360},
+		Intensity:    NormalLabourIntensity,
+		Productivity: NormalLabourProductivity,
+	})
+	fourteen := ComputeOutcome(LabourScenario{
+		WorkingDay:   WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 480},
+		Intensity:    NormalLabourIntensity,
+		Productivity: NormalLabourProductivity,
+	})
+	if fourteen.SurplusLabourMinutes <= twelve.SurplusLabourMinutes {
+		t.Errorf("absolute surplus must rise: 12h=%d, 14h=%d", twelve.SurplusLabourMinutes, fourteen.SurplusLabourMinutes)
+	}
+	if twelve.RateOfSurplusValue != 1.0 {
+		t.Errorf("12h rate: got %v, want 1.0", twelve.RateOfSurplusValue)
+	}
+	if want := 480.0 / 360.0; math.Abs(fourteen.RateOfSurplusValue-want) > 1e-9 {
+		t.Errorf("14h rate: got %v, want %v", fourteen.RateOfSurplusValue, want)
+	}
+	if fourteen.LabourPowerValueMinutes != twelve.LabourPowerValueMinutes {
+		t.Errorf("labour-power value must not change with day length: %d vs %d",
+			twelve.LabourPowerValueMinutes, fourteen.LabourPowerValueMinutes)
+	}
+}
+
+// Derived from the §3 setup (not a Marx quotation): shortening the day from
+// 12h to 10h with necessary labour fixed at 6h lowers surplus-value both
+// absolutely (360 → 240) and relatively (rate 1.0 → 2/3).
+func TestComputeOutcome_S3_ShorteningLowersSurplusAbsolutelyAndRelatively(t *testing.T) {
+	t.Parallel()
+	before := ComputeOutcome(LabourScenario{
+		WorkingDay:   WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360},
+		Intensity:    NormalLabourIntensity,
+		Productivity: NormalLabourProductivity,
+	})
+	after := ComputeOutcome(LabourScenario{
+		WorkingDay:   WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 240},
+		Intensity:    NormalLabourIntensity,
+		Productivity: NormalLabourProductivity,
+	})
+	if after.SurplusLabourMinutes != 240 || after.DailyValueMinutes != 600 {
+		t.Errorf("10h day: surplus=%d daily=%d, want 240 and 600", after.SurplusLabourMinutes, after.DailyValueMinutes)
+	}
+	if after.RateOfSurplusValue >= before.RateOfSurplusValue {
+		t.Errorf("rate must fall: before=%v after=%v", before.RateOfSurplusValue, after.RateOfSurplusValue)
+	}
+}
+
+// Marx Ch. 17 §4A: lengthening the day by 4h exactly offsets the rise in the
+// value of labour-power from 3s to 4s. Surplus-value rises absolutely
+// (360 → 480) but the rate s/v is unchanged at 1.0 — the rise is absolute only.
+func TestComputeOutcome_S4A_AbsoluteRiseWithUnchangedRate(t *testing.T) {
+	t.Parallel()
+	before := ComputeOutcome(LabourScenario{
+		WorkingDay:   WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360},
+		Intensity:    NormalLabourIntensity,
+		Productivity: NormalLabourProductivity,
+	})
+	after := ComputeOutcome(LabourScenario{
+		WorkingDay:   WorkingDay{NecessaryLabourMinutes: 480, SurplusLabourMinutes: 480},
+		Intensity:    NormalLabourIntensity,
+		Productivity: NormalLabourProductivity,
+	})
+	if after.SurplusLabourMinutes <= before.SurplusLabourMinutes {
+		t.Errorf("absolute surplus must rise: %d → %d", before.SurplusLabourMinutes, after.SurplusLabourMinutes)
+	}
+	if before.RateOfSurplusValue != after.RateOfSurplusValue {
+		t.Errorf("rate must be unchanged: %v → %v", before.RateOfSurplusValue, after.RateOfSurplusValue)
+	}
+}
