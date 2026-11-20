@@ -103,7 +103,11 @@ func (h *Handler) ShortenWorkingDay(w http.ResponseWriter, r *http.Request) {
 		NecessaryLabour: production.NecessaryLabour(req.NecessaryLabour),
 		SurplusLabour:   production.SurplusLabour(req.SurplusLabour),
 	}
-	newWD := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(req.NewLabourPowerValue))
+	newWD, err := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(req.NewLabourPowerValue))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	delta := int64(newWD.SurplusLabour) - int64(wd.SurplusLabour)
 	writeJSON(w, http.StatusOK, shortenWorkingDayResponse{
 		WorkingDay:           dtoFromWorkingDay(newWD),

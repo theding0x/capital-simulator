@@ -204,7 +204,10 @@ func TestReduceNecessaryLabour_AgreesWithCh12Bridge(t *testing.T) {
 
 			old := production.WorkingDay{Total: 720, NecessaryLabour: 600, SurplusLabour: 120}
 			newLPV := production.ApplyProductivityToSNLT(600, tc.factor)
-			ch12 := production.ShortenNecessaryLabour(old, production.LabourPowerValue(newLPV))
+			ch12, err := production.ShortenNecessaryLabour(old, production.LabourPowerValue(newLPV))
+			if err != nil {
+				t.Fatalf("ShortenNecessaryLabour: %v", err)
+			}
 			bridgeDelta := int64(ch12.SurplusLabour - old.SurplusLabour)
 
 			if int64(rsv.LabourMinutes) != bridgeDelta {

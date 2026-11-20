@@ -98,7 +98,12 @@ func ReduceNecessaryLabour(wd WorkingDay, factor ProductivityFactor) (WorkingDay
 	if production.NecessaryLabour(scaled) >= wd.NecessaryLabour {
 		return wd, RelativeSurplusValue{SurplusValue: SurplusValue{Origin: OriginRelative}}
 	}
-	newWD := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(scaled))
+	newWD, err := production.ShortenNecessaryLabour(wd, production.LabourPowerValue(scaled))
+	if err != nil {
+		// Only an unpartitioned input day reaches here (the shortening and
+		// positivity cases are handled above); treat it as a no-op.
+		return wd, RelativeSurplusValue{SurplusValue: SurplusValue{Origin: OriginRelative}}
+	}
 	return newWD, RelativeSurplusValue{
 		SurplusValue: SurplusValue{LabourMinutes: labour.LabourMinutes(newWD.SurplusLabour - wd.SurplusLabour), Origin: OriginRelative},
 	}

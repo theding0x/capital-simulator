@@ -3,6 +3,7 @@
 package production
 
 import (
+	"errors"
 	"math"
 
 	"github.com/theding0x/capital-simulator/pkg/surplusrate"
@@ -47,12 +48,36 @@ func (wd WorkingDay) Partitioned() bool {
 	return LabourMinutes(wd.NecessaryLabour)+LabourMinutes(wd.SurplusLabour) == wd.Total
 }
 
+// Sentinel errors for ShortenNecessaryLabour (the L-P1 partition guards).
+var (
+	ErrWorkingDayNotPartitioned = errors.New("production: necessary + surplus labour must equal the working day")
+	ErrLPVNotPositive           = errors.New("production: new labour-power value must be positive")
+	ErrLPVExceedsWorkingDay     = errors.New("production: new labour-power value exceeds the working day")
+	ErrNotShortening            = errors.New("production: new labour-power value must be below the current necessary labour")
+)
+
 // ShortenNecessaryLabour recomputes the working-day split after a productivity
 // rise reduces the value of labour-power to newLPV. Total day is unchanged [§1].
-func ShortenNecessaryLabour(wd WorkingDay, newLPV LabourPowerValue) WorkingDay {
+//
+// Relative surplus-value arises only from a genuine shortening, so it rejects
+// an unpartitioned day, a non-positive newLPV, a newLPV beyond the day (which
+// would make surplus labour negative), and a newLPV that does not fall below
+// the current necessary labour. SurplusLabour >= 0 and NL + SL == Total hold on
+// every successful return.
+func ShortenNecessaryLabour(wd WorkingDay, newLPV LabourPowerValue) (WorkingDay, error) {
+	switch {
+	case !wd.Partitioned():
+		return WorkingDay{}, ErrWorkingDayNotPartitioned
+	case newLPV <= 0:
+		return WorkingDay{}, ErrLPVNotPositive
+	case LabourMinutes(newLPV) > wd.Total:
+		return WorkingDay{}, ErrLPVExceedsWorkingDay
+	case NecessaryLabour(newLPV) >= wd.NecessaryLabour:
+		return WorkingDay{}, ErrNotShortening
+	}
 	nl := NecessaryLabour(newLPV)
 	sl := SurplusLabour(wd.Total - LabourMinutes(nl))
-	return WorkingDay{Total: wd.Total, NecessaryLabour: nl, SurplusLabour: sl}
+	return WorkingDay{Total: wd.Total, NecessaryLabour: nl, SurplusLabour: sl}, nil
 }
 
 // RateOfSurplusValue returns s/v as a float64. Returns 0 when nl == 0 [§1].
