@@ -18,6 +18,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+
+	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 )
 
 // --- Sentinel errors ---------------------------------------------------------
@@ -204,7 +206,7 @@ func ComputePerCircuitRate(
 	if variablePence <= 0 {
 		return PerCircuitSurplusRate{}, ErrZeroVariable
 	}
-	bp := 10_000 * int64(surplusPence) / int64(variablePence)
+	bp := surplusrate.RoundHalfUpDiv(10_000*int64(surplusPence), int64(variablePence))
 	return PerCircuitSurplusRate{
 		ID:                       NewPerCircuitSurplusRateID(),
 		VariableCapitalAdvanceID: advanceID,
@@ -227,7 +229,7 @@ func ComputeAnnualSurplusRate(
 ) AnnualSurplusRate {
 	var annual int64
 	if nBasisPoints > 0 && perCircuitBasisPoints > 0 {
-		annual = nBasisPoints * perCircuitBasisPoints / 10_000
+		annual = surplusrate.RoundHalfUpDiv(nBasisPoints*perCircuitBasisPoints, 10_000)
 	}
 	return AnnualSurplusRate{
 		ID:                       NewAnnualSurplusRateID(),
@@ -249,7 +251,7 @@ func ComputeAnnualSurplusRateContrast(
 ) AnnualSurplusRateContrast {
 	var ratio int64
 	if bAnnualBP > 0 {
-		ratio = 10_000 * aAnnualBP / bAnnualBP
+		ratio = surplusrate.RoundHalfUpDiv(10_000*aAnnualBP, bAnnualBP)
 	}
 	return AnnualSurplusRateContrast{
 		ID:                        NewAnnualSurplusRateContrastID(),
