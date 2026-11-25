@@ -333,3 +333,51 @@ func TestComputeOutcome_S4A_AbsoluteRiseWithUnchangedRate(t *testing.T) {
 		t.Errorf("rate must be unchanged: %v → %v", before.RateOfSurplusValue, after.RateOfSurplusValue)
 	}
 }
+
+// Marx Ch. 17 §4B: increased productiveness and intensity both shorten the
+// necessary labour, so the working-day can be shortened while surplus-value
+// holds up. Day 12h → 10h (720 → 600 min), productiveness 4/3 (necessary
+// 360 → 270 clock minutes) and intensity 6/5. Daily value stays 720, the
+// value of labour-power is 324, and surplus-value rises 360 → 396 and the rate
+// 1.0 → 11/9 even though the day is shorter.
+func TestComputeOutcome_S4B_ShorterDayWithIntensityAndProductivity(t *testing.T) {
+	t.Parallel()
+	before := ComputeOutcome(LabourScenario{
+		WorkingDay:   WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 360},
+		Intensity:    NormalLabourIntensity,
+		Productivity: NormalLabourProductivity,
+	})
+	shorter := WorkingDay{NecessaryLabourMinutes: 360, SurplusLabourMinutes: 240}
+	after := ComputeOutcome(LabourScenario{
+		WorkingDay:   shorter,
+		Intensity:    LabourIntensity{Factor: 1.2},
+		Productivity: LabourProductivity{Factor: 4.0 / 3.0},
+	})
+
+	if shorter.TotalMinutes() >= 720 {
+		t.Fatalf("setup: day must be shorter than 12h, got %d", shorter.TotalMinutes())
+	}
+	if after.NecessaryLabourMinutes != 270 {
+		t.Errorf("necessary labour: got %d, want 270", after.NecessaryLabourMinutes)
+	}
+	if after.DailyValueMinutes != 720 || after.LabourPowerValueMinutes != 324 {
+		t.Errorf("daily value=%d, labour-power value=%d, want 720 and 324",
+			after.DailyValueMinutes, after.LabourPowerValueMinutes)
+	}
+	if after.SurplusLabourMinutes != 396 {
+		t.Errorf("surplus-value: got %d, want 396", after.SurplusLabourMinutes)
+	}
+	if after.SurplusLabourMinutes <= before.SurplusLabourMinutes {
+		t.Errorf("surplus-value must rise despite the shorter day: %d → %d",
+			before.SurplusLabourMinutes, after.SurplusLabourMinutes)
+	}
+	if want := 396.0 / 324.0; math.Abs(after.RateOfSurplusValue-want) > 1e-9 {
+		t.Errorf("rate: got %v, want %v", after.RateOfSurplusValue, want)
+	}
+	// The minimum day is fixed by the necessary labour: surplus labour never
+	// vanishes under capital, so necessary labour stays strictly below the day.
+	if int64(after.NecessaryLabourMinutes) >= shorter.TotalMinutes() {
+		t.Errorf("necessary labour %d must stay below the day %d",
+			after.NecessaryLabourMinutes, shorter.TotalMinutes())
+	}
+}
