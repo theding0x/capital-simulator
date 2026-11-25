@@ -316,3 +316,47 @@ func TestAnnualSurplusRate_LatentHoardExcluded_OnlyCapitalisedVariableMoves(t *t
 		t.Errorf("rate after capitalising hoard into v = %d bp, want < %d", got, base)
 	}
 }
+
+// --- Round-half-up of scaled-integer rates (#449) -----------------------------
+
+// The project convention is round-half-up for every scaled-integer magnitude
+// derived from a ratio (pkg/surplusrate.RoundHalfUpDiv); truncating understated
+// each rate by up to one basis point.
+func TestComputePerCircuitRate_RoundsHalfUp(t *testing.T) {
+	t.Parallel()
+	// s/v = 2/3 = 6666.67 bp → 6667, not the truncated 6666.
+	rate, err := valorisation.ComputePerCircuitRate(valorisation.NewVariableCapitalAdvanceID(), 2, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rate.BasisPoints != 6667 {
+		t.Errorf("2/3: got %d bp, want 6667", rate.BasisPoints)
+	}
+	// 1/3 = 3333.33 bp rounds down to 3333.
+	rate, err = valorisation.ComputePerCircuitRate(valorisation.NewVariableCapitalAdvanceID(), 1, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rate.BasisPoints != 3333 {
+		t.Errorf("1/3: got %d bp, want 3333", rate.BasisPoints)
+	}
+}
+
+func TestComputeAnnualSurplusRate_RoundsHalfUp(t *testing.T) {
+	t.Parallel()
+	// n = 1.5 turnovers, s/v = 33.33%: 15000 × 3333 / 10000 = 4999.5 → 5000.
+	rate := valorisation.ComputeAnnualSurplusRate(valorisation.NewVariableCapitalAdvanceID(), 15000, 3333, "x")
+	if rate.AnnualBasisPoints != 5000 {
+		t.Errorf("got %d bp, want 5000", rate.AnnualBasisPoints)
+	}
+}
+
+func TestComputeAnnualSurplusRateContrast_RoundsHalfUp(t *testing.T) {
+	t.Parallel()
+	// A:B = 20000:30000 = 2/3 → 6667 bp, not the truncated 6666.
+	contrast := valorisation.ComputeAnnualSurplusRateContrast(
+		valorisation.NewVariableCapitalAdvanceID(), valorisation.NewVariableCapitalAdvanceID(), 20000, 30000)
+	if contrast.RatioBasisPoints != 6667 {
+		t.Errorf("got %d bp, want 6667", contrast.RatioBasisPoints)
+	}
+}
