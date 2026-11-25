@@ -9,12 +9,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/theding0x/capital-simulator/services/finance-service/internal/money"
+	"github.com/theding0x/capital-simulator/pkg/money"
 )
 
-// The Ch. 38 surplus-profit ≙ differential-rent identity bridges pence and
-// LabourMinutes through the shared money package's canonical scale
-// (£1 = 100 pence = 480 LM), so rent stays commensurable with avgprofit (#411).
+// The Ch. 38 surplus-profit ≙ differential-rent identity bridges money and
+// LabourMinutes through pkg/money's canonical MELT (£1 = 2,400 LM), so rent stays
+// commensurable with avgprofit (#411, #449). The surplus-profit fields are named
+// *_bp but are hundredths of a pound (the legacy decimal scale), not canonical
+// 1/240-£ pence; hundredthsPerPound is that scale and the identity converts at
+// this boundary.
+const hundredthsPerPound = 100
 
 // ErrSurplusProfitRentMismatch is returned when a DifferentialRent's recorded
 // surplus-profit and its annual rent do not denote the same money-magnitude.
@@ -73,14 +77,15 @@ func IndividualPriceOfProduction(individualCostPriceBP, averageProfitBP int64) i
 	return individualCostPriceBP + averageProfitBP
 }
 
-// SurplusProfitMatchesRent reports whether a surplus-profit (in pence) and an
-// annual differential rent (in LabourMinutes) denote the same money-magnitude.
+// SurplusProfitMatchesRent reports whether a surplus-profit (in hundredths of a
+// pound) and an annual differential rent (in LabourMinutes) denote the same
+// money-magnitude.
 // Marx's Ch. 38 identity: the surplus-profit the waterfall capital earns above
 // the general price of production IS the differential rent landed property
 // captures — the same £, only the unit differs. The comparison cross-multiplies
 // to the common £-scale to avoid integer-division rounding.
 func SurplusProfitMatchesRent(surplusProfitBP, annualRentLabourMinutes int64) bool {
-	return surplusProfitBP*money.LabourMinutesPerPound == annualRentLabourMinutes*money.PencePerPound
+	return surplusProfitBP*money.LabourMinutesPerPound == annualRentLabourMinutes*hundredthsPerPound
 }
 
 // MonopolisedNaturalForceID identifies a persisted monopolised-natural-force record.
@@ -120,7 +125,7 @@ func NewDifferentialRentID() DifferentialRentID {
 
 // DifferentialRent is ground-rent arising from converting surplus-profit into
 // rent. AnnualRentLabourMinutes is the captured magnitude in LabourMinutes
-// (£1 = 480 LM).
+// (£1 = 2,400 LM, pkg/money).
 type DifferentialRent struct {
 	ID                      DifferentialRentID `json:"id"`
 	ParcelID                string             `json:"parcel_id"`
@@ -130,7 +135,7 @@ type DifferentialRent struct {
 }
 
 // Validate checks the Ch. 38 identity surplus_profit ≙ differential_rent: the
-// recorded surplus-profit (pence) and annual rent (LabourMinutes) must denote
+// recorded surplus-profit (hundredths of £) and annual rent (LabourMinutes) must denote
 // the same money-magnitude. Marx: the surplus-profit converted into rent IS the
 // rent — a DifferentialRent whose two fields disagree is internally
 // contradictory. Returns ErrSurplusProfitRentMismatch when they diverge.

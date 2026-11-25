@@ -48,13 +48,13 @@ func TestComputeSurplusProfit(t *testing.T) {
 }
 
 // TestSurplusProfitEqualsDifferentialRent pins the Ch. 38 identity (#378): the
-// waterfall surplus-profit (£10 = 1000 pence) equals the differential rent it
-// becomes (£10 = 4800 LabourMinutes), and that rent capitalised at 5% is the
-// £200 (96000 LM) land-price seeded alongside.
+// waterfall surplus-profit (£10 = 1000 hundredths) equals the differential rent it
+// becomes (£10 = 24000 LabourMinutes at £1 = 2,400 LM), and that rent capitalised
+// at 5% is the £200 (480000 LM) land-price seeded alongside.
 func TestSurplusProfitEqualsDifferentialRent(t *testing.T) {
 	t.Parallel()
 	surplusProfitBP := ComputeSurplusProfit(11500, IndividualPriceOfProduction(9000, 1500)) // 1000
-	const rentLM = 4800                                                                      // £10
+	const rentLM = 24000                                                                     // £10
 	if !SurplusProfitMatchesRent(surplusProfitBP, rentLM) {
 		t.Errorf("surplus-profit %d pence does not match rent %d LM (should both be £10)", surplusProfitBP, rentLM)
 	}
@@ -64,13 +64,13 @@ func TestSurplusProfitEqualsDifferentialRent(t *testing.T) {
 		t.Errorf("DifferentialRent.Validate() = %v, want nil", err)
 	}
 	// The old contradictory pairing (£25 surplus next to £10 rent) is rejected.
-	bad := DifferentialRent{SurplusProfitBP: 2500, AnnualRentLabourMinutes: 4800}
+	bad := DifferentialRent{SurplusProfitBP: 2500, AnnualRentLabourMinutes: 24000}
 	if err := bad.Validate(); err == nil {
-		t.Error("DifferentialRent{2500 pence, 4800 LM}.Validate() = nil, want mismatch error")
+		t.Error("DifferentialRent{2500 hundredths, 24000 LM}.Validate() = nil, want mismatch error")
 	}
 	// And the rent capitalises to the seeded £200 land-price at 5%.
-	if got := ComputeCapitalisedPrice(rentLM, 500); got != 96000 {
-		t.Errorf("ComputeCapitalisedPrice(4800,500) = %d, want 96000 (£200)", got)
+	if got := ComputeCapitalisedPrice(rentLM, 500); got != 480000 {
+		t.Errorf("ComputeCapitalisedPrice(24000,500) = %d, want 480000 (£200)", got)
 	}
 }
 
@@ -81,10 +81,10 @@ func TestComputeCapitalisedPrice(t *testing.T) {
 
 	t.Run("Marx fixture: £10 rent at 5% interest", func(t *testing.T) {
 		t.Parallel()
-		// £10 annual rent = 4800 LM; 5% = 500 bp.
-		// Capitalised price = roundHalfUp(4800×10000, 500) = 96 000 000/500 = 96000 LM.
-		got := ComputeCapitalisedPrice(4800, 500)
-		if got != 96000 {
+		// £10 annual rent = 24000 LM; 5% = 500 bp.
+		// Capitalised price = roundHalfUp(24000×10000, 500) = 240 000 000/500 = 480000 LM.
+		got := ComputeCapitalisedPrice(24000, 500)
+		if got != 480000 {
 			t.Errorf("ComputeCapitalisedPrice(4800,500) = %d, want 96000", got)
 		}
 	})

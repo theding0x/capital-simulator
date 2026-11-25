@@ -101,29 +101,30 @@ func TestComputeProductionSphere_HighComposition(t *testing.T) {
 
 // --- LabourPowerIndex exact value tests ---
 
-// Sphere A: v=100, C=700 → labourPowerIndex = 100*480*100/700 = 6857.
+// Sphere A: v=100, C=700 → labourPowerIndex = 100*2400*100/700 = 34285
+// (pkg/money: £1 = 2,400 labour-minutes).
 func TestLabourPowerIndex_SphereA(t *testing.T) {
 	t.Parallel()
 	sp := ComputeProductionSphere("Sphere A", 700, 100, 10000)
-	if sp.LabourPowerIndex != 6857 {
-		t.Errorf("LabourPowerIndex = %d, want 6857", sp.LabourPowerIndex)
+	if sp.LabourPowerIndex != 34285 {
+		t.Errorf("LabourPowerIndex = %d, want 34285", sp.LabourPowerIndex)
 	}
 }
 
-// Sphere B: v=600, C=700 → labourPowerIndex = 600*480*100/700 = 41142.
-// B carries 6× Sphere A's variable capital at the same total capital, and at the
-// canonical 480 scale the truncated index lands exactly on 6× A's (6857·6 =
-// 41142) — the integer-division divergence the old 3600 scale showed is gone.
+// Sphere B: v=600, C=700 → labourPowerIndex = 600*2400*100/700 = 205714.
+// B carries 6× Sphere A's variable capital at the same total capital, so its
+// index is 6× A's up to integer truncation: A's truncated 34285 loses < 1, which
+// the ×6 amplifies to < 6, so B and 6·A differ by less than 6.
 func TestLabourPowerIndex_SphereB(t *testing.T) {
 	t.Parallel()
 	sp := ComputeProductionSphere("Sphere B", 700, 600, 10000)
-	if sp.LabourPowerIndex != 41142 {
-		t.Errorf("LabourPowerIndex = %d, want 41142", sp.LabourPowerIndex)
+	if sp.LabourPowerIndex != 205714 {
+		t.Errorf("LabourPowerIndex = %d, want 205714", sp.LabourPowerIndex)
 	}
-	// B's index is exactly 6× Sphere A's (same C, 6× v).
 	spA := ComputeProductionSphere("Sphere A", 700, 100, 10000)
-	if sp.LabourPowerIndex != LabourPowerIndex(6*int64(spA.LabourPowerIndex)) {
-		t.Errorf("B.LabourPowerIndex = %d, want 6×A = %d", sp.LabourPowerIndex, 6*int64(spA.LabourPowerIndex))
+	if diff := int64(sp.LabourPowerIndex) - 6*int64(spA.LabourPowerIndex); diff < 0 || diff >= 6 {
+		t.Errorf("B.LabourPowerIndex = %d, want 6×A = %d within truncation (<6), diff %d",
+			sp.LabourPowerIndex, 6*int64(spA.LabourPowerIndex), diff)
 	}
 }
 

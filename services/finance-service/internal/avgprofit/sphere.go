@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/theding0x/capital-simulator/services/finance-service/internal/money"
+	"github.com/theding0x/capital-simulator/pkg/money"
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/value"
 )
 
