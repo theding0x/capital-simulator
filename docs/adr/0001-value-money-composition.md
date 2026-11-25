@@ -1,6 +1,6 @@
 # ADR 0001 — Value composition across the circuit: the LabourMinutes ↔ Pence bridge
 
-- **Status:** Accepted (decision); implementation **Deferred**
+- **Status:** Accepted (decision); implementation **In progress** — `pkg/money` (canonical £sd scale, MELT = 2,400 labour-minutes per £) landed; package adoption and P→ΔM wiring remain
 - **Date:** 2026-06-03
 - **Issue:** [#369](https://github.com/theding0x/capital-simulator/issues/369) (umbrella) — related: #216, #222, #370
 
