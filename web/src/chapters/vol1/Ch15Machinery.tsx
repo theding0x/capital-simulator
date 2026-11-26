@@ -107,6 +107,7 @@ function RegisterMachinePanel({ onCreated }: { onCreated: () => void }) {
   const [handLabour, setHandLabour] = useState(0);
   const [err, setErr] = useState<string | null>(null);
 
+  // 145,000/day is Marx's (§8A); value and life are illustrative.
   function seedNeedleMachine() {
     setName("Needle-machine");
     setMotor("steam piston");
@@ -123,9 +124,11 @@ function RegisterMachinePanel({ onCreated }: { onCreated: () => void }) {
     setMotor("steam piston");
     setTransmission("traction cable");
     setTool("plough share");
-    setMachineValue(720_000);
-    setLifespan(500);
-    setProductivePower(1);
+    // 3d = 33 min at 11 min/penny × 8 h × 5,475 days. Price and life are assumed: the
+    // life is borrowed from §3B's "a machine" worked 8 h/day for 15 years, and only scales the price.
+    setMachineValue(1_445_400);
+    setLifespan(5_475);
+    setProductivePower(8);
     setHandLabour(60 * 66); // 66 men × 60 min = 3,960 lab-min displaced per ploughing hour
   }
 
@@ -161,7 +164,11 @@ function RegisterMachinePanel({ onCreated }: { onCreated: () => void }) {
         needle-machine: 145,000/day).
       </p>
       <div style={{ marginBottom: "0.75rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-        <button type="button" onClick={seedNeedleMachine}>
+        <button
+          type="button"
+          onClick={seedNeedleMachine}
+          title="145,000/day is Marx's; value and life are illustrative"
+        >
           §8A needle-machine (145,000/day)
         </button>
         <button type="button" onClick={seedSteamPlough}>

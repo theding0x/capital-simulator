@@ -6,21 +6,57 @@ import (
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/machinery"
 )
 
+// Marx's steam-plough passage (§2): 66 men × 1 h at a 100% rate produce "a value of
+// 30 shillings"; their 15s wages are half an hour's labour each. 3,960 min = 360d, so
+// 1d = 11 min (1s = 132, £1 = 2,640). Every £/pence conversion here uses that rate.
+//
+// The plough's price and life are assumed (Marx gives neither). The 5,475-day life is
+// borrowed from his §3B illustration of "a machine" worked 8 hours daily for 15 years;
+// since wear is fixed at 33 min per ploughing hour, the life only scales the price.
+const (
+	ploughMen         = 66
+	ploughHandMinutes = ploughMen * 60                                                         // 3,960
+	ploughHourPence   = 30 * 12                                                                // 360d
+	minutesPerPenny   = ploughHandMinutes / ploughHourPence                                    // 11
+	ploughCostPence   = 3                                                                      // "three-pence" an hour
+	ploughWagePence   = 15 * 12                                                                // 180d
+	ploughHoursPerDay = machinery.StandardWorkingDayHours                                      // the 8-hour reference day
+	ploughLifespan    = 15 * 365                                                               // 5,475 days (assumed; see above)
+	ploughValue       = ploughCostPence * minutesPerPenny * ploughHoursPerDay * ploughLifespan // 1,445,400
+)
+
+func steamPlough() machinery.Machine {
+	return machinery.Machine{
+		MachineValue: machinery.MachineValue(ploughValue), LifespanDays: ploughLifespan,
+		ProductivePower: machinery.ProductivePower(ploughHoursPerDay), HandLabourPerUnit: ploughHandMinutes,
+	}
+}
+
 // Capital Vol. I, Ch. 15, §2:
 // "the machine ... enters into the value-begetting process only by bits. It
 //  never adds more value than it loses, on an average, by wear and tear."
 //
-// A £600 machine that wears out evenly over 1,000 working days transfers
-// 600 LabourMinutes-worth of value per day.
+// The steam-plough costs three-pence an hour (3d = 33 min at 11 min/penny). Over a
+// 5,475-day life (15 years × 365, borrowed from his §3B illustration of "a machine"
+// worked 8 hours daily for 15 years) that is 33 × 8 × 5,475 = 1,445,400 min
+// (£547 10s), which wears out at 264 min a day and 33 an hour. Marx gives no plough
+// price or life, both are assumed: the price is derived from his 3d, all of it taken
+// as value transferred, and since wear is fixed at 33 min per ploughing hour the life
+// only scales the price.
 func TestDailyWearAndTear_Para2_BitByBit(t *testing.T) {
 	t.Parallel()
-	m := machinery.Machine{
-		MachineValue: machinery.MachineValue(600_000),
-		LifespanDays: 1000,
-	}
+	m := steamPlough()
 	got := machinery.DailyWearAndTear(m)
-	if got != machinery.LabourMinutes(600) {
-		t.Fatalf("DailyWearAndTear = %d, want 600", got)
+	if got != machinery.LabourMinutes(264) {
+		t.Fatalf("DailyWearAndTear = %d, want 264", got)
+	}
+	if got*machinery.LabourMinutes(m.LifespanDays) != machinery.LabourMinutes(m.MachineValue) {
+		t.Fatalf("264 × %d = %d, want MachineValue %d",
+			m.LifespanDays, got*machinery.LabourMinutes(m.LifespanDays), m.MachineValue)
+	}
+	const pound547Tens = (547*20 + 10) * 12 * minutesPerPenny // £547 10s in minutes
+	if m.MachineValue != machinery.MachineValue(pound547Tens) {
+		t.Fatalf("MachineValue = %d, want £547 10s = %d", m.MachineValue, pound547Tens)
 	}
 }
 
@@ -53,7 +89,7 @@ func TestLabourSavingRatio_Para2_Spinning(t *testing.T) {
 func TestTotalValueTransferred_Para2_LifecycleEquivalence(t *testing.T) {
 	t.Parallel()
 	m := machinery.Machine{
-		MachineValue: machinery.MachineValue(600_000),
+		MachineValue: machinery.MachineValue(ploughValue),
 		LifespanDays: 5475, // calibrated to a standard 8h day
 	}
 	a := machinery.TotalValueTransferred(m, 16, 2738)
@@ -76,17 +112,23 @@ func TestTotalValueTransferred_Para2_LifecycleEquivalence(t *testing.T) {
 // "a steam-plough does as much work in one hour at a cost of three-pence, as
 //  66 men at a cost of 15 shillings."
 //
-// LabourDisplaced = 66 man-hours = 3,960 LabourMinutes.
-// Machine cost in pence (3d/hr) is far less than the displaced wage bill
-// (15s = 180d/hr).
+// LabourDisplaced = 66 man-hours = 3,960 LabourMinutes per ploughing hour, and
+// eight such hours in the reference day. Machine cost in pence (3d/hr) is far
+// less than the displaced wage bill (15s = 180d/hr).
 func TestLabourDisplaced_Para2_SteamPlough(t *testing.T) {
 	t.Parallel()
 	const handLabourMinutesPerHour = machinery.LabourMinutes(60)
-	const menReplaced = 66
 	const machineUnitsPerHour = 1 // one hour of ploughing
-	displaced := machinery.LabourDisplaced(handLabourMinutesPerHour*menReplaced, machineUnitsPerHour)
+	m := steamPlough()
+	displaced := machinery.LabourDisplaced(handLabourMinutesPerHour*ploughMen, machineUnitsPerHour)
 	if displaced != machinery.LabourMinutes(3960) {
 		t.Fatalf("LabourDisplaced = %d, want 3960", displaced)
+	}
+	if got := machinery.LabourDisplaced(m.HandLabourPerUnit, 1); got != 3960 {
+		t.Fatalf("LabourDisplaced(seed hand labour, 1 hour) = %d, want 3960", got)
+	}
+	if got := machinery.LabourDisplaced(m.HandLabourPerUnit, int64(m.ProductivePower)); got != 31_680 {
+		t.Fatalf("LabourDisplaced over %d ploughing hours = %d, want 31680 (8 × 3,960)", m.ProductivePower, got)
 	}
 }
 
@@ -94,20 +136,42 @@ func TestLabourDisplaced_Para2_SteamPlough(t *testing.T) {
 // "the limit to his using a machine is fixed by the difference between the
 //  value of the machine and the value of the labour-power replaced by it."
 //
-// Steam-plough: 3d an hour against 15s (180d) for 66 men. Both sides are
-// expressed on one scale (pence, carried as LabourMinutes magnitudes), so
-// only the difference matters: 180 - 3 = 177.
+// Steam-plough: 3d an hour (33 min) against 15s (180d = 1,980 min) for 66 men,
+// who in that hour work 3,960 min: half necessary, half surplus (the 100% rate).
+// Both sides are in LabourMinutes at 11 min/penny, so only the difference
+// matters: 1,980 - 33 = 1,947.
 func TestCapitalistGain_Para2_SteamPlough(t *testing.T) {
 	t.Parallel()
-	const machineCost = machinery.LabourMinutes(3)
-	const labourPowerReplaced = machinery.LabourMinutes(15 * 12)
-	if got := machinery.CapitalistGain(machineCost, labourPowerReplaced); got != 177 {
-		t.Fatalf("CapitalistGain = %d, want 177", got)
+	m := steamPlough()
+	machineCost := machinery.ValueTransferredPerUnit(m, ploughHoursPerDay)
+	if machineCost != 33 {
+		t.Fatalf("ValueTransferredPerUnit = %d, want 33 (3d at 11 min/penny)", machineCost)
+	}
+	labourPowerReplaced := machinery.LabourMinutes(ploughWagePence * minutesPerPenny)
+	if labourPowerReplaced != 1980 {
+		t.Fatalf("wages = %d, want 1980", labourPowerReplaced)
+	}
+	if halfHourEach := machinery.LabourMinutes(ploughMen) * 30; labourPowerReplaced != halfHourEach {
+		t.Fatalf("wages = %d, want 66 men × 30 min = %d", labourPowerReplaced, halfHourEach)
+	}
+	displaced := machinery.LabourDisplaced(m.HandLabourPerUnit, 1)
+	if labourPowerReplaced*2 != displaced {
+		t.Fatalf("wages × 2 = %d, want the %d min the 66 men work in the hour", labourPowerReplaced*2, displaced)
+	}
+	if got := machinery.CapitalistGain(machineCost, labourPowerReplaced); got != 1947 {
+		t.Fatalf("CapitalistGain = %d, want 1947", got)
 	}
 	if !machinery.WithinCapitalistLimit(machineCost, labourPowerReplaced) {
 		t.Fatalf("steam-plough must lie within the capitalist's limit")
 	}
+	if !machinery.WithinSocialLimit(machineCost, displaced) {
+		t.Fatalf("steam-plough must lie within the social limit")
+	}
 }
+
+// Magnitudes with no §-citation (600_000 over 1,000 days, 1_000_000 vs 700_000) are
+// illustrative. Marx gives no needle-machine price or life. They exercise
+// invariants, not his figures.
 
 // The capitalist's limit is narrower than the social one: a machine can save
 // society labour (66 men's 3,960 minutes displaced) and still be refused

@@ -27,11 +27,11 @@ func newMachineryTestServer(t *testing.T) *httptest.Server {
 	return ts
 }
 
-// §2 fixture: machine_value=600000, lifespan_days=1000 → daily_wear_and_tear=600
+// Illustrative fixture: machine_value=600000, lifespan_days=1000 → daily_wear_and_tear=600
 func TestCreateMachine_FixtureDailyWearAndTear(t *testing.T) {
 	t.Parallel()
 	ts := newMachineryTestServer(t)
-	body := `{"name":"power-loom","machine_value":600000,"lifespan_days":1000,"productive_power":145000}`
+	body := `{"name":"needle-machine","machine_value":600000,"lifespan_days":1000,"productive_power":145000}`
 	res, err := http.Post(ts.URL+"/v1/machines", "application/json", bytes.NewReader([]byte(body)))
 	if err != nil {
 		t.Fatalf("POST: %v", err)
@@ -126,7 +126,7 @@ func TestTickFactory_Para8A_NeedleFactory(t *testing.T) {
 func TestGetMachineWear_ReturnsRemainingValue(t *testing.T) {
 	t.Parallel()
 	ts := newMachineryTestServer(t)
-	body := `{"name":"power-loom","machine_value":600000,"lifespan_days":1000,"productive_power":145000}`
+	body := `{"name":"needle-machine","machine_value":600000,"lifespan_days":1000,"productive_power":145000}`
 	res, err := http.Post(ts.URL+"/v1/machines", "application/json", bytes.NewReader([]byte(body)))
 	if err != nil {
 		t.Fatalf("POST: %v", err)
