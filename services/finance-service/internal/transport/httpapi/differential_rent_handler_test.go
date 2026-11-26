@@ -135,8 +135,8 @@ func TestCreateCapitalisedRentPrice_Valid(t *testing.T) {
 	t.Parallel()
 	ts, _ := newDiffRentTestServer(t)
 
-	// Marx fixture: £10 annual rent (4800 LM) at 5% (500 bp) → 96000 LM.
-	body := `{"parcel_id":"highland-parcel-001","annual_rent_labour_minutes":4800,"interest_rate_bp":500}`
+	// Marx fixture: £10 annual rent (24000 LM) at 5% (500 bp) → 480000 LM.
+	body := `{"parcel_id":"highland-parcel-001","annual_rent_labour_minutes":24000,"interest_rate_bp":500}`
 	res, err := http.Post(ts.URL+"/v1/rent/capitalised-prices", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("post: %v", err)
@@ -156,8 +156,8 @@ func TestCreateCapitalisedRentPrice_Valid(t *testing.T) {
 		t.Fatalf("decode: %v", err)
 	}
 	// Server must compute the capitalised price regardless of any client value.
-	if crp.CapitalisedPriceLabourMinutes != 96000 {
-		t.Errorf("capitalised_price_labour_minutes = %d, want 96000 (server-computed)", crp.CapitalisedPriceLabourMinutes)
+	if crp.CapitalisedPriceLabourMinutes != 480000 {
+		t.Errorf("capitalised_price_labour_minutes = %d, want 480000 (server-computed)", crp.CapitalisedPriceLabourMinutes)
 	}
 }
 
@@ -165,7 +165,7 @@ func TestCreateCapitalisedRentPrice_ZeroInterestRate(t *testing.T) {
 	t.Parallel()
 	ts, _ := newDiffRentTestServer(t)
 
-	body := `{"parcel_id":"highland-parcel-002","annual_rent_labour_minutes":4800,"interest_rate_bp":0}`
+	body := `{"parcel_id":"highland-parcel-002","annual_rent_labour_minutes":24000,"interest_rate_bp":0}`
 	res, err := http.Post(ts.URL+"/v1/rent/capitalised-prices", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("post: %v", err)
@@ -273,8 +273,8 @@ func TestCreateDifferentialRent_Valid(t *testing.T) {
 	t.Parallel()
 	ts, _ := newDiffRentTestServer(t)
 
-	// surplus-profit £10 (1000 pence) ≙ annual rent £10 (4800 LM) — the identity.
-	body := `{"parcel_id":"highland-parcel-005","surplus_profit_bp":1000,"annual_rent_labour_minutes":4800}`
+	// surplus-profit £10 (1000 hundredths) ≙ annual rent £10 (24000 LM) — the identity.
+	body := `{"parcel_id":"highland-parcel-005","surplus_profit_bp":1000,"annual_rent_labour_minutes":24000}`
 	res, err := http.Post(ts.URL+"/v1/rent/differential-rents", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("post: %v", err)
@@ -297,7 +297,7 @@ func TestCreateDifferentialRent_SurplusRentMismatch(t *testing.T) {
 	t.Parallel()
 	ts, _ := newDiffRentTestServer(t)
 
-	body := `{"parcel_id":"highland-parcel-006","surplus_profit_bp":2500,"annual_rent_labour_minutes":4800}`
+	body := `{"parcel_id":"highland-parcel-006","surplus_profit_bp":2500,"annual_rent_labour_minutes":24000}`
 	res, err := http.Post(ts.URL+"/v1/rent/differential-rents", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("post: %v", err)
@@ -313,7 +313,7 @@ func TestCreateDifferentialRent_EmptyParcelID(t *testing.T) {
 	t.Parallel()
 	ts, _ := newDiffRentTestServer(t)
 
-	body := `{"parcel_id":"","surplus_profit_bp":2500,"annual_rent_labour_minutes":4800}`
+	body := `{"parcel_id":"","surplus_profit_bp":2500,"annual_rent_labour_minutes":24000}`
 	res, err := http.Post(ts.URL+"/v1/rent/differential-rents", "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("post: %v", err)

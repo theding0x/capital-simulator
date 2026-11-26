@@ -99,13 +99,17 @@ This package-local money scale — and the absence of a `LabourMinutes ↔ Pence
 bridge — is the subject of the value-composition umbrella (issue #369); the
 scale inconsistency itself is tracked as #370.
 
-**`pkg/money` (canonical scale and MELT).** The canonical scale now exists in
+**`pkg/money` (canonical scale and MELT).** The canonical scale lives in
 `pkg/money`: pre-decimal £sd (£1 = 20s = 240d) and a MELT of 10 labour-minutes
 per penny (£1 = 40 hours = 2,400 labour-minutes, Marx's Ch. 17 "6s = a 12-hour
 day"). `money.Rescale(amount, fromPerPound)` converts a legacy-scale amount to
-canonical `Pence` at a package boundary. No existing package has been moved onto
-it yet: that adoption (including finance-service's `internal/money`, which still
-uses 100 pence and 480 minutes per £) is incremental, per ADR 0001.
+canonical `Pence` at a package boundary. **finance-service has adopted it** (its
+own `internal/money`, 100 pence and 480 minutes per £, is gone): the Ch. 8
+labour-power index and the Ch. 38 surplus-profit ≙ rent identity use £1 = 2,400
+LM, and migration `00110` rescales the seeded rows tied to £ by ×5. Finance's
+`*_bp` surplus-profit fields remain hundredths of a pound, converted at the
+identity's boundary. The simulation-engine and market-service `Pence` packages
+have not yet moved onto it; that adoption is incremental, per ADR 0001.
 
 ## Roadmap (chapter-driven)
 
