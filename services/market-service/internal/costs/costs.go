@@ -20,9 +20,11 @@ import (
 )
 
 // Pence is the canonical money magnitude (1 GBP = 240 pence); an alias of
-// money.Pence (ADR 0001, #449). Scale evidence: the Ch. 6 Birmingham glass
-// fixtures state £11 and £2 per crate and are held as 2640 and 480; the 24 d
-// per ton-mile tariff is literal pence. No stored value changes.
+// money.Pence (ADR 0001, #449). Scale evidence: the in-package test
+// costs_test.go holds the Ch. 6 Birmingham glass crates as Pence(2640) // £11
+// x 240 and Pence(480) // £2 x 240. Seed 00006 does not store those crate
+// values, and the 24 base_pence_per_ton_mile tariff is scale-neutral (it does
+// not discriminate between 100/£ and 240/£). No stored value changes.
 type Pence = money.Pence
 
 // Sentinel errors.
