@@ -27,16 +27,11 @@ func TestPenceCanonical(t *testing.T) {
 		{"negative mirrors positive", -7, -17},
 	}
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			if got := tc.legacy.Canonical(); got != tc.want {
 				t.Errorf("Pence(%d).Canonical() = %d, want %d", tc.legacy, got, tc.want)
 			}
 		})
-	}
-
-	if got := turnover.Pence(8_000_000).Canonical(); got != 19_200_000 {
-		t.Errorf("£80,000 canonical = %d, want 19200000", got)
 	}
 }

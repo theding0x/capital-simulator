@@ -75,8 +75,11 @@ func NewTurnoverNumberID() TurnoverNumberID {
 
 // Pence is the legacy turnover money magnitude, recorded at 100 units to the
 // pound (decimal pence), not the canonical pre-decimal 240 (ADR 0001). Evidence:
-// the Ch. 9 seed records £80,000 as 8,000,000. Stored and emitted values stay at
-// this scale; use Canonical to convert at the package boundary.
+// the Ch. 9 seed records £80,000 as 8,000,000. The Ch. 7 TurnoverCycle seeds
+// (00036: 48000, 500000, 200000) carry no £ label, so they give no evidence
+// either way; uniformity across the package rests on the Ch. 9 fixtures. Stored
+// and emitted values stay at this scale; use Canonical to convert at the
+// package boundary.
 type Pence int64
 
 // Canonical converts p from the legacy 100-per-pound scale to money.Pence
