@@ -18,10 +18,12 @@
 // single capitalist can identify the source of their own surplus-value money.
 //
 // Monetary values are integer money units local to the reproduction package;
-// the £-scale is package-local and not interchangeable with other packages'
-// pence without conversion. See docs/architecture.md → "Money scale across
-// packages". (The Ch. 20/21 reproduction-scheme fixtures scale Marx's figures
-// ×1000, e.g. £1000 → 1_000_000.)
+// the £-scale is package-local, NOT uniform, and not interchangeable with other
+// packages' pence without conversion. See docs/architecture.md → "Money scale
+// across packages" and the Pence type comment below. This file's Ch. 17 scale
+// is 240 per £, whereas the Ch. 20/21 reproduction-scheme fixtures scale Marx's
+// figures ×1000 (e.g. £1000 → 1_000_000; Ch. 20 seed 00058:4, Ch. 21 fixture
+// extended_reproduction_test.go:21).
 package reproduction
 
 import (
@@ -60,7 +62,9 @@ var (
 //
 // The scale is NOT uniform across the package (issue #449 audit), so there is
 // deliberately no Canonical() bridge to money.Pence on this type:
-//   - Ch. 20/21 schemes: ×1000 per £ (£1000 = 1_000_000; migration 00058:4).
+//   - Ch. 20/21 schemes: ×1000 per £ (£1000 = 1_000_000; migration 00058:4,
+//     extended_reproduction_test.go:21). The Ch. 21 seed 00060:23 is the
+//     exception: it stores Marx's figures unscaled (4000c = 4000).
 //   - Ch. 17 surplus circulation: 240 per £ (£208,333 = 50_000_000;
 //     migration 00053:6, surplus_circulation_test.go:10).
 //   - Ch. 18 money supply: contradicts itself (migration 00055:5 says 1 GBP =
