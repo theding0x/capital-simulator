@@ -6,11 +6,23 @@ import (
 	"errors"
 	"io"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/money"
 )
 
 type ID string
 type Class string
+
+// Pence is agent-service's legacy money scale: 100 per pound (decimal pence),
+// so Watt's £521 is 52100 and a £100 advance is 10000. It is NOT money.Pence
+// (240 per pound, ADR 0001); stored and emitted values stay on this scale.
+// Use Canonical to cross into the canonical scale.
 type Pence int64
+
+// Canonical rescales p from 100 per pound to money.Pence (240 per pound),
+// rounded half away from zero.
+func (p Pence) Canonical() money.Pence { return money.Rescale(int64(p), 100) }
+
 type CircuitType string
 
 const (
