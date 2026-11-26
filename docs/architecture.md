@@ -82,8 +82,8 @@ Two value units flow through the simulator:
   | `simulation-engine/internal/turnover` | 100 |
   | `simulation-engine/internal/valorisation` | 240 |
   | `simulation-engine/internal/reproduction` | ×1000 (Marx scheme figures, e.g. £1000 → 1_000_000) |
-  | `market-service/internal/circulation` | 240 |
-  | `market-service/internal/costs` | 240 |
+  | `market-service/internal/circulation` | 240 (alias of `pkg/money.Pence`) |
+  | `market-service/internal/costs` | 240 (alias of `pkg/money.Pence`) |
 
   Each package is internally consistent, and **no asserted law cross-multiplies
   pence across packages** — every audited invariant is a ratio, a sum, or a

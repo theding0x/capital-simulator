@@ -15,10 +15,15 @@ import (
 	"encoding/hex"
 	"errors"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/money"
 )
 
-// Pence is the canonical monetary unit (1 GBP = 240 pence).
-type Pence int64
+// Pence is the canonical money magnitude (1 GBP = 240 pence); an alias of
+// money.Pence (ADR 0001, #449). Scale evidence: the Ch. 6 Birmingham glass
+// fixtures state £11 and £2 per crate and are held as 2640 and 480; the 24 d
+// per ton-mile tariff is literal pence. No stored value changes.
+type Pence = money.Pence
 
 // Sentinel errors.
 var (
