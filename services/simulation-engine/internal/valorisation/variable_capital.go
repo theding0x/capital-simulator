@@ -19,6 +19,7 @@ import (
 	"encoding/hex"
 	"errors"
 
+	"github.com/theding0x/capital-simulator/pkg/money"
 	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 )
 
@@ -50,8 +51,10 @@ func newHexID() string {
 
 // --- Pence -------------------------------------------------------------------
 
-// Pence is the canonical monetary unit (1 GBP = 240 pence).
-type Pence int64
+// Pence is the canonical money-form magnitude, shared with every service via
+// pkg/money (ADR 0001): pre-decimal pence, 1 GBP = 240 pence. This package
+// already recorded money at that scale, so the alias changes no wire value.
+type Pence = money.Pence
 
 // --- ID types ----------------------------------------------------------------
 
