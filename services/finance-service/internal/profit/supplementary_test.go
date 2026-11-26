@@ -71,16 +71,45 @@ func TestCapitalMagnitudeChangeMoneyValue(t *testing.T) {
 }
 
 // A proportional change in the magnitude of capital at unchanged composition also
-// leaves the rate untouched.
+// leaves the rate untouched. Marx's own figures: "no matter whether we have C, or
+// nC, or C/n, e.g., 1,000, or 2,000, or 500, and the rate of profit being 20%, the
+// profit = 200 in the first case, = 400 in the second, and = 100 in the third.
+// But 200:1,000 = 400:2,000 = 100:500 = 20%." The re-valued magnitudes are formed
+// here independently of NewRate, so the rate is checked against his ratios.
 func TestCapitalMagnitudeChangeProportional(t *testing.T) {
 	t.Parallel()
 
-	m := CapitalMagnitudeChange{Kind: KindProportionalChange, OriginalCapital: 3000, OriginalProfit: 600, Factor: 250}
-	if m.NewRate() != m.OldRate() {
-		t.Errorf("proportional change: new %d != old %d", m.NewRate(), m.OldRate())
-	}
-	if !m.RateUnchanged() {
-		t.Error("a proportional change must leave the rate of profit unchanged")
+	for _, tc := range []struct {
+		name        string
+		factor      int64
+		wantCapital int64
+		wantProfit  int64
+	}{
+		{"nC with n = 2", 200, 2000, 400},
+		{"C/n with n = 2", 50, 500, 100},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			m := CapitalMagnitudeChange{Kind: KindProportionalChange, OriginalCapital: 1000, OriginalProfit: 200, Factor: tc.factor}
+			if got := int64(m.OriginalCapital) * tc.factor / magnitudeFactorBase; got != tc.wantCapital {
+				t.Errorf("re-valued capital = %d, want %d", got, tc.wantCapital)
+			}
+			if got := int64(m.OriginalProfit) * tc.factor / magnitudeFactorBase; got != tc.wantProfit {
+				t.Errorf("re-valued profit = %d, want %d", got, tc.wantProfit)
+			}
+			if got := magnitudeRateBP(tc.wantProfit, tc.wantCapital); got != 2000 {
+				t.Errorf("rate on Marx's re-valued magnitudes = %d bp, want 2000 (20%%)", got)
+			}
+			if got := m.OldRate(); got != 2000 {
+				t.Errorf("old rate = %d bp, want 2000", got)
+			}
+			if m.NewRate() != m.OldRate() {
+				t.Errorf("proportional change: new %d != old %d", m.NewRate(), m.OldRate())
+			}
+			if !m.RateUnchanged() {
+				t.Error("a proportional change must leave the rate of profit unchanged")
+			}
+		})
 	}
 }
 
@@ -224,7 +253,8 @@ func TestCapitalMagnitudeChange_GoldRevaluationLeavesRate(t *testing.T) {
 	}{
 		{"gold falls by half: figures double", KindMoneyValueChange, 200},
 		{"gold rises: figures halve", KindMoneyValueChange, 50},
-		{"proportional growth at constant composition", KindProportionalChange, 250},
+		{"proportional growth at constant composition: nC, n = 2", KindProportionalChange, 200},
+		{"proportional shrinkage at constant composition: C/n, n = 2", KindProportionalChange, 50},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
