@@ -15,17 +15,17 @@ import (
 	"encoding/hex"
 	"errors"
 	"time"
-
-	"github.com/theding0x/capital-simulator/pkg/money"
 )
 
-// Pence is the canonical money magnitude (1 GBP = 240 pence); an alias of
-// money.Pence (ADR 0001, #449). Scale evidence: the in-package test
-// costs_test.go holds the Ch. 6 Birmingham glass crates as Pence(2640) // £11
-// x 240 and Pence(480) // £2 x 240. Seed 00006 does not store those crate
-// values, and the 24 base_pence_per_ton_mile tariff is scale-neutral (it does
-// not discriminate between 100/£ and 240/£). No stored value changes.
-type Pence = money.Pence
+// Pence is the canonical monetary unit (1 GBP = 240 pence).
+//
+// The 240/£ scale is ASSUMED (from the architecture.md table) and is not
+// verified by any fixture: costs_test.go only checks the 5.5 ratio, which
+// holds at any scale; seed 00006 stores no crate values; and the 24
+// base_pence_per_ton_mile tariff is scale-neutral. For that reason this type
+// is deliberately NOT aliased to money.Pence (ADR 0001, #449): no bridge or
+// alias is added where the scale cannot be verified.
+type Pence int64
 
 // Sentinel errors.
 var (
