@@ -18,9 +18,13 @@ import (
 // Scale (legacy, ADR 0001): 100 units per £ (decimal pence). This scale is
 // INFERRED, not declared: the hoard and obligation seeds carry no £ annotation.
 // The evidence is the round magnitudes of the seeded hoards and obligations
-// (multiples of 100) and the Ch. 3 circuit seed's "£2 = 200 pence". This is
-// NOT the canonical pre-decimal money.Pence (240 per £). Stored and wire values
-// stay at this scale; convert at the boundary with Canonical.
+// (multiples of 100) and the Ch. 3 circuit seed's "£2 = 200 pence". That
+// circuit figure is a different type (CircuitLeg.Value), so it is only indirect
+// evidence. The seeded hoard magnitudes (12000, 48000) are also multiples of
+// 240, so they fit the pre-decimal scale equally well and the scale remains
+// inferred. This is NOT the canonical pre-decimal money.Pence (240 per £).
+// Stored and wire values stay at this scale; convert at the boundary with
+// Canonical.
 type Pence int64
 
 // legacyPencePerPound is the per-£ scale of the local Pence type.
