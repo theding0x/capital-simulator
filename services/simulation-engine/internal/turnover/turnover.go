@@ -12,6 +12,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/money"
 )
 
 // YearReferenceMinutes is the natural unit of measure for turnover time.
@@ -71,8 +73,23 @@ func NewTurnoverNumberID() TurnoverNumberID {
 
 // --- Pence -------------------------------------------------------------------
 
-// Pence is the canonical monetary unit (1 GBP = 240 pence).
+// Pence is the legacy turnover money magnitude, recorded at 100 units to the
+// pound (decimal pence), not the canonical pre-decimal 240 (ADR 0001). Evidence:
+// the Ch. 9 seed records £80,000 as 8,000,000. The Ch. 7 TurnoverCycle seeds
+// (00036: 48000, 500000, 200000) carry no £ label, so they give no evidence
+// either way; uniformity across the package rests on the Ch. 9 fixtures. Stored
+// and emitted values stay at this scale; use Canonical to convert at the
+// package boundary.
 type Pence int64
+
+// Canonical converts p from the legacy 100-per-pound scale to money.Pence
+// (240 per pound), rounded half away from zero.
+func (p Pence) Canonical() money.Pence {
+	return money.Rescale(int64(p), legacyPencePerPound)
+}
+
+// legacyPencePerPound is the turnover package's recorded scale.
+const legacyPencePerPound = 100
 
 // --- CircuitLens -------------------------------------------------------------
 
