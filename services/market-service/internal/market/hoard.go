@@ -15,10 +15,12 @@ import (
 // them as int64 avoids floating-point drift in arithmetic on hoards,
 // obligations, and the circulation-volume formula M = ΣP / V.
 //
-// Scale (legacy, ADR 0001): 100 units per £ (decimal pence; the Ch. 3 seed
-// 00012 states "£2 = 200 pence"). This is NOT the canonical pre-decimal
-// money.Pence (240 per £). Stored and wire values stay at this scale; convert
-// at the boundary with Canonical.
+// Scale (legacy, ADR 0001): 100 units per £ (decimal pence). This scale is
+// INFERRED, not declared: the hoard and obligation seeds carry no £ annotation.
+// The evidence is the round magnitudes of the seeded hoards and obligations
+// (multiples of 100) and the Ch. 3 circuit seed's "£2 = 200 pence". This is
+// NOT the canonical pre-decimal money.Pence (240 per £). Stored and wire values
+// stay at this scale; convert at the boundary with Canonical.
 type Pence int64
 
 // legacyPencePerPound is the per-£ scale of the local Pence type.

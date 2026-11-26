@@ -14,9 +14,9 @@ func TestPenceCanonical(t *testing.T) {
 		in   market.Pence
 		want money.Pence
 	}{
-		{"seeded hoard 12000 is 120 pounds", 12000, money.FromLSD(120, 0, 0)},
-		{"seeded hoard 48000 is 480 pounds", 48000, money.FromLSD(480, 0, 0)},
-		{"Ch. 3 two pounds is 200", 200, money.FromLSD(2, 0, 0)},
+		{"12000 legacy pence", 12000, money.FromLSD(120, 0, 0)},
+		{"48000 legacy pence", 48000, money.FromLSD(480, 0, 0)},
+		{"200 legacy pence (Ch. 3 circuit seed: £2 = 200 pence)", 200, money.FromLSD(2, 0, 0)},
 		{"zero", 0, 0},
 		{"1 rounds down (2.4 -> 2)", 1, 2},
 		{"3 rounds down (7.2 -> 7)", 3, 7},
