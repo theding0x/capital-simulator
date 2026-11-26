@@ -9,10 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/money"
 )
 
-// Pence is the canonical monetary unit in the simulation (1 GBP = 240 pence).
-type Pence int64
+// Pence is the canonical money magnitude (1 GBP = 240 pence); an alias of
+// money.Pence (ADR 0001, #449). Wire and storage values are unchanged: the
+// seeds already record pre-decimal pence (£50 cotton = 12000).
+type Pence = money.Pence
 
 // Sentinel errors.
 var (

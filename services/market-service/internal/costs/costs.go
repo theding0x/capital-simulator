@@ -18,6 +18,13 @@ import (
 )
 
 // Pence is the canonical monetary unit (1 GBP = 240 pence).
+//
+// The 240/£ scale is ASSUMED (from the architecture.md table) and is not
+// verified by any fixture: costs_test.go only checks the 5.5 ratio, which
+// holds at any scale; seed 00006 stores no crate values; and the 24
+// base_pence_per_ton_mile tariff is scale-neutral. For that reason this type
+// is deliberately NOT aliased to money.Pence (ADR 0001, #449): no bridge or
+// alias is added where the scale cannot be verified.
 type Pence int64
 
 // Sentinel errors.
