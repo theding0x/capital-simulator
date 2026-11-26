@@ -290,10 +290,13 @@ func TestComputeVariableCapitalReproduction_AtFullRate(t *testing.T) {
 // variable capital changes the denominator and so the rate.
 func TestAnnualSurplusRate_LatentHoardExcluded_OnlyCapitalisedVariableMoves(t *testing.T) {
 	t.Parallel()
+	// Magnitudes are ratio-only (s/v = 7800/5000 = 156%) and scale-free: Pence
+	// is money.Pence (240 per £), so these are 5000 and 7800 pence, not
+	// round-pound amounts; only the ratios matter to the assertions.
 	const (
-		variable valorisation.Pence = 5000 // £50
-		surplus  valorisation.Pence = 7800 // £78
-		hoard    valorisation.Pence = 7800 // the whole £78 held latent
+		variable valorisation.Pence = 5000 // v, in pence
+		surplus  valorisation.Pence = 7800 // s, in pence (s/v = 156%)
+		hoard    valorisation.Pence = 7800 // the whole surplus held latent
 		n        int64              = 10000
 	)
 	annual := func(v valorisation.Pence) int64 {
