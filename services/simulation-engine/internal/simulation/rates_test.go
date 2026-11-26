@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/production"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/simulation"
 )
 
@@ -19,7 +20,7 @@ func TestFormulaI_SixOverSix_100Percent(t *testing.T) {
 func TestFormulaII_SixOverTwelve_50Percent(t *testing.T) {
 	t.Parallel()
 	// §formula II: "6 hours surplus-labour / 12-hour working-day = 50%"
-	got := simulation.FormulaII(simulation.SurplusLabour{Minutes: 360}, simulation.WorkingDay{TotalMinutes: 720})
+	got := simulation.FormulaII(simulation.SurplusLabour{Minutes: 360}, production.WorkingDay{Total: 720, NecessaryLabour: 360, SurplusLabour: 360})
 	if got != 0.5 {
 		t.Fatalf("FormulaII: want 0.5, got %f", got)
 	}
@@ -28,7 +29,7 @@ func TestFormulaII_SixOverTwelve_50Percent(t *testing.T) {
 func TestFormulaII_BoundedBelow1(t *testing.T) {
 	t.Parallel()
 	// Formula II can never reach or exceed 1.0
-	got := simulation.FormulaII(simulation.SurplusLabour{Minutes: 719}, simulation.WorkingDay{TotalMinutes: 720})
+	got := simulation.FormulaII(simulation.SurplusLabour{Minutes: 719}, production.WorkingDay{Total: 720, NecessaryLabour: 1, SurplusLabour: 719})
 	if got >= 1.0 {
 		t.Fatalf("FormulaII: want < 1.0, got %f", got)
 	}

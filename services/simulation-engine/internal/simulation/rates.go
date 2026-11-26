@@ -6,6 +6,7 @@ package simulation
 import (
 	"github.com/theding0x/capital-simulator/pkg/surplusrate"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/labour"
+	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/production"
 )
 
 // NecessaryLabour is the paid portion of the working day — the time the
@@ -18,12 +19,6 @@ type NecessaryLabour struct {
 // labour, appropriated by capital as surplus-value.
 type SurplusLabour struct {
 	Minutes labour.LabourMinutes `json:"minutes"`
-}
-
-// WorkingDay is the total time the labourer is at the capitalist's
-// disposal. TotalMinutes equals NecessaryLabour.Minutes + SurplusLabour.Minutes.
-type WorkingDay struct {
-	TotalMinutes labour.LabourMinutes `json:"total_minutes"`
 }
 
 // RateScenario is the input to all three rate formulae: the two
@@ -58,11 +53,14 @@ func FormulaI(s SurplusLabour, v NecessaryLabour) float64 {
 // FormulaII returns surplus-labour divided by the total working day:
 // s/(s+v). Always strictly less than 1.0, because surplus-labour is
 // always less than the full working day.
-func FormulaII(s SurplusLabour, wd WorkingDay) float64 {
-	if wd.TotalMinutes == 0 {
+//
+// The working day is production.WorkingDay, the one definition of the day and
+// its L-P1 partition in simulation-engine.
+func FormulaII(s SurplusLabour, wd production.WorkingDay) float64 {
+	if wd.Total == 0 {
 		return 0
 	}
-	return float64(s.Minutes) / float64(wd.TotalMinutes)
+	return float64(s.Minutes) / float64(wd.Total)
 }
 
 // FormulaIII returns unpaid labour divided by paid labour. Renames
@@ -76,7 +74,11 @@ func FormulaIII(unpaid, paid labour.LabourMinutes) float64 {
 // ComputeRates applies all three formulae to scenario and returns the
 // results. The working day is derived from the two partitions.
 func ComputeRates(s RateScenario) RateResult {
-	wd := WorkingDay{TotalMinutes: s.NecessaryLabour.Minutes + s.SurplusLabour.Minutes}
+	wd := production.WorkingDay{
+		Total:           s.NecessaryLabour.Minutes + s.SurplusLabour.Minutes,
+		NecessaryLabour: production.NecessaryLabour(s.NecessaryLabour.Minutes),
+		SurplusLabour:   production.SurplusLabour(s.SurplusLabour.Minutes),
+	}
 	return RateResult{
 		FormulaI:   FormulaI(s.SurplusLabour, s.NecessaryLabour),
 		FormulaII:  FormulaII(s.SurplusLabour, wd),
