@@ -6,13 +6,29 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/money"
 )
 
-// Pence is the canonical money-magnitude unit for Vol. I Ch. 3 records.
+// Pence is the money-magnitude unit for Vol. I Ch. 3 records.
 // Money-prices in Marx's Ch. 3 examples are always integer pence; storing
 // them as int64 avoids floating-point drift in arithmetic on hoards,
 // obligations, and the circulation-volume formula M = ΣP / V.
+//
+// Scale (legacy, ADR 0001): 100 units per £ (decimal pence; the Ch. 3 seed
+// 00012 states "£2 = 200 pence"). This is NOT the canonical pre-decimal
+// money.Pence (240 per £). Stored and wire values stay at this scale; convert
+// at the boundary with Canonical.
 type Pence int64
+
+// legacyPencePerPound is the per-£ scale of the local Pence type.
+const legacyPencePerPound = 100
+
+// Canonical converts p to the canonical pre-decimal money.Pence, rounded half
+// away from zero.
+func (p Pence) Canonical() money.Pence {
+	return money.Rescale(int64(p), legacyPencePerPound)
+}
 
 // HoardID uniquely identifies a Hoard.
 type HoardID string
