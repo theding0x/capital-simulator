@@ -68,7 +68,7 @@ func TestComputePerCircuitRate_SpinningMill1871(t *testing.T) {
 	// Spinning Mill 1871 calibrated example: s/v = 156% → BasisPoints = 15600.
 	// Marx uses this to derive the annual rate of 8112%.
 	id := valorisation.NewVariableCapitalAdvanceID()
-	// £1 variable, £1.56 surplus.
+	// Ratio-only: surplus is 156% of variable (s/v = 156%); no pound scale implied.
 	rate, err := valorisation.ComputePerCircuitRate(id, 15600, 10000)
 	if err != nil {
 		t.Fatal(err)
@@ -285,7 +285,8 @@ func TestComputeVariableCapitalReproduction_AtFullRate(t *testing.T) {
 
 // Vol. II Ch. 2 → Ch. 16: latent money-capital is hoarded surplus-value that
 // is not yet functioning capital, so it never enters the annual rate. The
-// Spinning Mill 1871 circuit (v=£50, s=£78, so s/v = 156%) at n=1 has the same
+// Spinning Mill 1871 circuit (ratio-only, plain pence: 5000 variable, 7800
+// surplus, so s/v = 156%) at n=1 has the same
 // annual rate whatever hoard sits beside it; only capitalisation into
 // variable capital changes the denominator and so the rate.
 func TestAnnualSurplusRate_LatentHoardExcluded_OnlyCapitalisedVariableMoves(t *testing.T) {
