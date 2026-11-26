@@ -38,9 +38,6 @@ type NecessaryLabour LabourMinutes
 // SurplusLabour is the portion of the working day that produces surplus-value [§1].
 type SurplusLabour LabourMinutes
 
-// WorkingDay is the total labour-time: NecessaryLabour + SurplusLabour [§4].
-type WorkingDay LabourMinutes
-
 // ErrDivisionByZero is returned when computing a rate against zero variable capital.
 var ErrDivisionByZero = errors.New("commodity: variable capital cannot be zero")
 
