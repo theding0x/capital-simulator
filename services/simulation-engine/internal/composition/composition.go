@@ -10,10 +10,23 @@ import (
 	"encoding/hex"
 	"errors"
 	"time"
+
+	"github.com/theding0x/capital-simulator/pkg/money"
 )
 
-// Pence is the canonical monetary unit.
+// Pence is this package's legacy money magnitude: decimal pence, 100 per £1
+// (so Marx's £10,000 machine is 1,000,000; seed 00038, composition_test.go).
+// It is not the canonical money scale (money.Pence, 240 per £1, ADR 0001); it
+// stays as-is so stored and emitted values do not change. Convert at the
+// package boundary with Canonical.
 type Pence int64
+
+// legacyPencePerPound is the scale of Pence: 100 per £1.
+const legacyPencePerPound = 100
+
+// Canonical converts p from the legacy 100-per-£ scale to canonical money.Pence
+// (240 per £1), rounding half away from zero.
+func (p Pence) Canonical() money.Pence { return money.Rescale(int64(p), legacyPencePerPound) }
 
 // CapitalComponentID is the unique identifier for a CapitalComponent.
 type CapitalComponentID string
