@@ -57,6 +57,18 @@ var (
 // Pence is the reproduction package's integer money unit. Its £-scale is
 // package-local (see docs/architecture.md → "Money scale across packages") and
 // not interchangeable with other packages' Pence without conversion.
+//
+// The scale is NOT uniform across the package (issue #449 audit), so there is
+// deliberately no Canonical() bridge to money.Pence on this type:
+//   - Ch. 20/21 schemes: ×1000 per £ (£1000 = 1_000_000; migration 00058:4).
+//   - Ch. 17 surplus circulation: 240 per £ (£208,333 = 50_000_000;
+//     migration 00053:6, surplus_circulation_test.go:10).
+//   - Ch. 18 money supply: contradicts itself (migration 00055:5 says 1 GBP =
+//     240 pence yet stores £1,000 as 10_000_000; money_supply_test.go:11 says
+//     £1000 = 1_000_000 yet line 191 reads 2_000_000 as £8,333).
+//
+// A bridge needs a per-record-kind scale, chosen once the Ch. 18 seed is
+// resolved by a new migration (existing migrations are append-only).
 type Pence int64
 
 // --- ID types ---------------------------------------------------------------
