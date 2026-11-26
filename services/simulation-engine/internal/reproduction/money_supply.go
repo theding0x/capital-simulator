@@ -24,10 +24,12 @@
 //     for means of production.
 //
 // Monetary values are integer money units local to the reproduction package;
-// the £-scale is package-local and not interchangeable with other packages'
-// pence without conversion. See docs/architecture.md → "Money scale across
-// packages". (The Ch. 20/21 reproduction-scheme fixtures scale Marx's figures
-// ×1000, e.g. £1000 → 1_000_000.)
+// the £-scale is package-local, NOT uniform, and not interchangeable with other
+// packages' pence without conversion. See docs/architecture.md → "Money scale
+// across packages" and the Pence type comment in surplus_circulation.go. The
+// Ch. 20/21 reproduction-scheme fixtures scale Marx's figures ×1000 (e.g.
+// £1000 → 1_000_000; Ch. 20 seed 00058:4, Ch. 21 fixture
+// extended_reproduction_test.go:21), whereas Ch. 17 is 240 per £.
 package reproduction
 
 import (

@@ -6,6 +6,17 @@ import (
 )
 
 // Pence is the monetary unit for Part VII — The Accumulation of Capital.
+//
+// Its £-scale is NOT uniform across the simulation package (issue #449 audit),
+// so there is deliberately no Canonical() bridge to money.Pence on this type:
+//   - 1 per £: reproduction_test.go:11-14 (£1,000 capital = 800c+200v),
+//     accumulation_test.go:10-14 (£2,000 surplus = 2000).
+//   - 100 per £: abode.go:53-55 (£6,000 = 600000, £25 = 2500).
+//   - 240 per £: colonisation_test.go:75-76 and :133-147, migration
+//     00025_v1_ch33_seed.sql:19 (£500 = 120,000), historical_tendency_test.go:87.
+//
+// Each file's scale must be settled (or its fixtures migrated) before any
+// bridge is added.
 type Pence int64
 
 // CapitalStock is the value composition of capital at a point in time.
