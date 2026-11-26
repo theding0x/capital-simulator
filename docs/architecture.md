@@ -73,27 +73,39 @@ Two value units flow through the simulator:
   production). One magnitude, one meaning everywhere.
 - **`Pence int64`** — the money-form (Vol. II circulation, Vol. III
   distribution). It is defined **per package**, and the £→pence scale differs
-  between packages:
+  between packages (and, in some packages, between chapters or fields):
 
-  | package | £ → pence |
-  |---|---|
-  | `simulation-engine/internal/circulation` | 100 |
-  | `simulation-engine/internal/composition` | 100 |
-  | `simulation-engine/internal/turnover` | 100 |
-  | `simulation-engine/internal/valorisation` | 240 |
-  | `simulation-engine/internal/reproduction` | ×1000 (Marx scheme figures, e.g. £1000 → 1_000_000) |
-  | `market-service/internal/circulation` | 240 (alias of `pkg/money.Pence`) |
-  | `market-service/internal/costs` | 240 (alias of `pkg/money.Pence`) |
+  | package | £ → pence | treatment |
+  |---|---|---|
+  | `simulation-engine/internal/circulation` | 100 | local type + `Canonical()` (#502) |
+  | `simulation-engine/internal/composition` | 100 | local type + `Canonical()` (#502) |
+  | `simulation-engine/internal/turnover` | 100 | local type + `Canonical()` (#501) |
+  | `simulation-engine/internal/valorisation` | 240 | alias of `pkg/money.Pence` (#498) |
+  | `simulation-engine/internal/reproduction` | MIXED: Ch. 17 at 240 (seed 00053); Ch. 20/21 fixtures at ×1000 (seed 00058, £1000 → 1_000_000; the Ch. 21 seed 00060 stores Marx's figures unscaled); Ch. 18 internally inconsistent (seed 00055) | no bridge (#500) |
+  | `simulation-engine/internal/simulation` | MIXED: 1, 100 and 240 per £ by file | no bridge (#500) |
+  | `market-service/internal/circulation` | 240 | alias of `pkg/money.Pence` (#499) |
+  | `market-service/internal/costs` | 240 ASSUMED, unverified by any fixture | local type, deliberately not aliased (#499) |
+  | `market-service/internal/market` (hoard) | 100, INFERRED | local type + `Canonical()` (#497) |
+  | `agent-service` | MIXED: balances and circuits at 100 (seed 00003); wages and `LabourPowerDailyPence` at 240 (seed 00015) | no bridge, tracked on #449 |
 
-  Each package is internally consistent, and **no asserted law cross-multiplies
-  pence across packages** — every audited invariant is a ratio, a sum, or a
-  same-package balance, all scale-invariant (verified by `/capital-reflection`).
+  Some pence fields are plain `int64`, outside any `Pence` type, at mixed
+  scales: `workperiod` (240/£, seed 00045); `reproduction/{simple_reproduction,
+  money_supply,extended_reproduction,from_annual_rates}.go`;
+  `simulation/{general_law,labour_legislation}.go`. `observatory/derivations.go`
+  draws on 100/£ sources.
 
-**Rule:** a `Pence` magnitude is meaningful only within its own package. Never
-compare or arithmetically combine pence from two packages without an explicit
-conversion. Seed fixtures and migrations are append-only, so the historical
-scales are frozen; the safe fix for any future cross-package endpoint is to
-convert at the boundary, not to re-scale existing data.
+  Packages with a single scale are marked above; mixed packages vary by
+  chapter or field. **No asserted law cross-multiplies pence across packages**
+  — every audited invariant is a ratio, a sum, or a same-package balance, all
+  scale-invariant (verified by `/capital-reflection`).
+
+**Rule:** a `Pence` magnitude is meaningful only within its own package and,
+for the mixed packages above, only within its chapter or field. Never compare
+or arithmetically combine pence from two packages (or two chapters of a mixed
+package) without an explicit conversion. Seed fixtures and migrations are
+append-only, so the historical scales are frozen; the safe fix for any future
+cross-package endpoint is to convert at the boundary, not to re-scale existing
+data.
 
 This package-local money scale — and the absence of a `LabourMinutes ↔ Pence`
 bridge — is the subject of the value-composition umbrella (issue #369); the
@@ -109,7 +121,12 @@ labour-power index and the Ch. 38 surplus-profit ≙ rent identity use £1 = 2,4
 LM, and migration `00110` rescales the seeded rows tied to £ by ×5. Finance's
 `*_bp` surplus-profit fields remain hundredths of a pound, converted at the
 identity's boundary. The simulation-engine and market-service `Pence` packages
-have not yet moved onto it; that adoption is incremental, per ADR 0001.
+have since been adopted where the scale is uniform: they either alias
+`money.Pence` (240/£) or expose `Canonical()` (`money.Rescale` at 100/£). The
+mixed packages (simulation-engine `reproduction` and `simulation`, agent-service)
+are intentionally left unbridged (Option A decision on #449) until per-chapter
+helpers or normalising migrations land, per ADR 0001. Until then the web
+`fmtPounds` helper assumes 100/£ everywhere (#495).
 
 ## Roadmap (chapter-driven)
 
