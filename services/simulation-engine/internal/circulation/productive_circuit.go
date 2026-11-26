@@ -13,7 +13,9 @@ import (
 // (Spinning Mill 1871 £422 advance is 42,200; seeds 00028-00034, 00049, 00064,
 // 00069). It is not the canonical money scale (money.Pence, 240 per £1,
 // ADR 0001); it stays as-is so stored and emitted values do not change.
-// Convert at the package boundary with Canonical.
+// Convert at the package boundary with Canonical. Seed 00045 (workperiod, plain
+// int64 at 240/£) and 00053 (reproduction) are other types and not part of
+// circulation.Pence.
 type Pence int64
 
 // legacyPencePerPound is the scale of Pence: 100 per £1.
