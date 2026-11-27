@@ -19,10 +19,18 @@ import (
 // surplus-value; all of them cheapen the constant capital against which that
 // surplus is measured, and so raise the rate of profit.
 //
-// Two enterprises make the point: with the same s = £1,000 on the same v =
-// £1,000, the one carrying c = £9,000 shows p' = 10%, the one carrying c =
-// £11,000 only 8 1/3%. The £2,000 of constant capital economised is the whole
-// difference between them.
+// Ch. 5's own illustrations are the working-day (the same fixed capital serving
+// 12, 16 or 18 hours, so that at 18 instead of 12 its value is reproduced in two
+// thirds of the time), the single shaft driving 29,000 doubling spindles (a 60 per
+// cent saving in shafting, in some cases 80) and woollen rags (about £4 4s. a ton
+// thirty years ago, £44 now). The two-enterprise comparison, s = v = £1,000 on
+// c = £9,000 or £11,000 (p' 10% against 8 1/3%), is Ch. 7's. It is borrowed here
+// because it isolates c: the £2,000 economised is the whole difference between
+// the two rates.
+//
+// Money scale. Part I keeps every £ figure as the same integer in a
+// LabourMinutes-typed field (one stored unit is £1), not at the pkg/money MELT of
+// £1 = 2,400 LM. Rates are basis points, so the scale never enters them.
 
 // EconomyKind names the form a saving in constant capital takes. Marx runs
 // through them in Ch. 5: the working-day lengthened over the same fixed capital,
@@ -75,6 +83,9 @@ type ConstantCapitalEconomy struct {
 
 // Validate enforces the magnitude invariants: non-negative inputs, a recognised
 // economy kind, and a saving that cannot exceed the constant capital it economises.
+// A saving equal to the constant capital is allowed: it is Marx's limit c = 0,
+// where p' equals the rate of surplus-value and the rate of profit is at its
+// maximum (Ch. 5 §I).
 func (e ConstantCapitalEconomy) Validate() error {
 	if e.ConstantCapital < 0 || e.VariableCapital < 0 || e.SurplusValue < 0 || e.Saving < 0 {
 		return ErrNegativeMagnitude
@@ -120,7 +131,7 @@ func profitRateBP(s SurplusValue, c ConstantCapital, v VariableCapital) int64 {
 }
 
 // SharedCondition models §III's economy from conditions of production used in
-// common — a boiler-house, building, lighting or heating that many enterprises or
+// common — a shaft, building, lighting or heating that many enterprises or
 // labourers share instead of each providing its own. SoloCost is the aggregate
 // the participants bear if each provides the condition for itself; SharedCost is
 // the cost of the single shared facility serving them all. The economy is the
@@ -135,6 +146,9 @@ type SharedCondition struct {
 // SavingPerParticipant returns the constant-capital economy each participant
 // realises by sharing the condition rather than providing it alone:
 // (SoloCost − SharedCost) / ParticipantCount. With no participants it is zero.
+// ParticipantCount 1 is the degenerate case of Marx's single shaft: one mill under
+// one management, saving 60 per cent (in some cases 80) of the shafting that other
+// firms need for the same spindles.
 func (s SharedCondition) SavingPerParticipant() ConstantCapital {
 	if s.ParticipantCount <= 0 {
 		return 0
@@ -143,11 +157,11 @@ func (s SharedCondition) SavingPerParticipant() ConstantCapital {
 }
 
 // WasteReduction models §IV's economy from reclaiming the excretions of
-// production — waste cotton in spinning, for instance — and returning them to
+// production — woollen rags, for instance — and returning them to
 // production. OriginalWaste is the quantity lost as waste before the economy;
 // RecoveredWaste is the quantity reclaimed; PricePerUnit is the value of one unit
-// of the raw material. Reclaiming waste cheapens the constant capital by the value
-// of the material no longer bought afresh.
+// of the waste, as Marx prices woollen rags per ton. Reclaiming waste cheapens the
+// constant capital by the value of the material no longer bought afresh.
 type WasteReduction struct {
 	Kind           EconomyKind   `json:"kind"`
 	OriginalWaste  int64         `json:"original_waste"`
@@ -165,7 +179,10 @@ func (w WasteReduction) ConstantCapitalSaving() ConstantCapital {
 // same fixed capital serves the longer day without fresh outlay, so the
 // fixed-capital charge each hour of labour bears falls. FixedCapital is the value
 // of the instruments of labour; OriginalHours and ExtendedHours are the lengths of
-// the working-day before and after the extension.
+// the working-day before and after the extension. Marx's figures are 12 against 16
+// hours and 12 against 18, at which last the machinery's value is reproduced in
+// two thirds of the usual time. All magnitudes are LabourMinutes-typed, and the
+// £ figures are the same numbers under the Part I convention (one unit is £1).
 type WorkdayExtensionEffect struct {
 	Kind          EconomyKind     `json:"kind"`
 	FixedCapital  ConstantCapital `json:"fixed_capital"`
@@ -174,8 +191,9 @@ type WorkdayExtensionEffect struct {
 }
 
 // FixedChargePerHour returns the share of the fixed capital borne by each hour of
-// a working-day of the given length: FixedCapital / hours. With no hours it is
-// zero.
+// a working-day of the given length: FixedCapital / hours, in LabourMinutes per
+// hour (integer division, so exact only when hours divides FixedCapital). With no
+// hours it is zero.
 func (e WorkdayExtensionEffect) FixedChargePerHour(hours int64) ConstantCapital {
 	if hours <= 0 {
 		return 0
@@ -183,13 +201,17 @@ func (e WorkdayExtensionEffect) FixedChargePerHour(hours int64) ConstantCapital 
 	return e.FixedCapital / ConstantCapital(hours)
 }
 
-// ProfitRateGain returns the economy in the per-hour fixed-capital charge won by
-// lengthening the working-day from OriginalHours to ExtendedHours:
+// ProfitRateGain despite its name is not a rate. It is the saving in the per-hour
+// fixed-capital charge, in LabourMinutes per hour, integer-truncated; the rise in
+// p' in basis points is ConstantCapitalEconomy.ProfitRateGain.
+//
+// It returns the economy in the per-hour charge won by lengthening the
+// working-day from OriginalHours to ExtendedHours:
 // FixedCapital/OriginalHours − FixedCapital/ExtendedHours. The same fixed capital
 // serves the longer day for no fresh outlay, so each hour of labour bears a
 // smaller charge; surplus-value unchanged, the rate of profit rises. It is zero
-// when there is no fixed capital to spread (or the day is not lengthened) and
-// positive otherwise.
+// when there is no fixed capital to spread (or the day is not changed), positive
+// when the day is lengthened, and negative when it is shortened.
 func (e WorkdayExtensionEffect) ProfitRateGain() ConstantCapital {
 	return e.FixedChargePerHour(e.OriginalHours) - e.FixedChargePerHour(e.ExtendedHours)
 }
