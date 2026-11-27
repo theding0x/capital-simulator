@@ -24,7 +24,7 @@ func newWorkingPeriodHandler() *httpapi.Handler {
 // --- CreateWorkingPeriod -----------------------------------------------------
 
 // TestCreateWorkingPeriod_SpinningMill1871 verifies 201 for a discrete spinning mill.
-// Marx: yarn is produced each day — multiplier = 1 regardless of day count.
+// This is a one-day discrete period; the seeded spinner uses Marx's week of 7 days.
 func TestCreateWorkingPeriod_SpinningMill1871(t *testing.T) {
 	t.Parallel()
 
@@ -345,16 +345,16 @@ func TestRecordInterruption_NotFound(t *testing.T) {
 // --- RecordWorkingPeriodShortening -------------------------------------------
 
 // TestRecordShortening_BakewellBreeding verifies 201 for a bakewell_breeding shortening
-// (Marx's cattle maturation example -- no extra fixed capital required).
+// (Marx's Bakewell sheep, four years to one -- no extra fixed capital required).
 func TestRecordShortening_BakewellBreeding(t *testing.T) {
 	t.Parallel()
 
 	h := newWorkingPeriodHandler()
 
 	wpBody := map[string]any{
-		"industrial_capital_id":      "bakewell-farm",
-		"commodity_id":               "cattle-001",
-		"working_day_count":          365,
+		"industrial_capital_id":      "dishley-grange",
+		"commodity_id":               "sheep-001",
+		"working_day_count":          1460,
 		"mode":                       "connected",
 		"working_day_length_minutes": 600,
 	}
@@ -367,8 +367,8 @@ func TestRecordShortening_BakewellBreeding(t *testing.T) {
 
 	shortBody := map[string]any{
 		"kind":                           "bakewell_breeding",
-		"old_working_day_count":          365,
-		"new_working_day_count":          270,
+		"old_working_day_count":          1460,
+		"new_working_day_count":          365,
 		"additional_fixed_capital_pence": 0,
 		"additional_labour_count":        0,
 	}
@@ -430,7 +430,7 @@ func TestRecordShortening_MachineryMissingFixedCapital(t *testing.T) {
 // --- RecordWorkingPeriodCreditFinancing --------------------------------------
 
 // TestRecordCreditFinancing_LondonBuilder verifies 201 for the Marx London-builder
-// credit-financing example (own capital = 0, borrowed = full value).
+// credit-financing example (borrowed capital is 20 x own capital).
 func TestRecordCreditFinancing_LondonBuilder(t *testing.T) {
 	t.Parallel()
 
@@ -439,7 +439,7 @@ func TestRecordCreditFinancing_LondonBuilder(t *testing.T) {
 	wpBody := map[string]any{
 		"industrial_capital_id":      "london-builder",
 		"commodity_id":               "house-001",
-		"working_day_count":          200,
+		"working_day_count":          168,
 		"mode":                       "connected",
 		"working_day_length_minutes": 600,
 	}
@@ -451,9 +451,9 @@ func TestRecordCreditFinancing_LondonBuilder(t *testing.T) {
 	_ = json.NewDecoder(rec.Body).Decode(&period)
 
 	cfBody := map[string]any{
-		"own_capital_pence":      0,
-		"borrowed_capital_pence": 1_000_000, // £10,000 as pence
-		"mortgage_provider_id":   "bank-of-england-placeholder",
+		"own_capital_pence":      24_000,  // £100 at 240 pence to the pound
+		"borrowed_capital_pence": 480_000, // £2,000
+		"mortgage_provider_id":   "vol3-credit-placeholder",
 	}
 	b, _ = json.Marshal(cfBody)
 	req = httptest.NewRequest(http.MethodPost, "/v1/working-periods/"+string(period.ID)+"/credit-financing", bytes.NewReader(b))
@@ -466,8 +466,11 @@ func TestRecordCreditFinancing_LondonBuilder(t *testing.T) {
 	}
 	var cf wp.WorkingPeriodCreditFinancing
 	_ = json.NewDecoder(rec.Body).Decode(&cf)
-	if cf.BorrowedCapitalPence != 1_000_000 {
-		t.Errorf("borrowed_capital_pence: want 1000000, got %d", cf.BorrowedCapitalPence)
+	if cf.OwnCapitalPence != 24_000 {
+		t.Errorf("own_capital_pence: want 24000, got %d", cf.OwnCapitalPence)
+	}
+	if cf.BorrowedCapitalPence != 480_000 {
+		t.Errorf("borrowed_capital_pence: want 480000, got %d", cf.BorrowedCapitalPence)
 	}
 }
 

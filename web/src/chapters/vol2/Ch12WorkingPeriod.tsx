@@ -26,6 +26,13 @@ import "./Ch12WorkingPeriod.css";
 // Seed fixtures visible on fresh DB (migration 00045_v2_ch12_seed.sql):
 //   SpinningMill1871 — discrete, 7 days, multiplier = 7
 //   LocomotiveWorks   — connected, 84 days, multiplier = 84
+//
+// 00073 adds seven reference working periods (man-of-war, road, railway,
+// carpet, Gobelin, plus the Bakewell sheep and London builder parents).
+// Carpet (about a week), man-of-war (one year or more) and sheep (four years,
+// the low end of "four or five") follow Marx's words; road, railway, Gobelin
+// and house are illustrative, and the merino-wool and timber floors are not
+// his figures. Grain, cattle and timber are Ch. 13 rows (labour-days there).
 
 function multiplier(wp: WorkingPeriod): number {
   return wp.working_day_count;
@@ -195,8 +202,10 @@ export function Ch12WorkingPeriod() {
           <p>
             Credit-financing (the London builder mortgage) defers the
             capital-locking problem: the capitalist borrows against an unfinished
-            building rather than tying up own reserves for 200+ days.
-            MortgageProviderID is a forward-reference placeholder.
+            building rather than tying up his own reserves for the whole working
+            period. Marx's builder undertakes an enterprise that exceeds his
+            resources twenty to fifty times. MortgageProviderID is a
+            forward-reference placeholder.
           </p>
           <p>
             Interest charges and the distinction between money-dealing capital
