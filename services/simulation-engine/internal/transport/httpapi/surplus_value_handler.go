@@ -141,6 +141,10 @@ type surplusValueRateResponse struct {
 //
 // `surplus_value` defaults to `surplus_labour` when omitted (the
 // magnitudes are identical in the §1 framing).
+//
+// All magnitudes are value in labour-minutes. Convert £ at pkg/money's MELT
+// (£1 = 2,400) if the minute magnitudes matter; the rates themselves are
+// scale-free.
 func (h *Handler) GetSurplusValueRate(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	surplusLabour, err := parsePositiveInt(q.Get("surplus_labour"), "surplus_labour")

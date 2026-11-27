@@ -900,6 +900,9 @@ export interface RelativeSurplusValueResult {
   relative_surplus_value: SurplusValueShape;
 }
 
+// Response of GET /v1/surplus-value/rate. Its magnitudes are value in
+// labour-minutes; convert £ at pkg/money's MELT (£1 = 2,400) if the minute
+// magnitudes matter. The rates themselves are scale-free.
 export interface SurplusValueRateResult {
   surplus_labour_minutes: number;
   necessary_labour_minutes: number;
