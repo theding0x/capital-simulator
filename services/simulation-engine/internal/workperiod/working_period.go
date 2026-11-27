@@ -180,7 +180,8 @@ const (
 	// simultaneously. AdditionalLabourCount must be positive.
 	ShorteningParallelLabour WorkingPeriodShorteningKind = "parallel_labour"
 	// ShorteningBakewellBreeding: selective breeding shortens the natural
-	// maturation period (Marx's Bakewell cattle example).
+	// maturation period (Marx's Bakewell sheep example: not fit for the
+	// butcher until four or five years old, fattened at one).
 	ShorteningBakewellBreeding WorkingPeriodShorteningKind = "bakewell_breeding"
 )
 
@@ -251,6 +252,10 @@ func (nc NaturalWorkingPeriodConstraint) Validate() error {
 // reserves; BorrowedCapitalPence covers the rest (e.g. a mortgage, as in
 // Marx's London builder example). Vol. III Part Five will model interest
 // charges; MortgageProviderID is a forward-reference placeholder.
+// Amounts are int64 pence at 240 per pound (pkg/money). Marx gives no sums
+// for the London builder, only that the enterprise exceeds his resources
+// twenty to fifty times, so the seed fixes the ratio and the sums are
+// illustrative.
 type WorkingPeriodCreditFinancing struct {
 	ID                   WorkingPeriodCreditFinancingID `json:"id"`
 	WorkingPeriodID      WorkingPeriodID                `json:"working_period_id"`

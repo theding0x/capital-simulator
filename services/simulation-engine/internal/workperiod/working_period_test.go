@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/theding0x/capital-simulator/pkg/money"
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/workperiod"
 )
 
@@ -261,16 +262,21 @@ func TestShortening_ParallelLabour_RequiresLabourCount(t *testing.T) {
 
 func TestShortening_BakewellBreeding_NoExtraCostsRequired(t *testing.T) {
 	t.Parallel()
-	// Bakewell's selective breeding (cattle maturation 3 y → 1.5 y)
-	// shortens the period with no additional fixed capital or labour beyond
-	// the breeding programme itself.
+	// Marx (Ch. 12): sheep were "not fit for the butcher until four or five
+	// years old"; on the Bakewell system they "may be fattened when only one
+	// year old". 1460 days is the low end of "four or five" years, 365 is his
+	// one year, and there is no extra fixed capital or labour.
+	const year = 365
 	s := workperiod.WorkingPeriodShortening{
 		Kind:               workperiod.ShorteningBakewellBreeding,
-		OldWorkingDayCount: 1095, // 3 years
-		NewWorkingDayCount: 547,  // ~1.5 years
+		OldWorkingDayCount: 4 * year,
+		NewWorkingDayCount: 1 * year,
 	}
 	if err := s.Validate(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if s.OldWorkingDayCount/s.NewWorkingDayCount != 4 {
+		t.Errorf("Bakewell shortening is %d to %d, want four to one", s.OldWorkingDayCount, s.NewWorkingDayCount)
 	}
 }
 
@@ -338,10 +344,11 @@ func TestNaturalConstraint_Validate_MissingFields(t *testing.T) {
 
 func TestCreditFinancing_Validate_Happy(t *testing.T) {
 	t.Parallel()
-	// London builder: own capital £100 + borrowed £2,000.
+	// London builder: own capital £100 + borrowed £2,000. The sums are
+	// illustrative: Marx names none, only the ratio.
 	cf := workperiod.WorkingPeriodCreditFinancing{
-		OwnCapitalPence:      24000,  // £100
-		BorrowedCapitalPence: 480000, // £2,000
+		OwnCapitalPence:      int64(money.FromLSD(100, 0, 0)),
+		BorrowedCapitalPence: int64(money.FromLSD(2000, 0, 0)),
 	}
 	if err := cf.Validate(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
