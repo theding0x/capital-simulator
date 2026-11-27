@@ -13,11 +13,16 @@ import "./Ch16TurnoverOfVariableCapital.css";
 //
 //   annual_S = n × (s/v)
 //
-// Seed fixtures (00051_v2_ch16_seed.sql):
-//   A  — 5eed0000000000001601: £500, n=10, s/v=100% → annual=1000%
-//   B  — 5eed0000000000001602: £5000, n=1, s/v=100% → annual=100%
-//   Sm — 5eed0000000000001603: Spinning Mill 1871, n=52, s/v=156% → 8112%
-//   Lw — 5eed0000000000001605: Locomotive Works, n≈4.3, s/v=80% → ≈348%
+// Seed fixtures (00051_v2_ch16_seed.sql, restated by 00074_v2_ch16_seed_fidelity.sql;
+// ids 5eed0000000000001601 … 5eed0000000000001615). n is taken on Marx's Ch. 16 year
+// of 50 weeks, so n = 50 / (turnover period in weeks):
+//   A  — …1601: £500, 5 weeks, n=10, s/v=100% → annual=1000% (Marx's own)
+//   B  — …1602: £5000, 50 weeks, n=1, s/v=100% → annual=100% (Marx's own)
+//   Sm — …1603: Spinning Mill 1871, Vol. II Ch. 1's £50 weekly wages and £78 weekly
+//        surplus, n=50, s/v=156% → 7,800% (derived; Marx gives no annual rate)
+//   Lw — …1605: Locomotive Works, the spinner's £50 a week laid out for Ch. 12's
+//        twelve weeks (£600), n=50/12≈4.17, s/v=156% → ≈650% (derived from Ch. 12;
+//        Marx gives this works no figures of its own)
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -118,7 +123,7 @@ function FormulaSlider() {
           <input
             type="range"
             min={1}
-            max={52}
+            max={50}
             value={n}
             onChange={(e) => setN(Number(e.target.value))}
           />
@@ -158,17 +163,17 @@ interface IndustryData {
 const LOCO_DATA: IndustryData = {
   name: "Locomotive Works",
   year: "1871",
-  nApprox: "≈4.3",
-  pcRate: "80%",
-  annualRateFallback: "≈348%",
+  nApprox: "≈4.17 (50/12)",
+  pcRate: "156%",
+  annualRateFallback: "≈650%",
 };
 
 const SPIN_DATA: IndustryData = {
   name: "Spinning Mill",
   year: "1871",
-  nApprox: "52",
+  nApprox: "50",
   pcRate: "156%",
-  annualRateFallback: "8,112%",
+  annualRateFallback: "7,800%",
 };
 
 function IndustryCard({
@@ -247,13 +252,15 @@ function InterruptionTable() {
 function SpinMillCard({ repro }: { repro: VariableCapitalReproduction | null }) {
   return (
     <div className="ch16-spinmill-card">
-      <p className="ch16-section-title">Spinning Mill 1871 — full calculation</p>
+      <p className="ch16-section-title">
+        Spinning Mill 1871 — full calculation (£50 a week wages, £78 a week surplus)
+      </p>
       <div className="ch16-spinmill-calc">
-        <span>n = <span className="ch16-val">52</span></span>
+        <span>n = <span className="ch16-val">50</span></span>
         <span>×</span>
         <span>s/v = <span className="ch16-val">156%</span></span>
         <span>=</span>
-        <span className="ch16-spinmill-result">8,112%</span>
+        <span className="ch16-spinmill-result">7,800%</span>
       </div>
       {repro && (
         <>
@@ -347,17 +354,14 @@ export function Ch16TurnoverOfVariableCapital() {
   return (
     <div className="ch16-root">
       <blockquote className="ch16-quote">
-        "If we consider the annual rate of surplus-value, it is evident that it
-        depends not only on the per-circuit rate of surplus-value but also on
-        the number of times the capital undergoes this circuit in the course of
-        a year. If s/v = 100% and n = 10, then annual S/V = 1,000%."
+        "the annual rate of surplus-value is always equal to s′n"
         <cite>— Capital, Vol. II, Ch. 16</cite>
       </blockquote>
 
       {/* Widget 1 — A vs B */}
       <section>
         <p className="ch16-section-title">
-          §2 — Capitalist A vs B: same annual surplus, different annual rates
+          §I — Capitalist A vs B: same annual surplus, different annual rates
         </p>
         <div className="ch16-ab-grid">
           <CapitalistCard data={STATIC_A} />

@@ -3,6 +3,7 @@ package httpapi_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -219,5 +220,142 @@ func TestGetVariableCapitalReproduction_CapitalistA(t *testing.T) {
 	if repro["total_variable_paid_annual_pence"].(float64) != 1200000 {
 		t.Errorf("expected total_variable_paid_annual_pence=1200000, got %v",
 			repro["total_variable_paid_annual_pence"])
+	}
+	// s/v = 100%, so the year's surplus is also £5000: Marx's annual S for Capital A.
+	if repro["total_surplus_annual_pence"].(float64) != 1200000 {
+		t.Errorf("expected total_surplus_annual_pence=1200000, got %v",
+			repro["total_surplus_annual_pence"])
+	}
+}
+
+// --- Marx's Ch. 16 fixtures through the handlers (issue #450) ------------------
+
+// valCall drives one handler and decodes its JSON object response.
+func valCall(t *testing.T, fn http.HandlerFunc, method, target, id, body string, wantCode int) map[string]any {
+	t.Helper()
+	req := httptest.NewRequest(method, target, bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	if id != "" {
+		req.SetPathValue("id", id)
+	}
+	w := httptest.NewRecorder()
+	fn(w, req)
+	if w.Code != wantCode {
+		t.Fatalf("%s %s: expected %d, got %d: %s", method, target, wantCode, w.Code, w.Body.String())
+	}
+	var out map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&out); err != nil {
+		t.Fatalf("%s %s: decode: %v", method, target, err)
+	}
+	return out
+}
+
+func valNum(t *testing.T, m map[string]any, key string) int64 {
+	t.Helper()
+	f, ok := m[key].(float64)
+	if !ok {
+		t.Fatalf("%s missing or not a number in %v", key, m)
+	}
+	return int64(f)
+}
+
+// valCircuit POSTs an advance and its per-circuit rate and returns the advance id.
+func valCircuit(t *testing.T, h *httpapi.Handler, ic string, pence, periodMin, nBP, surplus int64) string {
+	t.Helper()
+	body := fmt.Sprintf(`{"industrial_capital_id": %q, "pence": %d, "turnover_period_minutes": %d, "turnovers_per_year_basis_points": %d}`,
+		ic, pence, periodMin, nBP)
+	created := valCall(t, h.CreateVariableCapitalAdvance, http.MethodPost, "/v1/variable-capital-advances", "", body, http.StatusCreated)
+	id, _ := created["id"].(string)
+	rate := fmt.Sprintf(`{"surplus_pence": %d, "variable_pence": %d}`, surplus, pence)
+	valCall(t, h.RecordPerCircuitSurplusRate, http.MethodPost, "/v1/variable-capital-advances/"+id+"/per-circuit-rate", id, rate, http.StatusCreated)
+	return id
+}
+
+func valAnnual(t *testing.T, h *httpapi.Handler, id string) map[string]any {
+	t.Helper()
+	return valCall(t, h.ComputeAnnualSurplusRateHandler, http.MethodPost,
+		"/v1/variable-capital-advances/"+id+"/compute-annual-rate?period=1871", id, `{}`, http.StatusCreated)
+}
+
+func valRepro(t *testing.T, h *httpapi.Handler, id, query string) map[string]any {
+	t.Helper()
+	return valCall(t, h.GetVariableCapitalReproduction, http.MethodGet,
+		"/v1/variable-capital-reproductions/"+id+query, id, "", http.StatusOK)
+}
+
+// Capital B (£5000, a 50-week period, n=1) reproduces the same £5000 of wages and of
+// surplus a year as Capital A (£500, n=10): Ch. 16 §I's point that the annual amount
+// of surplus-value is the same and only the annual rate differs.
+func TestGetVariableCapitalReproduction_CapitalistB_SameAnnualSurplus(t *testing.T) {
+	t.Parallel()
+	h := newValHandler()
+	a := valCircuit(t, h, "ic-a", 120000, 50400, 100000, 120000)
+	b := valCircuit(t, h, "ic-b", 1200000, 504000, 10000, 1200000)
+	reproA, reproB := valRepro(t, h, a, ""), valRepro(t, h, b, "")
+	for _, key := range []string{"total_variable_paid_annual_pence", "total_surplus_annual_pence"} {
+		if valNum(t, reproB, key) != 1200000 || valNum(t, reproA, key) != valNum(t, reproB, key) {
+			t.Errorf("%s: A=%v B=%v, want 1200000 (£5000) each", key, reproA[key], reproB[key])
+		}
+	}
+}
+
+// Spinning mill: Vol. II Ch. 1's weekly £50 wages (12,000p) and £78 surplus (18,720p),
+// "156 per cent", turned over weekly (the week as its period is assumed) on Ch. 16's
+// 50-week year (n=50): annual rate 7,800%, £2,500 of wages and £3,900 of surplus a
+// year. The year_minutes parameter is only echoed: the totals come from n.
+func TestVariableCapital_SpinningMill_EndToEnd_MarxWeekly(t *testing.T) {
+	t.Parallel()
+	h := newValHandler()
+	id := valCircuit(t, h, "spinning-mill", 12000, 10080, 500000, 18720)
+
+	annual := valAnnual(t, h, id)
+	if valNum(t, annual, "n_basis_points") != 500000 || valNum(t, annual, "per_circuit_basis_points") != 15600 ||
+		valNum(t, annual, "annual_basis_points") != 780000 {
+		t.Errorf("annual rate = %v, want n=500000, s/v=15600, annual=780000", annual)
+	}
+	repro := valRepro(t, h, id, "?year_minutes=504000")
+	if valNum(t, repro, "total_variable_paid_annual_pence") != 600000 || valNum(t, repro, "total_surplus_annual_pence") != 936000 {
+		t.Errorf("reproduction = %v, want wages 600000p (£2500) and surplus 936000p (£3900)", repro)
+	}
+	if valNum(t, repro, "year_reference_minutes") != 504000 {
+		t.Errorf("year_reference_minutes = %v, want the 504000 requested", repro["year_reference_minutes"])
+	}
+}
+
+// Locomotive works, derived from Ch. 12 (the spinner's week for twelve weeks): £600
+// advance, 156%, n=50/12 (41,667 bp, rounded), annual 65,001 bp (650% plus 1 bp of
+// rounding n). Reproduction truncates (see #449), so it lands 4p and 6p off £2,500 and
+// £3,900: 600,004p and 936,006p, pinned exactly.
+func TestVariableCapital_LocomotiveWorks_EndToEnd_ChapterTwelve(t *testing.T) {
+	t.Parallel()
+	h := newValHandler()
+	id := valCircuit(t, h, "locomotive-works", 144000, 120960, 41667, 224640)
+
+	annual := valAnnual(t, h, id)
+	if valNum(t, annual, "n_basis_points") != 41667 || valNum(t, annual, "per_circuit_basis_points") != 15600 ||
+		valNum(t, annual, "annual_basis_points") != 65001 {
+		t.Errorf("annual rate = %v, want n=41667, s/v=15600, annual=65001", annual)
+	}
+	repro := valRepro(t, h, id, "")
+	gotV, gotS := valNum(t, repro, "total_variable_paid_annual_pence"), valNum(t, repro, "total_surplus_annual_pence")
+	if gotV != 600004 || gotS != 936006 {
+		t.Errorf("reproduction v=%d s=%d, want 600004 and 936006", gotV, gotS)
+	}
+}
+
+// Marx's contrast: Capital A's annual rate is 1,000% and Capital B's 100%, ten to one.
+func TestCreateAnnualSurplusRateContrast_MarxAB(t *testing.T) {
+	t.Parallel()
+	h := newValHandler()
+	a := valCircuit(t, h, "ic-ab", 120000, 50400, 100000, 120000)
+	b := valCircuit(t, h, "ic-ab", 1200000, 504000, 10000, 1200000)
+	valAnnual(t, h, a)
+	valAnnual(t, h, b)
+
+	body := fmt.Sprintf(`{"capital_a_id": %q, "capital_b_id": %q, "period": "1871"}`, a, b)
+	got := valCall(t, h.CreateAnnualSurplusRateContrast, http.MethodPost, "/v1/annual-surplus-rate-contrasts", "", body, http.StatusCreated)
+	if valNum(t, got, "capital_a_annual_basis_points") != 100000 || valNum(t, got, "capital_b_annual_basis_points") != 10000 ||
+		valNum(t, got, "ratio_basis_points") != 100000 {
+		t.Errorf("contrast = %v, want A=100000 (1,000%%), B=10000 (100%%), ratio=100000 (10x)", got)
 	}
 }

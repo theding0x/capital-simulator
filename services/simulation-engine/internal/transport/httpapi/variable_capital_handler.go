@@ -314,7 +314,9 @@ func (h *Handler) CreateAnnualSurplusRateContrast(w http.ResponseWriter, r *http
 // GetVariableCapitalReproduction handles GET /v1/variable-capital-reproductions/{id}.
 func (h *Handler) GetVariableCapitalReproduction(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	yearMinutes := int64(525600) // standard year in minutes
+	// Echoed label only: the totals come from the advance's n, not from this year.
+	// Marx's Ch. 16 year is 50 weeks (504,000 minutes); 525,600 is a 365-day year.
+	yearMinutes := int64(525600)
 	if ym := r.URL.Query().Get("year_minutes"); ym != "" {
 		parsed, err := strconv.ParseInt(ym, 10, 64)
 		if err != nil || parsed <= 0 {
