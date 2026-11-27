@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
@@ -18,6 +19,8 @@ var (
 	ErrSurplusLabourNegative           = errors.New("agent: surplus_labour_minutes must not be negative")
 	ErrWorkingDayExceedsPhysicalMax    = errors.New("agent: working day exceeds physical maximum of 24 hours")
 	ErrWorkingDayExceedsStatutoryLimit = errors.New("agent: working day exceeds statutory limit")
+	ErrNoStatutoryLimit                = errors.New("agent: factory act sets no statutory limit for this age band")
+	ErrUnknownAgeBand                  = errors.New("agent: unknown age band")
 )
 
 // Named value types for the two segments of the working day.
@@ -114,12 +117,72 @@ func (o Overwork) AnnualMinutes(workingDays int) int64 {
 	return o.MinutesPerDay * int64(workingDays)
 }
 
-// FactoryAct records a historical limit on working time.
+// FactoryAct records the daily limits on working time in force once an Act is
+// fully operative; later Acts inherit the limits they leave untouched. 1833:
+// children 8 h (480), young persons 12 h (720). 1844: children 6½ h (390).
+// 1847: young persons 10 h (600), definitive from 1 May 1848; children still 6½ h.
+//
+// A limit of 0 (or less) means "no statutory limit", not a zero-minute cap. None of the
+// Acts of 1833, 1844 and 1847 limited the working day of the male worker over 18
+// (Vol. I Ch. 10 §6), so AdultLimitMinutes is 0 in every historical Act. Women
+// over 18 are covered through YoungPersonLimitMinutes (the 1844 and 1847 Acts put
+// them on the young-person footing); there is deliberately no sex dimension.
+//
+// Only the general daily limit is modelled. A single daily number cannot
+// represent the 7 h child exception, the silk-mill children, the 1845 Print Works
+// Act, the 11 h preliminary limit of July 1847, the age phasing of 1834-36, or
+// the 1850 Act (10½ h on weekdays, 7½ h on Saturday).
+//
+// It is a domain-only fixture: not persisted (migration 00008 has no limit column
+// and the 1847 seed day carries no constraint), not exposed over HTTP (the
+// handlers take a raw statutory_limit_minutes), and Constraint currently has no
+// production caller.
 type FactoryAct struct {
 	Year                    int   `json:"year"`
 	ChildLimitMinutes       int64 `json:"child_limit_minutes"`
 	YoungPersonLimitMinutes int64 `json:"young_person_limit_minutes"`
 	AdultLimitMinutes       int64 `json:"adult_limit_minutes"`
+}
+
+// AgeBand is the class of worker a Factory Act limits differently.
+type AgeBand string
+
+const (
+	// AgeBandChild is a child under 13, limited to 8 h from 1833 and 6½ h from 1844.
+	AgeBandChild AgeBand = "child"
+	// AgeBandYoungPerson is a young person (13 to 18). Women over 18 belong here
+	// too from 1844: the Acts put them on the young-person footing.
+	AgeBandYoungPerson AgeBand = "young_person"
+	// AgeBandAdult is the male worker over 18, whom none of the Acts limited. An
+	// adult woman is AgeBandYoungPerson, not this band.
+	AgeBandAdult AgeBand = "adult"
+)
+
+// Constraint derives the WorkingDayConstraint the Act sets for band, so the
+// statutory number comes from the Act rather than a retyped literal. It returns
+// ErrUnknownAgeBand for an unrecognised band and ErrNoStatutoryLimit where the
+// Act sets no limit: ValidateConstraint with a zero limit would reject every
+// positive day, so "no limit" must be an error, never a zero constraint.
+func (fa FactoryAct) Constraint(band AgeBand) (WorkingDayConstraint, error) {
+	var limit int64
+	var who string
+	switch band {
+	case AgeBandChild:
+		limit, who = fa.ChildLimitMinutes, "child"
+	case AgeBandYoungPerson:
+		limit, who = fa.YoungPersonLimitMinutes, "young person"
+	case AgeBandAdult:
+		limit, who = fa.AdultLimitMinutes, "adult"
+	default:
+		return WorkingDayConstraint{}, fmt.Errorf("%w: %q", ErrUnknownAgeBand, band)
+	}
+	if limit <= 0 {
+		return WorkingDayConstraint{}, fmt.Errorf("%w: %d %s", ErrNoStatutoryLimit, fa.Year, band)
+	}
+	return WorkingDayConstraint{
+		Label:                 fmt.Sprintf("Factory Act %d (%s)", fa.Year, who),
+		StatutoryLimitMinutes: StatutoryLimitMinutes(limit),
+	}, nil
 }
 
 // ShiftKind distinguishes day and night shifts in a relay system.
