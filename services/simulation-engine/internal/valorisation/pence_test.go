@@ -21,7 +21,12 @@ func TestPenceIsCanonicalMoney(t *testing.T) {
 		wantMinutes int64
 	}{
 		{"Marx's 500 pound capital (seed 00051)", valorisation.Pence(120000), money.FromLSD(500, 0, 0), 500 * money.LabourMinutesPerPound},
-		{"100 pounds a week variable advance", valorisation.Pence(24000), money.FromLSD(100, 0, 0), 100 * money.LabourMinutesPerPound},
+		{"Marx's 100 pound weekly outlay (Capitals A and B)", valorisation.Pence(24000), money.FromLSD(100, 0, 0), 100 * money.LabourMinutesPerPound},
+		// Vol. II Ch. 1's spinning mill, seeded by 00074 at Marx's own pounds.
+		{"spinning mill weekly wages, 50 pounds (seed 00074)", valorisation.Pence(12000), money.FromLSD(50, 0, 0), 50 * money.LabourMinutesPerPound},
+		{"spinning mill weekly surplus, 78 pounds (seed 00074)", valorisation.Pence(18720), money.FromLSD(78, 0, 0), 78 * money.LabourMinutesPerPound},
+		// Locomotive works: the spinner's 50 pounds a week for Ch. 12's twelve weeks (derived).
+		{"locomotive works 12-week advance, 600 pounds (seed 00074)", valorisation.Pence(144000), money.FromLSD(600, 0, 0), 600 * money.LabourMinutesPerPound},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

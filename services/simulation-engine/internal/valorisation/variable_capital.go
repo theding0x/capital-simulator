@@ -106,6 +106,12 @@ func NewWorkingPeriodAdvanceID() WorkingPeriodAdvanceID {
 //
 // TurnoversPerYearBasisPoints encodes n as 10,000 × n (so n=10 → 100,000 bp).
 // This allows fractional turnovers to be represented exactly without float64.
+//
+// n is supplied by the caller: it is neither derived from TurnoverPeriodMinutes nor
+// checked against it, and no year length is stored. Marx's Ch. 16 year is "a year of
+// 50 weeks" (504,000 minutes), so on his figures n = 504,000 / TurnoverPeriodMinutes
+// (A: 5 weeks → n=10; B: 50 weeks → n=1). The project's 365-day year (525,600 minutes,
+// Ch. 7) gives a different n, so callers and seeds must choose their year knowingly.
 type VariableCapitalAdvance struct {
 	ID                          VariableCapitalAdvanceID `json:"id"`
 	IndustrialCapitalID         string                   `json:"industrial_capital_id"`
@@ -155,10 +161,10 @@ type AnnualSurplusRate struct {
 	AnnualBasisPoints        int64                    `json:"annual_basis_points"`
 }
 
-// AnnualSurplusRateContrast compares two capitals' annual rates.
-// "Capital A with £500 variable capital and 10 turnovers achieves an annual
-// rate of 1000%, whereas Capital B with £5,000 and 1 turnover achieves only
-// 100%, despite each paying out £5,000 in wages over the year." — Marx.
+// AnnualSurplusRateContrast compares two capitals' annual rates. In Ch. 16 §I,
+// Marx's Capital A (£500 variable capital, 10 turnovers) reaches an annual rate
+// of 1000% and Capital B (£5,000, 1 turnover) only 100%, though each pays out
+// £5,000 in wages over the year.
 //
 // RatioBasisPoints = 10,000 × CapitalAAnnualBasisPoints / CapitalBAnnualBasisPoints.
 type AnnualSurplusRateContrast struct {
@@ -315,6 +321,11 @@ func ComputeAdjustedAnnualRate(variablePence, baseSurplusPence Pence, nBasisPoin
 //
 // TotalVariablePaidAnnualPence = adv.Pence × adv.TurnoversPerYearBasisPoints / 10,000.
 // TotalSurplusAnnualPence = TotalVariablePaid × perCircuitBP / 10,000.
+//
+// yearMinutes is only echoed into YearReferenceMinutes as a label: neither total
+// depends on it, both come from adv's n. Both totals truncate (they do not round half
+// up like the rates), so an n that is itself rounded, such as 50/12 weeks, leaves them a
+// few pence short of the exact amount.
 func ComputeVariableCapitalReproduction(
 	adv VariableCapitalAdvance,
 	perCircuitBP int64,
