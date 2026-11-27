@@ -9,9 +9,9 @@ import (
 	"github.com/theding0x/capital-simulator/services/finance-service/internal/profit"
 )
 
-// Marx's §I two-enterprise illustration: 11,000c + 1,000v + 1,000s economising
-// £2,000 of constant capital lifts p' from 8 1/3% (833 bp) to 10% (1000 bp), a
-// gain of 167 bp.
+// Ch. 7's two enterprises, borrowed by Ch. 5 because they isolate c: 11,000c +
+// 1,000v + 1,000s economising £2,000 of constant capital lifts p' from 8 1/3%
+// (833 bp) to 10% (1000 bp), a gain of 167 bp.
 func TestCreateEconomyAnalysis_Marx(t *testing.T) {
 	t.Parallel()
 	ts, _ := newFinanceTestServer(t)
@@ -41,6 +41,56 @@ func TestCreateEconomyAnalysis_Marx(t *testing.T) {
 	}
 	if a.ID.IsZero() {
 		t.Error("expected an assigned id")
+	}
+}
+
+// Ch. 5 §I, the working-day: the same fixed capital serves 12 or 18 hours, so the
+// charge on the same 12 hours of labour falls by a third. Illustrative base of
+// 3,600 fixed capital (all of c), v = s = 1,200: p' rises from 25% to 33.33%.
+func TestCreateEconomyAnalysis_WorkdayExtension(t *testing.T) {
+	t.Parallel()
+	ts, _ := newFinanceTestServer(t)
+	body := `{"kind":"workday_extension","constant":3600,"variable":1200,"surplus_value":1200,"saving":1200}`
+	res, err := http.Post(ts.URL+"/v1/profit/economy", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("post: %v", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("status = %d, want 201", res.StatusCode)
+	}
+	var a profit.EconomyAnalysis
+	if err := json.NewDecoder(res.Body).Decode(&a); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if a.OldProfitRate != 2500 || a.NewProfitRate != 3333 || a.ProfitRateGain != 833 {
+		t.Errorf("got old=%d new=%d gain=%d, want 2500/3333/833", a.OldProfitRate, a.NewProfitRate, a.ProfitRateGain)
+	}
+	if a.Economy.Kind != profit.KindWorkdayExtension {
+		t.Errorf("kind = %q, want workday_extension", a.Economy.Kind)
+	}
+}
+
+// Marx's limit (Ch. 5 §I): with c at zero p' equals s'. Economising all of an
+// illustrative c = 3,600 over v = s = 1,200 is accepted, and p' reaches s' = 100%.
+func TestCreateEconomyAnalysis_NoConstantCapitalLeft(t *testing.T) {
+	t.Parallel()
+	ts, _ := newFinanceTestServer(t)
+	body := `{"kind":"workday_extension","constant":3600,"variable":1200,"surplus_value":1200,"saving":3600}`
+	res, err := http.Post(ts.URL+"/v1/profit/economy", "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("post: %v", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusCreated {
+		t.Fatalf("status = %d, want 201", res.StatusCode)
+	}
+	var a profit.EconomyAnalysis
+	if err := json.NewDecoder(res.Body).Decode(&a); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if a.OldProfitRate != 2500 || a.NewProfitRate != 10000 || a.ProfitRateGain != 7500 {
+		t.Errorf("got old=%d new=%d gain=%d, want 2500/10000/7500", a.OldProfitRate, a.NewProfitRate, a.ProfitRateGain)
 	}
 }
 
@@ -115,9 +165,10 @@ func TestGetEconomyAnalysis_NotFound(t *testing.T) {
 func TestCreateThenGetEconomyAnalysis(t *testing.T) {
 	t.Parallel()
 	ts, _ := newFinanceTestServer(t)
-	// A spinning mill reclaiming waste cotton: 2000c + 1000v + 1000s, £200 saved.
+	// Woollen rags at Marx's £44 a ton: an illustrative 10 tons reclaimed saves £440
+	// on a 2000c + 1000v + 1000s mill.
 	res, err := http.Post(ts.URL+"/v1/profit/economy", "application/json",
-		strings.NewReader(`{"kind":"waste_reduction","constant":2000,"variable":1000,"surplus_value":1000,"saving":200}`))
+		strings.NewReader(`{"kind":"waste_reduction","constant":2000,"variable":1000,"surplus_value":1000,"saving":440}`))
 	if err != nil {
 		t.Fatalf("post: %v", err)
 	}
@@ -126,8 +177,8 @@ func TestCreateThenGetEconomyAnalysis(t *testing.T) {
 	if err := json.NewDecoder(res.Body).Decode(&created); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if created.OldProfitRate != 3333 || created.NewProfitRate != 3571 {
-		t.Errorf("got old=%d new=%d, want 3333/3571", created.OldProfitRate, created.NewProfitRate)
+	if created.OldProfitRate != 3333 || created.NewProfitRate != 3906 || created.ProfitRateGain != 573 {
+		t.Errorf("got old=%d new=%d gain=%d, want 3333/3906/573", created.OldProfitRate, created.NewProfitRate, created.ProfitRateGain)
 	}
 
 	got, err := http.Get(ts.URL + "/v1/profit/economy/" + string(created.ID))

@@ -13,20 +13,25 @@ function pct(bp: number): string {
   return `${(bp / 100).toLocaleString("en-GB", { maximumFractionDigits: 2 })}%`;
 }
 
-// Capital magnitudes are LabourMinutes; Marx denominates them in £.
+// Capital magnitudes are LabourMinutes-typed; Marx denominates them in £. Part I
+// keeps the same integer, so one stored unit prints as £1 (this is not the
+// pkg/money MELT, where £1 = 2,400 LM). Rates are basis points, so the scale
+// never enters them.
 function money(n: number): string {
   return `£${n.toLocaleString("en-GB")}`;
 }
 
 // Client-side mirror of the Go profitRateBP: s / (c + v) in basis points, with
-// truncating (floor) division to match the server to the last basis point.
+// truncating (floor) division. The server rounds half-up (#410, migration 00108),
+// so this can read one basis point lower when the fraction is .5 or more. None of
+// the preset economies below is affected.
 function profitRateBp(s: number, c: number, v: number): number {
   const total = c + v;
   return total > 0 ? Math.floor((s * 10000) / total) : 0;
 }
 
 const KIND_LABELS: Record<EconomyKind, string> = {
-  shared_conditions: "Shared conditions (boiler, building, power)",
+  shared_conditions: "Shared conditions (shaft, building, power)",
   waste_reduction: "Waste reclaimed",
   workday_extension: "Workday extension",
   improved_machinery: "Improved machinery",
@@ -35,75 +40,112 @@ const KIND_LABELS: Record<EconomyKind, string> = {
 
 const KINDS = Object.keys(KIND_LABELS) as EconomyKind[];
 
-interface EconomyPreset {
+type SharedInputs = Omit<SharedConditionResponse, "kind">;
+type WasteInputs = Omit<WasteReductionResponse, "kind">;
+
+// §III: the saving each participant realises from a condition used in common.
+function sharedSaving(x: SharedInputs): number {
+  if (x.participant_count <= 0) return 0;
+  return Math.max(0, Math.floor((x.solo_cost - x.shared_cost) / x.participant_count));
+}
+
+// §IV: the value of the reclaimed waste no longer bought afresh.
+function wasteSaving(x: WasteInputs): number {
+  return x.recovered_waste * x.price_per_unit;
+}
+
+// A preset for one of the two kinds that derive their saving carries that
+// calculator's inputs and no saving of its own, so the two cannot disagree; the
+// other kinds carry the saving directly. The union makes a waste_reduction preset
+// without waste inputs (or a shared_conditions one without shared inputs) a type
+// error rather than a preset that silently reuses stale calculator state.
+interface PresetBase {
   label: string;
   note: string;
-  kind: EconomyKind;
   c: number;
   v: number;
   s: number;
-  saving: number;
 }
 
-// The three seeded economies, drawn from Ch. 5's worked illustrations.
-const PRESETS: EconomyPreset[] = [
-  {
-    label: "Two enterprises (§I)",
-    note: "11,000c + 1,000v + 1,000s. Economising £2,000 of constant capital lifts p′ from 8⅓% to 10%.",
-    kind: "raw_material_saving",
-    c: 11000,
-    v: 1000,
-    s: 1000,
-    saving: 2000,
-  },
-  {
-    label: "Waste cotton (§IV)",
-    note: "2,000c + 1,000v + 1,000s. Reclaiming 40 lb of waste at £5 (= £200) raises p′ from 33.33% to 35.71%.",
-    kind: "waste_reduction",
-    c: 2000,
-    v: 1000,
-    s: 1000,
-    saving: 200,
-  },
-  {
-    label: "Communal boiler (§IV)",
-    note: "1,200c + 600v + 600s. Sharing a boiler-house with 11 others saves £100, raising p′ from 33.33% to 35.29%.",
-    kind: "shared_conditions",
-    c: 1200,
-    v: 600,
-    s: 600,
-    saving: 100,
-  },
-];
+type EconomyPreset =
+  | (PresetBase & { kind: "waste_reduction"; waste: WasteInputs })
+  | (PresetBase & { kind: "shared_conditions"; shared: SharedInputs })
+  | (PresetBase & {
+      kind: Exclude<EconomyKind, "waste_reduction" | "shared_conditions">;
+      saving: number;
+    });
+
+// The rag prices Marx cites are per ton: about £4 4s. thirty years ago, £44 now. Only the
+// £44 is held (whole pounds); the 10 tons are illustrative. Saving = 10 x 44 = 440.
+const RAGS_WASTE: WasteInputs = { original_waste: 10, recovered_waste: 10, price_per_unit: 44 };
+
+// The single shaft Marx quotes saves 60% of the shafting other firms need (80% in some
+// cases). The £500 is illustrative, so this mill's shafting is £200 and the saving
+// £300, one participant.
+const SHAFT_SHARED: SharedInputs = { solo_cost: 500, shared_cost: 200, participant_count: 1 };
+
+const RAGS: EconomyPreset = {
+  label: "Woollen rags (§IV)",
+  note: "Marx cites a factory report: woollen rags about £4 4s. a ton thirty years ago, £44 a ton now. Illustrative base 2,000c + 1,000v + 1,000s. Reclaiming 10 tons (= £440) raises p′ from 33.33% to 39.06%.",
+  kind: "waste_reduction",
+  c: 2000,
+  v: 1000,
+  s: 1000,
+  waste: RAGS_WASTE,
+};
+
+const SHAFT: EconomyPreset = {
+  label: "Single shaft (§III)",
+  note: "Marx quotes a cotton spinner: one shaft drives 29,000 doubling spindles, saving 60% of the shafting other firms need (80% in some cases). Illustrative base 1,200c + 600v + 600s with £500 of shafting. The £300 saved raises p′ from 33.33% to 40%.",
+  kind: "shared_conditions",
+  c: 1200,
+  v: 600,
+  s: 600,
+  shared: SHAFT_SHARED,
+};
+
+const WORKDAY = {
+  label: "Working-day 12 to 18 hours (§I)",
+  note: "Marx: the fixed capital is the same whether it serves 12 or 16 hours, and at 18 instead of 12 its value is reproduced in ⅔ of the time. Illustrative: 3,600 of fixed capital, 1,200v, 1,200s. The charge on the same 12 working hours falls by a third (£1,200): p′ rises from 25% to 33.33%.",
+  kind: "workday_extension",
+  c: 3600,
+  v: 1200,
+  s: 1200,
+  saving: 1200,
+} satisfies EconomyPreset;
+
+const TWO_ENTERPRISES: EconomyPreset = {
+  label: "Two enterprises (Ch. 7)",
+  note: "Marx's Ch. 7 illustration, borrowed here (not Ch. 5): s = v = £1,000, c = £9,000 or £11,000. Economising the £2,000 between them lifts p′ from 8⅓% to 10%.",
+  kind: "raw_material_saving",
+  c: 11000,
+  v: 1000,
+  s: 1000,
+  saving: 2000,
+};
+
+// The four seeded economies: Ch. 5's own three illustrations, then Ch. 7's pair.
+const PRESETS: EconomyPreset[] = [RAGS, SHAFT, WORKDAY, TWO_ENTERPRISES];
 
 export function Ch05ConstantCapitalEconomy() {
-  const [kind, setKind] = useState<EconomyKind>("raw_material_saving");
-  const [c, setC] = useState(11000);
-  const [v, setV] = useState(1000);
-  const [s, setS] = useState(1000);
-  const [saving, setSaving] = useState(2000);
+  // The panel opens on Ch. 5's own argument (the working-day), not Ch. 7's pair.
+  const [kind, setKind] = useState<EconomyKind>(WORKDAY.kind);
+  const [c, setC] = useState(WORKDAY.c);
+  const [v, setV] = useState(WORKDAY.v);
+  const [s, setS] = useState(WORKDAY.s);
+  const [saving, setSaving] = useState(WORKDAY.saving);
 
-  // §IV calculators that derive a saving for two of the kinds.
-  const [shared, setShared] = useState<Omit<SharedConditionResponse, "kind">>({
-    solo_cost: 2400,
-    shared_cost: 1200,
-    participant_count: 12,
-  });
-  const [waste, setWaste] = useState<Omit<WasteReductionResponse, "kind">>({
-    original_waste: 100,
-    recovered_waste: 40,
-    price_per_unit: 5,
-  });
+  // §III and §IV calculators that derive a saving for two of the kinds.
+  const [shared, setShared] = useState<SharedInputs>(SHAFT_SHARED);
+  const [waste, setWaste] = useState<WasteInputs>(RAGS_WASTE);
 
   // The economy realised in constant capital, derived per kind. shared_conditions
   // and waste_reduction compute it from their own inputs; the rest use the slider.
   const derivedSaving =
     kind === "shared_conditions"
-      ? shared.participant_count > 0
-        ? Math.max(0, Math.floor((shared.solo_cost - shared.shared_cost) / shared.participant_count))
-        : 0
+      ? sharedSaving(shared)
       : kind === "waste_reduction"
-        ? waste.recovered_waste * waste.price_per_unit
+        ? wasteSaving(waste)
         : saving;
 
   // A saving can never exceed the constant capital it economises.
@@ -133,7 +175,18 @@ export function Ch05ConstantCapitalEconomy() {
     setC(p.c);
     setV(p.v);
     setS(p.s);
-    setSaving(p.saving);
+    switch (p.kind) {
+      case "waste_reduction":
+        setWaste(p.waste);
+        setSaving(wasteSaving(p.waste));
+        break;
+      case "shared_conditions":
+        setShared(p.shared);
+        setSaving(sharedSaving(p.shared));
+        break;
+      default:
+        setSaving(p.saving);
+    }
   }
 
   async function record() {
@@ -235,13 +288,13 @@ export function Ch05ConstantCapitalEconomy() {
             </p>
             <div className="v3-ch05-controls">
               <label className="v3-ch05-control">
-                <span>Waste recovered (units) — {waste.recovered_waste}</span>
+                <span>Waste recovered (tons) — {waste.recovered_waste}</span>
                 <input type="range" min={0} max={waste.original_waste} step={1} value={waste.recovered_waste}
                   onChange={(e) => setWaste({ ...waste, recovered_waste: Number(e.target.value) })} />
               </label>
               <label className="v3-ch05-control">
-                <span>Price per unit — {money(waste.price_per_unit)}</span>
-                <input type="range" min={0} max={20} step={1} value={waste.price_per_unit}
+                <span>Price per ton — {money(waste.price_per_unit)}</span>
+                <input type="range" min={0} max={60} step={1} value={waste.price_per_unit}
                   onChange={(e) => setWaste({ ...waste, price_per_unit: Number(e.target.value) })} />
               </label>
             </div>
@@ -285,8 +338,8 @@ export function Ch05ConstantCapitalEconomy() {
         </button>
       </section>
 
-      <section className="v3-ch05-presets-section" aria-label="Marx's worked economies">
-        <h4>Marx's worked economies</h4>
+      <section className="v3-ch05-presets-section" aria-label="Worked economies">
+        <h4>Worked economies</h4>
         <div className="v3-ch05-presets">
           {PRESETS.map((p) => (
             <button key={p.label} type="button" className="v3-ch05-preset" onClick={() => applyPreset(p)}

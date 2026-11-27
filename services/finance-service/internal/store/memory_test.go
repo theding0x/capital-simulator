@@ -270,7 +270,7 @@ func TestMemory_EconomyAnalysisRoundTrip(t *testing.T) {
 	m := NewMemory()
 	ctx := context.Background()
 
-	// Marx's §I two-enterprise illustration: economising £2,000 of constant
+	// Ch. 7's two enterprises, borrowed by Ch. 5: economising £2,000 of constant
 	// capital lifts p' from 8 1/3% to 10%.
 	a := profit.ComputeEconomyAnalysis(profit.ConstantCapitalEconomy{
 		Kind: profit.KindRawMaterialSaving, ConstantCapital: 11000, VariableCapital: 1000, SurplusValue: 1000, Saving: 2000,

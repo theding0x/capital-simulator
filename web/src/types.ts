@@ -3169,7 +3169,8 @@ export interface TurnoverAnalysisResponse {
 // the denominator shrinks while the surplus stays put. The economy takes various
 // forms (the kind), and the analysis records the old rate, the new rate, and the
 // gain between them, all in basis points (10000 bp = 100%). Magnitudes are
-// LabourMinutes, expressed in £ in Marx's examples.
+// LabourMinutes-typed, expressed in £ in Marx's examples (Part I convention: one
+// stored unit = £1; not the pkg/money MELT of £1 = 2,400 LM).
 
 export type EconomyKind =
   | "shared_conditions"
@@ -3195,7 +3196,7 @@ export interface EconomyAnalysisResponse {
   created_at: string;
 }
 
-// §IV — conditions of production used in common: solo_cost is the aggregate the
+// §III — conditions of production used in common: solo_cost is the aggregate the
 // participants bear providing the condition each for itself; shared_cost is the
 // single shared facility serving them all. The saving per participant is
 // (solo_cost − shared_cost) / participant_count.
