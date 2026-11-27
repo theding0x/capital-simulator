@@ -26,7 +26,7 @@ import (
 // thirty years ago, £44 now). The two-enterprise comparison, s = v = £1,000 on
 // c = £9,000 or £11,000 (p' 10% against 8 1/3%), is Ch. 7's. It is borrowed here
 // because it isolates c: the £2,000 economised is the whole difference between
-// the two rates.
+// the two constant capitals.
 //
 // Money scale. Part I keeps every £ figure as the same integer in a
 // LabourMinutes-typed field (one stored unit is £1), not at the pkg/money MELT of

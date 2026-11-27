@@ -43,20 +43,37 @@ const KINDS = Object.keys(KIND_LABELS) as EconomyKind[];
 type SharedInputs = Omit<SharedConditionResponse, "kind">;
 type WasteInputs = Omit<WasteReductionResponse, "kind">;
 
-// A preset sets the saving AND, for the two kinds that derive it from their own
-// calculator, that calculator's inputs: derivedSaving ignores the preset's saving
-// for those kinds, so the sub-calculator state must come with it.
-interface EconomyPreset {
+// §III: the saving each participant realises from a condition used in common.
+function sharedSaving(x: SharedInputs): number {
+  if (x.participant_count <= 0) return 0;
+  return Math.max(0, Math.floor((x.solo_cost - x.shared_cost) / x.participant_count));
+}
+
+// §IV: the value of the reclaimed waste no longer bought afresh.
+function wasteSaving(x: WasteInputs): number {
+  return x.recovered_waste * x.price_per_unit;
+}
+
+// A preset for one of the two kinds that derive their saving carries that
+// calculator's inputs and no saving of its own, so the two cannot disagree; the
+// other kinds carry the saving directly. The union makes a waste_reduction preset
+// without waste inputs (or a shared_conditions one without shared inputs) a type
+// error rather than a preset that silently reuses stale calculator state.
+interface PresetBase {
   label: string;
   note: string;
-  kind: EconomyKind;
   c: number;
   v: number;
   s: number;
-  saving: number;
-  shared?: SharedInputs;
-  waste?: WasteInputs;
 }
+
+type EconomyPreset =
+  | (PresetBase & { kind: "waste_reduction"; waste: WasteInputs })
+  | (PresetBase & { kind: "shared_conditions"; shared: SharedInputs })
+  | (PresetBase & {
+      kind: Exclude<EconomyKind, "waste_reduction" | "shared_conditions">;
+      saving: number;
+    });
 
 // The rag prices Marx cites are per ton: about £4 4s. thirty years ago, £44 now. Only the
 // £44 is held (whole pounds); the 10 tons are illustrative. Saving = 10 x 44 = 440.
@@ -74,7 +91,6 @@ const RAGS: EconomyPreset = {
   c: 2000,
   v: 1000,
   s: 1000,
-  saving: 440,
   waste: RAGS_WASTE,
 };
 
@@ -85,11 +101,10 @@ const SHAFT: EconomyPreset = {
   c: 1200,
   v: 600,
   s: 600,
-  saving: 300,
   shared: SHAFT_SHARED,
 };
 
-const WORKDAY: EconomyPreset = {
+const WORKDAY = {
   label: "Working-day 12 to 18 hours (§I)",
   note: "Marx: the fixed capital is the same whether it serves 12 or 16 hours, and at 18 instead of 12 its value is reproduced in ⅔ of the time. Illustrative: 3,600 of fixed capital, 1,200v, 1,200s. The charge on the same 12 working hours falls by a third (£1,200): p′ rises from 25% to 33.33%.",
   kind: "workday_extension",
@@ -97,7 +112,7 @@ const WORKDAY: EconomyPreset = {
   v: 1200,
   s: 1200,
   saving: 1200,
-};
+} satisfies EconomyPreset;
 
 const TWO_ENTERPRISES: EconomyPreset = {
   label: "Two enterprises (Ch. 7)",
@@ -128,11 +143,9 @@ export function Ch05ConstantCapitalEconomy() {
   // and waste_reduction compute it from their own inputs; the rest use the slider.
   const derivedSaving =
     kind === "shared_conditions"
-      ? shared.participant_count > 0
-        ? Math.max(0, Math.floor((shared.solo_cost - shared.shared_cost) / shared.participant_count))
-        : 0
+      ? sharedSaving(shared)
       : kind === "waste_reduction"
-        ? waste.recovered_waste * waste.price_per_unit
+        ? wasteSaving(waste)
         : saving;
 
   // A saving can never exceed the constant capital it economises.
@@ -162,9 +175,18 @@ export function Ch05ConstantCapitalEconomy() {
     setC(p.c);
     setV(p.v);
     setS(p.s);
-    setSaving(p.saving);
-    if (p.shared) setShared(p.shared);
-    if (p.waste) setWaste(p.waste);
+    switch (p.kind) {
+      case "waste_reduction":
+        setWaste(p.waste);
+        setSaving(wasteSaving(p.waste));
+        break;
+      case "shared_conditions":
+        setShared(p.shared);
+        setSaving(sharedSaving(p.shared));
+        break;
+      default:
+        setSaving(p.saving);
+    }
   }
 
   async function record() {

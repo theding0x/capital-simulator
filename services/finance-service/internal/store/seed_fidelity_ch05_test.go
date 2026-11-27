@@ -356,6 +356,11 @@ func ch05CheckWorkday(t *testing.T, s ch05State) {
 	if row.v != row.s {
 		t.Errorf("0504: v=%d and s=%d should be equal", row.v, row.s)
 	}
+	// The ratios above hold for any rescale, so pin the illustrative base itself:
+	// the panel's working-day preset and the handler test use the same figures.
+	if row.c != 3600 || row.v != 1200 {
+		t.Errorf("0504: c=%d v=%d, want the illustrative 3,600 and 1,200", row.c, row.v)
+	}
 }
 
 func ch05CheckHygiene(t *testing.T, s ch05State) {
