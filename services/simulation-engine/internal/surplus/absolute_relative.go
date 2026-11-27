@@ -54,7 +54,8 @@ type RelativeSurplusValue struct {
 //	NecessaryLabour + SurplusLabour == Total
 //
 // must hold after every transition. This is the Ch. 12 production.WorkingDay,
-// not a second declaration: Chs. 12 and 16 describe the same day.
+// not a second declaration: Chs. 12 and 16 describe the same day. The
+// partition is period-agnostic (Marx's bread-cutter partition is a week).
 type WorkingDay = production.WorkingDay
 
 // ProductivityFactor is a multiplicative scalar on output per unit time.
@@ -111,6 +112,10 @@ func ReduceNecessaryLabour(wd WorkingDay, factor ProductivityFactor) (WorkingDay
 
 // RateSurplusValue is Marx's "rate of exploitation": surplus-labour divided
 // by necessary-labour. Returns 0 when necessary is 0 (undefined wage relation).
+//
+// Magnitudes are value in labour-minutes; money (Marx's £) enters through
+// pkg/money's MELT (ADR 0001). Both rates are ratios of like magnitudes, so
+// they are scale-free.
 func RateSurplusValue(surplusLabour, necessaryLabour labour.LabourMinutes) float64 {
 	r, _ := surplusrate.Ratio(int64(surplusLabour), int64(necessaryLabour))
 	return r
@@ -121,6 +126,10 @@ func RateSurplusValue(surplusLabour, necessaryLabour labour.LabourMinutes) float
 // constant capital is positive — Marx's correction of Mill (§1):
 // "if the rate of surplus-value be 20%, the rate of profit will be
 // 20:500, i.e., 4% and not 20%".
+//
+// Magnitudes are value in labour-minutes; money (Marx's £) enters through
+// pkg/money's MELT (ADR 0001). Both rates are ratios of like magnitudes, so
+// they are scale-free.
 func RateOfProfit(surplusValue, totalCapitalAdvanced labour.LabourMinutes) float64 {
 	if totalCapitalAdvanced == 0 {
 		return 0

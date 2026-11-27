@@ -79,7 +79,11 @@ function SurplusValueCalculator() {
       <h2>Working-day partition (§1)</h2>
       <p className="description">
         Configure a starting partition and watch both mechanisms produce
-        surplus from the same input.
+        surplus from the same input. Preset: Marx's Ch. 12 day, 12 h = 10 h
+        necessary + 2 h surplus (labour-power 5s at 6d an hour). The extension
+        and productivity inputs are illustrative; Marx's own figures are in
+        Ch. 10 §1 (6 h necessary, prolonged by 1, 3 or 6 h) and Ch. 12
+        (labour-power 5s → 3s, implying a factor of 5/3).
       </p>
       <form className="form-grid" onSubmit={submit}>
         <label>
@@ -271,7 +275,12 @@ function MillCritiquePanel() {
       <p className="description">
         Marx, §1: "if the rate of surplus-value be 20%, the rate of profit
         will be 20:500, i.e., 4% and not 20%." Same numerator, different
-        denominators. The Mill error is to collapse them.
+        denominators. The Mill error is to collapse them. Marx's figures are
+        pounds (£400 c + £100 v, s = £20). The endpoint reads the three numbers
+        as value magnitudes in one shared unit, and a rate is a ratio, so £20 /
+        £100 / £500 can be entered as 20 / 100 / 500 with the same result. At
+        the MELT (£1 = 2,400 labour-minutes) the same figures are 48,000 /
+        240,000 / 1,200,000.
       </p>
       <form className="form-grid" onSubmit={(e) => { e.preventDefault(); void recompute(); }}>
         <label>
