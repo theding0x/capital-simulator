@@ -23,4 +23,6 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("GET /v1/production-accounts", h.ListProductionAccounts)
 	s.HandleFunc("GET /v1/production-accounts/{id}", h.GetProductionAccount)
 	s.HandleFunc("POST /v1/rate-of-surplus-value", h.RateOfSurplusValue)
+	s.HandleFunc("POST /v1/product-parts", h.ProductParts)
+	s.HandleFunc("POST /v1/working-day-revision", h.WorkingDayRevision)
 }

@@ -46,6 +46,9 @@ func TestIsComputePath(t *testing.T) {
 func TestComputeAllowlistAudited(t *testing.T) {
 	t.Parallel()
 	mustAllow := []string{
+		// commodity-service — stateless calculators
+		"/v1/product-parts",
+		"/v1/working-day-revision",
 		// simulation-engine — stateless calculators
 		"/v1/production/extra-surplus-value",
 		"/v1/production/working-day",

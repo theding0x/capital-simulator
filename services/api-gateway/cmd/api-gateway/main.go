@@ -52,6 +52,8 @@ func main() {
 	srv.Handle("/v1/production-accounts", commodityProxy)
 	srv.Handle("/v1/production-accounts/{rest...}", commodityProxy)
 	srv.Handle("/v1/rate-of-surplus-value", commodityProxy)
+	srv.Handle("/v1/product-parts", commodityProxy)
+	srv.Handle("/v1/working-day-revision", commodityProxy)
 
 	// Reverse-proxy routes to market-service.
 	marketURL := getenv("MARKET_SERVICE_URL", "http://market-service:8083")

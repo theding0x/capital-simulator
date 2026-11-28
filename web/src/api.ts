@@ -55,6 +55,10 @@ import type {
   ProductionAccountResult,
   RateOfSurplusValueInput,
   RateOfSurplusValueResult,
+  ProductPartsInput,
+  ProductPartsResult,
+  WorkingDayRevisionInput,
+  WorkingDayRevisionResult,
   SimulateExchangeInput,
   SocialRelations,
   UniversalEquivalent,
@@ -597,6 +601,18 @@ export const api = {
 
   computeRateOfSurplusValue: (input: RateOfSurplusValueInput) =>
     http<RateOfSurplusValueResult>("/v1/rate-of-surplus-value", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  apportionProduct: (input: ProductPartsInput) =>
+    http<ProductPartsResult>("/v1/product-parts", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  reviseWorkingDay: (input: WorkingDayRevisionInput) =>
+    http<WorkingDayRevisionResult>("/v1/working-day-revision", {
       method: "POST",
       body: JSON.stringify(input),
     }),

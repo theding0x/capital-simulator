@@ -509,6 +509,37 @@ export interface RateOfSurplusValueResult {
   surplus_produce_fraction: number;
 }
 
+// Ch. 9 §2 — parts of the product embodying c, v and s (POST /v1/product-parts).
+export interface ProductPartsInput {
+  constant: number;
+  variable: number;
+  surplus: number;
+  total_product: number;
+}
+
+export interface ProductPartsResult {
+  total_product: number;
+  parts: {
+    constant: number;
+    variable: number;
+    surplus: number;
+  };
+}
+
+// Ch. 9 §3 — Senior's "last hour" (POST /v1/working-day-revision).
+export interface WorkingDayRevisionInput {
+  necessary_labour: number;        // minutes, held fixed
+  working_day: number;             // minutes
+}
+
+export interface WorkingDayRevisionResult {
+  working_day: number;
+  necessary_labour: number;
+  surplus_labour: number;
+  rate: number;
+  rate_basis_points: number;       // 10000 = 100%
+}
+
 // --- agent-service types (Ch. 10: The Working-Day) ---------------------------
 
 export interface WorkingDay {
