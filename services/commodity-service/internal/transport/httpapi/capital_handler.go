@@ -231,3 +231,91 @@ func (h *Handler) RateOfSurplusValue(w http.ResponseWriter, r *http.Request) {
 		),
 	})
 }
+
+// productPartsRequest uses pointers so an omitted (or null) field is told apart
+// from a genuine zero: a missing surplus would otherwise read as "no
+// surplus-value" and return a plausible-looking split.
+type productPartsRequest struct {
+	Constant     *commodity.LabourMinutes `json:"constant"`
+	Variable     *commodity.LabourMinutes `json:"variable"`
+	Surplus      *commodity.SurplusValue  `json:"surplus"`
+	TotalProduct *commodity.Quantity      `json:"total_product"`
+}
+
+type productPartsResponse struct {
+	TotalProduct commodity.Quantity     `json:"total_product"`
+	Parts        commodity.ProductParts `json:"parts"`
+}
+
+// ProductParts handles POST /v1/product-parts [Ch.9 §2] — stateless: divides a
+// total product into the parts embodying the constant capital, the variable
+// capital and the surplus-value.
+func (h *Handler) ProductParts(w http.ResponseWriter, r *http.Request) {
+	var req productPartsRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	switch {
+	case req.Constant == nil:
+		writeError(w, http.StatusBadRequest, "constant is required")
+		return
+	case req.Variable == nil:
+		writeError(w, http.StatusBadRequest, "variable is required")
+		return
+	case req.Surplus == nil:
+		writeError(w, http.StatusBadRequest, "surplus is required")
+		return
+	case req.TotalProduct == nil:
+		writeError(w, http.StatusBadRequest, "total_product is required")
+		return
+	}
+	parts, err := commodity.ApportionProduct(commodity.ProductionAccount{
+		Constant: *req.Constant,
+		Variable: *req.Variable,
+		Surplus:  *req.Surplus,
+	}, *req.TotalProduct)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, productPartsResponse{TotalProduct: *req.TotalProduct, Parts: parts})
+}
+
+// workingDayRevisionRequest uses pointers for the same reason as
+// productPartsRequest.
+type workingDayRevisionRequest struct {
+	NecessaryLabour *commodity.NecessaryLabour `json:"necessary_labour"`
+	WorkingDay      *commodity.LabourMinutes   `json:"working_day"`
+}
+
+// WorkingDayRevision handles POST /v1/working-day-revision [Ch.9 §3] —
+// stateless: re-cuts the working-day with the necessary labour held fixed and
+// returns the surplus labour and rate of surplus-value that result (Senior's
+// "last hour").
+func (h *Handler) WorkingDayRevision(w http.ResponseWriter, r *http.Request) {
+	var req workingDayRevisionRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	switch {
+	case req.NecessaryLabour == nil:
+		writeError(w, http.StatusBadRequest, "necessary_labour is required")
+		return
+	case req.WorkingDay == nil:
+		writeError(w, http.StatusBadRequest, "working_day is required")
+		return
+	}
+	revised, err := commodity.ReviseWorkingDay(*req.NecessaryLabour, *req.WorkingDay)
+	if errors.Is(err, commodity.ErrDivisionByZero) {
+		// ErrDivisionByZero speaks of variable capital; here it is the necessary labour.
+		writeError(w, http.StatusBadRequest, "necessary_labour must be positive")
+		return
+	}
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, revised)
+}

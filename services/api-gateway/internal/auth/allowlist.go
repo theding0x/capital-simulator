@@ -20,6 +20,10 @@ var computePaths = []string{
 	// Atlas observatory — per-session in-memory, zero DB writes (simulation-engine)
 	"/v1/observatory/levers",
 
+	// Vol. I Ch. 9 §2–3 — Parts of the product; Senior's "last hour" (commodity-service, pure compute)
+	"/v1/product-parts",
+	"/v1/working-day-revision",
+
 	// Vol. I Ch. 11 — Rate and Mass of Surplus-Value (simulation-engine, handler.go)
 	"/v1/surplus/mass",
 
