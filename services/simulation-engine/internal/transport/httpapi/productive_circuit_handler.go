@@ -52,6 +52,36 @@ type reserveDrawResponse struct {
 	OccurredAt          string `json:"occurred_at"`
 }
 
+// exitCommodityResponse is C', the exit form of the circuit's P.
+type exitCommodityResponse struct {
+	ProductiveCircuitID string `json:"productive_circuit_id"`
+	ValueOriginal       int64  `json:"value_original"`
+	ValueSurplus        int64  `json:"value_surplus"`
+}
+
+// exitRealisationResponse is the C'—M' sale that closed the circuit.
+type exitRealisationResponse struct {
+	ProductiveCircuitID string `json:"productive_circuit_id"`
+	RealisedPence       int64  `json:"realised_pence"`
+	SoldAt              string `json:"sold_at"`
+}
+
+func toExitCommodityResponse(c circulation.ExitCommodityCapital) exitCommodityResponse {
+	return exitCommodityResponse{
+		ProductiveCircuitID: string(c.ProductiveCircuitID),
+		ValueOriginal:       int64(c.ValueOriginal),
+		ValueSurplus:        int64(c.ValueSurplus),
+	}
+}
+
+func toExitRealisationResponse(r circulation.ExitRealisation) exitRealisationResponse {
+	return exitRealisationResponse{
+		ProductiveCircuitID: string(r.ProductiveCircuitID),
+		RealisedPence:       int64(r.RealisedPence),
+		SoldAt:              r.SoldAt.UTC().Format(time.RFC3339),
+	}
+}
+
 type productiveCircuitResponse struct {
 	ID                         string                       `json:"id"`
 	AgentID                    string                       `json:"agent_id,omitempty"`
@@ -65,6 +95,8 @@ type productiveCircuitResponse struct {
 	RevenueCircuits            []revenueCircuitResponse     `json:"revenue_circuits"`
 	CapitalisationSteps        []capitalisationStepResponse `json:"capitalisation_steps"`
 	ReserveDraws               []reserveDrawResponse        `json:"reserve_draws"`
+	ExitCommodity              *exitCommodityResponse       `json:"exit_commodity,omitempty"`
+	ExitRealisation            *exitRealisationResponse     `json:"exit_realisation,omitempty"`
 	CreatedAt                  string                       `json:"created_at,omitempty"`
 }
 
@@ -102,7 +134,7 @@ func toProductiveCircuitResponse(pc circulation.ProductiveCircuit) productiveCir
 		}
 	}
 
-	return productiveCircuitResponse{
+	resp := productiveCircuitResponse{
 		ID:                         string(pc.ID),
 		AgentID:                    pc.AgentID,
 		ConstantPence:              int64(pc.ConstantPence),
@@ -125,6 +157,15 @@ func toProductiveCircuitResponse(pc circulation.ProductiveCircuit) productiveCir
 		ReserveDraws:        draws,
 		CreatedAt:           pc.CreatedAt.UTC().Format(time.RFC3339),
 	}
+	if pc.ExitCommodity != nil {
+		c := toExitCommodityResponse(*pc.ExitCommodity)
+		resp.ExitCommodity = &c
+	}
+	if pc.ExitRealisation != nil {
+		r := toExitRealisationResponse(*pc.ExitRealisation)
+		resp.ExitRealisation = &r
+	}
+	return resp
 }
 
 // CreateProductiveCircuit handles POST /v1/productive-circuits.
@@ -387,6 +428,88 @@ func (h *Handler) DrawReserve(w http.ResponseWriter, r *http.Request) {
 		Reason:              string(draw.Reason),
 		OccurredAt:          draw.OccurredAt.UTC().Format(time.RFC3339),
 	})
+}
+
+// RecordExitCommodity handles POST /v1/productive-circuits/{id}/commodity: it
+// records C', the exit form of the circuit's P. A second C' is a 409.
+func (h *Handler) RecordExitCommodity(w http.ResponseWriter, r *http.Request) {
+	id := circulation.ProductiveCircuitID(r.PathValue("id"))
+	var req struct {
+		ValueOriginal int64 `json:"value_original"`
+		ValueSurplus  int64 `json:"value_surplus"`
+	}
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	c := circulation.ExitCommodityCapital{
+		ProductiveCircuitID: id,
+		ValueOriginal:       circulation.Pence(req.ValueOriginal),
+		ValueSurplus:        circulation.Pence(req.ValueSurplus),
+	}
+	if err := c.Validate(); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	recorded, err := h.ProductiveCircuits.RecordExitCommodity(r.Context(), id, c.ValueOriginal, c.ValueSurplus)
+	if err != nil {
+		h.writeExitError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toExitCommodityResponse(recorded))
+}
+
+// RecordExitRealisation handles POST /v1/productive-circuits/{id}/realise: it
+// records the C'—M' sale. "C' must be sold at its value and in its entirety",
+// so a short sale (ErrPartialRealisation) and a sale with no C' recorded
+// (ErrNoCommodityCapital) are both 422 and nothing is recorded.
+func (h *Handler) RecordExitRealisation(w http.ResponseWriter, r *http.Request) {
+	id := circulation.ProductiveCircuitID(r.PathValue("id"))
+	var req struct {
+		RealisedPence int64  `json:"realised_pence"`
+		SoldAt        string `json:"sold_at,omitempty"`
+	}
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	// A non-positive amount is malformed input (400), like every other amount
+	// field here. A positive amount that falls short of C' is a rule violation
+	// (422, ErrPartialRealisation) and is decided by the store.
+	if req.RealisedPence <= 0 {
+		writeError(w, http.StatusBadRequest, "realised_pence must be positive")
+		return
+	}
+	var soldAt time.Time
+	if req.SoldAt != "" {
+		t, err := time.Parse(time.RFC3339, req.SoldAt)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid sold_at: "+err.Error())
+			return
+		}
+		soldAt = t
+	}
+	recorded, err := h.ProductiveCircuits.RecordExitRealisation(r.Context(), id, circulation.Pence(req.RealisedPence), soldAt)
+	if err != nil {
+		h.writeExitError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toExitRealisationResponse(recorded))
+}
+
+// writeExitError maps the C' / C'—M' store errors to HTTP statuses.
+func (h *Handler) writeExitError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, store.ErrNotFound):
+		writeError(w, http.StatusNotFound, "productive circuit not found")
+	case errors.Is(err, store.ErrAlreadyExists):
+		writeError(w, http.StatusConflict, "already recorded for this productive circuit")
+	case errors.Is(err, circulation.ErrPartialRealisation),
+		errors.Is(err, circulation.ErrNoCommodityCapital):
+		writeError(w, http.StatusUnprocessableEntity, err.Error())
+	default:
+		h.writeServerError(w, err)
+	}
 }
 
 // isValidationError reports whether err originates from domain validation.

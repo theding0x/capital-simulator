@@ -869,6 +869,10 @@ func (m *Memory) CreateProductiveCircuit(_ context.Context, pc circulation.Produ
 	pc.LatentMoneyCapital.ProductiveCircuitID = pc.ID
 	pc.LatentMoneyCapital.Threshold = pc.MinCapitalisationIncrement
 	pc.ReserveFund.ProductiveCircuitID = pc.ID
+	// C' and its sale are recorded only through RecordExitCommodity /
+	// RecordExitRealisation (as in MySQL, whose INSERT ignores them).
+	pc.ExitCommodity = nil
+	pc.ExitRealisation = nil
 	pc.CreatedAt = m.now().UTC()
 	m.productiveCircuits[pc.ID] = pc
 	return pc, nil
@@ -881,10 +885,24 @@ func (m *Memory) GetProductiveCircuit(_ context.Context, id circulation.Producti
 	if !ok {
 		return circulation.ProductiveCircuit{}, ErrNotFound
 	}
+	return detachProductiveCircuit(pc), nil
+}
+
+// detachProductiveCircuit copies every slice and pointer field of pc so a
+// caller cannot mutate the stored circuit through the returned value.
+func detachProductiveCircuit(pc circulation.ProductiveCircuit) circulation.ProductiveCircuit {
 	pc.RevenueCircuits = append([]circulation.RevenueCircuit(nil), pc.RevenueCircuits...)
 	pc.CapitalisationSteps = append([]circulation.CapitalisationStep(nil), pc.CapitalisationSteps...)
 	pc.ReserveDraws = append([]circulation.ReserveDraw(nil), pc.ReserveDraws...)
-	return pc, nil
+	if pc.ExitCommodity != nil {
+		c := *pc.ExitCommodity
+		pc.ExitCommodity = &c
+	}
+	if pc.ExitRealisation != nil {
+		r := *pc.ExitRealisation
+		pc.ExitRealisation = &r
+	}
+	return pc
 }
 
 func (m *Memory) ListProductiveCircuits(_ context.Context) ([]circulation.ProductiveCircuit, error) {
@@ -892,10 +910,7 @@ func (m *Memory) ListProductiveCircuits(_ context.Context) ([]circulation.Produc
 	defer m.mu.RUnlock()
 	out := make([]circulation.ProductiveCircuit, 0, len(m.productiveCircuits))
 	for _, pc := range m.productiveCircuits {
-		pc.RevenueCircuits = append([]circulation.RevenueCircuit(nil), pc.RevenueCircuits...)
-		pc.CapitalisationSteps = append([]circulation.CapitalisationStep(nil), pc.CapitalisationSteps...)
-		pc.ReserveDraws = append([]circulation.ReserveDraw(nil), pc.ReserveDraws...)
-		out = append(out, pc)
+		out = append(out, detachProductiveCircuit(pc))
 	}
 	sort.Slice(out, func(i, j int) bool {
 		return out[i].CreatedAt.Before(out[j].CreatedAt)
@@ -988,6 +1003,50 @@ func (m *Memory) WithdrawReserve(_ context.Context, id circulation.ProductiveCir
 	pc.ReserveDraws = append(pc.ReserveDraws, draw)
 	m.productiveCircuits[id] = pc
 	return draw, nil
+}
+
+// RecordExitCommodity records C' for the circuit, once.
+func (m *Memory) RecordExitCommodity(_ context.Context, id circulation.ProductiveCircuitID, valueOriginal, valueSurplus circulation.Pence) (circulation.ExitCommodityCapital, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	pc, ok := m.productiveCircuits[id]
+	if !ok {
+		return circulation.ExitCommodityCapital{}, ErrNotFound
+	}
+	if pc.ExitCommodity != nil {
+		return circulation.ExitCommodityCapital{}, ErrAlreadyExists
+	}
+	c := circulation.ExitCommodityCapital{ProductiveCircuitID: id, ValueOriginal: valueOriginal, ValueSurplus: valueSurplus}
+	if err := c.Validate(); err != nil {
+		return circulation.ExitCommodityCapital{}, err
+	}
+	pc.ExitCommodity = &c
+	m.productiveCircuits[id] = pc
+	return c, nil
+}
+
+// RecordExitRealisation records the C'—M' sale, once, and only a full sale: a
+// sale that fails circulation.ValidateRealisation leaves the circuit untouched.
+func (m *Memory) RecordExitRealisation(_ context.Context, id circulation.ProductiveCircuitID, realised circulation.Pence, soldAt time.Time) (circulation.ExitRealisation, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	pc, ok := m.productiveCircuits[id]
+	if !ok {
+		return circulation.ExitRealisation{}, ErrNotFound
+	}
+	if pc.ExitRealisation != nil {
+		return circulation.ExitRealisation{}, ErrAlreadyExists
+	}
+	if err := pc.ValidateRealisation(realised); err != nil {
+		return circulation.ExitRealisation{}, err
+	}
+	if soldAt.IsZero() {
+		soldAt = m.now()
+	}
+	r := circulation.ExitRealisation{ProductiveCircuitID: id, SoldAt: soldAt.UTC(), RealisedPence: realised}
+	pc.ExitRealisation = &r
+	m.productiveCircuits[id] = pc
+	return r, nil
 }
 
 // Vol. II Ch. 3 — CommodityCircuitStore implementation.

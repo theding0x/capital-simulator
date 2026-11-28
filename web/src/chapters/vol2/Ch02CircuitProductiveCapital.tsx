@@ -6,6 +6,7 @@ import { PENCE_PER_POUND } from "../../format";
 import type {
   ProductiveCircuit,
   CreateProductiveCircuitInput,
+  RecordExitCommodityInput,
 } from "../../types";
 import "./Ch02CircuitProductiveCapital.css";
 
@@ -17,6 +18,18 @@ const DEFAULT_FORM: CreateProductiveCircuitInput = {
   mode: "simple",
   min_capitalisation_increment_pence: 100,
 };
+
+// Spinning Mill 1871 exit C′ (legacy 100-pence-per-pound scale): 42,200 carried
+// over (£422) + 7,800 surplus (£78) = 50,000 (£500).
+const DEFAULT_EXIT_COMMODITY: RecordExitCommodityInput = {
+  value_original: 42200,
+  value_surplus: 7800,
+};
+const DEFAULT_REALISED_PENCE = 50000;
+
+function errorText(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
 
 function FormIIAsymmetryInsight() {
   return (
@@ -58,10 +71,22 @@ export function Ch02CircuitProductiveCapital() {
   const [drawReason, setDrawReason] = useState<"delayed_realisation" | "price_rise_in_mp">("delayed_realisation");
   const [drawError, setDrawError] = useState("");
 
+  const [exitForm, setExitForm] = useState<RecordExitCommodityInput>(DEFAULT_EXIT_COMMODITY);
+  const [exitError, setExitError] = useState("");
+
+  const [realisedPence, setRealisedPence] = useState(DEFAULT_REALISED_PENCE);
+  const [realiseError, setRealiseError] = useState("");
+
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // A rejection belongs to the circuit it was raised against; drop it on switch.
+  useEffect(() => {
+    setExitError("");
+    setRealiseError("");
+  }, [selectedId]);
 
   async function refresh() {
     setListError("");
@@ -116,6 +141,34 @@ export function Ch02CircuitProductiveCapital() {
     }
   }
 
+  async function handleRecordExit(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedId) return;
+    setExitError("");
+    try {
+      await api.recordProductiveCommodity(selectedId, exitForm);
+      // Recording C′ resolves a "no commodity capital recorded" rejection of the sale.
+      setRealiseError("");
+      await refresh();
+    } catch (e) {
+      setExitError(errorText(e));
+    }
+  }
+
+  async function handleRealise(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedId) return;
+    setRealiseError("");
+    try {
+      await api.realiseProductiveCircuit(selectedId, { realised_pence: realisedPence });
+      await refresh();
+    } catch (e) {
+      setRealiseError(errorText(e));
+    }
+  }
+
+  const exitCommodity = selected?.exit_commodity;
+  const exitRealisation = selected?.exit_realisation;
   const lmc = selected?.latent_money_capital;
   const pct = lmc && lmc.threshold > 0
     ? Math.min(100, Math.round((lmc.accumulated / lmc.threshold) * 100))
@@ -296,6 +349,85 @@ export function Ch02CircuitProductiveCapital() {
                     : " — hoarding, not yet functional as capital"}
                 </p>
               </div>
+            </div>
+
+            {/* C′—M′ realisation */}
+            <div className="pc-card" style={{ marginBottom: "1rem" }}>
+              <h3>Realise C&prime;&mdash;M&prime;</h3>
+              <p className="pc-realise-note">
+                C&prime; must be sold at its value and in its entirety: a sale smaller than
+                C&prime; is rejected and nothing is recorded.
+              </p>
+              <dl className="pc-balance">
+                {exitCommodity ? (
+                  <>
+                    <dt>C&prime; carried-over value</dt>
+                    <dd>{fmt(exitCommodity.value_original)}</dd>
+                    <dt>C&prime; surplus-value</dt>
+                    <dd>{fmt(exitCommodity.value_surplus)}</dd>
+                    <dt>C&prime; total</dt>
+                    <dd>
+                      <strong>{fmt(exitCommodity.value_original + exitCommodity.value_surplus)}</strong>
+                    </dd>
+                  </>
+                ) : (
+                  <>
+                    <dt>C&prime;</dt>
+                    <dd>not yet recorded</dd>
+                  </>
+                )}
+                <dt>M&prime; realised</dt>
+                <dd>
+                  {exitRealisation
+                    ? `${fmt(exitRealisation.realised_pence)} on ${new Date(exitRealisation.sold_at).toLocaleDateString("en-GB", { timeZone: "UTC" })}`
+                    : "not yet recorded"}
+                </dd>
+              </dl>
+
+              {!exitCommodity && (
+                <form className="pc-form" onSubmit={handleRecordExit}>
+                  <div className="pc-form-row">
+                    <label>
+                      C&prime; carried-over value (pence)
+                      <input
+                        type="number"
+                        value={exitForm.value_original}
+                        onChange={(e) => setExitForm({ ...exitForm, value_original: Number(e.target.value) })}
+                        min={1}
+                      />
+                    </label>
+                    <label>
+                      C&prime; surplus-value (pence)
+                      <input
+                        type="number"
+                        value={exitForm.value_surplus}
+                        onChange={(e) => setExitForm({ ...exitForm, value_surplus: Number(e.target.value) })}
+                        min={0}
+                      />
+                    </label>
+                    <button type="submit">Record C&prime;</button>
+                  </div>
+                  {exitError && <p className="pc-error" role="alert">{exitError}</p>}
+                </form>
+              )}
+
+              {!exitRealisation && (
+                <form className="pc-form" onSubmit={handleRealise}>
+                  <div className="pc-form-row">
+                    <label>
+                      Sale realised (pence)
+                      <input
+                        type="number"
+                        value={realisedPence}
+                        onChange={(e) => setRealisedPence(Number(e.target.value))}
+                        min={1}
+                      />
+                    </label>
+                    <button type="submit">Realise C&prime;&mdash;M&prime;</button>
+                  </div>
+                  {realiseError && <p className="pc-error" role="alert">{realiseError}</p>}
+                </form>
+              )}
             </div>
 
             {/* Reserve fund */}

@@ -183,6 +183,10 @@ import type {
   CapitalisationStep,
   ReserveFund,
   ReserveDraw,
+  ExitCommodityCapital,
+  ExitRealisation,
+  RecordExitCommodityInput,
+  RecordRealisationInput,
   CommodityCircuit,
   CreateCommodityCircuitInput,
   SuccessivePartialSale,
@@ -1184,6 +1188,18 @@ export const api = {
     http<ReserveDraw>(`/v1/productive-circuits/${id}/reserve/draw`, {
       method: "POST",
       body: JSON.stringify({ amount, reason }),
+    }),
+
+  recordProductiveCommodity: (id: string, input: RecordExitCommodityInput) =>
+    http<ExitCommodityCapital>(`/v1/productive-circuits/${id}/commodity`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+
+  realiseProductiveCircuit: (id: string, input: RecordRealisationInput) =>
+    http<ExitRealisation>(`/v1/productive-circuits/${id}/realise`, {
+      method: "POST",
+      body: JSON.stringify(input),
     }),
 
   // Vol. II Ch. 10 — Theories of Fixed and Circulating Capital: Physiocrats and Adam Smith.

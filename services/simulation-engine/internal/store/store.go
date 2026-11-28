@@ -9,6 +9,7 @@ package store
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/theding0x/capital-simulator/services/simulation-engine/internal/circulation"
 	comp "github.com/theding0x/capital-simulator/services/simulation-engine/internal/composition"
@@ -170,7 +171,16 @@ type ColonialLabourMarketStore interface {
 
 // ProductiveCircuitStore is the persistence contract for Vol. II Ch. 2
 // productive-circuit records. The full state (latent capital, reserve fund,
-// revenue exits, capitalisation steps, reserve draws) is assembled on Get.
+// revenue exits, capitalisation steps, reserve draws, C' and its realisation)
+// is assembled on Get and included on List.
+//
+// RecordExitCommodity records C' once per circuit (ErrAlreadyExists on a
+// second). RecordExitRealisation records the C'—M' sale once per circuit and
+// only for a full sale: it returns circulation.ErrNoCommodityCapital when no
+// C' exists and circulation.ErrPartialRealisation when realised < C' value, and
+// a rejected sale is not recorded. It is not named RecordRealisation because
+// MoneyCircuitStore already owns that name, and both are embedded in the one
+// store the service runs on.
 type ProductiveCircuitStore interface {
 	CreateProductiveCircuit(ctx context.Context, pc circulation.ProductiveCircuit) (circulation.ProductiveCircuit, error)
 	GetProductiveCircuit(ctx context.Context, id circulation.ProductiveCircuitID) (circulation.ProductiveCircuit, error)
@@ -180,6 +190,8 @@ type ProductiveCircuitStore interface {
 	Capitalise(ctx context.Context, id circulation.ProductiveCircuitID, amount, dc, dv circulation.Pence) (circulation.CapitalisationStep, error)
 	DepositReserve(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence) (circulation.ReserveFund, error)
 	WithdrawReserve(ctx context.Context, id circulation.ProductiveCircuitID, amount circulation.Pence, reason circulation.ReserveDrawReason) (circulation.ReserveDraw, error)
+	RecordExitCommodity(ctx context.Context, id circulation.ProductiveCircuitID, valueOriginal, valueSurplus circulation.Pence) (circulation.ExitCommodityCapital, error)
+	RecordExitRealisation(ctx context.Context, id circulation.ProductiveCircuitID, realised circulation.Pence, soldAt time.Time) (circulation.ExitRealisation, error)
 }
 
 // CommodityCircuitStore is the persistence contract for Vol. II Ch. 3

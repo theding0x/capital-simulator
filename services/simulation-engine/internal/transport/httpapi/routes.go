@@ -64,6 +64,8 @@ func Register(s *httpx.Server, h *Handler) {
 	s.HandleFunc("POST /v1/productive-circuits/{id}/capitalise", h.CapitaliseCircuit)
 	s.HandleFunc("POST /v1/productive-circuits/{id}/reserve/deposit", h.DepositReserve)
 	s.HandleFunc("POST /v1/productive-circuits/{id}/reserve/draw", h.DrawReserve)
+	s.HandleFunc("POST /v1/productive-circuits/{id}/commodity", h.RecordExitCommodity)
+	s.HandleFunc("POST /v1/productive-circuits/{id}/realise", h.RecordExitRealisation)
 
 	// Ch. 11 — Rate and Mass of Surplus-Value
 	s.HandleFunc("POST /v1/surplus/mass", h.ComputeMass)

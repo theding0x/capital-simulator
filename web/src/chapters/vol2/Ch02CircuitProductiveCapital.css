@@ -195,6 +195,12 @@
   margin-top: 0.25rem;
 }
 
+.pc-realise-note {
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  margin: 0 0 0.75rem;
+}
+
 .pc-list {
   list-style: none;
   padding: 0;

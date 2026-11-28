@@ -1446,6 +1446,10 @@ func (m *MySQL) GetProductiveCircuit(ctx context.Context, id circulation.Product
 		return circulation.ProductiveCircuit{}, err
 	}
 	pc.ReserveDraws = draws
+
+	if err := m.loadExitState(ctx, &pc); err != nil {
+		return circulation.ProductiveCircuit{}, err
+	}
 	return pc, nil
 }
 
@@ -1470,6 +1474,9 @@ func (m *MySQL) ListProductiveCircuits(ctx context.Context) ([]circulation.Produ
 		pc.CapitalisationSteps = steps
 		draws, _ := m.listReserveDraws(ctx, pc.ID)
 		pc.ReserveDraws = draws
+		if err := m.loadExitState(ctx, &pc); err != nil {
+			return nil, err
+		}
 		out = append(out, pc)
 	}
 	if out == nil {
@@ -1630,6 +1637,167 @@ func (m *MySQL) WithdrawReserve(ctx context.Context, id circulation.ProductiveCi
 		Reason:              reason,
 		OccurredAt:          now,
 	}, nil
+}
+
+// RecordExitCommodity records C' for the circuit, once. The productive_circuits
+// row is locked FOR UPDATE first so the exists-check and the insert cannot race.
+func (m *MySQL) RecordExitCommodity(ctx context.Context, id circulation.ProductiveCircuitID, valueOriginal, valueSurplus circulation.Pence) (circulation.ExitCommodityCapital, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.ExitCommodityCapital{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := lockProductiveCircuit(ctx, tx, id); err != nil {
+		return circulation.ExitCommodityCapital{}, err
+	}
+	const exists = `SELECT 1 FROM productive_circuit_commodities WHERE productive_circuit_id = ?`
+	if err := ensureAbsent(ctx, tx, exists, string(id)); err != nil {
+		return circulation.ExitCommodityCapital{}, err
+	}
+	c := circulation.ExitCommodityCapital{ProductiveCircuitID: id, ValueOriginal: valueOriginal, ValueSurplus: valueSurplus}
+	if err := c.Validate(); err != nil {
+		return circulation.ExitCommodityCapital{}, err
+	}
+	const ins = `INSERT INTO productive_circuit_commodities
+		(productive_circuit_id, value_original, value_surplus) VALUES (?, ?, ?)`
+	if _, err := tx.ExecContext(ctx, ins, string(id), int64(valueOriginal), int64(valueSurplus)); err != nil {
+		if isDuplicateKey(err) {
+			return circulation.ExitCommodityCapital{}, ErrAlreadyExists
+		}
+		return circulation.ExitCommodityCapital{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return circulation.ExitCommodityCapital{}, err
+	}
+	return c, nil
+}
+
+// RecordExitRealisation records the C'—M' sale, once, and only a full sale. The
+// productive_circuits row is locked FOR UPDATE first; C' is then read inside the
+// same transaction and checked with circulation.ValidateRealisation, so a
+// rejected sale writes nothing.
+func (m *MySQL) RecordExitRealisation(ctx context.Context, id circulation.ProductiveCircuitID, realised circulation.Pence, soldAt time.Time) (circulation.ExitRealisation, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return circulation.ExitRealisation{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := lockProductiveCircuit(ctx, tx, id); err != nil {
+		return circulation.ExitRealisation{}, err
+	}
+	const exists = `SELECT 1 FROM productive_circuit_realisations WHERE productive_circuit_id = ?`
+	if err := ensureAbsent(ctx, tx, exists, string(id)); err != nil {
+		return circulation.ExitRealisation{}, err
+	}
+	commodity, err := queryExitCommodity(ctx, tx, id)
+	if err != nil {
+		return circulation.ExitRealisation{}, err
+	}
+	if err := circulation.ValidateRealisation(commodity, realised); err != nil {
+		return circulation.ExitRealisation{}, err
+	}
+	if soldAt.IsZero() {
+		soldAt = m.now()
+	}
+	soldAt = soldAt.UTC()
+	const ins = `INSERT INTO productive_circuit_realisations
+		(productive_circuit_id, realised_pence, sold_at) VALUES (?, ?, ?)`
+	if _, err := tx.ExecContext(ctx, ins, string(id), int64(realised), soldAt); err != nil {
+		if isDuplicateKey(err) {
+			return circulation.ExitRealisation{}, ErrAlreadyExists
+		}
+		return circulation.ExitRealisation{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return circulation.ExitRealisation{}, err
+	}
+	return circulation.ExitRealisation{ProductiveCircuitID: id, SoldAt: soldAt, RealisedPence: realised}, nil
+}
+
+// lockProductiveCircuit takes a row lock on the circuit for the transaction and
+// returns ErrNotFound when it does not exist.
+func lockProductiveCircuit(ctx context.Context, tx *sql.Tx, id circulation.ProductiveCircuitID) error {
+	const sel = `SELECT id FROM productive_circuits WHERE id = ? FOR UPDATE`
+	var locked string
+	if err := tx.QueryRowContext(ctx, sel, string(id)).Scan(&locked); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	}
+	return nil
+}
+
+// ensureAbsent runs a single-argument SELECT 1 query and returns
+// ErrAlreadyExists when it finds a row.
+func ensureAbsent(ctx context.Context, tx *sql.Tx, query, id string) error {
+	var one int
+	err := tx.QueryRowContext(ctx, query, id).Scan(&one)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil
+	case err != nil:
+		return err
+	}
+	return ErrAlreadyExists
+}
+
+// rowQuerier is the QueryRowContext surface shared by *sql.DB and *sql.Tx.
+type rowQuerier interface {
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
+
+// queryExitCommodity reads the circuit's C', or nil when none is recorded.
+func queryExitCommodity(ctx context.Context, q rowQuerier, id circulation.ProductiveCircuitID) (*circulation.ExitCommodityCapital, error) {
+	const sel = `SELECT value_original, value_surplus FROM productive_circuit_commodities WHERE productive_circuit_id = ?`
+	var original, surplus int64
+	err := q.QueryRowContext(ctx, sel, string(id)).Scan(&original, &surplus)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &circulation.ExitCommodityCapital{
+		ProductiveCircuitID: id,
+		ValueOriginal:       circulation.Pence(original),
+		ValueSurplus:        circulation.Pence(surplus),
+	}, nil
+}
+
+// queryExitRealisation reads the circuit's C'—M' sale, or nil when unsold.
+func queryExitRealisation(ctx context.Context, q rowQuerier, id circulation.ProductiveCircuitID) (*circulation.ExitRealisation, error) {
+	const sel = `SELECT realised_pence, sold_at FROM productive_circuit_realisations WHERE productive_circuit_id = ?`
+	var r circulation.ExitRealisation
+	var realised int64
+	err := q.QueryRowContext(ctx, sel, string(id)).Scan(&realised, &r.SoldAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	r.ProductiveCircuitID = id
+	r.RealisedPence = circulation.Pence(realised)
+	return &r, nil
+}
+
+// loadExitState fills pc.ExitCommodity and pc.ExitRealisation (nil while
+// unrecorded) for Get and List.
+func (m *MySQL) loadExitState(ctx context.Context, pc *circulation.ProductiveCircuit) error {
+	commodity, err := queryExitCommodity(ctx, m.db, pc.ID)
+	if err != nil {
+		return err
+	}
+	realisation, err := queryExitRealisation(ctx, m.db, pc.ID)
+	if err != nil {
+		return err
+	}
+	pc.ExitCommodity = commodity
+	pc.ExitRealisation = realisation
+	return nil
 }
 
 func (m *MySQL) listRevenueCircuits(ctx context.Context, id circulation.ProductiveCircuitID) ([]circulation.RevenueCircuit, error) {

@@ -1776,6 +1776,22 @@ export interface ReserveDraw {
   occurred_at: string;
 }
 
+// C' as the exit form of a productive circuit's P. C' = value_original +
+// value_surplus; both on the legacy 100-pence-per-pound scale.
+export interface ExitCommodityCapital {
+  productive_circuit_id: string;
+  value_original: number;
+  value_surplus: number;
+}
+
+// The C'—M' sale that closes a productive circuit. realised_pence must cover
+// all of C'; the server rejects a smaller sale with a 422.
+export interface ExitRealisation {
+  productive_circuit_id: string;
+  sold_at: string; // RFC3339
+  realised_pence: number;
+}
+
 export interface ProductiveCircuit {
   id: string;
   agent_id?: string;
@@ -1789,7 +1805,19 @@ export interface ProductiveCircuit {
   revenue_circuits: RevenueCircuit[];
   capitalisation_steps: CapitalisationStep[];
   reserve_draws: ReserveDraw[];
+  exit_commodity?: ExitCommodityCapital;
+  exit_realisation?: ExitRealisation;
   created_at?: string;
+}
+
+export interface RecordExitCommodityInput {
+  value_original: number;
+  value_surplus: number;
+}
+
+export interface RecordRealisationInput {
+  realised_pence: number;
+  sold_at?: string; // RFC3339; the server defaults it to now
 }
 
 export interface CreateProductiveCircuitInput {

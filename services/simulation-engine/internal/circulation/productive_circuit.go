@@ -33,6 +33,7 @@ var (
 	ErrCapitalisationExceedsHoard   = errors.New("circulation: amount exceeds the latent money-capital hoard")
 	ErrInsufficientReserve          = errors.New("circulation: reserve draw exceeds balance")
 	ErrPartialRealisation           = errors.New("circulation: commodity capital not fully realised")
+	ErrNoCommodityCapital           = errors.New("circulation: no commodity capital recorded to realise")
 	ErrValueRelationShift           = errors.New("circulation: value-relation shift detected mid-circuit")
 )
 
@@ -82,7 +83,11 @@ type ProductiveCircuit struct {
 	RevenueCircuits            []RevenueCircuit     `json:"revenue_circuits"`
 	CapitalisationSteps        []CapitalisationStep `json:"capitalisation_steps"`
 	ReserveDraws               []ReserveDraw        `json:"reserve_draws"`
-	CreatedAt                  time.Time            `json:"created_at"`
+	// ExitCommodity is C', recorded once the circuit's P has produced it.
+	ExitCommodity *ExitCommodityCapital `json:"exit_commodity,omitempty"`
+	// ExitRealisation is the full C'—M' sale; nil while C' is unsold.
+	ExitRealisation *ExitRealisation `json:"exit_realisation,omitempty"`
+	CreatedAt       time.Time        `json:"created_at"`
 }
 
 // TotalAdvance returns the active money-capital (C+V) currently deployed in production.
