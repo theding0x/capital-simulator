@@ -143,3 +143,60 @@ func ValidateRevenueLimit(comp AnnualValueComposition, partition SurplusValuePar
 	}
 	return nil
 }
+
+// ErrNegativeRevenueClaim is returned when a claimed revenue is negative: a
+// claim that the product resolves into less than nothing is not Smith's error,
+// it is malformed input.
+var ErrNegativeRevenueClaim = errors.New("revenue: claimed revenue must be >= 0")
+
+// SmithsAddingUpError records Adam Smith's "adding-up" error: resolving the value
+// of the product into revenue (wages + profit + rent) without accounting for the
+// constant capital c, which is transferred, not newly created, and must be
+// replaced. Only the new value v + s can be revenue; anything claimed beyond it
+// is constant capital treated as if it needed no replacement.
+//
+// On Marx's aggregate fixture (c = 6000, v = 1500, s = 1500), resolving the whole
+// product, 9000, into revenue claims 9000 against a new value of 3000: an error
+// of 6000, which is exactly c.
+type SmithsAddingUpError struct {
+	CompositionID string `json:"composition_id"`
+	// ClaimedRevenueLM is the value Smith resolves into wages + profit + rent.
+	ClaimedRevenueLM int64 `json:"claimed_revenue_lm"`
+	// NewValueLM is v + s, the most that can be distributed as revenue.
+	NewValueLM int64 `json:"new_value_lm"`
+	// OmittedConstantCapitalLM is ClaimedRevenueLM - NewValueLM: the constant
+	// capital consumed as revenue. For Smith's own claim, the whole product, it
+	// equals c.
+	OmittedConstantCapitalLM int64 `json:"omitted_constant_capital_lm"`
+}
+
+// Error implements the error interface.
+func (e *SmithsAddingUpError) Error() string {
+	return fmt.Sprintf(
+		"revenue: Smith's adding-up error: %d claimed as revenue exceeds the new value v+s = %d; %d of constant capital omitted from replacement",
+		e.ClaimedRevenueLM, e.NewValueLM, e.OmittedConstantCapitalLM,
+	)
+}
+
+// CheckRevenueResolution tests a claim that claimedRevenueLM of the annual
+// product resolves into revenue. Revenue cannot exceed the new value v + s, so a
+// claim beyond it returns a *SmithsAddingUpError carrying the size of the
+// omission. The composition is validated first, so the comparison is made
+// against a new value that actually equals v + s.
+func CheckRevenueResolution(comp AnnualValueComposition, claimedRevenueLM int64) error {
+	if err := comp.Validate(); err != nil {
+		return err
+	}
+	if claimedRevenueLM < 0 {
+		return fmt.Errorf("%w: got %d", ErrNegativeRevenueClaim, claimedRevenueLM)
+	}
+	if claimedRevenueLM > comp.NewValueLabourMinutes {
+		return &SmithsAddingUpError{
+			CompositionID:            string(comp.ID),
+			ClaimedRevenueLM:         claimedRevenueLM,
+			NewValueLM:               comp.NewValueLabourMinutes,
+			OmittedConstantCapitalLM: claimedRevenueLM - comp.NewValueLabourMinutes,
+		}
+	}
+	return nil
+}
