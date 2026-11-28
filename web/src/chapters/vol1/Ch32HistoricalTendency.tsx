@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import type {
   AccumulationTrajectory,
   Negation,
@@ -16,7 +17,7 @@ const STAGE_LABEL: Record<string, string> = {
 };
 
 export function Ch32HistoricalTendency() {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.PRE_DECIMAL);
 
   const [stages, setStages] = useState<Negation[]>([]);
   const [stagesError, setStagesError] = useState("");

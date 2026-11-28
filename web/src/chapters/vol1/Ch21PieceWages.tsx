@@ -6,7 +6,8 @@ import type {
   PieceWage,
   SubContract,
 } from "../../types";
-import { usePounds } from "../../CurrencyContext";
+import { useCurrency, usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import "./Ch21PieceWages.css";
 
 function PieceWageInsight() {
@@ -244,7 +245,11 @@ function PieceWageCoda() {
 }
 
 export function Ch21PieceWages() {
-  const fmt = usePounds();
+  // Piece-wage fields are in farthings, as the rest of this panel shows them.
+  // Historical mode keeps the raw "Nf"; modern mode converts at 960 per pound.
+  const { modern } = useCurrency();
+  const fmtModern = usePounds(PENCE_PER_POUND.FARTHINGS);
+  const fmt = (n: number) => (modern ? fmtModern(n) : `${n}f`);
   const [dailyWage, setDailyWage] = useState(144);
   const [dayValueProduct, setDayValueProduct] = useState(288);
   const [normalOutput, setNormalOutput] = useState(24);
@@ -476,7 +481,7 @@ export function Ch21PieceWages() {
             />
           </label>
           <label>
-            Price per piece (pence)
+            Price per piece (farthings)
             <input
               type="number"
               min={1}
@@ -540,7 +545,7 @@ export function Ch21PieceWages() {
             />
           </label>
           <label>
-            Piece rate to head (pence)
+            Piece rate to head (farthings)
             <input
               type="number"
               min={1}
@@ -550,7 +555,7 @@ export function Ch21PieceWages() {
             />
           </label>
           <label>
-            Assistant rate (pence)
+            Assistant rate (farthings)
             <input
               type="number"
               min={0}

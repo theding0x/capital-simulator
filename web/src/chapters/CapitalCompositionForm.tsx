@@ -36,7 +36,7 @@ export function CapitalCompositionForm({ values, maxPeriods = 20, presets, onCha
       )}
       <div className="form-row">
         <label className="form-label">
-          Constant capital c (pence)
+          Constant capital c (£)
           <input
             type="number"
             min={0}
@@ -47,7 +47,7 @@ export function CapitalCompositionForm({ values, maxPeriods = 20, presets, onCha
           />
         </label>
         <label className="form-label">
-          Variable capital v (pence)
+          Variable capital v (£)
           <input
             type="number"
             min={1}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import type {
   ProductiveCircuit,
   CreateProductiveCircuitInput,
@@ -38,7 +39,7 @@ function FormIIAsymmetryInsight() {
 }
 
 export function Ch02CircuitProductiveCapital() {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.DECIMAL);
 
   const [circuits, setCircuits] = useState<ProductiveCircuit[]>([]);
   const [selectedId, setSelectedId] = useState("");

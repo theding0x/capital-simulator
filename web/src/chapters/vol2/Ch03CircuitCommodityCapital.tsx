@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { commodityCircuitApi } from "../../api";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import type {
   CommodityCircuit,
   CreateCommodityCircuitInput,
@@ -37,7 +38,7 @@ function SocialCapitalCoda() {
 }
 
 export function Ch03CircuitCommodityCapital() {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.DECIMAL);
 
   const [circuits, setCircuits] = useState<CommodityCircuit[]>([]);
   const [selectedId, setSelectedId] = useState("");

@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../api";
 import type { CircuitProof, ExchangeSimulation } from "../../types";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import "./Ch05Contradictions.css";
 
 interface Ch05Props {
@@ -103,7 +104,7 @@ function InsightBox({ candidates }: { candidates: Candidates }) {
 }
 
 function CircuitProbePanel({ onUsuryProven }: { onUsuryProven: () => void }) {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.DECIMAL);
   const [m, setM] = useState(10000);
   const [commodityId, setCommodityId] = useState("");
   const [mPrime, setMPrime] = useState(10500);
@@ -221,7 +222,7 @@ function ExchangeSimulationPanel({
 }: {
   onRedistribution: (aBefore: number, bBefore: number) => void;
 }) {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.DECIMAL);
   const [aValue, setAValue] = useState(5000);
   const [bValue, setBValue] = useState(5000);
   const [result, setResult] = useState<ExchangeSimulation | null>(null);

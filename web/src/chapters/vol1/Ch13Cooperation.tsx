@@ -24,7 +24,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { RelativeSurplusBridge } from "../../components/RelativeSurplusBridge";
-import { fmtHoursLong } from "../../format";
+import { fmtHoursLong, PENCE_PER_POUND } from "../../format";
 import { usePounds } from "../../CurrencyContext";
 import type {
   Agent,
@@ -637,7 +637,7 @@ function FragmentRow({
 // ── Minimum capital panel (unchanged from previous version) ──────────────────
 
 function MinimumCapitalPanel() {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.PRE_DECIMAL);
   const [workerCount, setWorkerCount] = useState(300);
   const [wagePence, setWagePence] = useState(72);
   const [result, setResult] = useState<MinimumCapitalResult | null>(null);

@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
 import { fmtPounds, fmtPoundsModern } from "./format";
+import type { PencePerPound } from "./format";
 
 interface CurrencyContextShape {
   modern: boolean;
@@ -46,9 +47,14 @@ export function useCurrency(): CurrencyContextShape {
   return useContext(CurrencyContext);
 }
 
-export function usePounds(): (pence: number) => string {
+// usePounds returns the pound formatter for the active currency mode (1860s
+// historical or 2025 equivalent). `perPound` names the scale of the field the
+// caller formats; see PENCE_PER_POUND.
+export function usePounds(perPound: PencePerPound): (amount: number) => string {
   const { modern } = useCurrency();
-  return modern ? fmtPoundsModern : fmtPounds;
+  return modern
+    ? (n) => fmtPoundsModern(n, perPound)
+    : (n) => fmtPounds(n, perPound);
 }
 
 export function CurrencyToggle() {

@@ -2,12 +2,13 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import type { AccumulationPeriod, ExtendedReproductionResult, SplitSurplusResult } from "../../types";
 import { CapitalCompositionForm } from "../CapitalCompositionForm";
 import type { CapitalCompositionValues } from "../CapitalCompositionForm";
 
 export function Ch24AccumulationOfCapital() {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.POUNDS);
 
   // Extended reproduction inputs — shared (c, v, s′, periods)
   const [cv, setCv] = useState<CapitalCompositionValues>({ constant: 8000, variable: 2000, surplusRate: 1.0, periods: 3 });
@@ -210,7 +211,7 @@ export function Ch24AccumulationOfCapital() {
         <form className="ch-form" onSubmit={handleSplitSubmit}>
           <div className="form-row">
             <label className="form-label">
-              Surplus-value (pence)
+              Surplus-value (£)
               <input
                 type="number"
                 min={0}

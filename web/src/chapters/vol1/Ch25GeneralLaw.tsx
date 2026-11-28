@@ -2,12 +2,13 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import type { GeneralLawScenarioResult, OrganicCompositionResult, LabourDemandResult, ReserveArmyResult } from "../../types";
 import { CapitalCompositionForm } from "../CapitalCompositionForm";
 import type { CapitalCompositionValues } from "../CapitalCompositionForm";
 
 export function Ch25GeneralLaw() {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.POUNDS);
 
   // Organic composition calculator
   const [ocConstant, setOcConstant] = useState(8000);

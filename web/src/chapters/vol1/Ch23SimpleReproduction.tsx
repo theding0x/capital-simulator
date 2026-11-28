@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import type { ReproductionCycleItem, SimpleReproductionResult } from "../../types";
 import { CapitalCompositionForm } from "../CapitalCompositionForm";
 import type { CapitalCompositionValues } from "../CapitalCompositionForm";
@@ -15,7 +16,7 @@ const CH23_PRESETS: Array<{ label: string; values: CapitalCompositionValues }> =
 ];
 
 export function Ch23SimpleReproduction() {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.POUNDS);
   const [cv, setCv] = useState<CapitalCompositionValues>({ constant: 800, variable: 200, surplusRate: 1.0, periods: 10 });
   const [result, setResult] = useState<SimpleReproductionResult | null>(null);
   const [error, setError] = useState("");
