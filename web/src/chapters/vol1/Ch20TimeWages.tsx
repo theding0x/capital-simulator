@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../../api";
 import type { WorkingSession } from "../../types";
 import { useCurrency, usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import "./Ch20TimeWages.css";
 
 function TimeWageInsight({
@@ -72,7 +73,7 @@ function PriceOscillationCoda() {
 
 export function Ch20TimeWages() {
   const { modern } = useCurrency();
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.PRE_DECIMAL);
   const [agentID, setAgentID] = useState("");
   const [dailyPence, setDailyPence] = useState(36);
   const [workingDayHours, setWorkingDayHours] = useState(12);

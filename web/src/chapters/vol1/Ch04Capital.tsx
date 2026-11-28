@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { api } from "../../api";
 import type { Agent, AgentCircuitLeg, CapitalCircuit } from "../../types";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import "./Ch04Capital.css";
 
 interface Ch04Props {
@@ -256,7 +257,7 @@ function AgentCard({
   circuit: CircuitKind;
   onChanged: () => void;
 }) {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.DECIMAL);
   const [circuits, setCircuits] = useState<CapitalCircuit[]>([]);
   const [showCircuits, setShowCircuits] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -376,7 +377,7 @@ function CircuitLegList({ legs }: { legs: AgentCircuitLeg[] }) {
 }
 
 function CircuitSparklines({ circuits }: { circuits: CapitalCircuit[] }) {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.DECIMAL);
   const maxValue = useMemo(() => {
     let m = 0;
     for (const c of circuits) {

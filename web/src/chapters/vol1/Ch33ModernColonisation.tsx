@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import type {
   ColonialLabourMarket,
   CreateColonialLabourMarketInput,
@@ -20,7 +21,7 @@ const DEFAULT_PRICE_PENCE = 240;
 const DEFAULT_ACRES = 50;
 
 export function Ch33ModernColonisation() {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.PRE_DECIMAL);
 
   const [markets, setMarkets] = useState<ColonialLabourMarket[]>([]);
   const [listError, setListError] = useState("");

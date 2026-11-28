@@ -125,8 +125,11 @@ have since been adopted where the scale is uniform: they either alias
 `money.Pence` (240/£) or expose `Canonical()` (`money.Rescale` at 100/£). The
 mixed packages (simulation-engine `reproduction` and `simulation`, agent-service)
 are intentionally left unbridged (Option A decision on #449) until per-chapter
-helpers or normalising migrations land, per ADR 0001. Until then the web
-`fmtPounds` helper assumes 100/£ everywhere (#495).
+helpers or normalising migrations land, per ADR 0001. The web `fmtPounds` and
+`usePounds` take a required `PENCE_PER_POUND` scale (`POUNDS` 1, `DECIMAL` 100,
+`PRE_DECIMAL` 240, `FARTHINGS` 960) and each panel that uses them names the
+scale of the field it formats; wire values are unchanged (#495). Panels with
+their own local money helpers are not covered.
 
 ## Roadmap (chapter-driven)
 
@@ -356,7 +359,7 @@ Following an audit of Ch. 12–15 (`docs/plans/part-iv-cohesion-review.md`), Par
 - **`engine.Tick` wired through.** `AdvanceTick` now returns `engine.Tick`; the `factory_ticks` table is read via the new `GET /v1/factories/{id}/ticks?limit=N` endpoint; the Ch.15 React panel shows the last 10 ticks for each factory as a strip table. The orphan type from the Ch.15 spec is now the canonical wire shape.
 - **`CyclePhase` deleted.** The industrial-cycle enum was orphan in the original Ch.15 spec; deferred to a later volume.
 - **`IntensityFactor` wired.** Factories carry an `intensity_factor` column (migration `00003_ch15_factory_intensity.sql`); the tick path multiplies `HandLabourSaved` by it via `machinery.EffectiveLabour`, encoding the §3C intensification claim.
-- **Shared React format helpers.** `minutesToHours` and `poundsFromPence` (previously byte-identical in Ch.13 and Ch.14) and Ch.15's `compactNumber` / `poundsFromLabourMinutes` all live in `web/src/format.ts` as `fmtHoursLong`, `fmtPounds`, `fmtCompact`, and `fmtLabourMinutes`. Chapter files import via aliases for minimal churn.
+- **Shared React format helpers.** `minutesToHours` and `poundsFromPence` (previously byte-identical in Ch.13 and Ch.14) and Ch.15's `compactNumber` / `poundsFromLabourMinutes` all live in `web/src/format.ts` as `fmtHoursLong`, `fmtPounds` (which takes a required `PENCE_PER_POUND` scale naming the field's units to the pound), `fmtCompact`, and `fmtLabourMinutes`. Chapter files import via aliases for minimal churn.
 - **Agent-service handler tests.** `cooperation_handler_test.go` and `manufacture_handler_test.go` mirror the structure of the sim-engine handler tests (Burke five-man platoon, Caslon type-foundry 4/2/1 proportionality, iron-law headcount probe, integer scaling, manufacture-minimum vs cooperation-baseline). Brings the section to parity.
 - **Agent-service handler constructor.** `httpapi.New` now takes a single `AgentStore` composite interface instead of seven positional stores. `cmd/agent-service/main.go`'s `agentStore` is a one-line alias to keep the bootstrap signature stable.
 

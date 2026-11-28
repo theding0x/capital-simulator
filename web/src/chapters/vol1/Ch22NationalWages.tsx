@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../../api";
 import type { WageComparison } from "../../types";
 import { useCurrency, usePounds } from "../../CurrencyContext";
+import { PENCE_PER_POUND } from "../../format";
 import "./Ch22NationalWages.css";
 
 function NationalWagesInsight() {
@@ -118,7 +119,7 @@ function NationalWagesCoda() {
 
 export function Ch22NationalWages() {
   const { modern } = useCurrency();
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.PRE_DECIMAL);
   const [comparison, setComparison] = useState<WageComparison | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 

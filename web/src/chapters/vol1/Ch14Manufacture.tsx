@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { api } from "../../api";
 import { RelativeSurplusBridge } from "../../components/RelativeSurplusBridge";
-import { fmtHoursLong as minutesToHours } from "../../format";
+import { fmtHoursLong as minutesToHours, PENCE_PER_POUND } from "../../format";
 import { usePounds } from "../../CurrencyContext";
 import type {
   Agent,
@@ -551,7 +551,7 @@ function ScalePanel({ m, onScaled }: { m: Manufacture; onScaled: () => void }) {
 }
 
 function MinimumCapitalPanel({ m }: { m: Manufacture }) {
-  const fmt = usePounds();
+  const fmt = usePounds(PENCE_PER_POUND.PRE_DECIMAL);
   const [factor, setFactor] = useState(0.1);
   const [result, setResult] = useState<ManufactureMinimumCapitalResult | null>(null);
   const [err, setErr] = useState<string | null>(null);

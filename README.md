@@ -288,7 +288,9 @@ because that is what Marx's analysis quantifies. Money expressions —
 wages, prices, capital stocks — are in **pence** (`Pence int64`), since
 Marx's worked examples are in £-s-d and pence is the smallest unit that
 keeps everything in integer arithmetic. The dashboard renders in pounds
-via `web/src/format.ts` helpers (`fmtPounds`, `fmtLabourMinutes`).
+via `web/src/format.ts` helpers (`fmtPounds`, `fmtLabourMinutes`). The pound
+formatters take a per-field scale (`PENCE_PER_POUND`: 1, 100, 240 or 960 units
+to the pound) because money is not stored on one scale across chapters.
 
 Time-wage and piece-wage chapters (Ch. 20, 21) extend this to
 **farthings** (¼d.) where the historical wage tables required quarter-
